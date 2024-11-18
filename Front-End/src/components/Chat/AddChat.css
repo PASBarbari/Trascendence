@@ -1,0 +1,48 @@
+.chat {
+	display: flex;
+	flex-direction: column;
+	border-radius: 8px;
+	justify-content: space-between;
+	background: #f5f5f5f0;
+	height: fit-content;
+}
+
+.separated {
+	margin: 20px; /* Aggiunge uno spazio tra i div */
+}
+
+.clickable-div {
+	background: none;
+	border: none;
+
+	cursor: pointer;
+	width: 100%;
+	text-align: left;
+}
+
+.clickable-div .chat-header {
+	padding: 10px;
+	border-radius: 5px 5px 0 0;
+}
+
+.expanded {
+	height: 400px; /* Altezza espansa del div */
+}
+
+.scrollable-content {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	padding: 10px;
+	overflow-y: auto; /* Aggiunge una barra di scorrimento se il contenuto supera l'altezza massima */
+}
+
+.fixed-footer {
+	display: flex;
+	flex-direction: line;
+	padding: 10px;
+}
+
+.chat-button {
+	padding: 20px;
+}
