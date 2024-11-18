@@ -1,0 +1,18 @@
+##apt
+python3-pip
+pip
+nodejs
+npm
+postgresql-16
+postgresql-client-16
+postgresql-doc-16
+python3-venv
+docker
+docker-compose
+##end
+
+##npm da fare nella cartella Front-End
+react
+react-router-dom
+react-use-websocket
+##fin

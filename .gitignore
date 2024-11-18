@@ -1,0 +1,61 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# Build output
+dist/
+build/
+
+# Dependency directories
+jspm_packages/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.swp
+*__pycache__/
+*.pyc
+
+.venv
+venv*
+node_modules
+migrations/
+Back-End/login/my_login/__pycache__/signals.cpython-311.pyc
+Back-End/login/my_login/migrations/__pycache__/0002_appuser_is_staff.cpython-311.pyc
+Back-End/login/my_login/__pycache__/__init__.cpython-311.pyc
+Back-End/login/my_login/__pycache__/admin.cpython-311.pyc
+Back-End/login/my_login/__pycache__/apps.cpython-311.pyc
+Back-End/login/my_login/__pycache__/errors.cpython-311.pyc
+Back-End/login/my_login/__pycache__/models.cpython-311.pyc
+Back-End/login/my_login/__pycache__/serializers.cpython-311.pyc
+Back-End/login/my_login/__pycache__/urls.cpython-311.pyc
+Back-End/login/my_login/__pycache__/views.cpython-311.pyc
+Back-End/login/my_login/__pycache__/validations.cpython-311.pyc
+Back-End/login/my_login/migrations/__pycache__/__init__.cpython-311.pyc
+Back-End/login/my_login/migrations/__pycache__/0001_initial.cpython-311.pyc
+Back-End/login/login/__pycache__/wsgi.cpython-311.pyc
+Back-End/login/login/__pycache__/__init__.cpython-311.pyc
+Back-End/login/login/__pycache__/settings.cpython-311.pyc
+Back-End/login/login/__pycache__/urls.cpython-311.pyc
