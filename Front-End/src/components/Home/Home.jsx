@@ -44,9 +44,12 @@ const Home = () => {
 				{isDivVisible && <SideChats />}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
-					<div className="box"></div>
-					<div className="box"></div>
-					<div className="box"></div>
+					<div className="box"></div> 
+					{/* //task disponibili a cui ti puoi iscrivere per categoria  */}
+					<div className="box"></div> 
+					{/* //elenco delle task in cui sei iscritto e percentuale di avanzamento */}
+					<div className="box"></div> 
+					{/* //task in corso e quando le checki aggiorna il tuo score */}
 
 				</div>
 			</div>
