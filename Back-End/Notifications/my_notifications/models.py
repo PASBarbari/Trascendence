@@ -7,7 +7,6 @@ from .views import send_notification
 
 class BaseNotification(models.Model):
 	id = models.AutoField(primary_key=True)
-	Type = models.Choices(Types)
 	Sender = models.Choices(Microservices)
 	message = models.TextField()
 
