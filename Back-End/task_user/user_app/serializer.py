@@ -4,7 +4,7 @@ import datetime
 
 class AvatarsSerializer(serializers.ModelSerializer):
 	name = serializers.CharField(max_length=255)
-	image = serializers.URLField(max_length=200)
+	image = serializers.ImageField()
 
 	class Meta:
 		model = Avatars

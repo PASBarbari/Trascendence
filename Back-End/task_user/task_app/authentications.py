@@ -15,8 +15,6 @@ def login_self():
 	}
 
 	response = requests.post(login_url, json=data)
-	response_data = response.json()
-	print("login resp:", response_data)
 
 	if response.status_code != 200:
 		raise Exception('Failed to login user')
@@ -30,8 +28,6 @@ def user_register_self():
 		'password': 'chat_password',
 	}
 	response = requests.post(register_url, json=data)
-	print("Response:", response.json())
-	print("Response status code:", response.status_code)
 	
 	if response.status_code == 400:
 		login_self()
@@ -57,8 +53,8 @@ def register_self():
 
 	session = requests.Session()
 	csrf_resp = session.get(csrf_url)
-	print("Response cookies:", json.dumps(dict(csrf_resp.cookies), indent=4))
-	print("Response headers:", json.dumps(dict(csrf_resp.headers), indent=4))
+	# print("Response cookies:", json.dumps(dict(csrf_resp.cookies), indent=4))
+	# print("Response headers:", json.dumps(dict(csrf_resp.headers), indent=4))
     
 	if 'csrftoken' not in csrf_resp.cookies:
 		raise Exception('CSRF token not found in response cookies')
@@ -66,7 +62,6 @@ def register_self():
 	csrf_token = csrf_resp.cookies['csrftoken']
 
 	access_token = oauth2_settings['TOKEN']
-	print("Access token:", access_token)
 	headers = {
 		'Content-Type': 'application/json',
 		'X-CSRFToken': csrf_token,
@@ -74,7 +69,6 @@ def register_self():
 	}
 
 	response = session.post(register_url, json=data, headers=headers)
-	print("Response:", response.json())
 	if response.status_code != 200:
 		raise Exception('Failed to register application')
 	try:

@@ -25,7 +25,6 @@
 }
 
 .sidebar {
-	width: 50px;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
@@ -47,24 +46,6 @@
 	overflow-y: auto;
 }
 
-.profile {
-	width: 100%;
-	height: 200px;
-	background-color: #f5f5f5f0;
-	border-radius: 8px;
-	min-width: 400px;
-	display: flex;
-	justify-content: flex-start;
-	align-items: center;
-}
-
-img {
-	width: 130px;
-	height: 130px;
-	border-radius: 50%;
-	margin: 30px;
-}
-
 .box {
 	width: 100px;
 	height: 100%;
@@ -74,4 +55,53 @@ img {
 	min-width: 400px;
 	max-width: 800px;
 	max-height: 600px
+}
+
+.logo-image {
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+
+.propic-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.propic-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	padding: 2px;
+}
+
+.chat-buttons {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 50px;
+	padding: 2px;
+}
+
+.propic-button img {
+    display: block;
+}
+
+.chat-image {
+	padding-top: 5px;
+	width: 25px;
+	height: 25px;
 }

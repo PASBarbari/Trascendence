@@ -1,11 +1,10 @@
 from django.shortcuts import render, get_object_or_404
 from rest_framework.views import APIView
-from rest_framework import permissions, status, generics
+from rest_framework import permissions, status, generics, filters
 from rest_framework.response import Response
 from .models import *
 from .serializer import *
 from user_app.models import Users
-from django_filters.rest_framework import DjangoFilterBackend
 
 class MultipleFieldLookupMixin:
     """
@@ -37,8 +36,8 @@ class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
 class UserGen(generics.ListCreateAPIView):
     permission_classes = (permissions.AllowAny,)
     serializer_class = UsersSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['id']
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['id']
     queryset = Users.objects.all()
 
 class UserManage(generics.RetrieveUpdateDestroyAPIView):
@@ -49,8 +48,8 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 
 class FriendList(generics.ListAPIView):
 	serializer_class = FriendshipsSerializer
-	filter_backends = [DjangoFilterBackend]
-	filterset_fields = ['user_1__id', 'user_2__id', 'accepted']
+	filter_backends = [filters.SearchFilter]
+	search_fields = ['user_1__id', 'user_2__id', 'accepted']
 	queryset = Friendships.objects.all()
 	# def get_queryset(self):
 	# 	return Friendships.objects.filter(accepted=True)

@@ -8,7 +8,7 @@ def CreateTasks(**kwargs):
 	if not Avatars.objects.all():
 		a = Avatars.objects.create(
 			name = 'default avatar',
-			image = 'https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link'
+			image = 'avatar/cloud.png'
 		)
 		a.save()
 	if not Users.objects.all():
