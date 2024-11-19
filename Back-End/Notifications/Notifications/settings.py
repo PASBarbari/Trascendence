@@ -41,8 +41,9 @@ INSTALLED_APPS = [
 	'corsheaders',
 	'channels',
 	'celery',
-	'redis',
+	'django_redis',
 	'my_notifications',
+	'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +57,10 @@ MIDDLEWARE = [
 	'corsheaders.middleware.CorsMiddleware',
 	'my_notifications.middleware.TokenAuthMiddlewareHTTP',
 ]
+
+REST_FRAMEWORK = {
+	'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
 
 ROOT_URLCONF = 'Notifications.urls'
 
@@ -108,6 +113,8 @@ oauth2_settings = {
 	'scope': '',
 	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
 }
+
+
 
 CACHES = {
 	'default': {

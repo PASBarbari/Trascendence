@@ -54,7 +54,7 @@ INSTALLED_APPS = [
 	'corsheaders',
 	'channels',
 	'celery',
-	'redis',
+	'django_redis',
 ]
 
 MIDDLEWARE = [
