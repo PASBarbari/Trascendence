@@ -8,6 +8,8 @@ import settings from './settings.png';
 import chatImg from './chat.png';
 import propic from '../Profile/propic.jpeg';
 import close from './close.png';
+import TaskAvaiable from '../TaskAvaiable/TaskAvaiable';
+import TaskActive from '../TaskActive/TaskActive';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
 // import { Nav, navbar } from 'react-bootstrap';
@@ -44,10 +46,10 @@ const Home = () => {
 				{isDivVisible && <SideChats />}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
+					<TaskAvaiable />
+					<TaskActive />
 					<div className="box"></div> 
-					{/* //task disponibili a cui ti puoi iscrivere per categoria  */}
 					<div className="box"></div> 
-					{/* //elenco delle task in cui sei iscritto e percentuale di avanzamento */}
 					<div className="box"></div> 
 					{/* //task in corso e quando le checki aggiorna il tuo score */}
 
