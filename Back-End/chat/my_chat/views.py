@@ -1,4 +1,5 @@
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
+import requests
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -8,6 +9,8 @@ from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
 from rest_framework import generics
+from notification import *
+from chat.settings import Notification_url
 
 class GetChatMessage(generics.ListAPIView):
     serializer_class = chat_messageSerializer
@@ -140,3 +143,17 @@ class DownloadSimilaritiesData(APIView):
         }
         response = HttpResponse(data, headers)
         return Response(response, status=status.HTTP_200_OK)
+
+class SendNotification(APIView):
+	def SendImmidiateNotification(**kwargs):
+		notification = ImmediateNotification.objects.create(
+			user_id=kwargs.get('user_id'),
+			group_id=kwargs.get('group_id'),
+			Type = kwargs.get('Type'),
+			message=kwargs.get('message'),
+			is_read=kwargs.get('is_read'),
+			creation_time=kwargs.get('creation_time')
+		)
+		notification_request = HttpRequest()
+		notification_request.method = 'POST'
+		notification_request.POST = notification

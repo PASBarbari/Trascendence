@@ -7,7 +7,7 @@ from .views import send_notification
 
 class BaseNotification(models.Model):
 	id = models.AutoField(primary_key=True)
-	Sender = models.Choices(Microservices)
+	Sender = models.CharField(max_length=20, choices=Microservices)
 	message = models.TextField()
 
 	class Meta:
@@ -94,7 +94,7 @@ class UserProfile(models.Model):
 class NotificationsGroup(models.Model):
 	id = models.AutoField(primary_key=True)
 	name = models.CharField(max_length=100)
-	Type = models.Choices(Microservices)
+	Type = models.CharField(max_length=20, choices=Microservices)
 	members = models.ManyToManyField(UserProfile, related_name='Groups')
 	owner = models.ForeignKey(UserProfile, related_name='Owner', on_delete=models.CASCADE, default=None, null=True)
 

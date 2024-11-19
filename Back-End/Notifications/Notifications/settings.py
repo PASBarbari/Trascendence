@@ -42,8 +42,8 @@ INSTALLED_APPS = [
 	'channels',
 	'celery',
 	'django_redis',
-	'my_notifications',
 	'django_filters',
+	'my_notifications',
 ]
 
 MIDDLEWARE = [
@@ -185,7 +185,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Microservices
-Miroservices = {
+Microservices = {
 	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
 	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
 	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),

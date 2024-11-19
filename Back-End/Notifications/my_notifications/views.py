@@ -6,7 +6,7 @@ from rest_framework import permissions , status
 from channels.layers import get_channel_layer
 from .models import *
 from .serializers import *
-from django_filters import DjangoFilterBackend
+from django_filters.rest_frameworks import DjangoFilterBackend
 from rest_framework.pagination import CursorPagination
 class NotificationViewSet(viewsets.ViewSet):
 	def send_notification(self, user_id, group_id, notification):
