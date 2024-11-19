@@ -3,6 +3,7 @@ import './index.css';
 import SideChats from '../Chat/SideChats';
 import propic from './propic.jpeg';
 import WebSocketComponent from '../WebSocket/WebSocket';
+import popbutton from '../Popover/Popover';
 // import { Nav, navbar } from 'react-bootstrap';
 // import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -17,6 +18,7 @@ const Home = () => {
     <div className="home">
 			<div className="navbar">
 				<h1>logo</h1>
+				<popbutton />
 				<p>panino</p>
 				{/* Aggiungi il contenuto della tua home page qui */}
 			</div>
