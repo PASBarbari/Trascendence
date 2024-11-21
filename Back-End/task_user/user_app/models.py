@@ -17,7 +17,7 @@ class Users(models.Model):
     bio = models.TextField(default="")
     exp = models.IntegerField(default=0)
     level = models.IntegerField(default=0)
-    avatar = models.ForeignKey(Avatars, on_delete=models.SET(1), related_name="picture")
+    avatar = models.ForeignKey(Avatars, default=1, on_delete=models.SET(1), related_name="picture")
     last_modified = models.DateTimeField(auto_now=True)
 
 class Friendships(models.Model):
