@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from celery.schedules import crontab
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -134,10 +136,10 @@ AUTH_PASSWORD_VALIDATORS = [
 CELERY_BROKER_URL = 'redis://localhost:6702/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6702/0'
 CELERY_BEAT_SCHEDULE = {
-	# 'similar_users_chats': {
-	# 	'task': 'my_chat.tasks.similar_users_chats',
-	# 	'schedule': 3600,
-	# },
+	'task_notify': {
+		'task': 'task_app.celerity_task.task_notify',
+		'schedule': crontab(minute=0, hour=10),
+	},
 }
 
 
