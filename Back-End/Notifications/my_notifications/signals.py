@@ -1,13 +1,14 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import ImmediateNotification, ScheduledNotification, UserProfile , NotificationsGroup
+from .views import send_notification
 import logging
 
 
 @receiver(post_save, sender=ImmediateNotification)
 def send_notification(sender, instance, created, **kwargs):
 	if created:
-		if (instance.send()):
+		if (send_notification(instance.user_id, instance.group_id, instance)):
 			logger = logging.getLogger(__name__)
 			logger.info(f'Notification sent: {instance}')
 		else:

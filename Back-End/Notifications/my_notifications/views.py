@@ -4,16 +4,16 @@ from rest_framework.response import Response
 from asgiref.sync import async_to_sync
 from rest_framework import permissions , status
 from channels.layers import get_channel_layer
-from .models import *
-from .serializers import *
+from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, SentNotification
+from .serializers import UniversalNotificationSerializer, UserProfileSerializer
 from django_filters.rest_frameworks import DjangoFilterBackend
 from rest_framework.pagination import CursorPagination
 class NotificationViewSet(viewsets.ViewSet):
 	def send_notification(self, user_id, group_id, notification):
 		if user_id is not None:
-			self.send_user_notification(user_id, notification)
+			return self.send_user_notification(user_id, notification)
 		elif group_id is not None:
-			self.send_group_notification(group_id, notification)
+			return self.send_group_notification(group_id, notification)
 		else:
 			return Response({'error': 'No user or group specified'})
 	
@@ -28,18 +28,27 @@ class NotificationViewSet(viewsets.ViewSet):
 			}
 		)
 		if is_online:
-			async_to_sync(channel_layer.group_send)(
+			sent = async_to_sync(channel_layer.group_send)(
 				f'notifications_{user_id}',
 				{
 					'type': 'notification',
 					'text': serialized_notification
 				}
 			)
+			if sent is True:
+				SentNotification.objects.create(
+					is_sent=True,
+					UserNotification=serialized_notification
+				)
+				notification.delete()
+				return sent
+			return sent
 		else:
 			QueuedNotification.objects.create(
 				is_sent=False,
 				UserNotification=serialized_notification
 			)
+			return False
 
 class NewUser(generics.CreateAPIView):
 	permissionClasses = (permissions.AllowAny,)

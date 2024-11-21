@@ -73,29 +73,29 @@ services:
     networks:
       - back-end
     
-  celery_worker_chat:
-    build: .
-    container_name: celery_worker_chat
-    command: celery -A chat worker --loglevel=info
-    volumes:
-      - .:/app
-    networks:
-      - back-end
-    depends_on:
-      - chat_db
-      - redis_chat
+  # celery_worker_chat:
+  #   build: .
+  #   container_name: celery_worker_chat
+  #   command: celery -A chat worker --loglevel=info
+  #   volumes:
+  #     - .:/app
+  #   networks:
+  #     - back-end
+  #   depends_on:
+  #     - chat_db
+  #     - redis_chat
 
-  celery_beat_chat:
-    build: .
-    container_name: celery_beat_chat
-    command: celery -A chat beat --loglevel=info
-    volumes:
-      - .:/app
-    networks:
-      - back-end
-    depends_on:
-      - chat_db
-      - redis_chat
+  # celery_beat_chat:
+  #   build: .
+  #   container_name: celery_beat_chat
+  #   command: celery -A chat beat --loglevel=info
+  #   volumes:
+  #     - .:/app
+  #   networks:
+  #     - back-end
+  #   depends_on:
+  #     - chat_db
+  #     - redis_chat
 
   redis_notification:
     image: "redis:latest"

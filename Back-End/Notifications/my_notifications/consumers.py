@@ -1,7 +1,6 @@
 from channels.layers import get_channel_layer
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
-from .models import QueuedNotification , UserProfile , NotificationsGroup
 
 class UserNotificationConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
@@ -14,8 +13,10 @@ class UserNotificationConsumer(AsyncWebsocketConsumer):
 		)
 
 		await self.accept()
-
+		from .models import UserProfile
 		UserProfile.objects.filter(user_id=self.user.id).update(is_online=True)
+
+		from .models import QueuedNotification
 
 		queued_notifications = QueuedNotification.objects.filter(user_id=self.user.id, is_sent=False)
 		for notification in queued_notifications:
@@ -24,7 +25,7 @@ class UserNotificationConsumer(AsyncWebsocketConsumer):
 			notification.save() # after the save the notifications are moved elsewhere
 
 	async def disconnect(self, close_code):
-		
+		from .models import UserProfile
 		UserProfile.objects.filter(user_id=self.user.id).update(is_online=False)
 
 		await self.channel_layer.group_discard(
@@ -76,7 +77,7 @@ class GroupNotificationConsumer(AsyncWebsocketConsumer):
 				'text': message
 			}
 		)
-
+		from .models import NotificationsGroup
 		group = NotificationsGroup.objects.get(id=self.group_id)
 		users_in_group = group.users.all()
 
@@ -88,6 +89,8 @@ class GroupNotificationConsumer(AsyncWebsocketConsumer):
 			online = await self.check_user_online(user_group_name)
 
 			if not online:
+				from .models import QueuedNotification
+
 				QueuedNotification.objects.create(
 					user_id=user.user_id,
 					group_id=None,

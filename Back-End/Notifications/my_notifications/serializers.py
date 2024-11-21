@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import *
+from .models import ImmediateNotification , QueuedNotification , ScheduledNotification , UserProfile , NotificationsGroup , BaseNotification
 
 class ImmediateNotificationSerializer(serializers.ModelSerializer):
 	class Meta:

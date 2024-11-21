@@ -90,7 +90,7 @@ ASGI_APPLICATION = 'Notifications.asgi.application'
 DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.postgresql',
-		'NAME': 'notifications_db',
+		'NAME': 'Notification_db',
 		'USER': 'pasquale',
 		'PASSWORD': '123',
 		'HOST': 'localhost',
