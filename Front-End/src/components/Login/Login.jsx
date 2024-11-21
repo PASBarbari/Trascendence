@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./index.css";
+import "./Login.css";
 import Button from "../Button/Button";
 import Input from "../Input/Input";
 import { onHandleSubmit } from "./post";

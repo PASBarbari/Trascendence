@@ -1,4 +1,4 @@
-import './index.css';
+import './Input.css';
 
 export default function Input({ type, name, placeholder, value, onChange, className }) {
   return (
