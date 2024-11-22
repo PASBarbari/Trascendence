@@ -6,7 +6,6 @@ def custom_validation(data):
     email = data['email'].strip()
     username = data['username'].strip()
     password = data['password'].strip()
-    print(email, username, password)
     ##
     if not email:
         raise ValidationError('an email is needed')
@@ -38,3 +37,14 @@ def validate_password(data):
     if not password:
         raise ValidationError('a password is needed')
     return True
+
+
+from oauth2_provider.oauth2_validators import OAuth2Validator
+from oauth2_provider.models import AccessToken
+	
+class CustomOAuth2Validator(OAuth2Validator):
+	def save_bearer_token(self, token, request, *args, **kwargs):
+		super().save_bearer_token(token, request, *args, **kwargs)
+		if request.user:
+			token['user_id'] = request.user.pk
+			token['username'] = request.user.username

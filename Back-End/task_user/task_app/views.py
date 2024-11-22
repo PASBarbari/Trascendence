@@ -1,11 +1,10 @@
 from django.shortcuts import render, get_object_or_404
-from rest_framework import permissions, status, generics
+from rest_framework import permissions, status, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Tasks, Progresses
 from .serializer import TasksSerializer, ProgressesSerializer, ProgressManageSerializer
 from user_app.models import Users
-from django_filters.rest_framework import DjangoFilterBackend
 
 class MultipleFieldLookupMixin:
     """
@@ -26,8 +25,7 @@ class MultipleFieldLookupMixin:
 class TaskGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = TasksSerializer
-	filter_backends = [DjangoFilterBackend]
-	filterset_fields = ['author__id', 'category', 'duration', 'exp']
+	lookup_fields = ['author__id', 'category', 'duration', 'exp']
 	queryset = Tasks.objects.all()
 
 class TaskManage(generics.RetrieveUpdateDestroyAPIView):
@@ -40,8 +38,8 @@ class TaskManage(generics.RetrieveUpdateDestroyAPIView):
 class ProgressGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = ProgressesSerializer
-	filter_backends = [DjangoFilterBackend]
-	filterset_fields = ['user__id','task__id']
+	filter_backends = [filters.SearchFilter]
+	search_fields = ['user__id','task__id']
 	queryset = Progresses.objects.all()
 
 class ProgressDelete(generics.DestroyAPIView):

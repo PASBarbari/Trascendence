@@ -51,6 +51,7 @@ INSTALLED_APPS = [
 	'rest_framework',
 	'my_chat',
 	'oauth2_provider',
+	'django_filters',
 	'corsheaders',
 	'channels',
 	'celery',
@@ -66,8 +67,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	#'my_chat.middleware.TokenAuthMiddleware',
-	#'my_chat.middleware.TokenAuthMiddlewareHTTP',
+	'my_chat.middleware.TokenAuthMiddlewareHTTP',
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
@@ -140,12 +140,13 @@ AUTH_PASSWORD_VALIDATORS = [
 		'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
 	},
 ]
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+CELERY_BROKER_URL = 'redis://localhost:6700/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6700/0'
 CELERY_BEAT_SCHEDULE = {
 	'similar_users_chats': {
 		'task': 'my_chat.tasks.similar_users_chats',
-		'schedule': 3600,
+		'schedule': 3600, #seconds
 	},
 }
 
@@ -198,6 +199,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'my_chat.authentications.TokenAuthentication',
     ],
+		'DEFAULT_PERMISSION_CLASSES': [
+				'my_chat.middleware.TokenAuthPermission',
+		],
 }
 
 LOGGING = {

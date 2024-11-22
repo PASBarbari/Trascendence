@@ -125,15 +125,13 @@ DATABASES = {
 AUTH_USER_MODEL = 'my_login.AppUser'
 
 REST_FRAMEWORK = {
-	'DEFAULT_PERMISSION_CLASSES': (
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-    ),
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -153,16 +151,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# settings.py
-
 OAUTH2_PROVIDER = {
-	'ACCESS_TOKEN_EXPIRE_SECONDS': 3600,  # 1 hour
-	'REFRESH_TOKEN_EXPIRE_SECONDS': 86400,  # 1 day
-	'ROTATE_REFRESH_TOKEN': True,
-	'ALLOWED_GRANT_TYPES': ['client_credentials', 'authorization_code', 'password', 'refresh_token', 'token'],
-	'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'},
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
+    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 36000,
+    'ROTATE_REFRESH_TOKENS': True,
+    'SCOPES': {
+        'read': 'Read scope',
+        'write': 'Write scope',
+        'groups': 'Access to your groups',
+    },
+    # 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
+		'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
 }
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -190,30 +191,50 @@ STATIC_ROOT = '/home/lollo/Documents/challenge_fides/Back-End/login/staticfiles'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 SERVICE_PASSWORD = os.getenv('SERVICE_PASSWORD','123') # this is the password that the service will use to authenticate itself to the OAuth2 server
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'loki': {
+        'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
-            'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
         },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['loki'],
-            'level': 'INFO',
-            'propagate': True,
-        },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
     },
-    'formatters': {
-        'detailed': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-    	    },
-	    },
 }
 
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'handlers': {
+#         'loki': {
+#             'class': 'logging.StreamHandler',
+#             'formatter': 'detailed',
+#             'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+#         },
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['loki'],
+#             'level': 'INFO',
+#             'propagate': True,
+#         },
+#     },
+#     'formatters': {
+#         'detailed': {
+#             'format': '{levelname} {asctime} {module} {message}',
+#             'style': '{',
+#     	    },
+# 	    },
+# }
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+}

@@ -1,3 +1,5 @@
+import { getCookie } from "../Cookie.jsx";
+
 export const onHandleSubmit = async (e, username, email, password, navigate) => {
   e.preventDefault();
   if (email && password) {
@@ -9,6 +11,7 @@ export const onHandleSubmit = async (e, username, email, password, navigate) => 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+					'X-CSRFToken': getCookie('csrftoken'),
         },
         body: JSON.stringify({ username, email, password }),
       });
@@ -16,8 +19,12 @@ export const onHandleSubmit = async (e, username, email, password, navigate) => 
       if (response.ok) {
         const data = await response.json();
         console.log('Risposta dal server:', data);
-        // Gestisci la risposta del server, ad esempio, naviga a un'altra pagina
-        navigate('/login');
+
+				// const { user, user_id } = data;
+				// const { email, username } = user;
+
+				// await pingNewUser( user_id, username, email );
+				navigate('/login');
       } else {
 				const errorData = await response.json();
 				console.error('Errore nella risposta del server:', errorData.error);
@@ -39,3 +46,28 @@ export const onHandleSubmit = async (e, username, email, password, navigate) => 
     console.log('Per favore, inserisci sia username che password.');
   }
 };
+
+// const pingNewUser = async (user_id, username, email) => {
+// 	try {
+// 		const response = await fetch('http://localhost:8001/chat/new_user/', {
+// 			method: 'POST',
+// 			headers: {
+// 				'Content-Type': 'application/json',
+// 				'X-CSRFToken': getCookie('csrftoken'),
+// 				'Authorization': `Bearer ${localStorage.getItem('token')}`,
+// 			},
+// 			body: JSON.stringify({ user_id: user_id, username: username, email: email }),
+// 		});
+		
+// 		if (response.ok) {
+// 			const data = await response.json();
+// 			console.log('Risposta dal server:', data);
+// 		} else {
+// 			const errorData = await response.json();
+// 			console.error('Errore nella risposta del server:', errorData);
+// 		}
+// 	}
+// 	catch (error) {
+// 		console.error('Errore nella richiesta:', error);
+// 	}
+// };

@@ -58,18 +58,6 @@ services:
     networks:
       - back-end
 
-  redis_task_user:
-    image: "redis:latest"
-    ports:
-      - "6702:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    networks:
-      - back-end
-
   prometheus:
     build:
       context: ./prometheus
@@ -92,7 +80,6 @@ services:
     volumes:
       - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
       - loki-data:/var/lib/loki
-      - loki-tmp:/tmp/loki
     networks:
       - back-end
 
@@ -125,7 +112,6 @@ services:
       - back-end
     depends_on:
       - loki
-
   postgres_exporter:
     image: prometheuscommunity/postgres-exporter
     container_name: postgres_exporter
@@ -153,7 +139,6 @@ volumes:
   prometheus_data: {}
   loki-data: {}
   grafana-data: {}
-  loki-tmp: {}
 
 networks:
   back-end:
