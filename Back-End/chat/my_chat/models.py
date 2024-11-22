@@ -5,6 +5,7 @@ from django.db import models
 class UserProfile(models.Model):
 	user_id = models.IntegerField(primary_key=True)
 	username = models.CharField(max_length=255, null=True)
+	email = models.EmailField(max_length=255, unique=True, null=True)
 	is_staff = models.BooleanField(default=False)
 
 class ChatRoom(models.Model):

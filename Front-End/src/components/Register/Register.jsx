@@ -40,13 +40,6 @@ export default function Login() {
 							value={email}
 							onChange={(e) => setEmail(e.target.value)}
 						/>
-						{/* <Input
-							type="date"
-							name="birthdate"
-							placeholder="dd/mm/yyyy"
-							value={birthdate}
-							onChange={(e) => setBirthdate(e.target.value)}
-						/> */}
 						<Input
 							type="password"
 							name="password"

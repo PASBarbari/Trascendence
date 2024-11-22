@@ -29,25 +29,34 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+CORS_ALLOWED_ORIGINS = [
+	'http://localhost:8000',
+	'http://localhost:8001',
+	'http://localhost:8002',
+	'http://localhost:3000',
+]
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+]
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+  'django.contrib.admin',
+  'django.contrib.auth',
+  'django.contrib.contenttypes',
+  'django.contrib.sessions',
+  'django.contrib.messages',
+  'django.contrib.staticfiles',
 	'rest_framework',
 	'django_filters',
 	'oauth2_provider',
-	'corsheaders',
-	'channels',
-	'celery',
-	'django_redis',
 	'task_app',
 	'user_app',
+	'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -58,6 +67,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+		'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'task_user.urls'
@@ -79,7 +89,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'task_user.wsgi.application'
-ASGI_APPLICATION = 'task_user.wsgi.application'
 
 
 # Database
@@ -164,55 +173,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ORIGIN_ALLOW_ALL = True
-
-CACHES = {
-	'default': {
-		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': 'redis://172.18.0.1:6702/1',
-		'OPTIONS': {
-			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-		}
-	}
-}
-
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('172.18.0.1', 6702)],
-        },
-    }
-}
-
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 MEDIA_ROOT = BASE_DIR / 'media/'
 # MEDIA_URL = 'http://localhost:8000/'
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'loki': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
-            'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['loki'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-    'formatters': {
-        'detailed': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
-}

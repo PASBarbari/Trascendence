@@ -8,38 +8,38 @@ def CreateTasks(**kwargs):
 	if not Avatars.objects.all():
 		a = Avatars.objects.create(
 			name = 'default avatar',
-			image = 'https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link'
+			image = 'avatar/cloud.png'
 		)
 		a.save()
-	if not Users.objects.all():
-		u = Users.objects.create(
-			account_id= 1,
-    		first_name= "mario",
-    		last_name= "rossi",
-    		birth_date= "2000-1-1",
-    		bio= "bio dei miei ciglioni",
-    		avatar= Avatars.objects.get(id=1)
-		)
-		u.save()
-		u = Users.objects.create(
-			account_id= 2,
-    		first_name= "vincenzo",
-    		last_name= "bianchi",
-    		birth_date= "1999-11-4",
-    		bio= "bio dei miei ciglioni",
-    		avatar= Avatars.objects.get(id=1)
-		)
-		u.save()
-		u = Users.objects.create(
-			account_id= 3,
-			staff= True,
-    		first_name= "guglielmo",
-    		last_name= "duranti",
-    		birth_date= "1900-11-4",
-    		bio= "ma ti fanno anche da uomo",
-    		avatar= Avatars.objects.get(id=1)
-		)
-		u.save()
+	# if not Users.objects.all():
+	# 	u = Users.objects.create(
+	# 		account_id= 1,
+  #   		first_name= "mario",
+  #   		last_name= "rossi",
+  #   		birth_date= "2000-1-1",
+  #   		bio= "bio dei miei ciglioni",
+  #   		avatar= Avatars.objects.get(id=1)
+	# 	)
+	# 	u.save()
+	# 	u = Users.objects.create(
+	# 		account_id= 2,
+  #   		first_name= "vincenzo",
+  #   		last_name= "bianchi",
+  #   		birth_date= "1999-11-4",
+  #   		bio= "bio dei miei ciglioni",
+  #   		avatar= Avatars.objects.get(id=1)
+	# 	)
+	# 	u.save()
+	# 	u = Users.objects.create(
+	# 		account_id= 3,
+	# 		staff= True,
+  #   		first_name= "guglielmo",
+  #   		last_name= "duranti",
+  #   		birth_date= "1900-11-4",
+  #   		bio= "ma ti fanno anche da uomo",
+  #   		avatar= Avatars.objects.get(id=1)
+	# 	)
+	# 	u.save()
 	if not Tasks.objects.all():
 		t = Tasks.objects.create(
 			author = Users.objects.get(id=3),

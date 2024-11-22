@@ -6,13 +6,12 @@ import Button from "../Button/Button";
 
 // to test the chat you need to create 2 new chat to have the roomID that exist (hardcoded in this file)
 
-export default function Chat() {
+export default function Chat({ roomID}) {
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const [isExpanded, setIsExpanded] = useState(false);
-  const roomID = "2";
   const token = localStorage.getItem("token");
-  const wsUrl = useRef(`ws://127.0.0.1:8001/ws/chat/${roomID}/`).current;
+  const wsUrl = useRef(`ws://127.0.0.1:8001/ws/chat/${roomID}/?token=${token}`).current;
 
   const { sendMessage, lastMessage, readyState, getWebSocket } = useWebSocket(
     wsUrl,
@@ -53,6 +52,8 @@ export default function Chat() {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
+							"X-CSRFToken": localStorage.getItem("csrftoken"),
+							"Authorization": `Bearer ${token}`,
             },
           }
         );
@@ -87,7 +88,7 @@ export default function Chat() {
 				room_id: roomID,
         message: message,
 				timestamp: new Date().toISOString(),
-        sender: localStorage.getItem("user_id"),
+        sender: localStorage.getItem("user_username"),
       };
       sendMessage(JSON.stringify(messageData));
       setMessage("");

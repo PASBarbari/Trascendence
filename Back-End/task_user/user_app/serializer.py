@@ -4,7 +4,7 @@ import datetime
 
 class AvatarsSerializer(serializers.ModelSerializer):
 	name = serializers.CharField(max_length=255)
-	image = serializers.URLField(max_length=200)
+	image = serializers.ImageField()
 
 	class Meta:
 		model = Avatars
@@ -20,6 +20,7 @@ class UsersSerializer(serializers.ModelSerializer):
 	exp = serializers.IntegerField(default=0)
 	level = serializers.IntegerField(default=0)
 	avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=1)
+	#TODO avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=Avatars.objects.get(id=1))
 	last_modified = serializers.DateTimeField(read_only=True)
     
 	class Meta:

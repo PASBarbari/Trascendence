@@ -1,3 +1,4 @@
+from rest_framework import generics, filters
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -7,8 +8,8 @@ from asgiref.sync import async_to_sync
 from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
-from rest_framework import generics
-
+from .middleware import TokenAuthPermission
+from .authentications import TokenAuthentication
 class GetChatMessage(generics.ListAPIView):
     serializer_class = chat_messageSerializer
     lookup_url_kwarg = 'room_id'
@@ -44,31 +45,29 @@ class GetChatInfo(generics.RetrieveAPIView):
 
         return ChatRoom.objects.filter(room_id=room_id)
 
-class new_user(APIView):
-    def post(self, request):
-        serializer = userSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class new_user(generics.ListCreateAPIView):
+		serializer_class = userSerializer
+		queryset = UserProfile.objects.all()
 
-class CreateChat(generics.CreateAPIView):
+class CreateChat(generics.ListCreateAPIView):
     serializer_class = chat_roomSerializer
     queryset = ChatRoom.objects.all()
 
 class GetChats(generics.ListAPIView):
     serializer_class = chat_roomSerializer
+    permission_classes = [TokenAuthPermission]
     
     def get_queryset(self):
-        user = self.request.user
-        if isinstance(user, AnonymousUser):
+        user_id = self.request.query_params.get('user_id')
+        if not user_id:
             return ChatRoom.objects.none()
-        return ChatRoom.objects.filter(users=user)
-    
+
+        return ChatRoom.objects.filter(users__user_id=user_id)
+
 class AddUsersToChat(generics.UpdateAPIView):
 		serializer_class = chat_roomSerializer
 		lookup_url_kwarg = 'room_id'
-      
+
 		def get_queryset(self):
 				room_id = self.kwargs.get(self.lookup_url_kwarg)
 				user = self.request.user
@@ -81,8 +80,6 @@ class AddUsersToChat(generics.UpdateAPIView):
 						return ChatRoom.objects.none()
 
 				return ChatRoom.objects.filter(room_id=room_id)
-
-		
 
 class CreateChannelGroupView(APIView):
     def post(self, request, *args, **kwargs):
@@ -99,8 +96,8 @@ class CreateChannelGroupView(APIView):
 
         users = UserProfile.objects.filter(user_id__in=user_ids)
         if not users.exists():
-            return Response({'error': 'No valid users found'}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({'error': 'No valid users found with user_id: ' + user_ids}, status=status.HTTP_400_BAD_REQUEST)
+	
         room.users.add(*users)
         room.save()
 

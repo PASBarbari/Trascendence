@@ -38,4 +38,5 @@ pip install -r requirements.txt
 
 ## install with npm
 
+#npm install lucide-react
 #npm install react-router-dom

@@ -1,18 +1,4 @@
-// Funzione per ottenere il valore di un cookie
-const getCookie = (name) => {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
+import { getCookie } from '../Cookie.jsx';
 
 // Funzione per ottenere i dati dell'utente
 const handleGetUser = async (csrftoken) => {
@@ -74,31 +60,6 @@ const loginUser = async (email, password, csrftoken, navigate) => {
   }
 };
 
-const pingNewUser = async () => {
-	try {
-		const response = await fetch('http://localhost:8001/chat/new_user/', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				/*'X-CSRFToken': getCookie('csrftoken'),*/
-				/*'Authorization': `Bearer ${localStorage.getItem('token')}`,*/
-			},
-			body: JSON.stringify({ user_id: localStorage.getItem('user_id'), username: localStorage.getItem('user_username') }),
-		});
-		
-		if (response.ok) {
-			const data = await response.json();
-			console.log('Risposta dal server:', data);
-		} else {
-			const errorData = await response.json();
-			console.error('Errore nella risposta del server:', errorData);
-		}
-	}
-	catch (error) {
-		console.error('Errore nella richiesta:', error);
-	}
-};
-
 // Funzione per gestire l'evento di submit
 export const onHandleSubmit = async (e, email, password, navigate) => {
 	e.preventDefault();
@@ -109,7 +70,6 @@ export const onHandleSubmit = async (e, email, password, navigate) => {
     const loginSuccess = await loginUser(email, password, csrftoken, navigate);
 		if (loginSuccess) {
 			await handleGetUser(csrftoken); // TODO gestire return false?
-			await pingNewUser(); // TODO primo login!
 			navigate('/home');
 		}
   } else {
