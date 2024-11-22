@@ -3,9 +3,10 @@ from django.conf import settings
 import psycopg2
 
 class Avatars(models.Model):
-    id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=255)
-    image = models.ImageField(upload_to="avatar/", null=True)
+	id = models.AutoField(primary_key=True)
+	name = models.CharField(max_length=255)
+	image = models.URLField(max_length=200, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link')
+    # image = models.ImageField(upload_to="avatar/", null=True)
 
 class Users(models.Model):
     id = models.AutoField(primary_key=True)
