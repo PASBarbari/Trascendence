@@ -40,35 +40,35 @@ def CreateTasks(**kwargs):
   #   		avatar= Avatars.objects.get(id=1)
 	# 	)
 	# 	u.save()
-	if not Tasks.objects.all():
-		t = Tasks.objects.create(
-			author = Users.objects.get(id=3),
-			name = 'walk',
-			description = 'walk at least 10k step each day',
-			duration = '7 00:00:00',
-			exp = 1000,
-			category = 'SP'
-		)
-		t.save()
-		t = Tasks.objects.create(
-			author = Users.objects.get(id=3),
-			name = 'run',
-			description = 'improve your body health step by step',
-			duration = '30 00:00:00',
-			exp = 2000,
-			category = 'SP',
-			previous_task = Tasks.objects.get(id=1)
-		)
-		t.save()
-		t = Tasks.objects.create(
-			author = Users.objects.get(id=3),
-			name = 'drink water',
-			description = 'drink 2l of water a day',
-			duration = '7 00:00:00',
-			exp = 500,
-			category = 'HE'
-		)
-		t.save()
+	# if not Tasks.objects.all():
+	# 	t = Tasks.objects.create(
+	# 		author = Users.objects.get(id=3),
+	# 		name = 'walk',
+	# 		description = 'walk at least 10k step each day',
+	# 		duration = '7 00:00:00',
+	# 		exp = 1000,
+	# 		category = 'SP'
+	# 	)
+	# 	t.save()
+	# 	t = Tasks.objects.create(
+	# 		author = Users.objects.get(id=3),
+	# 		name = 'run',
+	# 		description = 'improve your body health step by step',
+	# 		duration = '30 00:00:00',
+	# 		exp = 2000,
+	# 		category = 'SP',
+	# 		previous_task = Tasks.objects.get(id=1)
+	# 	)
+	# 	t.save()
+	# 	t = Tasks.objects.create(
+	# 		author = Users.objects.get(id=3),
+	# 		name = 'drink water',
+	# 		description = 'drink 2l of water a day',
+	# 		duration = '7 00:00:00',
+	# 		exp = 500,
+	# 		category = 'HE'
+	# 	)
+	# 	t.save()
 
 
 @receiver(post_migrate)
