@@ -45,18 +45,21 @@ const Home = () => {
       </div>
       <div className="undernavbar">
 
-        <div className="flex h-screen bg-background">
+	    <div className="expandable-sidebar-container">
           <ExpandableSidebar
             activeChatType={activeChatType}
             setActiveChatType={setActiveChatType}
           />
-          <main className="flex-1 p-6">
-            <h1 className="text-2xl font-bold">Welcome to the Chat App</h1>
-            <p className="mt-2">
-              Select a chat type from the sidebar to start chatting.
-            </p>
-          </main>
         </div>
+
+		<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
+			{isProfileVisible && <Profile />}
+			<TaskAvaiable />
+			<TaskActive />
+			<div className="box"></div> 
+			<div className="box"></div> 
+			<div className="box"></div> 
+		</div>
 
         {/*				<div className="sidebar">
 					<button className="chat-buttons" onClick={toggleDiv}>
@@ -64,15 +67,6 @@ const Home = () => {
 					</button>
 				</div>
 				{isDivVisible && <SideChats />}
-				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
-					{isProfileVisible && <Profile />}
-					<TaskAvaiable />
-					<TaskActive />
-					<div className="box"></div> 
-					<div className="box"></div> 
-					<div className="box"></div> 
-					 //task in corso e quando le checki aggiorna il tuo score
-				</div>
 */}
       </div>
     </div>

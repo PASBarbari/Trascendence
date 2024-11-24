@@ -105,3 +105,9 @@
 	width: 25px;
 	height: 25px;
 }
+
+.expandable-sidebar-container {
+	display: flex;
+	height: 100%;
+	background-color: none;
+  }

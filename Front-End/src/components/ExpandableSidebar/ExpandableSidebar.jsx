@@ -1,17 +1,34 @@
-'use client'
-
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Users, Shuffle, ChevronDown, ChevronUp } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { MessageCircle, Users, Shuffle, ChevronDown, ChevronUp, ChevronRight, ChevronLeft } from 'lucide-react'
 import './ExpandableSidebar.css'
 
-export function ExpandableSidebar({ activeChatType, setActiveChatType }) {
+export function ExpandableSidebar() {
   const [chats, setChats] = useState([])
   const [expandedChat, setExpandedChat] = useState(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [areChatItemsVisible, setAreChatItemsVisible] = useState(true)
+  const [activeButton, setActiveButton] = useState(null)
+  const chatRefs = useRef({})
 
   const handleChatTypeClick = (type) => {
-    setActiveChatType(prevType => prevType === type ? null : type)
+    const firstChatOfType = chats.find(chat => chat.type === type)
+    if (firstChatOfType && chatRefs.current[firstChatOfType.id]) {
+      chatRefs.current[firstChatOfType.id].scrollIntoView({ behavior: 'smooth' })
+    }
+    setActiveButton(type)
+  }
+
+  const handleCloseSidebar = () => {
+    setAreChatItemsVisible(false)
+    setTimeout(() => {
+      setIsSidebarOpen(false)
+    }, 350) // dipende da quante chat ci sono e dalla durata delle loro animazioni
+  }
+
+  const handleOpenSidebar = () => {
+    setIsSidebarOpen(true)
+    setAreChatItemsVisible(true)
   }
 
   useEffect(() => {
@@ -19,67 +36,92 @@ export function ExpandableSidebar({ activeChatType, setActiveChatType }) {
       const mockChats = [
         { id: '1', name: 'Alice', lastMessage: 'Hey, how are you?', type: 'single' },
         { id: '2', name: 'Bob', lastMessage: 'Did you see the game last night?', type: 'single' },
-        { id: '3', name: 'Project Team', lastMessage: 'Meeting at 3 PM', type: 'group' },
-        { id: '4', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
+        { id: '3', name: 'Charlie', lastMessage: 'Meeting at 2 PM', type: 'single' },
+        { id: '4', name: 'David', lastMessage: 'Can you help me with this?', type: 'single' },
+        { id: '5', name: 'Eve', lastMessage: 'Thanks for your help!', type: 'single' },
+        { id: '6', name: 'Project Team', lastMessage: 'Meeting at 3 PM', type: 'group' },
+		{ id: '7', name: 'Project Team', lastMessage: 'Meeting at 3 PM', type: 'group' },
+		{ id: '8', name: 'Project Team', lastMessage: 'Meeting at 3 PM', type: 'group' },
+		{ id: '9', name: 'Project Team', lastMessage: 'Meeting at 3 PM', type: 'group' },
+		{ id: '10', name: 'Project Team', lastMessage: 'Meeting at 3 PM', type: 'group' },
+        { id: '11', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
+		{ id: '12', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
+		{ id: '13', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
+		{ id: '14', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
+		{ id: '15', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
+		{ id: '16', name: 'Random User', lastMessage: 'Nice to meet you!', type: 'random' },
       ]
-      setChats(activeChatType ? mockChats.filter(chat => chat.type === activeChatType) : [])
+      setChats(mockChats)
     }
 
     fetchChats()
-  }, [activeChatType])
+  }, [])
 
   return (
     <div className="expandable-sidebar">
       <nav className="sidebar-nav">
+        {isSidebarOpen ? (
+          <button
+            onClick={handleCloseSidebar}
+            className={`sidebar-button ${activeButton === 'close' ? 'active' : ''}`}
+          >
+            <ChevronLeft className="icon" />
+            <span className="button-label">Chiudi</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleOpenSidebar}
+            className={`sidebar-button ${activeButton === 'open' ? 'active' : ''}`}
+          >
+            <ChevronRight className="icon" />
+            <span className="button-label">Apri</span>
+          </button>
+        )}
+
         <button
           onClick={() => handleChatTypeClick('single')}
-          className={cn(
-            'sidebar-button',
-            activeChatType === 'single' && 'active'
-          )}
+          className={`sidebar-button ${activeButton === 'single' ? 'active' : ''}`}
         >
           <MessageCircle className="icon" />
-          <span className="sr-only">Single Chat</span>
+          <span className="button-label">Single Chat</span>
         </button>
+
         <button
           onClick={() => handleChatTypeClick('group')}
-          className={cn(
-            'sidebar-button',
-            activeChatType === 'group' && 'active'
-          )}
+          className={`sidebar-button ${activeButton === 'group' ? 'active' : ''}`}
         >
           <Users className="icon" />
-          <span className="sr-only">Group Chat</span>
+          <span className="button-label">Group Chat</span>
         </button>
+
         <button
           onClick={() => handleChatTypeClick('random')}
-          className={cn(
-            'sidebar-button',
-            activeChatType === 'random' && 'active'
-          )}
+          className={`sidebar-button ${activeButton === 'random' ? 'active' : ''}`}
         >
           <Shuffle className="icon" />
-          <span className="sr-only">Random Chat</span>
+          <span className="button-label">Random Chat</span>
         </button>
       </nav>
+
       <AnimatePresence>
-        {activeChatType && (
+        {isSidebarOpen && (
           <motion.div
-            key="chat-list"
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 300, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            initial={{ width: 0 }}
+            animate={{ width: 300 }}
+            exit={{ width: 0 }}
+            transition={{ duration: 0.2 }}
             className="chat-list"
           >
-            <div className="chat-list-content">
-              <h2 className="chat-list-title">{activeChatType} Chats</h2>
-              {chats.map((chat) => (
+            <AnimatePresence>
+              {areChatItemsVisible && chats.map((chat, index) => (
                 <motion.div
                   key={chat.id}
-                  layout
+                  initial={{ opacity: 0, x: -50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -50 }}
+                  transition={{ duration: 0.2, delay: index * 0.1 }}
                   className="chat-item"
-                  animate={{ height: expandedChat === chat.id ? 'auto' : '80px' }}
+                  ref={el => chatRefs.current[chat.id] = el}
                 >
                   <div
                     className="chat-item-header"
@@ -91,15 +133,22 @@ export function ExpandableSidebar({ activeChatType, setActiveChatType }) {
                     </div>
                     {expandedChat === chat.id ? <ChevronUp className="icon" /> : <ChevronDown className="icon" />}
                   </div>
-                  {expandedChat === chat.id && (
-                    <div className="chat-item-content">
-                      <p>Full chat content for {chat.id} would go here.</p>
-                      <p>This is where you'd render the complete chat history and message input.</p>
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {expandedChat === chat.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="chat-item-content"
+                      >
+                        <p>Full chat content for {chat.id} would go here.</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               ))}
-            </div>
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
