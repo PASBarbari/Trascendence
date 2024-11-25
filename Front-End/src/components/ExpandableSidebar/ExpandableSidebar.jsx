@@ -30,6 +30,10 @@ export function ExpandableSidebar() {
     setActiveButton(type);
   };
 
+  const isAddChat = (chat_id) => {
+	return chat_id === "0";
+  };
+
   const handleCloseSidebar = () => {
     setAreChatItemsVisible(false);
     setTimeout(() => {
@@ -233,7 +237,16 @@ export function ExpandableSidebar() {
                     className="chat-item"
                     ref={(el) => (chatRefs.current[chat.id] = el)}
                   >
-                    <div
+                    {isAddChat(chat.id) ? (
+					  <div className="add-chat">
+
+						<input type="text" placeholder="Nome del gruppo" />
+						<input type="text" placeholder="Descrizione" />
+						<input type="text" placeholder="Aggiungi membri con userID" />
+						<button onClick={handleAddSidebar}>Aggiungi</button>
+					  </div>
+					) : (
+					<div
                       className="chat-item-header"
                       onClick={() =>
                         setExpandedChat((prev) =>
@@ -251,6 +264,7 @@ export function ExpandableSidebar() {
                         <ChevronDown className="icon" />
                       )}
                     </div>
+					)}
                     <AnimatePresence>
                       {expandedChat === chat.id && (
                         <motion.div
