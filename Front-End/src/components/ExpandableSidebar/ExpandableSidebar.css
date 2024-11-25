@@ -1,6 +1,7 @@
 .expandable-sidebar {
   display: flex;
   height: 100%;
+	overflow: hidden;
 }
 
 .sidebar-nav {
@@ -66,8 +67,7 @@
   overflow-y: auto;
   padding: 10px;
   scrollbar-width: none;
-  max-height: calc(100vh - 70px - 800px);
-  padding-bottom: 800px; /*TODO renderelo una variabile per calcolare max-height*/
+  padding-bottom: 700px; /*TODO renderelo una variabile per calcolare max-height*/
 }
 
 .chat-list::-webkit-scrollbar {
