@@ -8,7 +8,8 @@ import {
   ChevronUp,
   ChevronRight,
   ChevronLeft,
-	Plus,
+  Plus,
+  Send,
 } from "lucide-react";
 import "./ExpandableSidebar.css";
 
@@ -18,6 +19,7 @@ export function ExpandableSidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [areChatItemsVisible, setAreChatItemsVisible] = useState(true);
   const [activeButton, setActiveButton] = useState(null);
+  const [newMessage, setNewMessage] = useState("");
   const chatRefs = useRef({});
 
   const handleChatTypeClick = (type) => {
@@ -31,7 +33,7 @@ export function ExpandableSidebar() {
   };
 
   const isAddChat = (chat_id) => {
-	return chat_id === "0";
+    return chat_id === "0";
   };
 
   const handleCloseSidebar = () => {
@@ -46,14 +48,21 @@ export function ExpandableSidebar() {
     setAreChatItemsVisible(true);
   };
 
-	const handleAddSidebar = () => {
-		handleCloseSidebar();	
-	};
+  const handleAddSidebar = () => {
+    handleCloseSidebar();
+  };
+
+  const handleSendMessage = (chatId) => {
+    if (newMessage.trim() !== "") {
+      console.log(`Sending message to chat ${chatId}: ${newMessage}`);
+      setNewMessage("");
+    }
+  };
 
   useEffect(() => {
     const fetchChats = async () => {
       const mockChats = [
-				{
+        {
           id: "0",
           name: "Crea",
           lastMessage: "Hey, crea?",
@@ -238,46 +247,67 @@ export function ExpandableSidebar() {
                     ref={(el) => (chatRefs.current[chat.id] = el)}
                   >
                     {isAddChat(chat.id) ? (
-					  <div className="add-chat">
-
-						<input type="text" placeholder="Nome del gruppo" />
-						<input type="text" placeholder="Descrizione" />
-						<input type="text" placeholder="Aggiungi membri con userID" />
-						<button onClick={handleAddSidebar}>Aggiungi</button>
-					  </div>
-					) : (
-					<div
-                      className="chat-item-header"
-                      onClick={() =>
-                        setExpandedChat((prev) =>
-                          prev === chat.id ? null : chat.id
-                        )
-                      }
-                    >
-                      <div>
-                        <h3 className="chat-item-name">{chat.name}</h3>
-                        <p className="chat-item-message">{chat.lastMessage}</p>
+                      <div className="add-chat">
+                        <input type="text" placeholder="Nome del gruppo" />
+                        <input type="text" placeholder="Descrizione" />
+                        <input type="text" placeholder="Aggiungi membri con userID" />
+                        <button onClick={handleAddSidebar}>Aggiungi</button>
                       </div>
-                      {expandedChat === chat.id ? (
-                        <ChevronUp className="icon" />
-                      ) : (
-                        <ChevronDown className="icon" />
-                      )}
-                    </div>
-					)}
-                    <AnimatePresence>
-                      {expandedChat === chat.id && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="chat-item-content"
+                    ) : (
+                      <div>
+                        <div
+                          className="chat-item-header"
+                          onClick={() =>
+                            setExpandedChat((prev) =>
+                              prev === chat.id ? null : chat.id
+                            )
+                          }
                         >
-                          <p>Full chat content for {chat.id} would go here.</p>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                          <div className="chat-item-header-content">
+                            <div className="avatar">
+                              <div className="avatar-placeholder"></div>
+                            </div>
+                            <div className="chat-item-info">
+                              <div className="chat-item-name">{chat.name}</div>
+                              <div className="chat-item-message">{chat.lastMessage}</div>
+                            </div>
+                            <div className="chat-item-icon">
+                              {expandedChat !== chat.id ? (
+                                <ChevronDown className="icon" />
+                              ) : (
+                                <ChevronUp className="icon" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <AnimatePresence>
+                          {expandedChat === chat.id && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="chat-item-content"
+                            >
+                              <div className="chat-messages">
+                                {/* Qui puoi aggiungere i messaggi della chat */}
+                              </div>
+                              <div className="chats-input">
+                                <input
+                                  type="text"
+                                  placeholder="Type a message..."
+                                  value={newMessage}
+                                  onChange={(e) => setNewMessage(e.target.value)}
+                                />
+                                <button onClick={() => handleSendMessage(chat.id)}>
+                                  <Send className="icon" />
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    )}
                   </motion.div>
                 ))}
             </AnimatePresence>
