@@ -23,29 +23,10 @@ class GroupNotification(BaseNotification):
 	class Meta:
 		abstract = True
 
-class ImmediateNotification(UserNotification, GroupNotification):
-	# def send(self):
-	# 	if (send_notification(self.user_id, self.group_id, self.message)):
-	# 		SentNotification.objects.create(
-	# 			user_id=self.user_id,
-	# 			group_id=self.group_id,
+class SentNotification(UserNotification, GroupNotification):
+	sent_time = models.DateTimeField(auto_now_add=True)
 
-	# 			message=self.message,
-	# 			is_read=self.is_read,
-	# 			creation_time=self.creation_time
-	# 		)
-	# 		self.delete()
-	# 		return True
-	# 	else:
-	# 		QueuedNotification.objects.create(
-	# 			user_id=self.user_id,
-	# 			group_id=self.group_id,
-	# 			message=self.message,
-	# 			is_read=self.is_read,
-	# 			creation_time=self.creation_time
-	# 		)
-	# 		self.delete()
-	# 		return False
+class ImmediateNotification(UserNotification, GroupNotification):
 	pass		
 	
 class QueuedNotification(UserNotification, GroupNotification):
@@ -96,4 +77,26 @@ class NotificationsGroup(models.Model):
 	name = models.CharField(max_length=100)
 	Type = models.CharField(max_length=20, choices=Microservices)
 	members = models.ManyToManyField(UserProfile, related_name='Groups')
-	owner = models.ForeignKey(UserProfile, related_name='Owner', on_delete=models.CASCADE, default=None, null=True)
+
+	# def send(self):
+	# 	if (send_notification(self.user_id, self.group_id, self.message)):
+	# 		SentNotification.objects.create(
+	# 			user_id=self.user_id,
+	# 			group_id=self.group_id,
+
+	# 			message=self.message,
+	# 			is_read=self.is_read,
+	# 			creation_time=self.creation_time
+	# 		)
+	# 		self.delete()
+	# 		return True
+	# 	else:
+	# 		QueuedNotification.objects.create(
+	# 			user_id=self.user_id,
+	# 			group_id=self.group_id,
+	# 			message=self.message,
+	# 			is_read=self.is_read,
+	# 			creation_time=self.creation_time
+	# 		)
+	# 		self.delete()
+	# 		return False

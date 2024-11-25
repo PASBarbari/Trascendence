@@ -181,3 +181,19 @@ class TokenAuthPermission(BasePermission):
                 request.user = user
                 return True
         return False
+
+from django.http import JsonResponse
+from django.conf import settings
+
+class APIKeyPermission(BasePermission):
+	def has_permission(self, request, view):
+		api_key = request.META.get('X-API-KEY')
+		if api_key:
+			return api_key == settings.API_KEY
+		return False
+
+	def has_permission(self, request, view):
+		api_key = request.META.get('X-API-KEY')
+		if api_key:
+			return api_key == settings.API_KEY
+		return False

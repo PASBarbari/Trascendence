@@ -21,6 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-u+0oqxb+f!fa)0f_m6ezqtb*m-86^vxt$9rn%-_nbxc3@qo_@0'
+API_KEY = os.getenv('API_KEY', '123')
+
+def arise(exception):
+	raise(exception)
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,6 +61,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
 	'my_notifications.middleware.TokenAuthMiddlewareHTTP',
+	'my_notifications.middleware.APIKeyAuthMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -114,6 +120,12 @@ oauth2_settings = {
 	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
 }
 
+REST_FRAMEWORK = {
+	'DEFAULT_PERMISSION_CLASSES': [
+		'my_notifications.middleware.TokenAuthPermission',
+		'my_notifications.middleware.APIKeyAuthPermission',
+	],
+}
 
 
 CACHES = {

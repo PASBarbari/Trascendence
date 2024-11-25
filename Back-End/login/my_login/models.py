@@ -26,7 +26,7 @@ class AppUserManager(BaseUserManager):
 
 
 class AppUser(AbstractBaseUser, PermissionsMixin):
-	user_id = models.AutoField(primary_key=True)
+	user_id = models.AutoField(primary_key=True) #TODO - Change to UUIDField
 	email = models.EmailField(max_length=50, unique=True)
 	username = models.CharField(max_length=100)
 	USERNAME_FIELD = 'email'
