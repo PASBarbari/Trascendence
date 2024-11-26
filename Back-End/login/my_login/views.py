@@ -1,5 +1,4 @@
-from urllib.parse import urlencode
-from django.contrib.auth import get_user_model, login, logout
+from django.contrib.auth import login, logout
 from django.utils.decorators import method_decorator
 from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
@@ -8,16 +7,17 @@ from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerial
 from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication , TokenHasScope, TokenHasReadWriteScope
-from .errors import error_codes
 from oauth2_provider.models import AccessToken , Application, RefreshToken
-from oauthlib.common import generate_token
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.middleware.csrf import get_token
 from oauth2_provider.views import TokenView
 from django.contrib.auth import login
-from login.settings import client
-from login.settings import SERVICE_PASSWORD
+from django.conf import settings
+
+SERVICE_PASSWORD = settings.SERVICE_PASSWORD
+client = settings.client
+
 from oauth2_provider.models import AccessToken
 from django.utils.decorators import method_decorator
 from .models import AppUser
@@ -35,7 +35,7 @@ class UserRegister(APIView):
 					serializer.data['password'] = user.password
 					return Response(serializer.data, status=status.HTTP_201_CREATED)
 		except Exception as e:
-			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -96,7 +96,7 @@ class UserLogin(APIView):
 
 			return token_response
 		except Exception as e:
-				return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+				return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -129,7 +129,7 @@ class ServiceRegister(APIView):
 			else:
 				return Response({'error': 'Invalid service password'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
-			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -147,7 +147,7 @@ class UserLogout(APIView):
 		except AccessToken.DoesNotExist:
 			return Response({'error': 'invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
-			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 		
 
