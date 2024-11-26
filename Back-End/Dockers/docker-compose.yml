@@ -1,5 +1,5 @@
 version: '3.8'
-
+# TODO add the celery wrokers and the celery beat
 services:
   usertask_db:
     build:
@@ -46,7 +46,22 @@ services:
       timeout: 10s
       retries: 5
 
-  redis:
+  notification_db:
+    build:
+      context: ./notification_db
+      dockerfile: Dockerfile
+    container_name: container_notification_db
+    ports:
+      - "5437:5432"
+    networks:
+      - back-end
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pasquale -d notification_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis_chat:
     image: "redis:latest"
     ports:
       - "6700:6379"
@@ -57,6 +72,29 @@ services:
       retries: 5
     networks:
       - back-end
+
+  redis_notification:
+    image: "redis:latest"
+    ports:
+      - "6701:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - back-end
+
+  celery_worker_notificaton:
+    build:
+      context: ./celery_worker_notification
+      dockerfile: Dockerfile
+    container_name: celery_worker_notification
+    networks:
+      - back-end
+    depends_on:
+      - notification_db
+      - redis_notification
 
   prometheus:
     build:
@@ -143,56 +181,3 @@ volumes:
 networks:
   back-end:
     driver: bridge
-
-
-# version: '3.8'
-
-# services:
-#   usertask_db:
-#     build: usertask_db/
-#     container_name: container_usertask_db
-#     ports:
-#       - "5434:5432"  # Map host port 5434 to container port 5432
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U pasquale -d usertask_db"] # TODO add env file cred.
-#       interval: 30s
-#       timeout: 10s
-#       retries: 5
-
-#   login_db:
-#     build: login_db/
-#     container_name: container_login_db
-#     ports:
-#       - "5435:5432"  # Map host port 5435 to container port 5432
-#     networks:
-#       - back-end
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U pasquale -d login_db"]
-#       interval: 30s
-#       timeout: 10s
-#       retries: 5
-
-#   chat_db:
-#     build: chat_db/
-#     container_name: container_chat_db
-#     ports:
-#       - "5436:5432"  # Map host port 5436 to container port 5432
-#     healthcheck:
-#       test: ["CMD-SHELL", "pg_isready -U pasquale -d chat_db"]
-#       interval: 30s
-#       timeout: 10s
-#       retries: 5
-
-#   redis:
-#     image: "redis:latest"
-#     ports:
-#       - 6700:6379 # cache and channel server
-#     healthcheck:
-#       test: ["CMD", "redis-cli", "ping"]
-#       interval: 30s
-#       timeout: 10s
-#       retries: 5
-
-# networks:
-#   back-end:
-#     driver: bridge
