@@ -105,6 +105,7 @@
   height: 40px;
   width: 40px;
   margin-right: 10px;
+	min-width: 40px;
 }
 
 .avatar-placeholder {

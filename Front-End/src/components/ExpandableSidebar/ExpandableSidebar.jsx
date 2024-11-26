@@ -12,6 +12,7 @@ import {
   Send,
 } from "lucide-react";
 import "./ExpandableSidebar.css";
+import { ChatBubble } from "./ChatBubble";
 
 export function ExpandableSidebar() {
   const [chats, setChats] = useState([]);
@@ -250,7 +251,10 @@ export function ExpandableSidebar() {
                       <div className="add-chat">
                         <input type="text" placeholder="Nome del gruppo" />
                         <input type="text" placeholder="Descrizione" />
-                        <input type="text" placeholder="Aggiungi membri con userID" />
+                        <input
+                          type="text"
+                          placeholder="Aggiungi membri con userID"
+                        />
                         <button onClick={handleAddSidebar}>Aggiungi</button>
                       </div>
                     ) : (
@@ -269,7 +273,9 @@ export function ExpandableSidebar() {
                             </div>
                             <div className="chat-item-info">
                               <div className="chat-item-name">{chat.name}</div>
-                              <div className="chat-item-message">{chat.lastMessage}</div>
+                              <div className="chat-item-message">
+                                {chat.lastMessage}
+                              </div>
                             </div>
                             <div className="chat-item-icon">
                               {expandedChat !== chat.id ? (
@@ -290,16 +296,51 @@ export function ExpandableSidebar() {
                               className="chat-item-content"
                             >
                               <div className="chat-messages">
-                                {/* Qui puoi aggiungere i messaggi della chat */}
+                                {/* bubble messages */}
+                                <ChatBubble
+                                  username="Alice"
+                                  sender="You"
+                                  date="2023-10-01 10:00"
+                                  message="Hey, how are you?"
+                                />
+																<ChatBubble
+                                  sender="You"
+                                  date="2023-10-01 10:00"
+                                  message="Hey, how are you?"
+                                />
+                                <ChatBubble
+                                  sender="Me"
+                                  date="2023-10-01 10:01"
+                                  message="I'm good, thanks!"
+                                />
+																<ChatBubble
+                                  sender="Me"
+                                  date="2023-10-01 10:01"
+                                  message="I'm good, thanks!"
+                                />
+																<ChatBubble
+                                  sender="Me"
+                                  date="2023-10-01 10:01"
+                                  message="I'm good, thanks!"
+                                />
+																<ChatBubble
+                                  sender="Me"
+                                  date="2023-10-02 12:01"
+                                  message="oggi e' un nuovo giorno!"
+                                />
                               </div>
                               <div className="chats-input">
                                 <input
                                   type="text"
                                   placeholder="Type a message..."
                                   value={newMessage}
-                                  onChange={(e) => setNewMessage(e.target.value)}
+                                  onChange={(e) =>
+                                    setNewMessage(e.target.value)
+                                  }
                                 />
-                                <button onClick={() => handleSendMessage(chat.id)}>
+                                <button
+                                  onClick={() => handleSendMessage(chat.id)}
+                                >
                                   <Send className="icon" />
                                 </button>
                               </div>
