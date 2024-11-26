@@ -48,7 +48,7 @@ class ProgressesSerializer(serializers.ModelSerializer):
 	def validate(self, data):
 		if Progresses.objects.filter(task=data['task'], user=data['user']):
 			raise serializers.ValidationError("user is already registered to this task")
-		t = Tasks.objects.get(id=data['task'])
+		t = data['task']
 		if t.previous_task is None:
 			return data
 		if Progresses.objects.filter(task=t.previous_task, user=data['user']):
@@ -59,6 +59,18 @@ class ProgressesSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Progresses
 		fields = '__all__'
+
+class ProgressesReadSerializer(serializers.ModelSerializer):
+    task = TasksSerializer()
+    user = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
+    rate = serializers.DecimalField(max_digits=6, decimal_places=3, default=0)
+    begin_date = serializers.DateTimeField(read_only=True)
+    last_modified = serializers.DateTimeField(read_only=True)
+    finish_date = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = Progresses
+        fields = '__all__'
 
 class ProgressManageSerializer(serializers.ModelSerializer):
 	task = serializers.PrimaryKeyRelatedField(read_only=True)
