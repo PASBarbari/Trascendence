@@ -9,7 +9,7 @@ urlpatterns = [
 	path('new_user/', views.new_user.as_view()),
 	path('create_channel_group/', views.CreateChannelGroupView.as_view()),
 	path('chat_rooms/create/', views.CreateChat.as_view()),
-	path('chat_rooms/', views.GetChats.as_view(), name='get_chats'),
+	path('chat_rooms/getchat/', views.GetChats.as_view(), name='get_chats'),
 	path('chat_data/', views.DownloadChatRoomData.as_view()),
 	path('user_similarities/', views.DownloadSimilaritiesData.as_view()),
 	path('chat_rooms/<int:room_id>/add_user/', views.AddUsersToChat.as_view()),

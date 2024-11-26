@@ -2,6 +2,7 @@ import "./AddChat.css";
 import React, { useState } from "react";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
+import { getCookie } from "../Cookie.jsx";
 
 export default function AddChat() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -9,39 +10,30 @@ export default function AddChat() {
   const [room_description, setRoomDescription] = useState("");
   const [user_ids, setUsers] = useState("");
   const [creator] = useState(localStorage.getItem('user_id'));
-	const [room_id, setRoomId] = useState("");
 
   const handleExpand = () => {
     setIsExpanded(!isExpanded);
   };
-
-  const getCookie = (name) => {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  };
-
 	
   const handleSubmit = async (e) => {
 		e.preventDefault();
-		
+
+    let userIdsArray = user_ids.split(',').map(id => id.trim()).filter(id => id);
+    if (!userIdsArray.includes(creator)) {
+      userIdsArray.push(creator);
+    }
+
+    console.log('Utenti:', userIdsArray);
+
     try {
 			const response = await fetch('http://localhost:8001/chat/chat_rooms/create/', {
         method: 'POST',
         headers: {
 					'Content-Type': 'application/json',
           'X-CSRFToken': getCookie('csrftoken'),
+					'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({ room_name, room_description, creator }),
+        body: JSON.stringify({ room_name, room_description, creator, users: userIdsArray }),
       });
 
       if (response.ok) {
@@ -57,26 +49,27 @@ export default function AddChat() {
 		
 		//post su path('create_channel_group/'         room_name = request.data.get('room_name')
 		//        user_ids = request.data.get('user_ids', [])
-		try {
-			const response = await fetch('http://localhost:8001/chat/create_channel_group/', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': getCookie('csrftoken'),
-				},
-				body: JSON.stringify({ room_id, user_ids }),
-			});
+		// try {
+		// 	const response = await fetch('http://localhost:8001/chat/create_channel_group/', {
+		// 		method: 'POST',
+		// 		headers: {
+		// 			'Content-Type': 'application/json',
+		// 			'X-CSRFToken': getCookie('csrftoken'),
+		// 			'Authorization': `Bearer ${localStorage.getItem('token')}`,
+		// 		},
+		// 		body: JSON.stringify({ room_id, user_ids }),
+		// 	});
 
-			if (response.ok) {
-				const data = await response.json();
-				console.log('Gruppo creato:', data);
-			} else {
-				const errorData = await response.json();
-				console.error('Errore nella risposta del server:', errorData);
-			}
-		} catch (error) {
-			console.error('Errore nella richiesta:', error);
-		}
+		// 	if (response.ok) {
+		// 		const data = await response.json();
+		// 		console.log('Gruppo creato:', data);
+		// 	} else {
+		// 		const errorData = await response.json();
+		// 		console.error('Errore nella risposta del server:', errorData);
+		// 	}
+		// } catch (error) {
+		// 	console.error('Errore nella richiesta:', error);
+		// }
   };
 
   return (
@@ -109,12 +102,6 @@ export default function AddChat() {
               value={user_ids}
               onChange={(e) => setUsers(e.target.value)}
             />
-						<Input
-							type="text"
-							placeholder="room_id"
-							value={room_id}
-							onChange={(e) => setRoomId(e.target.value)}
-						/>
             <Button text="Invia" type="submit" />
           </form>
         </div>

@@ -1,26 +1,60 @@
-from django.contrib.auth import login, logout
+from urllib.parse import urlencode
+from django.contrib.auth import get_user_model, login, logout
 from django.utils.decorators import method_decorator
 from django.utils.decorators import method_decorator
+import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer
 from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication , TokenHasScope, TokenHasReadWriteScope
+from .errors import error_codes
 from oauth2_provider.models import AccessToken , Application, RefreshToken
+from oauthlib.common import generate_token
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.middleware.csrf import get_token
 from oauth2_provider.views import TokenView
 from django.contrib.auth import login
-from django.conf import settings
-
-SERVICE_PASSWORD = settings.SERVICE_PASSWORD
-client = settings.client
-
+from login.settings import client
+from login.settings import SERVICE_PASSWORD
 from oauth2_provider.models import AccessToken
 from django.utils.decorators import method_decorator
 from .models import AppUser
+from login.settings import Microservices
+from django.utils import timezone
+from datetime import timedelta
+
+def get_access_token():
+    app = Application.objects.get(name='my_login')
+
+    token = AccessToken.objects.create(
+        user=app.user,
+        token=generate_token(),
+        application=app,
+        scope='read write',
+        expires=timezone.now() + timedelta(seconds=36000),
+    )
+    return token.token
+
+def CreateOnOtherServices(user):
+    Chat_url = Microservices['Chat']
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {get_access_token()}',
+    }
+
+    user_data = {
+        'user_id': user.user_id,
+        'username': user.username,
+        'email': user.email,
+    }
+    chat_response = requests.post('http://localhost:8001/chat/new_user/', json=user_data, headers=headers)
+    if chat_response.status_code != 201:
+        raise ValueError('Chat service failed to create user')
+
+
 
 
 class UserRegister(APIView):
@@ -33,9 +67,10 @@ class UserRegister(APIView):
 				user = serializer.create(clean_data)
 				if user:
 					serializer.data['password'] = user.password
-					return Response(serializer.data, status=status.HTTP_201_CREATED)
+					CreateOnOtherServices(user)
+					return Response({'user': serializer.data, 'user_id': user.user_id}, status=status.HTTP_201_CREATED)
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -62,7 +97,6 @@ class UserLogin(APIView):
 			user = serializer.check_user(data)
 			login(request, user)
 			
-
 			# Prepare data for tocken request
 
 			headers = {
@@ -96,7 +130,7 @@ class UserLogin(APIView):
 
 			return token_response
 		except Exception as e:
-				return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+				return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -114,22 +148,45 @@ class ServiceRegister(APIView):
 				if not Application.objects.filter(name=service_name).exists():
 					app = Application.objects.create(
 						name=service_name,
-						client_type=data.get('client_type'),
+						client_type=Application.CLIENT_CONFIDENTIAL,
 						client_id=data.get('client_id'),
 						client_secret=data.get('client_secret'),
-						authorization_grant_type=data.get('authorization_grant_type'),
-						redirect_uris=data.get('redirect_uris'),
+						authorization_grant_type=Application.GRANT_PASSWORD,
+						redirect_uris='http://localhost:8000',
 					)
-					return Response({
-						'client_id': app.client_id,
-						'client_secret': app.client_secret,
-					}, status=status.HTTP_200_OK)
+					app.scope = '__all__'
+					app.save()
+					return Response({'message': 'Service created successfully', 'client_id': app.client_id, 'client_secret': app.client_secret},
+						status=status.HTTP_201_CREATED)
+
+					## Login the app as a staff user
+					# if not AppUser.objects.filter(username=service_name).exists():
+					# 	app_user = AppUser.objects.create(username=service_name, is_staff=True)
+					# 	app_user.set_password(data.get('client_secret'))
+					# 	app_user.save()
+					## Get an access token
+					# Tokenview = TokenView.as_view()
+					# token_request = HttpRequest()
+					# token_request.method = 'POST'
+					# token_request.POST = {
+					# 	'grant_type': 'client_credentials',
+	        #   'client_id': app.client_id,
+          #   'client_secret': app.client_secret,
+          # }
+					# token_request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+					# token_request.META['HTTP_AUTHORIZATION'] = f'Basic {app.client_id}:{app.client_secret}'
+					# token_request.META['HTTP_X_CSRFTOKEN'] = data.get('csrf_token')
+					# token_response = Tokenview(token_request)
+					# ## Return the client_id and client_secret and token
+					# token_response.data['client_id'] = app.client_id
+					# token_response.data['client_secret'] = app.client_secret
+					# return token_response
 				else:
 					return Response({'error': 'Service already exists'}, status=status.HTTP_400_BAD_REQUEST)
 			else:
 				return Response({'error': 'Invalid service password'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -147,7 +204,7 @@ class UserLogout(APIView):
 		except AccessToken.DoesNotExist:
 			return Response({'error': 'invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 		
 
@@ -169,6 +226,7 @@ from oauth2_provider.views import IntrospectTokenView
 from oauth2_provider.models import AccessToken
 
 class CustomIntrospect(IntrospectTokenView):
+    permissions = (permissions.AllowAny,)
     def get_token_response(self, token):
         try:
             token = AccessToken.objects.get(token=token)
@@ -176,7 +234,7 @@ class CustomIntrospect(IntrospectTokenView):
                 return {
                     'active': True,
                     'scope': token.scope,
-                    'user_id': token.user.pk,
+                    'user_id': token.user.user_id,
                     'username': token.user.username,
                     'exp': token.expires.timestamp(),
                 }

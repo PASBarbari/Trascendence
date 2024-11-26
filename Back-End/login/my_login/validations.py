@@ -6,7 +6,6 @@ def custom_validation(data):
     email = data['email'].strip()
     username = data['username'].strip()
     password = data['password'].strip()
-    print(email, username, password)
     ##
     if not email:
         raise ValidationError('an email is needed')

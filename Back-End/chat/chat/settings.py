@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-c-&5anrd7(h=4(s2+_@-&gwvt2*pr+$d4t82*3@wuev&0n&nb('
-API_KEY = os.getenv('API_KEY', '123')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -51,10 +51,11 @@ INSTALLED_APPS = [
 	'rest_framework',
 	'my_chat',
 	'oauth2_provider',
+	'django_filters',
 	'corsheaders',
 	'channels',
 	'celery',
-	'django_redis',
+	'redis',
 ]
 
 MIDDLEWARE = [
@@ -66,8 +67,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	#'my_chat.middleware.TokenAuthMiddleware',
-	#'my_chat.middleware.TokenAuthMiddlewareHTTP',
+	'my_chat.middleware.TokenAuthMiddlewareHTTP',
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
@@ -199,6 +199,9 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'my_chat.authentications.TokenAuthentication',
     ],
+		'DEFAULT_PERMISSION_CLASSES': [
+				'my_chat.middleware.TokenAuthPermission',
+		],
 }
 
 LOGGING = {

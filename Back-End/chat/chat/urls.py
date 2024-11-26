@@ -20,4 +20,5 @@ from django.urls import path , include
 urlpatterns = [
 	path('admin/', admin.site.urls),
 	path('chat/', include('my_chat.urls')),
+	#DEBUG# path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
 ]

@@ -15,8 +15,6 @@ def login_self():
 	}
 
 	response = requests.post(login_url, json=data)
-	response_data = response.json()
-	print("login resp:", response_data)
 
 	if response.status_code != 200:
 		raise Exception('Failed to login user')
@@ -30,8 +28,6 @@ def user_register_self():
 		'password': 'chat_password',
 	}
 	response = requests.post(register_url, json=data)
-	print("Response:", response.json())
-	print("Response status code:", response.status_code)
 	
 	if response.status_code == 400:
 		login_self()
@@ -57,8 +53,6 @@ def register_self():
 
 	session = requests.Session()
 	csrf_resp = session.get(csrf_url)
-	print("Response cookies:", json.dumps(dict(csrf_resp.cookies), indent=4))
-	print("Response headers:", json.dumps(dict(csrf_resp.headers), indent=4))
     
 	if 'csrftoken' not in csrf_resp.cookies:
 		raise Exception('CSRF token not found in response cookies')
@@ -73,16 +67,22 @@ def register_self():
 		'Authorization': 'Bearer ' + access_token,
 	}
 
-	response = session.post(register_url, json=data, headers=headers)
-	print("Response:", response.json())
-	if response.status_code != 200:
+	response = session.post(register_url, headers=headers, json=data)
+	print("Response status code:", response.status_code)
+	print("Response text:", response.json())
+	if response.status_code != 200 and response.status_code != 201:
 		raise Exception('Failed to register application')
 	try:
 		app_data = response.json()
 	except json.JSONDecodeError:
 		raise Exception('Failed to parse JSON response')
-	oauth2_settings['CLIENT_ID'] = app_data['client_id']
-	oauth2_settings['CLIENT_SECRET'] = app_data['client_secret']
+	# oauth2_settings['CLIENT_ID'] = app_data['client_id']
+	# oauth2_settings['CLIENT_SECRET'] = app_data['client_secret']
+	# oauth2_settings['TOKEN'] = app_data['access_token']	
+	# oauth2_settings['REFRESH_TOKEN'] = app_data['refresh_token']
+	# oauth2_settings['EXPIRES'] = datetime.now() + timedelta(seconds=app_data['expires_in'])
+	# oauth2_settings['token_type'] = app_data['token_type']
+	# oauth2_settings['scope'] = app_data['scope']
 
 
 #auth classes
@@ -92,56 +92,110 @@ from django.core.cache import cache
 from django.contrib.auth.models import AnonymousUser
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
-
+import base64 ,requests
+from chat.settings import oauth2_settings
+from my_chat.models import UserProfile
 from django.contrib.auth import get_user_model
 
 class TokenAuthentication(BaseAuthentication):
-    def authenticate(self, request):
-        # Get token from Authorization header
-        token = request.META.get('HTTP_AUTHORIZATION')
-        if not token:
-            return None  # No token provided; DRF will treat it as an anonymous request
+		def authenticate(self, request):
+				if request.path == '/chat/new_user/':
+						request.user = AnonymousUser()
+						return None
+				token = request.META.get('HTTP_AUTHORIZATION')
+				if not token:
+						return None
+				token = token.replace("Bearer ", "")
+				user = self.get_user_from_token(token)
 
-        token = token.replace("Bearer ", "")
-        user = self.get_user_from_token(token)
+				if user is not None:
+						return (user, token)	# Return tuple (user, auth) as required by DRF
+				else:
+						raise AuthenticationFailed("Invalid or inactive token")
+		
+		def get_user_from_token(self, token):
+			 # Check if the user is already cached
+			user = cache.get(token)
+			if user:
+					return user
 
-        if user is not None:
-            return (user, token)  # Return tuple (user, auth) as required by DRF
-        else:
-            raise AuthenticationFailed("Invalid or inactive token")
+			introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
+			client_id = oauth2_settings['CLIENT_ID']
+			client_secret = oauth2_settings['CLIENT_SECRET']
 
-    def get_user_from_token(self, token):
-        # Check the cache for user
-        user = cache.get(token)
-        if user:
-            return user
+			credentials = f"{client_id}:{client_secret}"
+			encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
-        # Token introspection request
-        introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
-        client_id = oauth2_settings['CLIENT_ID']
-        client_secret = oauth2_settings['CLIENT_SECRET']
+			headers = {
+				'Authorization': f'Basic {encoded_credentials}',
+				'Content-Type': 'application/x-www-form-urlencoded',
+			}
+			try:
+					response = requests.post(introspection_url, headers=headers,data={
+						'token': token,
+					})
+				
+					if response.status_code == 200:
+							data = response.json()
+							if data.get('active'):
+									email = data.get('username')
+									User = UserProfile.objects.get(email=email)
+									try:
+										# Cache the user with a timeout (e.g., 5 minutes)
+											cache.set(token, User, timeout=300)
+											return user
+									except e:
+										return AnonymousUser()
+					else:
+						print('Token introspection failed:' f'{response.status_code}')
+						print(f"Response: {response}")
+						return AnonymousUser()
+			except requests.RequestException as e:
+				# Log the exception if needed
+				print(f"Token introspection failed: {e}")
+				return None  # Default to None if authentication fails
 
-        try:
-            response = requests.post(introspection_url, data={
-                'token': token,
-                'client_id': client_id,
-                'client_secret': client_secret,
-            })
+			
 
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('active'):
-                    user_id = data.get('user_id')
-                    User = get_user_model()
-                    try:
-                        user = User.objects.get(id=user_id)
-                        # Cache user for token expiry duration (default to 5 min if not provided)
-                        expires_in = data.get('expires_in', 300)
-                        cache.set(token, user, timeout=expires_in)
-                        return user
-                    except User.DoesNotExist:
-                        pass
-        except requests.RequestException as e:
-            raise AuthenticationFailed(f"Token introspection failed: {str(e)}")
 
-        return None
+
+		# def get_user_from_token(self, token):
+    #     user = cache.get(token)
+    #     if user:
+    #         return user
+
+    #     # Token introspection request
+    #     introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
+    #     client_id = oauth2_settings['CLIENT_ID']
+    #     client_secret = oauth2_settings['CLIENT_SECRET']
+
+    #     try:
+    #         response = requests.post(introspection_url, data={
+    #             'token': token,
+    #             'client_id': client_id,
+    #             'client_secret': client_secret,
+    #         })
+
+    #         try:
+    #             response_json = response.json()
+    #             print(f'\033[96mResponse1 json: {response_json}\033[0m')  #DEBUG# # Testo ciano
+    #         except requests.exceptions.JSONDecodeError:
+    #             print('\033[91mFailed to decode JSON response\033[0m')  #DEBUG# # Testo rosso
+    #             return AnonymousUser()
+
+    #         if response.status_code == 200:
+    #             data = response.json()
+    #             if data.get('active'):
+    #                 user_id = data.get('username')
+    #                 User = get_user_model()
+    #                 try:
+    #                     user = User.objects.get(user_id=user_id)
+    #                     # Cache user for token expiry duration (default to 5 min if not provided)
+    #                     expires_in = data.get('expires_in', 300)
+    #                     cache.set(token, user, timeout=expires_in)
+    #                     return user
+    #                 except User.DoesNotExist:
+    #                     pass
+    #     except requests.RequestException as e:
+    #         raise AuthenticationFailed(f"Token introspection failed: {str(e)}")
+
