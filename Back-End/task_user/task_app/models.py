@@ -24,7 +24,7 @@ class Tasks(models.Model):
 class Progresses(models.Model):
 	id = models.AutoField(primary_key=True, unique=True)
 	task = models.ForeignKey(Tasks, on_delete=models.CASCADE, related_name="job")
-	user = models.ForeignKey(Users, on_delete=models.CASCADE, default=0, related_name="joiner")
+	user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="joiner")
 	rate = models.DecimalField(max_digits=6, decimal_places=3, default=0)
 	begin_date = models.DateTimeField(auto_now_add=True)
 	last_modified = models.DateTimeField(auto_now=True)
