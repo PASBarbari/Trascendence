@@ -23,7 +23,7 @@ sequenceDiagram
     ChatService->>Frontend: WebSocket Messages
 
     ChatService->>NotificationService: Send Notification
-    NotificationService->>Frontend: Notification Sent
+    NotificationService->>Frontend: Group Notification Sent via websocket
 
     TaskService->>NotificationService: Send Notification
     NotificationService->>Frontend: Notification Sent via WebSocket
