@@ -32,7 +32,6 @@ class ImmediateNotification(UserNotification, GroupNotification):
 class QueuedNotification(UserNotification, GroupNotification):
 	def save(self, *args, **kwargs):
 		if self.is_sent is True:
-			from .utils import SentNotification
 			SentNotification.objects.create(
 				user_id=self.user_id,
 				group_id=self.group_id,
