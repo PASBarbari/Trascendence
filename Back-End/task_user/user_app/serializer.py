@@ -19,7 +19,7 @@ class UsersSerializer(serializers.ModelSerializer):
 	bio = serializers.CharField(default="")
 	exp = serializers.IntegerField(default=0)
 	level = serializers.IntegerField(default=0)
-	avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=1)
+	avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=Avatars.objects.get(id=1))
 	#TODO avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=Avatars.objects.get(id=1))
 	last_modified = serializers.DateTimeField(read_only=True)
     

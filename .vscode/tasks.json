@@ -1,0 +1,103 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Docker Compose Up",
+            "type": "shell",
+            "command": "docker-compose up",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End/Dockers"
+            },
+            "problemMatcher": [],
+            "group": "build"
+        },
+        {
+            "label": "Wait 10 Seconds",
+            "type": "shell",
+            "command": "sleep 10",
+            "problemMatcher": [],
+            "group": "build",
+        },
+        {
+            "label": "Check and Create Venv",
+            "type": "shell",
+            "command": "[ -d venv ] || python3 -m venv venv",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Wait 10 Seconds"
+        },
+        {
+            "label": "Activate Venv and Install Requirements",
+            "type": "shell",
+            "command": "source venv/bin/activate && pip install -r requirements.txt",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Check and Create Venv"
+        },
+        {
+            "label": "Run Login Server",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+        {
+            "label": "Run Chat Server",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd chat && python3 manage.py makemigrations && python3 manage.py makemigrations my_chat && python3 manage.py migrate && python3 manage.py runserver 8001",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+				{
+					"label": "Run Task Server",
+					"type": "shell",
+					"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver 8002",
+					"options": {
+							"cwd": "${workspaceFolder}/Back-End"
+					},
+					"problemMatcher": [],
+					"group": "build",
+					"dependsOn": "Activate Venv and Install Requirements"
+				},
+        {
+            "label": "Start Front-End",
+            "type": "shell",
+            "command": "npm start",
+            "options": {
+                "cwd": "${workspaceFolder}/Front-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+						"dependsOn": "Wait 10 Seconds"
+        },
+        {
+            "label": "Run All",
+            "type": "shell",
+            "command": "echo 'Running all tasks...'",
+            "problemMatcher": [],
+            "dependsOn": [
+                "Docker Compose Up",
+                "Wait 10 Seconds",
+                "Run Login Server",
+                "Run Chat Server",
+								"Run Task Server",
+                "Start Front-End"
+            ],
+            "group": "build"
+        }
+    ]
+}

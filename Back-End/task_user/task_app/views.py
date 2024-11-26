@@ -3,7 +3,7 @@ from rest_framework import permissions, status, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Tasks, Progresses
-from .serializer import TasksSerializer, ProgressesSerializer, ProgressManageSerializer
+from .serializer import TasksSerializer, ProgressesSerializer, ProgressManageSerializer, ProgressesReadSerializer
 from user_app.models import Users
 
 class MultipleFieldLookupMixin:
@@ -26,7 +26,19 @@ class TaskGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = TasksSerializer
 	lookup_fields = ['author__id', 'category', 'duration', 'exp']
-	queryset = Tasks.objects.all()
+
+	def get_queryset(self):
+		queryset = Tasks.objects.all()
+		if self.request.method == 'GET':
+			user_id = self.request.query_params.get('user_id')
+			if user_id:
+				My_progress = Progresses.objects.filter(user__id=user_id)
+				queryset = queryset.exclude(id__in=[x.task.id for x in My_progress])
+				return queryset
+		return Tasks.objects.all()
+	
+				
+		
 
 class TaskManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
@@ -36,11 +48,15 @@ class TaskManage(generics.RetrieveUpdateDestroyAPIView):
 	queryset = Tasks.objects.all()
 
 class ProgressGen(generics.ListCreateAPIView):
-	permission_classes = (permissions.AllowAny,)
-	serializer_class = ProgressesSerializer
-	filter_backends = [filters.SearchFilter]
-	search_fields = ['user__id','task__id']
-	queryset = Progresses.objects.all()
+    permission_classes = (permissions.AllowAny,)
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['user__id', 'task__id']
+    queryset = Progresses.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return ProgressesSerializer
+        return ProgressesReadSerializer
 
 class ProgressDelete(generics.DestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
