@@ -14,6 +14,31 @@ import TabContext from "@mui/lab/TabContext";
 import TabList from "@mui/lab/TabList";
 import TabPanel from "@mui/lab/TabPanel";
 
+const joinTasks = async (task_id, user_id) => {
+	console.log("Joining task:", task_id, user_id);
+	try {
+    const response = await fetch(`http://localhost:8002/task/progress`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({ task: task_id, user: user_id }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Joined chat:", data);
+    } else {
+      const errorData = await response.json();
+      console.error("Errore nella risposta del server:", errorData);
+    }
+  } catch (error) {
+    console.error("Errore nella richiesta:", error);
+  }
+};
+
 export default function TaskAvaiable() {
   const [tasks, setTask] = useState([]);
   const [value, setValue] = React.useState("SP");
@@ -52,6 +77,11 @@ export default function TaskAvaiable() {
     handleGetTasks();
   }, []);
 
+  const handleJoinTask = (task_id) => {
+    const user_id = localStorage.getItem("user_id");
+    joinTasks(task_id, user_id);
+  };
+
   useEffect(() => {
     const selectedTab = tabListRef.current.querySelector(
       `[aria-selected="true"]`
@@ -73,7 +103,7 @@ export default function TaskAvaiable() {
           {filteredTasks.length > 0 ? (
             filteredTasks.map((task, index) => (
               <ListItem key={index}>
-                <Task task={task} />
+                <Task task={task} handleJoinTask={handleJoinTask} />
               </ListItem>
             ))
           ) : (

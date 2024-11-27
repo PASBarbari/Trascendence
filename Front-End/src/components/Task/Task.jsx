@@ -10,8 +10,7 @@ import Box from "@mui/material/Box";
 import TaskActive from "../TaskActive/TaskActive";
 import TaskInfo from "../TaskInfo/TaskInfo";
 
-
-export default function CardInvertedColors({ task }) {
+export default function CardInvertedColors({ task, handleJoinTask }) {
   const [open, setOpen] = React.useState(false);
 
   const handleClickOpen = () => {
@@ -37,11 +36,7 @@ export default function CardInvertedColors({ task }) {
           alignItems: "center",
         }}
       >
-        <CircularProgress
-          size="lg"
-          determinate
-          value={0}
-        >
+        <CircularProgress size="lg" determinate value={0}>
           <SvgIcon>
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -69,7 +64,7 @@ export default function CardInvertedColors({ task }) {
             padding: "0",
           }}
         >
-          <Button variant="soft" size="sm">
+          <Button variant="soft" size="sm" onClick={() => handleJoinTask(task.id)}>
             +
           </Button>
           <Button variant="soft" size="sm" onClick={handleClickOpen}>
@@ -81,4 +76,3 @@ export default function CardInvertedColors({ task }) {
     </React.Fragment>
   );
 }
-
