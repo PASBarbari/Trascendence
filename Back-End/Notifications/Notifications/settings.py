@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
-
+import secrets , os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,6 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-u+0oqxb+f!fa)0f_m6ezqtb*m-86^vxt$9rn%-_nbxc3@qo_@0'
+API_KEY = os.getenv('API_KEY', '123')
+
+def arise(exception):
+	raise(exception)
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,6 +42,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+	'oauth2_provider',
+	'corsheaders',
+	'channels',
+	'celery',
+	'django_redis',
+	'django_filters',
+	'my_notifications',
 ]
 
 MIDDLEWARE = [
@@ -47,7 +59,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'corsheaders.middleware.CorsMiddleware',
+	'my_notifications.middleware.TokenAuthMiddlewareHTTP',
+	'my_notifications.middleware.APIKeyAuthMiddleware',
 ]
+
+REST_FRAMEWORK = {
+	'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
 
 ROOT_URLCONF = 'Notifications.urls'
 
@@ -68,17 +87,72 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Notifications.wsgi.application'
+ASGI_APPLICATION = 'Notifications.asgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
+	'default': {
+		'ENGINE': 'django.db.backends.postgresql',
+		'NAME': 'Notification_db',
+		'USER': 'pasquale',
+		'PASSWORD': '123',
+		'HOST': 'localhost',
+		'PORT': '5437',
+	},
+    'backup': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+oauth2_settings = {
+	'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
+	'CLIENT_ID': secrets.token_urlsafe(32),
+	'CLIENT_SECRET': secrets.token_urlsafe(64),
+	'TOKEN': '',
+	'REFRESH_TOKEN': '',
+	'EXPIRES': '',
+	'token_type': '',
+	'scope': '',
+	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
+}
+
+REST_FRAMEWORK = {
+	'DEFAULT_PERMISSION_CLASSES': [
+		'my_notifications.middleware.TokenAuthPermission',
+		'my_notifications.middleware.APIKeyAuthPermission',
+	],
+}
+
+
+CACHES = {
+	'default': {
+		'BACKEND': 'django_redis.cache.RedisCache',
+		'LOCATION': 'redis://172.18.0.1:6701/1',
+		'OPTIONS': {
+			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+		}
+	}
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('172.18.0.1', 6701)],
+        },
+    }
+}
+
+CELERY_BROKER_URL = 'redis://localhost:6701/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6701/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
 
 
 # Password validation
@@ -121,3 +195,19 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Microservices
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Personal' : "Self",
+}
+
+Types = {
+	'IM' : 'Immediate',
+	'QU' : 'Queued',
+	'SC' : 'Scheduled',
+	'SE' : 'Sent',
+}

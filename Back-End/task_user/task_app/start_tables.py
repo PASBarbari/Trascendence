@@ -7,8 +7,7 @@ from django.dispatch import receiver  # type: ignore
 def CreateTasks(**kwargs):
 	if not Avatars.objects.all():
 		a = Avatars.objects.create(
-			name = 'default avatar',
-			image = 'avatar/cloud.png'
+			name = 'default avatar'
 		)
 		a.save()
 	if not Users.objects.all():

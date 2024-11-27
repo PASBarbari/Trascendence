@@ -4,29 +4,6 @@ import "./Profile.css";
 import Input from "../Input/Input";
 import Button from "../Button/Button";
 
-const GetProfile = async (name, surname, birthdate, bio) => {
-  const userID = localStorage.getItem("user_id");
-
-  try {
-    const response = await fetch(`http://localhost:8002/user/user?id=${userID}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log("Profile:", data);
-    } else {
-      const errorData = await response.json();
-      console.error("Errore nella risposta del server:", errorData);
-    }
-  } catch (error) {
-    console.error("Errore nella richiesta:", error);
-  }
-};
-
 const PostProfile = async (name, surname, birthdate, bio) => {
   const userID = localStorage.getItem("user_id");
 
@@ -122,10 +99,48 @@ export default function Profile() {
     localStorage.setItem("surname", tempSurname);
     localStorage.setItem("birthdate", tempBirthdate);
     localStorage.setItem("bio", tempBio);
-    PostProfile(tempName, tempSurname, tempBirthdate, tempBio);
+		PatchProfile(tempName, tempSurname, tempBirthdate, tempBio);
+    //PostProfile(tempName, tempSurname, tempBirthdate, tempBio);
 
     setEdit(false);
   };
+
+	useEffect(() => {
+
+		const GetProfile = async () => {
+				const userID = localStorage.getItem("user_id");
+				console.log("userID", userID);
+				console.log(`http://localhost:8002/user/user/${userID}/`);
+				try {
+					const response = await fetch(`http://localhost:8002/user/user/${userID}/`, {
+						method: "GET",
+						headers: {
+							"Content-Type": "application/json",
+							// "X-CSRFToken": getCookie("csrftoken"),
+							"Authorization": `Bearer ${localStorage.getItem("token")}`,
+						},
+					});
+			
+					if (response.ok) {
+						const data = await response.json();
+						console.log("Profile:", data);
+						const { first_name, last_name, birth_date, bio } = data;
+						console.log("first_name", first_name);
+						setName(first_name);
+						setSurname(last_name);
+						setBirthdate(birth_date);
+						setBio(bio);
+					} else {
+						const errorData = await response.json();
+						console.error("Errore nella risposta del server:", errorData);
+					}
+				} catch (error) {
+					console.error("Errore nella richiesta:", error);
+				}
+			};
+			GetProfile();
+		
+	}, []);
 
   return (
     <div className="profile">

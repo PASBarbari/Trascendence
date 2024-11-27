@@ -19,7 +19,6 @@ build/
 jspm_packages/
 
 # IDEs and editors
-.vscode/
 .idea/
 *.suo
 *.ntvs*
@@ -37,6 +36,7 @@ temp/
 *.swp
 *__pycache__/
 *.pyc
+.vscode/settings.json
 
 .venv
 venv*
