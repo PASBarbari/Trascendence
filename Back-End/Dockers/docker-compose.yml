@@ -85,16 +85,16 @@ services:
     networks:
       - back-end
 
-  celery_worker_notificaton:
-    build:
-      context: ./celery_worker_notification
-      dockerfile: Dockerfile
-    container_name: celery_worker_notification
-    networks:
-      - back-end
-    depends_on:
-      - notification_db
-      - redis_notification
+  # celery_worker_notificaton:
+  #   build:
+  #     context: ./celery_worker_notification
+  #     dockerfile: Dockerfile
+  #   container_name: celery_worker_notification
+  #   networks:
+  #     - back-end
+  #   depends_on:
+  #     - notification_db
+  #     - redis_notification
 
   prometheus:
     build:
