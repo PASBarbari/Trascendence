@@ -72,40 +72,48 @@ export default function AddChat() {
 		// }
   };
 
+										{/*<div className="add-chat">
+											<input type="text" placeholder="Nome del gruppo" />
+											<input type="text" placeholder="Descrizione" />
+											<input
+												type="text"
+												placeholder="Aggiungi membri con userID"
+											/>
+											<button onClick={handleAddSidebar}>Aggiungi</button>
+										</div>*/}
+
   return (
-    <div className={`chat separated ${isExpanded ? "expanded" : ""}`}>
+			<form onSubmit={handleSubmit} className="add-chat">
+				<input
+					type="text"
+					placeholder="Nome del gruppo"
+					value={room_name}
+					onChange={(e) => setRoomName(e.target.value)}
+				></input>
+				<input
+					type="text"
+					placeholder="Descrizione"
+					value={room_description}
+					onChange={(e) => setRoomDescription(e.target.value)}
+				></input>
+				<input
+					type="text"
+					placeholder="Aggiungi membri con userID"
+					value={user_ids}
+					onChange={(e) => setUsers(e.target.value)}
+				></input>
+				<button type="submit">Add</button>
+			</form>
+			);
+    {/*<div className={`chat separated ${isExpanded ? "expanded" : ""}`}>
       <div className="chat-button">
-        <button className="clickable-div" onClick={handleExpand}>
-          <div className="chat-header">
-            <h1>Chat</h1>
-          </div>
-        </button>
+			<button className="clickable-div" onClick={handleExpand}>
+			<div className="chat-header">
+			<h1>Chat</h1>
+			</div>
+			</button>
       </div>
-      {isExpanded && (
-        <div className="scrollable-content">
-          <form onSubmit={handleSubmit}>
-            <Input
-              type="text"
-              placeholder="Nome del gruppo"
-              value={room_name}
-              onChange={(e) => setRoomName(e.target.value)}
-            />
-            <Input
-              type="text"
-              placeholder="Descrizione"
-              value={room_description}
-              onChange={(e) => setRoomDescription(e.target.value)}
-            />
-            <Input
-              type="text"
-              placeholder="Aggiungi membri con userID"
-              value={user_ids}
-              onChange={(e) => setUsers(e.target.value)}
-            />
-            <Button text="Invia" type="submit" />
-          </form>
-        </div>
-      )}
-    </div>
-  );
+      {isExpanded && (*/}
+      {/*)}
+    </div>*/}
 }

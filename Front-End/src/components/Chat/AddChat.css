@@ -29,13 +29,7 @@
 	height: 400px; /* Altezza espansa del div */
 }
 
-.scrollable-content {
-	display: flex;
-	flex-direction: column;
-	flex: 1;
-	padding: 10px;
-	overflow-y: auto; /* Aggiunge una barra di scorrimento se il contenuto supera l'altezza massima */
-}
+
 
 .fixed-footer {
 	display: flex;
@@ -45,4 +39,30 @@
 
 .chat-button {
 	padding: 20px;
+}
+
+.add-chat {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-chat input {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.add-chat button {
+  padding: 8px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-chat button:hover {
+  background-color: #2563eb;
 }
