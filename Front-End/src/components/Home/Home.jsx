@@ -8,6 +8,8 @@ import settings from './settings.png';
 import chatImg from './chat.png';
 import propic from '../Profile/propic.jpeg';
 import close from './close.png';
+import TaskAvaiable from '../TaskAvaiable/TaskAvaiable';
+import TaskActive from '../TaskActive/TaskActive';
 import { ExpandableSidebar } from '../ExpandableSidebar/ExpandableSidebar';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
@@ -55,6 +57,8 @@ const Home = () => {
 */}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
+					<TaskAvaiable />
+					<TaskActive />
 					<div className="box"></div>
 					<div className="box"></div>
 					<div className="box"></div>
