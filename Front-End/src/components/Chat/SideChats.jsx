@@ -65,7 +65,7 @@ export default function SideChats() {
       <AddChat />
       <Input type="text" placeholder="Cerca chat" className="sidechat-input" />
       {chatRooms.map((room) => (
-        <Chat key={room.room_id} roomID={room.room_id} />
+        <Chat key={room.room_id} roomID={room.room_id} isSingleChat={false} />
       ))}
     </div>
   );
