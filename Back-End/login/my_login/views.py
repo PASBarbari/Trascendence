@@ -25,6 +25,7 @@ from .models import AppUser
 from login.settings import Microservices
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
 
 def get_access_token():
 	app = Application.objects.get(name='my_login')
@@ -44,6 +45,7 @@ def CreateOnOtherServices(user):
 	headers = {
 		'Content-Type': 'application/json',
 		'Authorization': f'Bearer {get_access_token()}',
+		'X-API-KEY': settings.API_KEY,
 	}
 
 	user_data = {
