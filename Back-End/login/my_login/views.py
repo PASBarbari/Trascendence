@@ -57,6 +57,9 @@ def CreateOnOtherServices(user):
 	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
 	if notification_response.status_code != 201:
 		raise ValueError('Notification service failed to create user')
+	user_response = requests.post(Microservices['Users'], json=user_data, headers=headers)
+	if user_response.status_code != 201:
+		raise ValueError('User service failed to create user')
 
 
 
