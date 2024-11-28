@@ -182,7 +182,6 @@ class TokenAuthPermission(BasePermission):
                 return True
         return False
 
-from django.http import JsonResponse
 from django.conf import settings
 
 class APIKeyPermission(BasePermission):

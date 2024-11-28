@@ -7,6 +7,7 @@ from .serializer import *
 from user_app.models import Users
 from .notification import ImmediateNotification, ScheduledNotification , SendNotification
 import asyncio
+from .middleware import APIKeyPermission
 class MultipleFieldLookupMixin:
 	"""
 	Apply this mixin to any view or viewset to get multiple field filtering
@@ -35,11 +36,17 @@ class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
 	queryset = Avatars.objects.all()
 
 class UserGen(generics.ListCreateAPIView):
-	permission_classes = (permissions.AllowAny,)
 	serializer_class = UsersSerializer
 	filter_backends = [filters.SearchFilter]
 	search_fields = ['id']
 	queryset = Users.objects.all()
+
+	def get_permissions(self):
+		if self.request.method == 'POST':
+			self.permission_classes = [APIKeyPermission]
+		else:
+			self.permission_classes = [permissions.AllowAny]
+		return super().get_permissions()
 
 class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
