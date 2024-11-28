@@ -11,6 +11,7 @@ import close from "./close.png";
 import TaskAvaiable from "../TaskAvaiable/TaskAvaiable";
 import TaskActive from "../TaskActive/TaskActive";
 import { ExpandableSidebar } from "../ExpandableSidebar/ExpandableSidebar";
+import Grid from '@mui/joy/Grid';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
 // import { Nav, navbar } from 'react-bootstrap';
@@ -54,20 +55,15 @@ const Home = () => {
 
 		<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 			{isProfileVisible && <Profile />}
-			<TaskAvaiable />
-			<TaskActive />
-			<div className="box"></div> 
-			<div className="box"></div> 
-			<div className="box"></div> 
-		</div>
-
-        {/*				<div className="sidebar">
-					<button className="chat-buttons" onClick={toggleDiv}>
-						<img src={chatImg} alt="chat" className="chat-image" />
-					</button>
-				</div>
-				{isDivVisible && <SideChats />}
-*/}
+			<Grid container spacing={2}>
+            <Grid item xs={6}>
+              <TaskAvaiable />
+            </Grid>
+            <Grid item xs={6}>
+              <TaskActive />
+            </Grid>
+          </Grid>
+        </div>
       </div>
     </div>
   );

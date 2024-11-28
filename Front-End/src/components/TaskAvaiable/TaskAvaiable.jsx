@@ -119,7 +119,7 @@ export default function TaskAvaiable() {
   const categories = ["SP", "ED", "HE", "AR", "SS", "MD"];
 
   return (
-    <Box sx={{ bgcolor: "white", borderRadius: "8px", maxWidth: "400px" }}>
+    <Box sx={{ bgcolor: "white", borderRadius: "8px", minHeight: "400px"}}>
       <TabContext value={value}>
         <Box sx={{ borderBottom: 0, borderColor: "divider" }}>
           <TabList
