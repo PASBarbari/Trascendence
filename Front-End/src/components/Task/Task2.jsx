@@ -7,33 +7,65 @@ import CardContent from '@mui/joy/CardContent';
 import Typography from '@mui/joy/Typography';
 import Sheet from '@mui/joy/Sheet';
 import CircularProgress from '@mui/joy/CircularProgress';
+import { getCookie } from "../Cookie.jsx";
 
-export default function UserCard({id, task}) {
+export default function Task2({ id, task, onCancel }) {
+  const [progress, setProgress] = React.useState(task.rate);
+
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel(id);
+    }
+  };
+
+  const updateProgress = async (newProgress) => {
+    try {
+      const response = await fetch(`http://localhost:8002/task/progress/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ rate: newProgress }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Errore nella risposta del server:", errorData);
+      }
+    } catch (error) {
+      console.error("Errore nella richiesta:", error);
+    }
+  };
+
+  const handleProgressClick = () => {
+    setProgress((prevProgress) => {
+      const newProgress = Math.min(prevProgress + 10, 100);
+      updateProgress(newProgress);
+      return newProgress;
+    });
+  };
+
   return (
     <Box>
-      <Card
-        orientation="horizontal"
-        sx={{
-          flexWrap: 'wrap',
-          [`& > *`]: {
-            '--stack-point': '500px',
-            minWidth:
-              'clamp(0px, (calc(var(--stack-point) - 2 * var(--Card-padding) - 2 * var(--variant-borderWidth, 0px)) + 1px - 100%) * 999, 100%)',
-          },
-          // make the card resizable for demo
-        }}
-      >
+      <Card orientation="horizontal">
         <CardContent>
-		<CircularProgress variant="solid" determinate="{task.progress}"/>
+          <CircularProgress
+            variant="solid"
+            value={progress}
+            onClick={handleProgressClick}
+			determinate
+            sx={{ cursor: 'pointer' }}
+          />
           <Typography sx={{ fontSize: 'xl', fontWeight: 'lg' }}>
-            {task.task.name}
+            {task.task.name} {task.task.category}
           </Typography>
           <Typography
             level="body-sm"
             textColor="text.tertiary"
             sx={{ fontWeight: 'lg' }}
-			>
-            Category: {task.task.category}
+          >
           </Typography>
           <Sheet
             sx={{
@@ -48,7 +80,7 @@ export default function UserCard({id, task}) {
           >
             <div>
               <Typography level="body-xs" sx={{ fontWeight: 'lg' }}>
-                Time remaing
+                Time remaining
               </Typography>
               <Typography sx={{ fontWeight: 'lg' }}>{task.task.duration[0]} days</Typography>
             </div>
@@ -60,13 +92,13 @@ export default function UserCard({id, task}) {
             </div>
             <div>
               <Typography level="body-xs" sx={{ fontWeight: 'lg' }}>
-                Rate
+                Progress
               </Typography>
-              <Typography sx={{ fontWeight: 'lg' }}>{task.rate}</Typography>
+              <Typography sx={{ fontWeight: 'lg' }}>{progress}</Typography>
             </div>
           </Sheet>
           <Box sx={{ display: 'flex', gap: 1.5, '& > button': { flex: 1 } }}>
-            <Button variant="outlined" color="neutral">
+            <Button variant="outlined" color="neutral" onClick={handleCancel}>
               Cancella
             </Button>
             <Button variant="solid" color="primary">

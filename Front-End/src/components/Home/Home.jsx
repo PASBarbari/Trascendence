@@ -55,7 +55,13 @@ const Home = () => {
 
 		<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 			{isProfileVisible && <Profile />}
-			<Grid container spacing={2}>
+			<Grid container spacing={2} sx={{
+				display: 'flex',
+				justifyContent: 'center',
+				height: '100%',
+				width: '100%',
+
+			}}>
             <Grid item xs={6}>
               <TaskAvaiable />
             </Grid>

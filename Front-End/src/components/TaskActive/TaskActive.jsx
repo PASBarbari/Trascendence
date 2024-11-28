@@ -35,6 +35,29 @@ export default function TaskActive() {
     handleGetActiveTasks();
   }, []);
 
+  const handleCancelTask = async (taskId) => {
+    try {
+      const response = await fetch(`http://localhost:8002/task/progress/${taskId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+
+      if (response.ok) {
+        setTask((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+        console.log(`Task ${taskId} cancelled successfully`);
+      } else {
+        const errorData = await response.json();
+        console.error("Errore nella risposta del server:", errorData);
+      }
+    } catch (error) {
+      console.error("Errore nella richiesta:", error);
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -42,14 +65,14 @@ export default function TaskActive() {
         padding: "10px",
         borderRadius: "10px",
         boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
-   		overflowY: 'auto',
-		minHeight: '380px',
-		maxHeight: '380px',
+        overflowY: 'auto',
+        minHeight: '380px',
+        maxHeight: '380px',
       }}
     >
       {tasks.length > 0 ? (
         tasks.map((task, index) => (
-          <Task2 key={index} task={task} /> // Use Task2 component
+          <Task2 key={index} id={task.id} task={task} onCancel={handleCancelTask} /> // Use Task2 component
         ))
       ) : (
         <p>No tasks active</p>
