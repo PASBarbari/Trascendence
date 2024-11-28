@@ -27,32 +27,36 @@ from django.utils import timezone
 from datetime import timedelta
 
 def get_access_token():
-    app = Application.objects.get(name='my_login')
+	app = Application.objects.get(name='my_login')
 
-    token = AccessToken.objects.create(
-        user=app.user,
-        token=generate_token(),
-        application=app,
-        scope='read write',
-        expires=timezone.now() + timedelta(seconds=36000),
-    )
-    return token.token
+	token = AccessToken.objects.create(
+		user=app.user,
+		token=generate_token(),
+		application=app,
+		scope='read write',
+		expires=timezone.now() + timedelta(seconds=36000),
+	)
+	return token.token
 
 def CreateOnOtherServices(user):
-    Chat_url = Microservices['Chat']
-    headers = {
-        'Content-Type': 'application/json',
-        'Authorization': f'Bearer {get_access_token()}',
-    }
+	Chat_url = Microservices['Chat']
+	Notification_url = Microservices['Notifications']
+	headers = {
+		'Content-Type': 'application/json',
+		'Authorization': f'Bearer {get_access_token()}',
+	}
 
-    user_data = {
-        'user_id': user.user_id,
-        'username': user.username,
-        'email': user.email,
-    }
-    chat_response = requests.post('http://localhost:8001/chat/new_user/', json=user_data, headers=headers)
-    if chat_response.status_code != 201:
-        raise ValueError('Chat service failed to create user')
+	user_data = {
+		'user_id': user.user_id,
+		'username': user.username,
+		'email': user.email,
+	}
+	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
+	if chat_response.status_code != 201:
+		raise ValueError('Chat service failed to create user')
+	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
+	if notification_response.status_code != 201:
+		raise ValueError('Notification service failed to create user')
 
 
 
@@ -170,9 +174,9 @@ class ServiceRegister(APIView):
 					# token_request.method = 'POST'
 					# token_request.POST = {
 					# 	'grant_type': 'client_credentials',
-	        #   'client_id': app.client_id,
-          #   'client_secret': app.client_secret,
-          # }
+			#   'client_id': app.client_id,
+		  #   'client_secret': app.client_secret,
+		  # }
 					# token_request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
 					# token_request.META['HTTP_AUTHORIZATION'] = f'Basic {app.client_id}:{app.client_secret}'
 					# token_request.META['HTTP_X_CSRFTOKEN'] = data.get('csrf_token')
@@ -220,23 +224,23 @@ class UserView(APIView):
 
 @ensure_csrf_cookie
 def get_csrf_token(request):
-    return JsonResponse({'detail': 'CSRF cookie set'})
+	return JsonResponse({'detail': 'CSRF cookie set'})
 
 from oauth2_provider.views import IntrospectTokenView
 from oauth2_provider.models import AccessToken
 
 class CustomIntrospect(IntrospectTokenView):
-    permissions = (permissions.AllowAny,)
-    def get_token_response(self, token):
-        try:
-            token = AccessToken.objects.get(token=token)
-            if token:
-                return {
-                    'active': True,
-                    'scope': token.scope,
-                    'user_id': token.user.user_id,
-                    'username': token.user.username,
-                    'exp': token.expires.timestamp(),
-                }
-        except AccessToken.DoesNotExist:
-            return {'active': False}
+	permissions = (permissions.AllowAny,)
+	def get_token_response(self, token):
+		try:
+			token = AccessToken.objects.get(token=token)
+			if token:
+				return {
+					'active': True,
+					'scope': token.scope,
+					'user_id': token.user.user_id,
+					'username': token.user.username,
+					'exp': token.expires.timestamp(),
+				}
+		except AccessToken.DoesNotExist:
+			return {'active': False}
