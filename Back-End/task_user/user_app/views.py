@@ -64,7 +64,7 @@ class FriendList(generics.ListAPIView):
 
 class AddFriend(APIView):
 	permission_classes = (permissions.AllowAny,)
-
+ 
 	def post(self, request):
 		serializer = FriendshipsSerializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
