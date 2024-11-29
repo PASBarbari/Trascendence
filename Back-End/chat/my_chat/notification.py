@@ -3,7 +3,6 @@ import os
 import asyncio
 import aiohttp
 
-
 Microservices = {
 	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
 	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
