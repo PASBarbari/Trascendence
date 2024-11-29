@@ -65,7 +65,7 @@
 				{
 					"label": "Run Task Server",
 					"type": "shell",
-					"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver 8002",
+					"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
 					"options": {
 							"cwd": "${workspaceFolder}/Back-End"
 					},
