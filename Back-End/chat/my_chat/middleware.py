@@ -71,6 +71,7 @@ def TokenAuthMiddlewareStack(inner):
 class TokenAuthMiddlewareHTTP(MiddlewareMixin):
 		def process_request(self, request):
 				if request.path == '/chat/new_user/':
+						print(request.path)
 						request.user = AnonymousUser()
 						return
 				
@@ -199,13 +200,7 @@ from rest_framework.permissions import BasePermission
 
 class APIKeyPermission(BasePermission):
 	def has_permission(self, request, view):
-		api_key = request.META.get('X-API-KEY')
-		if api_key:
-			return api_key == settings.API_KEY
-		return False
-
-	def has_permission(self, request, view):
-		api_key = request.META.get('X-API-KEY')
+		api_key = request.headers.get('X-API-KEY')
 		if api_key:
 			return api_key == settings.API_KEY
 		return False
