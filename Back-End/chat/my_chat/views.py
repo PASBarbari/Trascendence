@@ -8,7 +8,7 @@ from asgiref.sync import async_to_sync
 from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
-from .middleware import TokenAuthPermission
+from .middleware import TokenAuthPermission, APIKeyPermission
 from .authentications import TokenAuthentication
 class GetChatMessage(generics.ListAPIView):
     serializer_class = chat_messageSerializer
@@ -46,8 +46,9 @@ class GetChatInfo(generics.RetrieveAPIView):
         return ChatRoom.objects.filter(room_id=room_id)
 
 class new_user(generics.ListCreateAPIView):
-		serializer_class = userSerializer
-		queryset = UserProfile.objects.all()
+	permission_classes = (APIKeyPermission,)
+	serializer_class = userSerializer
+	queryset = UserProfile.objects.all()
 
 class CreateChat(generics.ListCreateAPIView):
     serializer_class = chat_roomSerializer
