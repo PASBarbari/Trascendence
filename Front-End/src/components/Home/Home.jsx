@@ -11,6 +11,7 @@ import close from './close.png';
 import TaskAvaiable from '../TaskAvaiable/TaskAvaiable';
 import TaskActive from '../TaskActive/TaskActive';
 import { ExpandableSidebar } from '../ExpandableSidebar/ExpandableSidebar';
+import Grid from '@mui/material/Grid';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
 // import { Nav, navbar } from 'react-bootstrap';
@@ -57,12 +58,18 @@ const Home = () => {
 */}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
-					<TaskAvaiable />
-					<TaskActive />
-					<div className="box"></div>
-					<div className="box"></div>
-					<div className="box"></div>
+					<Grid container spacing={2} sx={{
+						display: 'flex',
+						justifyContent: 'center',
 
+					}}>
+						<Grid item xs={6}>
+							<TaskAvaiable />
+						</Grid>
+						<Grid item xs={6}>
+							<TaskActive />
+						</Grid>
+					</Grid>
 				</div>
 			</div>
 		</div>

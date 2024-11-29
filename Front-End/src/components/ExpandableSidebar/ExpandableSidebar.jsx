@@ -247,7 +247,7 @@ export function ExpandableSidebar() {
 				</button>
 
 				<button
-					onClick={() => handleChatTypeClick("group")}onclick
+					onClick={() => handleChatTypeClick("group")}
 					className={`sidebar-button ${activeButton === "group" ? "active" : ""}`}
 				>
 					<Users className="icon" />
