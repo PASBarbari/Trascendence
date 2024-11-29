@@ -68,7 +68,6 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'my_chat.middleware.TokenAuthMiddlewareHTTP',
-	'my_chat.middleware.APIKeyAuthMiddleware',
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 

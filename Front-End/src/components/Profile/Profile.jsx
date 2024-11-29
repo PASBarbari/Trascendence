@@ -99,7 +99,7 @@ export default function Profile() {
     localStorage.setItem("surname", tempSurname);
     localStorage.setItem("birthdate", tempBirthdate);
     localStorage.setItem("bio", tempBio);
-		PatchProfile(tempName, tempSurname, tempBirthdate, tempBio);
+	PatchProfile(tempName, tempSurname, tempBirthdate, tempBio);
     //PostProfile(tempName, tempSurname, tempBirthdate, tempBio);
 
     setEdit(false);

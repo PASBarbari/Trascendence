@@ -40,8 +40,9 @@ def get_access_token():
 	return token.token
 
 def CreateOnOtherServices(user):
-	Chat_url = Microservices['Chat']
-	Notification_url = Microservices['Notifications']
+	Chat_url = Microservices['Chat'] + "/chat/new_user/"
+	Notification_url = Microservices['Notifications'] + "/notification/add_user"
+	User_url = Microservices['Users'] + "/user/user"
 	headers = {
 		'Content-Type': 'application/json',
 		'Authorization': f'Bearer {get_access_token()}',
@@ -53,15 +54,16 @@ def CreateOnOtherServices(user):
 		'username': user.username,
 		'email': user.email,
 	}
-	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
-	if chat_response.status_code != 201:
-		raise ValueError('Chat service failed to create user')
-	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
-	if notification_response.status_code != 201:
-		raise ValueError('Notification service failed to create user')
-	user_response = requests.post(Microservices['Users'], json=user_data, headers=headers)
+	user_response = requests.post(User_url, json=user_data, headers=headers)
 	if user_response.status_code != 201:
+		print(user_response.json())
 		raise ValueError('User service failed to create user')
+#	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
+#	if chat_response.status_code != 201:
+#		raise ValueError('Chat service failed to create user')
+#	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
+#	if notification_response.status_code != 201:
+#		raise ValueError('Notification service failed to create user')
 
 
 

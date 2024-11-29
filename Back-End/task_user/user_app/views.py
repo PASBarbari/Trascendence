@@ -43,9 +43,10 @@ class UserGen(generics.ListCreateAPIView):
 
 	def get_permissions(self):
 		if self.request.method == 'POST':
+			print("POST here")
 			self.permission_classes = [APIKeyPermission]
 		else:
-			self.permission_classes = [permissions.AllowAny]
+			self.permission_classes = (permissions.AllowAny,)
 		return super().get_permissions()
 
 class UserManage(generics.RetrieveUpdateDestroyAPIView):
