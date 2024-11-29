@@ -18,6 +18,34 @@ export default function Task2({ id, task, onCancel }) {
     }
   };
 
+  const handleCompleteTask = async (task_id, task_rate) => {
+    const user_id = localStorage.getItem("user_id");
+    try {
+      const response = await fetch(
+        `http://localhost:8002/task/progress/${task_id}&${user_id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken"),
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+					body: JSON.stringify({ rate: task_rate }),
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        console.log("CompletedTask:", data);
+        //handleGetActiveTasks();
+      } else {
+        const errorData = await response.json();
+        console.error("Errore CompletedTask:", errorData);
+      }
+    } catch (error) {
+      console.error("Errore CompletedTask:", error);
+    }
+  };
+
   const updateProgress = async (newProgress) => {
     try {
       const response = await fetch(`http://localhost:8002/task/progress/${id}`, {
@@ -101,7 +129,7 @@ export default function Task2({ id, task, onCancel }) {
             <Button variant="outlined" color="neutral" onClick={handleCancel}>
               Cancella
             </Button>
-            <Button variant="solid" color="primary">
+            <Button variant="solid" color="primary" onClick={() => handleCompleteTask(task.task.id, 100)}>
               Completa
             </Button>
           </Box>
