@@ -64,7 +64,7 @@ class FriendList(generics.ListAPIView):
 
 class AddFriend(APIView):
 	permission_classes = (permissions.AllowAny,)
-	serializer_class = FriendshipsSerializer
+
 	def post(self, request):
 		serializer = FriendshipsSerializer(data=request.data)
 		serializer.is_valid(raise_exception=True)
@@ -83,12 +83,6 @@ class AddFriend(APIView):
 			user_2 = u2
 		)
 		fs.save()
-		# Send notification
-		# immidiate_notification_data = {
-		# 	'Sender': u1.id,
-		# 	'message': f'Friend request from {u1.first_name} {u1.last_name}',
-		# 	'user_id': u2.id
-		# }
 		notifi = ImmediateNotification.objects.create(
 			Sender = u1,
 			message = f'Friend request from {u1.first_name} {u1.last_name}',
@@ -100,3 +94,31 @@ class AddFriend(APIView):
 			'info': 'friend request sent'
 		}, status=status.HTTP_200_OK)
 
+	def patch(self,request):
+		try:
+			serializer = FriendshipsSerializer(data=request.data)
+			serializer.is_valid(raise_exception=True)
+			u1 = Users.objects.get(id=serializer.data['user_1'])
+			u2 = Users.objects.get(id=serializer.data['user_2'])
+			if Friendships.objects.filter(user_1=u1, user_2=u2):
+				fs = Friendships.objects.get(user_1=u1, user_2=u2)
+				fs.accepted = True
+				fs.save()
+				notifi = ImmediateNotification.objects.create(
+					Sender = u2,
+					message = f'{u2.first_name} {u2.last_name} accepted your friend request',
+					user_id = u1.id,
+					group_id = None,
+				)
+				asyncio.create_task(SendNotification(notifi))
+				return Response({
+					'info': 'friend request accepted'
+				}, status=status.HTTP_200_OK)
+			else:
+				return Response({
+					'error': 'friend request not found'
+				}, status=status.HTTP_400_BAD_REQUEST)
+		except Exception as e:
+			return Response({
+				'error': e
+			}, status=status.HTTP_400_BAD_REQUEST)
