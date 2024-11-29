@@ -1,7 +1,5 @@
 from django.db import models
 import os
-import asyncio
-import aiohttp
 
 Microservices = {
 	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
@@ -43,9 +41,3 @@ class ImmediateNotification(UserNotification, GroupNotification):
 
 class ScheduledNotification(UserNotification, GroupNotification):
 	pass
-
-async def SendNotification(Notification):
-	noification_url = Microservices['Notifications']
-	async with aiohttp.ClientSession() as session:
-		async with session.post(noification_url, data=Notification) as response:
-			return response.status

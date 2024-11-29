@@ -65,7 +65,7 @@ class UserProfile(models.Model):
 	user_id = models.IntegerField(primary_key=True)
 	email = models.EmailField()
 	is_staff = models.BooleanField(default=False)
-	is_online = models.BooleanField(default=False)
+	is_online = models.BooleanField(default=False, null=True)
 
 	def get_is_online(self):
 		return UserNotificationConsumer.check_online(self.user_id)
