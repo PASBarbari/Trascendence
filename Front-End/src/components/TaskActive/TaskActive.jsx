@@ -1,10 +1,8 @@
 import "./TaskActive.css";
 import React, { useEffect, useState } from "react";
 import { getCookie } from "../Cookie.jsx";
-
-{
-  /* //elenco delle task in cui sei iscritto e percentuale di avanzamento */
-}
+import Task2 from "./Task2.jsx"; // Import Task2 component
+import Box from "@mui/material/Box";
 
 export default function TaskActive() {
   const [tasks, setTask] = useState([]);
@@ -94,28 +92,22 @@ export default function TaskActive() {
   }, []);
 
   return (
-    <div className="taskbox">
-      <div className="task-active">
-        <div className="task-active-text">
-          {tasks.length > 0 ? (
-            <div>
-              {tasks.map((task, index) => (
-                <div
-                  key={index}
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  <p>{`${task.task.name}: ${task.task.description}, ${task.task.duration}, ${task.task.exp}, ${task.rate}`}</p>
-                  <button onClick={() => handleCompleteTask(task.task.id, 100)}>
-                    Completa {task.task.name}
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p>No tasks active</p>
-          )}
-        </div>
-      </div>
-    </div>
+    <Box
+      sx={{
+        backgroundColor: "white",
+        padding: "10px",
+        borderRadius: "10px",
+        boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+        overflowY: 'auto',
+      }}
+    >
+      {tasks.length > 0 ? (
+        tasks.map((task, index) => (
+          <Task2 key={index} id={task.id} task={task} /> // Use Task2 component
+        ))
+      ) : (
+        <p>No tasks active</p>
+      )}
+    </Box>
   );
 }
