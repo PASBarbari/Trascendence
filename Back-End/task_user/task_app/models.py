@@ -28,4 +28,4 @@ class Progresses(models.Model):
 	rate = models.DecimalField(max_digits=6, decimal_places=3, default=0)
 	begin_date = models.DateTimeField(auto_now_add=True)
 	last_modified = models.DateTimeField(auto_now=True)
-	finish_date = models.DateTimeField(null=True)
+	finish_date = models.DateTimeField(null=True, default=None)

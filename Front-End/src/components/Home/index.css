@@ -20,6 +20,7 @@
 	flex: 1;
 	width: 100vw;
 	display: flex;
+	height: calc(100vh - 200px);
 	/*align-items: center;
 	justify-content: center;*/
 }
@@ -49,7 +50,7 @@
 .box {
 	width: 100px;
 	height: 100%;
-	background-color:#f5f5f5f0;
+	background-color:#f5f5f5f0;;
 	border-radius: 8px;
 	flex-grow: 1;
 	min-width: 400px;
@@ -105,3 +106,9 @@
 	width: 25px;
 	height: 25px;
 }
+
+.expandable-sidebar-container {
+	display: flex;
+	height: 100%;
+	background-color: none;
+  }

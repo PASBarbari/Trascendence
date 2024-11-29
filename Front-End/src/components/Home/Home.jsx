@@ -10,6 +10,7 @@ import propic from '../Profile/propic.jpeg';
 import close from './close.png';
 import TaskAvaiable from '../TaskAvaiable/TaskAvaiable';
 import TaskActive from '../TaskActive/TaskActive';
+import { ExpandableSidebar } from '../ExpandableSidebar/ExpandableSidebar';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
 // import { Nav, navbar } from 'react-bootstrap';
@@ -18,6 +19,7 @@ import TaskActive from '../TaskActive/TaskActive';
 const Home = () => {
 	const [isDivVisible, setIsDivVisible] = useState(true);
 	const [isProfileVisible, setIsProfileVisible] = useState(true);
+	const [activeChatType, setActiveChatType] = useState(null);
 
 	const toggleDiv = () => {
 		setIsDivVisible(!isDivVisible);
@@ -38,20 +40,28 @@ const Home = () => {
 				{/* Aggiungi il contenuto della tua home page qui */}
 			</div>
 			<div className="undernavbar">
-				<div className="sidebar">
+
+			<div className="expandable-sidebar-container">
+				<ExpandableSidebar 
+					activeChatType={activeChatType}
+					setActiveChatType={setActiveChatType}
+				/>
+			</div>
+
+{/*				<div className="sidebar">
 					<button className="chat-buttons" onClick={toggleDiv}>
 						<img src={chatImg} alt="chat" className="chat-image" />
 					</button>
 				</div>
 				{isDivVisible && <SideChats />}
+*/}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
 					<TaskAvaiable />
 					<TaskActive />
-					<div className="box"></div> 
-					<div className="box"></div> 
-					<div className="box"></div> 
-					{/* //task in corso e quando le checki aggiorna il tuo score */}
+					<div className="box"></div>
+					<div className="box"></div>
+					<div className="box"></div>
 
 				</div>
 			</div>
