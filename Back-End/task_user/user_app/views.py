@@ -32,13 +32,13 @@ class AvatarGen(generics.ListCreateAPIView):
 class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = AvatarsSerializer
-	lookup_url_kwarg = 'id'
+	lookup_url_kwarg = 'user_id'
 	queryset = Avatars.objects.all()
 
 class UserGen(generics.ListCreateAPIView):
 	serializer_class = UsersSerializer
 	filter_backends = [filters.SearchFilter]
-	search_fields = ['id']
+	search_fields = ['user_id']
 	queryset = Users.objects.all()
 
 	def get_permissions(self):
@@ -51,13 +51,13 @@ class UserGen(generics.ListCreateAPIView):
 class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = UsersSerializer
-	lookup_url_kwarg = 'id'
+	lookup_url_kwarg = 'user_id'
 	queryset = Users.objects.all()
 
 class FriendList(generics.ListAPIView):
 	serializer_class = FriendshipsSerializer
 	filter_backends = [filters.SearchFilter]
-	search_fields = ['user_1__id', 'user_2__id', 'accepted']
+	search_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
 	queryset = Friendships.objects.all()
 	# def get_queryset(self):
 	# 	return Friendships.objects.filter(accepted=True)

@@ -172,11 +172,6 @@ multidict==6.1.0
     #   -r requirements.in
     #   aiohttp
     #   yarl
-numpy==2.1.2
-    # via
-    #   -r requirements.in
-    #   scikit-learn
-    #   scipy
 oauthlib==3.2.2
     # via
     #   -r requirements.in
@@ -202,8 +197,6 @@ propcache==0.2.0
     #   -r requirements.in
     #   aiohttp
     #   yarl
-psycopg==3.2.3
-    # via -r requirements.in
 pyasn1==0.6.1
     # via
     #   -r requirements.in
@@ -282,7 +275,6 @@ typing-extensions==4.12.2
     # via
     #   -r requirements.in
     #   jwcrypto
-    #   psycopg
     #   twisted
 tzdata==2024.2
     # via
@@ -315,3 +307,7 @@ zope-interface==7.1.0
     # via
     #   -r requirements.in
     #   twisted
+
+# The following packages are considered to be unsafe in a requirements file:
+# pip
+# setuptools
