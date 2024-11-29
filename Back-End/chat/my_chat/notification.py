@@ -27,13 +27,13 @@ class BaseNotification(models.Model):
 		abstract = True
 
 class UserNotification(BaseNotification):
-	user_id = models.IntegerField(primary_key=True, default=None)
+	user_id = models.IntegerField(default=None)
 
 	class Meta:
 		abstract = True
 
 class GroupNotification(BaseNotification):
-	group_id = models.IntegerField(primary_key=True, default=None)
+	group_id = models.IntegerField(default=None)
 
 	class Meta:
 		abstract = True

@@ -9,13 +9,12 @@ class Avatars(models.Model):
 	# image = models.ImageField(upload_to="avatar/", null=True)
 
 class Users(models.Model):
-	id = models.AutoField(primary_key=True)
 	staff = models.BooleanField(default=False)
-	user_id = models.IntegerField(unique=True)
-	first_name = models.CharField(max_length=255, null=True)
-	last_name = models.CharField(max_length=255, null=True)
-	birth_date = models.DateField(null=True)
-	bio = models.TextField(default="")
+	user_id = models.IntegerField(unique=True, primary_key=True)
+	first_name = models.CharField(max_length=255, null=True, default="")
+	last_name = models.CharField(max_length=255, null=True, default="")
+	birth_date = models.DateField(null=True, default=None, blank=True)
+	bio = models.TextField(default="", null=True, blank=True)
 	exp = models.IntegerField(default=0)
 	level = models.IntegerField(default=0)
 	avatar = models.ForeignKey(Avatars, default=1, on_delete=models.SET(1), related_name="picture")
