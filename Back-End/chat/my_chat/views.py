@@ -1,4 +1,4 @@
-from rest_framework import generics, filters
+from rest_framework import generics, filters, permissions
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -46,9 +46,17 @@ class GetChatInfo(generics.RetrieveAPIView):
         return ChatRoom.objects.filter(room_id=room_id)
 
 class new_user(generics.ListCreateAPIView):
-	permission_classes = (APIKeyPermission,)
 	serializer_class = userSerializer
 	queryset = UserProfile.objects.all()
+
+	def get_permissions(self):
+		if self.request.method == 'POST':
+			print("POST here")
+			self.permission_classes = [APIKeyPermission]
+		else:
+			self.permission_classes = (permissions.AllowAny,)
+		return super().get_permissions()
+
 
 class CreateChat(generics.ListCreateAPIView):
     serializer_class = chat_roomSerializer
