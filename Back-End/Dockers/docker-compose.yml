@@ -87,7 +87,7 @@ services:
 
   celery_worker_notificaton:
     build:
-      context: ./celery_worker_notification
+      context: ./celery_notification
       dockerfile: Dockerfile
     container_name: celery_worker_notification
     networks:
