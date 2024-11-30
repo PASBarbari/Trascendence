@@ -12,6 +12,7 @@ import TaskAvaiable from '../TaskAvaiable/TaskAvaiable';
 import TaskActive from '../TaskActive/TaskActive';
 import { ExpandableSidebar } from '../ExpandableSidebar/ExpandableSidebar';
 import Grid from '@mui/material/Grid2';
+import Notification from '../Notification/Notification';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
 // import { Nav, navbar } from 'react-bootstrap';
@@ -58,6 +59,9 @@ const Home = () => {
 */}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
+					{/*<div className="task-container">
+						<Notification />
+					</div>*/}
 					<div className="task-container">
                         <TaskAvaiable />
                     </div>
