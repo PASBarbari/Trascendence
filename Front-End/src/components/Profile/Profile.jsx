@@ -174,6 +174,22 @@ export default function Profile() {
                 className="readonly-input"
               />
             </div>
+			<div className="profile-form-group">
+			  <TextField
+				label="Data di nascita"
+				type="date"
+				name="birthdate"
+				value={edit ? tempBirthdate : birthdate}
+				onChange={(e) => setTempBirthdate(e.target.value)}
+				InputProps={{
+				  readOnly: !edit,
+				  style: { height: 40, border: !edit ? 'none' : '' }
+				}}
+				variant="outlined"
+				fullWidth
+				className={!edit ? "readonly-input" : ""}
+			  />
+			</div>
             <div className="profile-form-group">
               <TextField
                 label="Nome"
@@ -208,22 +224,6 @@ export default function Profile() {
             </div>
             <div className="profile-form-group">
               <TextField
-                label="Data di nascita"
-                type="date"
-                name="birthdate"
-                value={edit ? tempBirthdate : birthdate}
-                onChange={(e) => setTempBirthdate(e.target.value)}
-                InputProps={{
-                  readOnly: !edit,
-                  style: { height: 40, border: !edit ? 'none' : '' }
-                }}
-                variant="outlined"
-                fullWidth
-                className={!edit ? "readonly-input" : ""}
-              />
-            </div>
-            <div className="profile-form-group">
-              <TextField
                 label="Bio"
                 type="text"
                 name="bio"
@@ -236,6 +236,8 @@ export default function Profile() {
                 variant="outlined"
                 fullWidth
                 className={!edit ? "readonly-input" : ""}
+				multiline
+				rows={1}
               />
             </div>
           </form>
