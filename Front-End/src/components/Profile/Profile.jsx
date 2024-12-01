@@ -1,39 +1,7 @@
-import React, { useState, useEffect } from "react";
-import propic from "./propic.jpeg";
+import React, { useState, useEffect, useRef } from "react";
 import "./Profile.css";
-import Button from "../Button/Button";
 import { TextField } from "@mui/material";
-import { Pencil } from 'lucide-react';
-
-const PostProfile = async (name, surname, birthdate, bio) => {
-  const userID = localStorage.getItem("user_id");
-
-  try {
-    const response = await fetch("http://localhost:8002/user/user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        account_id: userID,
-        first_name: name,
-        last_name: surname,
-        birth_date: birthdate,
-        bio: bio,
-      }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log("Profile:", data);
-    } else {
-      const errorData = await response.json();
-      console.error("Errore nella risposta del server:", errorData);
-    }
-  } catch (error) {
-    console.error("Errore nella richiesta:", error);
-  }
-};
+import { Pencil, Save } from 'lucide-react';
 
 const PatchProfile = async (name, surname, birthdate, bio) => {
   const userID = localStorage.getItem("user_id");
@@ -80,37 +48,30 @@ export default function Profile() {
   const [tempBirthdate, setTempBirthdate] = useState("");
   const [tempBio, setTempBio] = useState("");
 
+  const formRef = useRef(null);
+
   useEffect(() => {
-    if (edit) {
-      setTempName(name);
-      setTempSurname(surname);
-      setTempBirthdate(birthdate);
-      setTempBio(bio);
-    }
-  }, [edit, name, surname, birthdate]);
+    const handleResize = () => {
+      if (formRef.current) {
+        if (formRef.current.offsetWidth < 600) {
+          formRef.current.classList.add('column');
+        } else {
+          formRef.current.classList.remove('column');
+        }
+      }
+    };
 
-  const handleSave = (e) => {
-    e.preventDefault();
-    setName(tempName);
-    setSurname(tempSurname);
-    setBirthdate(tempBirthdate);
-    setBio(tempBio);
+    window.addEventListener('resize', handleResize);
+    handleResize();
 
-    localStorage.setItem("name", tempName);
-    localStorage.setItem("surname", tempSurname);
-    localStorage.setItem("birthdate", tempBirthdate);
-    localStorage.setItem("bio", tempBio);
-    PatchProfile(tempName, tempSurname, tempBirthdate, tempBio);
-    //PostProfile(tempName, tempSurname, tempBirthdate, tempBio);
-
-    setEdit(false);
-  };
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     const GetProfile = async () => {
       const userID = localStorage.getItem("user_id");
-      console.log("userID", userID);
-      console.log(`http://localhost:8002/user/user/${userID}/`);
       try {
         const response = await fetch(`http://localhost:8002/user/user/${userID}/`, {
           method: "GET",
@@ -122,9 +83,7 @@ export default function Profile() {
 
         if (response.ok) {
           const data = await response.json();
-          console.log("Profile:", data);
           const { first_name, last_name, birth_date, bio } = data;
-          console.log("first_name", first_name);
           setName(first_name);
           setSurname(last_name);
           setBirthdate(birth_date);
@@ -140,17 +99,36 @@ export default function Profile() {
     GetProfile();
   }, []);
 
+  useEffect(() => {
+    if (edit) {
+      setTempName(name);
+      setTempSurname(surname);
+      setTempBirthdate(birthdate);
+      setTempBio(bio);
+    }
+  }, [edit, name, surname, birthdate, bio]);
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    setName(tempName);
+    setSurname(tempSurname);
+    setBirthdate(tempBirthdate);
+    setBio(tempBio);
+
+    localStorage.setItem("name", tempName);
+    localStorage.setItem("surname", tempSurname);
+    localStorage.setItem("birthdate", tempBirthdate);
+    localStorage.setItem("bio", tempBio);
+    PatchProfile(tempName, tempSurname, tempBirthdate, tempBio);
+
+    setEdit(false);
+  };
+
   return (
     <div className="profile-card">
       <div className="profile-card-content">
-        <div className="profile-card-image-container">
-          <img src="/placeholder.svg" alt="Profile" className="profile-card-image" />
-          <button onClick={() => setEdit(!edit)} className="edit-button">
-            <Pencil className="edit-icon" />
-          </button>
-        </div>
         <div className="profile-card-details">
-          <form onSubmit={handleSave} className="profile-form">
+          <form onSubmit={handleSave} className={`profile-form ${formRef.current && formRef.current.classList.contains('column') ? 'column' : ''}`} ref={formRef}>
             <div className="profile-form-group">
               <TextField
                 label="Username"
@@ -166,7 +144,7 @@ export default function Profile() {
                 className="readonly-input"
               />
             </div>
-			<div className="profile-form-group">
+            <div className="profile-form-group">
               <TextField
                 label="User ID"
                 type="text"
@@ -260,12 +238,20 @@ export default function Profile() {
                 className={!edit ? "readonly-input" : ""}
               />
             </div>
-            {edit && (
-              <div className="profile-form-group">
-                <Button type="submit">Salva Modifiche</Button>
-              </div>
-            )}
           </form>
+        </div>
+        <div className="profile-card-image-container">
+          <div className="profile-image-circle">
+            {/*<img src="/placeholder.svg" alt="Profile" className="profile-card-image" />*/}
+          </div>
+		  <div className="buttons">
+			<button onClick={() => setEdit(!edit)} className="edit-button">
+				<Pencil className="edit-icon" />
+			</button>
+			<button onClick={handleSave} className="save-button">
+				<Save className="save-icon" />
+			</button>
+		  </div>
         </div>
       </div>
     </div>
