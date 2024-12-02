@@ -105,7 +105,7 @@ export default function TaskActive() {
 			}}
 		>
 			<Box sx={{ display: "flex", justifyContent: "space-between", borderBottom: 0, borderColor: "divider", alignItems: "center", padding: "10px", height: "40px" }}>
-				<Typography variant="body1">task attive</Typography>
+				<Typography variant="body1">task active</Typography>
 			</Box>
 			<Box sx={{ padding: "10px", paddingTop: "0px", display: "flex", flexDirection: "column", gap: "10px" }}>
 			{tasks.length > 0 ? (
