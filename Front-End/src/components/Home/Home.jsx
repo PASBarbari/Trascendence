@@ -11,7 +11,8 @@ import close from './close.png';
 import TaskAvaiable from '../TaskAvaiable/TaskAvaiable';
 import TaskActive from '../TaskActive/TaskActive';
 import { ExpandableSidebar } from '../ExpandableSidebar/ExpandableSidebar';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid2';
+import Notification from '../Notification/Notification';
 
 //import WebSocketComponent from '../WebSocket/WebSocket';
 // import { Nav, navbar } from 'react-bootstrap';
@@ -42,14 +43,14 @@ const Home = () => {
 			</div>
 			<div className="undernavbar">
 
-			<div className="expandable-sidebar-container">
-				<ExpandableSidebar 
-					activeChatType={activeChatType}
-					setActiveChatType={setActiveChatType}
-				/>
-			</div>
+				<div className="expandable-sidebar-container">
+					<ExpandableSidebar
+						activeChatType={activeChatType}
+						setActiveChatType={setActiveChatType}
+					/>
+				</div>
 
-{/*				<div className="sidebar">
+				{/*				<div className="sidebar">
 					<button className="chat-buttons" onClick={toggleDiv}>
 						<img src={chatImg} alt="chat" className="chat-image" />
 					</button>
@@ -58,18 +59,15 @@ const Home = () => {
 */}
 				<div className={`content ${isDivVisible ? 'content-reduced' : ''}`}>
 					{isProfileVisible && <Profile />}
-					<Grid container spacing={2} sx={{
-						display: 'flex',
-						justifyContent: 'center',
-
-					}}>
-						<Grid item xs={6}>
-							<TaskAvaiable />
-						</Grid>
-						<Grid item xs={6}>
-							<TaskActive />
-						</Grid>
-					</Grid>
+					{/*<div className="task-container">
+						<Notification />
+					</div>*/}
+					<div className="task-container">
+                        <TaskAvaiable />
+                    </div>
+                    <div className="task-container">
+                        <TaskActive />
+                    </div>
 				</div>
 			</div>
 		</div>
