@@ -129,7 +129,7 @@ export default function TaskAvaiable() {
 		}}>
 			<TabContext value={value}>
 				<Box sx={{ display: "flex", justifyContent: "space-between", borderBottom: 0, borderColor: "divider", alignItems: "center", padding: "10px", height: "40px" }}>
-					<Typography variant="body1">task disponibili</Typography>
+					<Typography variant="body1">task available</Typography>
 					<Button
 						id="demo-positioned-button"
 						aria-controls={Boolean(anchorEl) ? 'demo-positioned-menu' : undefined}
