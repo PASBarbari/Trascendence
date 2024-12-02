@@ -28,10 +28,10 @@ class UsersSerializer(serializers.ModelSerializer):
 
 
 class FriendshipsSerializer(serializers.ModelSerializer):
-	user_1 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
-	user_2 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
-	accepted = serializers.BooleanField(read_only=True)
-	last_modified = serializers.DateTimeField(read_only=True)
+	# user_1 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
+	# user_2 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
+	# accepted = serializers.BooleanField(read_only=True)
+	# last_modified = serializers.DateTimeField(read_only=True)
 
 	class Meta:
 		model = Friendships
