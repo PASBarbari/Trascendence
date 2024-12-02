@@ -135,9 +135,11 @@ export default function Profile() {
                 type="text"
                 name="username"
                 value={username}
-                InputProps={{
-                  readOnly: true,
-                  style: { border: 'none' }
+                slotProps={{
+                  input: {
+                    readOnly: true,
+                    style: { border: 'none' }
+                  }
                 }}
                 variant="outlined"
                 size="small"
@@ -151,9 +153,11 @@ export default function Profile() {
                 type="text"
                 name="user_id"
                 value={user_id}
-                InputProps={{
-                  readOnly: true,
-                  style: { border: 'none' }
+                slotProps={{
+                  input: {
+                    readOnly: true,
+                    style: { border: 'none' }
+                  }
                 }}
                 variant="outlined"
                 size="small"
@@ -167,9 +171,11 @@ export default function Profile() {
                 type="email"
                 name="email"
                 value={email}
-                InputProps={{
-                  readOnly: true,
-                  style: { border: 'none' }
+                slotProps={{
+                  input: {
+                    readOnly: true,
+                    style: { border: 'none' }
+                  }
                 }}
                 variant="outlined"
                 size="small"
@@ -184,9 +190,14 @@ export default function Profile() {
                 name="birthdate"
                 value={edit ? tempBirthdate : birthdate}
                 onChange={(e) => setTempBirthdate(e.target.value)}
-                InputProps={{
-                  readOnly: !edit,
-                  style: { border: !edit ? 'none' : '' },
+                slotProps={{
+                  input: {
+                    readOnly: !edit,
+                    style: { border: !edit ? 'none' : '' },
+                  },
+                  inputLabel: {
+                    shrink: true,
+                  }
                 }}
                 size="small"
                 variant="outlined"
@@ -201,9 +212,11 @@ export default function Profile() {
                 name="name"
                 value={edit ? tempName : name}
                 onChange={(e) => setTempName(e.target.value)}
-                InputProps={{
-                  readOnly: !edit,
-                  style: { border: !edit ? 'none' : '' }
+                slotProps={{
+                  input: {
+                    readOnly: !edit,
+                    style: { border: !edit ? 'none' : '' }
+                  }
                 }}
                 variant="outlined"
                 size="small"
@@ -218,9 +231,11 @@ export default function Profile() {
                 name="surname"
                 value={edit ? tempSurname : surname}
                 onChange={(e) => setTempSurname(e.target.value)}
-                InputProps={{
-                  readOnly: !edit,
-                  style: { border: !edit ? 'none' : '' }
+                slotProps={{
+                  input: {
+                    readOnly: !edit,
+                    style: { border: !edit ? 'none' : '' }
+                  }
                 }}
                 variant="outlined"
                 size="small"
@@ -235,9 +250,11 @@ export default function Profile() {
                 name="bio"
                 value={edit ? tempBio : bio}
                 onChange={(e) => setTempBio(e.target.value)}
-                InputProps={{
-                  readOnly: !edit,
-                  style: { border: !edit ? 'none' : '' }
+                slotProps={{
+                  input: {
+                    readOnly: !edit,
+                    style: { border: !edit ? 'none' : '' }
+                  }
                 }}
                 variant="outlined"
                 size="small"

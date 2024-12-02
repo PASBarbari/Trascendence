@@ -111,19 +111,3 @@
 .readonly-input.Mui-focused .MuiOutlinedInput-notchedOutline {
   border-color: transparent;
 }
-
-/* Nascondi il placeholder dell'input di tipo date quando non è attivo */
-input[type="date"]::-webkit-datetime-edit-text,
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field {
-  color: transparent;
-}
-
-/* Mostra il placeholder dell'input di tipo date quando è attivo */
-input[type="date"]:focus::-webkit-datetime-edit-text,
-input[type="date"]:focus::-webkit-datetime-edit-month-field,
-input[type="date"]:focus::-webkit-datetime-edit-day-field,
-input[type="date"]:focus::-webkit-datetime-edit-year-field {
-  color: initial;
-}
