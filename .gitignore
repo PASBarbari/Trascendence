@@ -40,6 +40,7 @@ temp/
 
 .venv
 venv*
+*venv/
 node_modules
 migrations/
 Back-End/login/my_login/__pycache__/signals.cpython-311.pyc

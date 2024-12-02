@@ -96,11 +96,11 @@ ASGI_APPLICATION = 'Notifications.asgi.application'
 DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.postgresql',
-		'NAME': 'Notification_db',
-		'USER': 'pasquale',
-		'PASSWORD': '123',
-		'HOST': 'localhost',
-		'PORT': '5437',
+		'NAME': os.getenv('POSTGRES_DB', 'notifications'),
+		'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+		'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+		'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+		'PORT': os.getenv('POSTGRES_PORT', '5432'),
 	},
     'backup': {
         'ENGINE': 'django.db.backends.sqlite3',

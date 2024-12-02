@@ -35,8 +35,15 @@ Microservices = {
 	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
 }
 
-ALLOWED_HOSTS = ['*', 'chat_service', 'login_service', 'users_service', 'notifications_service', 'http://localhost:8000', 'http://localhost:8001', 'http://localhost:8002', 'http://login_service:8000']
-
+ALLOWED_HOSTS = [
+    '*', 
+    'chat_service', 
+    'login_service', 
+    'users_service', 
+    'notifications_service', 
+    'localhost', 
+    '127.0.0.1'
+]
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
