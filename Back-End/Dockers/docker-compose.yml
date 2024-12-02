@@ -16,6 +16,14 @@ services:
       timeout: 10s
       retries: 5
 
+  usertask_service:
+    build:
+      context: ./usertask_service
+      dockerfile: Dockerfile
+    container_name: container_usertask_service
+    ports:
+      - "8002:8000"
+
   login_db:
     build:
       context: ./login_db
@@ -30,6 +38,23 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+    env_file:
+      - ./login_service/.env
+
+  login_service:
+    build:
+      context: ./login_service
+      dockerfile: Dockerfile
+    container_name: container_login_service
+    ports:
+      - "8000:8000"
+    networks:
+      - back-end
+    env_file:
+      - ./login_service/.env
+    depends_on:
+      login_db:
+        condition: service_healthy
 
   chat_db:
     build:
@@ -45,6 +70,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+  
+  chat_service:
+    build:
+      context: ./chat_service
+      dockerfile: Dockerfile
+    container_name: container_chat_service
+    ports:
+      - "8001:8000"
 
   notification_db:
     build:
@@ -60,6 +93,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  notification_service:
+    build:
+      context: ./notification_service
+      dockerfile: Dockerfile
+    container_name: container_notification_service
+    ports:
+      - "8003:8000"
 
   redis_chat:
     image: "redis:latest"
@@ -179,5 +220,21 @@ volumes:
   grafana-data: {}
 
 networks:
+  usertask_network:
+    driver: bridge
+  chat_network:
+    driver: bridge
+  login_network:
+    driver: bridge
+  internal_notification_network:
+    driver: bridge
+  exporters_network:
+    driver: bridge
+  auth_network:
+    driver: bridge
+  logging_network:
+    driver: bridge
+  notification_network:
+    driver: bridge
   back-end:
     driver: bridge
