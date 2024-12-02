@@ -206,7 +206,7 @@ export function ExpandableSidebar() {
 						className={`sidebar-button ${activeButton === "close" ? "active" : ""}`}
 					>
 						<ChevronLeft className="icon" />
-						<span className="button-label">Chiudi</span>
+						<span className="button-label">Close</span>
 					</button>
 				) : (
 					<button
@@ -214,7 +214,7 @@ export function ExpandableSidebar() {
 						className={`sidebar-button ${activeButton === "open" ? "active" : ""}`}
 					>
 						<ChevronRight className="icon" />
-						<span className="button-label">Apri</span>
+						<span className="button-label">Open</span>
 					</button>
 				)}
 
@@ -223,7 +223,7 @@ export function ExpandableSidebar() {
 					className={`sidebar-button ${activeButton === "crea" ? "active" : ""}`}
 				>
 					<Plus className="icon" />
-					<span className="button-label">Crea</span>
+					<span className="button-label">Create</span>
 				</button>
 
 				<button
