@@ -108,18 +108,6 @@ export function ExpandableSidebar() {
 
 			const mockChats = [
 				{
-					id: "3",
-					name: "Charlie",
-					lastMessage: "Meeting at 2 PM",
-					type: "single",
-				},
-				{
-					id: "4",
-					name: "David",
-					lastMessage: "Can you help me with this?",
-					type: "single",
-				},
-				{
 					id: "5",
 					name: "Eve",
 					lastMessage: "Thanks for your help!",
@@ -276,13 +264,13 @@ export function ExpandableSidebar() {
 							{areChatItemsVisible &&
 								chats.map((chat, index) => (
 									<motion.div
-										key={chat.id}
-										initial={{ opacity: 0, x: -50 }}
-										animate={{ opacity: 1, x: 0 }}
-										exit={{ opacity: 0, x: -50 }}
-										transition={{ duration: 0.2, delay: index * 0.1 }}
-										className="chat-item"
-										ref={(el) => (chatRefs.current[chat.id] = el)}
+									key={chat.id}
+									initial={{ opacity: 0, x: -50 }}
+									animate={{ opacity: 1, x: 0 }}
+									exit={{ opacity: 0, x: -50 }}
+									transition={{ duration: 0.2, delay: index * 0.1 }}
+									className="chat-item"
+									ref={(el) => (chatRefs.current[chat.id] = el)}
 									>
 										{/*<div className="add-chat">
 											<input type="text" placeholder="Nome del gruppo" />
@@ -325,7 +313,7 @@ export function ExpandableSidebar() {
 													</div>
 												</div>
 												<AnimatePresence>
-													{expandedChat === chat.id && (
+													{expandedChat === chat.id && chat.id < 5 && (
 														<motion.div
 															initial={{ height: 0, opacity: 0 }}
 															animate={{ height: 384, opacity: 1 }}

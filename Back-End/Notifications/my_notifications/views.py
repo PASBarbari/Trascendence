@@ -9,7 +9,7 @@ from .serializers import UniversalNotificationSerializer, UserProfileSerializer 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination
-from .middleware import TokenAuthMiddlewareHTTP, APIKeyPermission
+from .middleware import APIKeyPermission
 class NotificationViewSet(viewsets.ViewSet):
 	def send_notification(self, user_id, group_id, notification):
 		if user_id is not None:

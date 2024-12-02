@@ -61,9 +61,10 @@ def CreateOnOtherServices(user):
 	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 	if chat_response.status_code != 201:
 		raise ValueError('Chat service failed to create user')
-#	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
-#	if notification_response.status_code != 201:
-#		raise ValueError('Notification service failed to create user')
+	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
+	if notification_response.status_code != 201:
+		print(notification_response.json())
+		raise ValueError('Notification service failed to create user')
 
 
 
