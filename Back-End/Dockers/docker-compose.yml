@@ -33,7 +33,7 @@ services:
     depends_on:
       usertask_db:
         condition: service_healthy
-      loginService:
+      loginservice:
         condition: service_healthy
     env_file:
       - ./usertask_service/.env
@@ -54,11 +54,11 @@ services:
       timeout: 10s
       retries: 5
     env_file:
-      - ./loginService/.env
+      - ./loginservice/.env
 
-  loginService:
+  loginservice:
     build:
-      context: ./loginService
+      context: ./loginservice
       dockerfile: Dockerfile
     container_name: container_loginService
     ports:
@@ -67,7 +67,7 @@ services:
       - login_network
       - auth_network
     env_file:
-      - ./loginService/.env
+      - ./loginservice/.env
     depends_on:
       login_db:
         condition: service_healthy
@@ -93,11 +93,11 @@ services:
       timeout: 10s
       retries: 5
     env_file:
-      - ./chatService/.env
+      - ./chatservice/.env
   
-  chatService:
+  chatservice:
     build:
-      context: ./chatService
+      context: ./chatservice
       dockerfile: Dockerfile
     container_name: container_chat_service
     ports:
@@ -111,10 +111,10 @@ services:
         condition: service_healthy
       redis_chat:
         condition: service_healthy
-      loginService:
+      loginservice:
         condition: service_healthy
     env_file:
-      - ./chatService/.env
+      - ./chatservice/.env
 
   notification_db:
     build:

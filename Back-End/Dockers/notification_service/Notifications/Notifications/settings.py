@@ -198,10 +198,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Microservices
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Login': os.getenv('loginservice', 'http://localhost:8000'),
+	'Chat': os.getenv('chatservice', 'http://localhost:8001'),
+	'Users': os.getenv('userService', 'http://localhost:8002'),
+	'Notifications': os.getenv('notificationService', 'http://localhost:8003'),
 	'Personal' : "Self",
 }
 
