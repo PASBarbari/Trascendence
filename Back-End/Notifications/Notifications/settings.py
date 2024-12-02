@@ -60,8 +60,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
-	'my_notifications.middleware.TokenAuthMiddlewareHTTP',
-	'my_notifications.middleware.APIKeyAuthMiddleware',
+	# 'my_notifications.middleware.TokenAuthMiddlewareHTTP',
+	# 'my_notifications.middleware.APIKeyAuthMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -100,7 +100,7 @@ DATABASES = {
 		'USER': 'pasquale',
 		'PASSWORD': '123',
 		'HOST': 'localhost',
-		'PORT': '5437',
+		'PORT': '5438',
 	},
     'backup': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -122,8 +122,8 @@ oauth2_settings = {
 
 REST_FRAMEWORK = {
 	'DEFAULT_PERMISSION_CLASSES': [
-		'my_notifications.middleware.TokenAuthPermission',
-		'my_notifications.middleware.APIKeyAuthPermission',
+		# 'my_notifications.middleware.TokenAuthPermission',
+		'my_notifications.middleware.APIKeyPermission',
 	],
 }
 

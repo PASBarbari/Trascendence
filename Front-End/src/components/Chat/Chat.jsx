@@ -9,6 +9,7 @@ import { Send } from "lucide-react";
 // to test the chat you need to create 2 new chat to have the roomID that exist (hardcoded in this file)
 
 export default function Chat({ roomID, isSingleChat }) {
+	console.log("Chat", roomID, isSingleChat);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const token = localStorage.getItem("token");
