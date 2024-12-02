@@ -6,7 +6,7 @@ import logging
 
 
 @receiver(post_save, sender=ImmediateNotification)
-def send_notification(sender, instance, created, **kwargs):
+def IMMsend_notification(sender, instance, created, **kwargs):
 	if created:
 		if (send_notification(instance.user_id, instance.group_id, instance)):
 			logger = logging.getLogger(__name__)
