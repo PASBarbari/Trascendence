@@ -1,7 +1,18 @@
 from celery import shared_task
 from .models import *
-import requests
+import requests, dictionaries
 
 @shared_task
 def task_notify():
-	pass
+	# t = Tasks.objects.all()
+	# p = Progresses.objects.all()
+	# u = []
+	# d = dict()
+	# for x in t:
+	# 	for y in p:
+	# 		if y.task.id == x.id:
+	# 			u.append(y.user)
+	# 	d[x.id] = u
+	# 	u.clear()
+	print('ciao')
+		

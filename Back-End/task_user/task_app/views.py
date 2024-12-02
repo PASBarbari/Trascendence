@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from .models import Tasks, Progresses
 from .serializer import TasksSerializer, ProgressesSerializer, ProgressManageSerializer, ProgressesReadSerializer
 from user_app.models import Users
+from django_filters.rest_framework import DjangoFilterBackend
 
 class MultipleFieldLookupMixin:
 	"""
@@ -49,8 +50,8 @@ class TaskManage(generics.RetrieveUpdateDestroyAPIView):
 
 class ProgressGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
-	filter_backends = [filters.SearchFilter]
-	search_fields = ['user__user_id', 'task__id']
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['user__user_id', 'task__id']
 	queryset = Progresses.objects.all()
 
 	def get_serializer_class(self):

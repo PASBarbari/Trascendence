@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 	'oauth2_provider',
 	'task_app',
 	'user_app',
+	'celery',
 	'corsheaders',
 ]
 
@@ -151,7 +152,8 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6702/0'
 CELERY_BEAT_SCHEDULE = {
 	'task_notify': {
 		'task': 'task_app.celerity_task.task_notify',
-		'schedule': crontab(minute=0, hour=10),
+		'schedule': 20,
+		# 'schedule': crontab(minute=0, hour=10),
 	},
 }
 

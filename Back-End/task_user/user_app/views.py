@@ -8,6 +8,7 @@ from user_app.models import Users
 from .notification import ImmediateNotification, ScheduledNotification , SendNotification
 import asyncio
 from .middleware import APIKeyPermission
+from django_filters.rest_framework import DjangoFilterBackend
 class MultipleFieldLookupMixin:
 	"""
 	Apply this mixin to any view or viewset to get multiple field filtering
@@ -32,13 +33,13 @@ class AvatarGen(generics.ListCreateAPIView):
 class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = AvatarsSerializer
-	lookup_url_kwarg = 'user_id'
+	lookup_url_kwarg = 'id'
 	queryset = Avatars.objects.all()
 
 class UserGen(generics.ListCreateAPIView):
 	serializer_class = UsersSerializer
-	filter_backends = [filters.SearchFilter]
-	search_fields = ['user_id']
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['user_id']
 	queryset = Users.objects.all()
 
 	def get_permissions(self):
@@ -57,8 +58,8 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 
 class FriendList(generics.ListAPIView):
 	serializer_class = FriendshipsSerializer
-	filter_backends = [filters.SearchFilter]
-	search_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
 	queryset = Friendships.objects.all()
 	# def get_queryset(self):
 	# 	return Friendships.objects.filter(accepted=True)
