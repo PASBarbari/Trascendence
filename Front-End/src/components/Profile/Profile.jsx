@@ -34,9 +34,9 @@ const PatchProfile = async (name, surname, birthdate, bio) => {
 };
 
 export default function Profile() {
-  const username = localStorage.getItem("user_username");
-  const email = localStorage.getItem("user_email");
-  const user_id = localStorage.getItem("user_id");
+  const username = localStorage.getItem("user_username") || "";
+  const email = localStorage.getItem("user_email") || "";
+  const user_id = localStorage.getItem("user_id") || "";
   const [name, setName] = useState("");
   const [surname, setSurname] = useState("");
   const [birthdate, setBirthdate] = useState("");
@@ -84,10 +84,10 @@ export default function Profile() {
         if (response.ok) {
           const data = await response.json();
           const { first_name, last_name, birth_date, bio } = data;
-          setName(first_name);
-          setSurname(last_name);
-          setBirthdate(birth_date);
-          setBio(bio);
+          setName(first_name || "");
+          setSurname(last_name || "");
+          setBirthdate(birth_date || "");
+          setBio(bio || "");
         } else {
           const errorData = await response.json();
           console.error("Errore nella risposta del server:", errorData);
@@ -137,9 +137,10 @@ export default function Profile() {
                 value={username}
                 InputProps={{
                   readOnly: true,
-                  style: { height: 40, border: 'none' }
+                  style: { border: 'none' }
                 }}
                 variant="outlined"
+                size="small"
                 fullWidth
                 className="readonly-input"
               />
@@ -152,9 +153,10 @@ export default function Profile() {
                 value={user_id}
                 InputProps={{
                   readOnly: true,
-                  style: { height: 40, border: 'none' }
+                  style: { border: 'none' }
                 }}
                 variant="outlined"
+                size="small"
                 fullWidth
                 className="readonly-input"
               />
@@ -167,29 +169,31 @@ export default function Profile() {
                 value={email}
                 InputProps={{
                   readOnly: true,
-                  style: { height: 40, border: 'none' }
+                  style: { border: 'none' }
                 }}
                 variant="outlined"
+                size="small"
                 fullWidth
                 className="readonly-input"
               />
             </div>
-			<div className="profile-form-group">
-			  <TextField
-				label="Data di nascita"
-				type="date"
-				name="birthdate"
-				value={edit ? tempBirthdate : birthdate}
-				onChange={(e) => setTempBirthdate(e.target.value)}
-				InputProps={{
-				  readOnly: !edit,
-				  style: { height: 40, border: !edit ? 'none' : '' }
-				}}
-				variant="outlined"
-				fullWidth
-				className={!edit ? "readonly-input" : ""}
-			  />
-			</div>
+            <div className="profile-form-group">
+              <TextField
+                label="Data di nascita"
+                type="date"
+                name="birthdate"
+                value={edit ? tempBirthdate : birthdate}
+                onChange={(e) => setTempBirthdate(e.target.value)}
+                InputProps={{
+                  readOnly: !edit,
+                  style: { border: !edit ? 'none' : '' },
+                }}
+                size="small"
+                variant="outlined"
+                fullWidth
+                className={!edit ? "readonly-input" : ""}
+              />
+            </div>
             <div className="profile-form-group">
               <TextField
                 label="Nome"
@@ -199,9 +203,10 @@ export default function Profile() {
                 onChange={(e) => setTempName(e.target.value)}
                 InputProps={{
                   readOnly: !edit,
-                  style: { height: 40, border: !edit ? 'none' : '' }
+                  style: { border: !edit ? 'none' : '' }
                 }}
                 variant="outlined"
+                size="small"
                 fullWidth
                 className={!edit ? "readonly-input" : ""}
               />
@@ -215,9 +220,10 @@ export default function Profile() {
                 onChange={(e) => setTempSurname(e.target.value)}
                 InputProps={{
                   readOnly: !edit,
-                  style: { height: 40, border: !edit ? 'none' : '' }
+                  style: { border: !edit ? 'none' : '' }
                 }}
                 variant="outlined"
+                size="small"
                 fullWidth
                 className={!edit ? "readonly-input" : ""}
               />
@@ -231,13 +237,14 @@ export default function Profile() {
                 onChange={(e) => setTempBio(e.target.value)}
                 InputProps={{
                   readOnly: !edit,
-                  style: { height: 40, border: !edit ? 'none' : '' }
+                  style: { border: !edit ? 'none' : '' }
                 }}
                 variant="outlined"
+                size="small"
                 fullWidth
                 className={!edit ? "readonly-input" : ""}
-				multiline
-				rows={1}
+                multiline
+                rows={1}
               />
             </div>
           </form>
@@ -246,14 +253,14 @@ export default function Profile() {
           <div className="profile-image-circle">
             {/*<img src="/placeholder.svg" alt="Profile" className="profile-card-image" />*/}
           </div>
-		  <div className="buttons">
-			<button onClick={() => setEdit(!edit)} className="edit-button">
-				<Pencil className="edit-icon" />
-			</button>
-			<button onClick={handleSave} className="save-button">
-				<Save className="save-icon" />
-			</button>
-		  </div>
+          <div className="buttons">
+            <button onClick={() => setEdit(!edit)} className="edit-button">
+              <Pencil className="edit-icon" />
+            </button>
+            <button onClick={handleSave} className="save-button">
+              <Save className="save-icon" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
