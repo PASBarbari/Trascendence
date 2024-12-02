@@ -61,7 +61,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
 	'my_notifications.middleware.TokenAuthMiddlewareHTTP',
-	'my_notifications.middleware.APIKeyAuthMiddleware',
+	# 'my_notifications.middleware.APIKeyAuthMiddleware',
 ]
 
 REST_FRAMEWORK = {

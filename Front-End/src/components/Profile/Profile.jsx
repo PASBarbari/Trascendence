@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import "./Profile.css";
 import { TextField } from "@mui/material";
 import { Pencil, Save } from 'lucide-react';
+import Avatar from "../Avatar/Avatar";
 
 const PatchProfile = async (name, surname, birthdate, bio) => {
   const userID = localStorage.getItem("user_id");
@@ -49,6 +50,8 @@ export default function Profile() {
   const [tempBio, setTempBio] = useState("");
 
   const formRef = useRef(null);
+//   const level = localStorage.getItem("level");
+	const level = 10;
 
   useEffect(() => {
     const handleResize = () => {
@@ -267,9 +270,15 @@ export default function Profile() {
           </form>
         </div>
         <div className="profile-card-image-container">
-          <div className="profile-image-circle">
-            {/*<img src="/placeholder.svg" alt="Profile" className="profile-card-image" />*/}
-          </div>
+      <Avatar>
+		console.log("level2", level);
+        level = {level}
+		console.log("level3", level);
+        </Avatar>
+
+          {/* <div className="profile-image-circle">
+            <img src="/placeholder.svg" alt="Profile" className="profile-card-image" />
+          </div> */}
           <div className="buttons">
             <button onClick={() => setEdit(!edit)} className="edit-button">
               <Pencil className="edit-icon" />

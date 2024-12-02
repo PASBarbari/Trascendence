@@ -43,7 +43,7 @@
         {
             "label": "Run Login Server",
             "type": "shell",
-            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver",
+            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py makemigrations my_login && python3 manage.py migrate && python3 manage.py runserver",
             "options": {
                 "cwd": "${workspaceFolder}/Back-End"
             },

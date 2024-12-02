@@ -11,6 +11,7 @@ import { getCookie } from "../Cookie.jsx";
 
 export default function Task2({ id, task, onCancel }) {
   const [progress, setProgress] = React.useState(task.rate);
+  const [level, setLevel] = React.useState(0);
 
   const handleCancel = () => {
     if (onCancel) {
