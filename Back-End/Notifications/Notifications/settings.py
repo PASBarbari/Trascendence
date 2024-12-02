@@ -36,6 +36,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+	'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +50,8 @@ INSTALLED_APPS = [
 	'django_redis',
 	'django_filters',
 	'my_notifications',
+	'rest_framework',
+	'redis',
 ]
 
 MIDDLEWARE = [

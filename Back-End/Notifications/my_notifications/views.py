@@ -5,23 +5,24 @@ from asgiref.sync import async_to_sync
 from rest_framework import permissions , status
 from channels.layers import get_channel_layer
 from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, NotificationsGroup
-from .serializers import UniversalNotificationSerializer, UserProfileSerializer , NotificationsGroupSerializer
+from .serializers import UniversalNotificationSerializer, UserProfileSerializer , NotificationsGroupSerializer , ImmediateNotificationSerializer , ScheduledNotificationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination
 from .middleware import APIKeyPermission
-class NotificationViewSet(viewsets.ViewSet):
-	def send_notification(self, user_id, group_id, notification):
+
+def send_notification(user_id, group_id, notification):
 		if user_id is not None:
-			return self.send_user_notification(user_id, notification)
-		elif group_id is not None:
-			return self.send_group_notification(group_id, notification)
+			return send_user_notification(user_id, notification)
+		# elif group_id is not None:
+		# 	return send_group_notification(group_id, notification)
 		else:
 			return Response({'error': 'No user or group specified'})
 	
-	def send_user_notification(user_id, notification):
+def send_user_notification(user_id, notification):
 		channel_layer = get_channel_layer()
 		serialized_notification = UniversalNotificationSerializer(notification)
+		print(f'Sending notification to user {user_id}')
 		is_online = async_to_sync(channel_layer.group_send)(
 			f'notifications_{user_id}',
 			{
@@ -58,14 +59,19 @@ class NewUser(generics.CreateAPIView):
 	fields = ['user_id', 'email', 'is_online']
 
 class NewNotification(generics.CreateAPIView):
-	permission_classes = [APIKeyPermission]
-	serializers = UniversalNotificationSerializer
-	def get_queryset(self):
-		ImmediateNotifications = ImmediateNotification.objects.all()
-		QueuedNotifications = QueuedNotification.objects.all()
-		ScheduledNotifications = ScheduledNotification.objects.all()
-		return ImmediateNotifications.union(QueuedNotifications, ScheduledNotifications)
+    permission_classes = [APIKeyPermission]
 
+    def get_queryset(self):
+        ImmediateNotifications = ImmediateNotification.objects.all()
+        ScheduledNotifications = ScheduledNotification.objects.all()
+        return ImmediateNotifications.union(ScheduledNotifications)
+
+    def get_serializer_class(self):
+        send_time = self.request.data.get('send_time', None)
+        if send_time is None:
+            return ImmediateNotificationSerializer
+        else:
+            return ScheduledNotificationSerializer
 
 class CursorNotificationPagination(CursorPagination):
 	page_size = 10
