@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-import psycopg2
+
 
 class Avatars(models.Model):
 	id = models.AutoField(primary_key=True)
