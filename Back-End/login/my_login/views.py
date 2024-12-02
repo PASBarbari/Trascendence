@@ -251,3 +251,7 @@ class CustomIntrospect(IntrospectTokenView):
 				}
 		except AccessToken.DoesNotExist:
 			return {'active': False}
+
+@csrf_exempt
+def health_check(request):
+    return JsonResponse({'status': 'ok'})

@@ -144,7 +144,7 @@ class UserLogin(APIView):
 				return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class ServiceRegister(APIView):
 	permission_classes = (permissions.AllowAny,)
 	authentication_classes = (OAuth2Authentication,)
@@ -251,3 +251,7 @@ class CustomIntrospect(IntrospectTokenView):
 				}
 		except AccessToken.DoesNotExist:
 			return {'active': False}
+
+@csrf_exempt
+def health_check(request):
+    return JsonResponse({'status': 'ok'})

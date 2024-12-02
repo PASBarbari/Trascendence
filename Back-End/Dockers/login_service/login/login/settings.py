@@ -28,24 +28,28 @@ API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-	'localhost',
-	'127.0.0.1',
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://localhost:3000',
-]
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+}
 
-CORS_ALLOWED_ORIGINS = [
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://localhost:3000',
-]
-# CORS_ALLOW_ALL_ORIGINS = True
+ALLOWED_HOSTS = ['*', 'chat_service', 'login_service', 'users_service', 'notifications_service', 'http://localhost:8000', 'http://localhost:8001', 'http://localhost:8002', 'http://login_service:8000']
+
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
+	'http://localhost:8000',
+	'http://localhost:8001',
+	'http://localhost:8002',
+	'http://localhost:8003',
+	Microservices['Chat'],
+	Microservices['Login'],
+	Microservices['Users'],
+	Microservices['Notifications'],
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -232,9 +236,3 @@ LOGGING = {
 #     	    },
 # 	    },
 # }
-Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-}

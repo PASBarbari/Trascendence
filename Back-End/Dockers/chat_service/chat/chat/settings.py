@@ -83,7 +83,7 @@ WSGI_APPLICATION = 'chat.wsgi.application'
 ASGI_APPLICATION = 'chat.asgi.application'
 
 oauth2_settings = {
-	'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
+	'OAUTH2_INTROSPECTION_URL': os.getenv('OAUTH2_INTROSPECTION_URL', 'http://localhost:8000/o/introspect/'),
 	'CLIENT_ID': secrets.token_urlsafe(32),
 	'CLIENT_SECRET': secrets.token_urlsafe(64),
 	'TOKEN': '',
@@ -91,7 +91,7 @@ oauth2_settings = {
 	'EXPIRES': '',
 	'token_type': '',
 	'scope': '',
-	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
+	'SERVICE_PASSWORD': os.getenv('SERVICE_PASSWORD', '123'),
 }
 
 # Database
@@ -100,17 +100,14 @@ oauth2_settings = {
 DATABASES = {
 	'default': {
 	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': 'chat_db',
-	'USER': 'pasquale',
-	'PASSWORD': '123',
-	'HOST': 'localhost',
-	'PORT': '5436',
-	},
-	'backup': {
-	'ENGINE': 'django.db.backends.sqlite3',
-	'NAME': str(BASE_DIR / 'db.sqlite3'),
+	'NAME': os.getenv('POSTGRES_DB', 'chat'),
+	'USER': os.getenv('POSTGRES_USER', 'postgres'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5432'),
 	}
 }
+
 
 
 # Password validation

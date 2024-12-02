@@ -5,13 +5,13 @@ from rest_framework.exceptions import AuthenticationFailed
 from django.conf import settings
 from datetime import datetime, timedelta
 from chat.settings import oauth2_settings
-import json
+import json , os
 
 def login_self():
-	login_url = 'http://localhost:8000/login/login'
+	login_url = os.getenv('LOGIN_URL', 'http://localhost:8000/login/login')
 	data = {
-		'email': 'chat@chat.me',
-		'password' : 'chat_password',
+		'email': os.getenv('CHAT_EMAIL'),
+		'password': os.getenv('CHAT_PASSWORD'),
 	}
 
 	response = requests.post(login_url, json=data)
@@ -21,11 +21,11 @@ def login_self():
 	return response.json()
 
 def user_register_self():
-	register_url = 'http://localhost:8000/login/register'
+	register_url = os.getenv('REGISTER_URL', 'http://localhost:8000/login/register')
 	data = {
-		'email': 'chat@chat.me',
-		'username': 'my_chat',
-		'password': 'chat_password',
+		'email': os.getenv('CHAT_EMAIL'),
+		'username': 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
+		'password': os.getenv('CHAT_PASSWORD'),
 	}
 	response = requests.post(register_url, json=data)
 	
@@ -38,8 +38,8 @@ def user_register_self():
 
 
 def register_self():
-	csrf_url = 'http://localhost:8000/login/get_csrf_token'
-	register_url = 'http://localhost:8000/login/Serviceregister'
+	csrf_url = os.getenv('CSRF_URL', 'http://localhost:8000/login/csrf')
+	register_url = os.getenv('REGISTER_SERVICE_URL', 'http://localhost:8000/login/register_service')
     
 	data = {
 		'name': 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
@@ -58,9 +58,7 @@ def register_self():
 		raise Exception('CSRF token not found in response cookies')
     
 	csrf_token = csrf_resp.cookies['csrftoken']
-
 	access_token = oauth2_settings['TOKEN']
-	print("Access token:", access_token)
 	headers = {
 		'Content-Type': 'application/json',
 		'X-CSRFToken': csrf_token,
@@ -76,13 +74,6 @@ def register_self():
 		app_data = response.json()
 	except json.JSONDecodeError:
 		raise Exception('Failed to parse JSON response')
-	# oauth2_settings['CLIENT_ID'] = app_data['client_id']
-	# oauth2_settings['CLIENT_SECRET'] = app_data['client_secret']
-	# oauth2_settings['TOKEN'] = app_data['access_token']	
-	# oauth2_settings['REFRESH_TOKEN'] = app_data['refresh_token']
-	# oauth2_settings['EXPIRES'] = datetime.now() + timedelta(seconds=app_data['expires_in'])
-	# oauth2_settings['token_type'] = app_data['token_type']
-	# oauth2_settings['scope'] = app_data['scope']
 
 
 #auth classes
