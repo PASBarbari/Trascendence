@@ -1,0 +1,156 @@
+move2kube:
+  minreplicas: "1"
+  repo:
+    keys:
+      load: No, I will add them later if necessary.
+      pub:
+        load: true
+  services:
+    chat:
+      "8080":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+      port: "8080"
+    fides-celery-notification:
+      "8080":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+    fides-chat-db:
+      "5432":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-chatservice:
+      "8000":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+    fides-grafana:
+      "8080":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+    fides-login-db:
+      "5432":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-loginservice:
+      "8000":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+    fides-loki:
+      "3100":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-notification-db:
+      "5432":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-notification-service:
+      "8000":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+    fides-prometheus:
+      "8080":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-user-db:
+      "5432":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-usertask-db:
+      "5432":
+        servicetype: Don't create service
+      deployment: StatefulSet
+      enable: true
+    fides-usertask-service:
+      "8000":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+    login:
+      "3000":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+      port: "3000"
+    notifications:
+      "3003":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+      port: "3003"
+    task-user:
+      "3002":
+        servicetype: Don't create service
+      deployment: Deployment
+      enable: true
+      port: "3002"
+  target:
+    cicd:
+      tekton:
+        gitrepobasicauthsecret: ""
+        gitreposshsecret: ""
+        registrypushsecret: ""
+    default:
+      clustertype: Kubernetes
+      ingress:
+        host: myproject.com
+        ingressclassname: ""
+        tls: ""
+    imageregistry:
+      index.docker.io:
+        logintype: no authentication
+      namespace: Transcendence
+      url: index.docker.io
+  transformers:
+    kubernetes:
+      argocd:
+        namespace: ""
+    types:
+      - ArgoCD
+      - Buildconfig
+      - CloudFoundry
+      - ClusterSelector
+      - ComposeAnalyser
+      - ComposeGenerator
+      - ContainerImagesPushScriptGenerator
+      - DockerfileDetector
+      - DockerfileImageBuildScript
+      - DockerfileParser
+      - DotNetCore-Dockerfile
+      - EarAnalyser
+      - EarRouter
+      - Golang-Dockerfile
+      - Gradle
+      - Jar
+      - Jboss
+      - Knative
+      - Kubernetes
+      - KubernetesVersionChanger
+      - Liberty
+      - Maven
+      - Nodejs-Dockerfile
+      - OperatorTransformer
+      - PHP-Dockerfile
+      - Parameterizer
+      - Python-Dockerfile
+      - ReadMeGenerator
+      - Ruby-Dockerfile
+      - Rust-Dockerfile
+      - Tekton
+      - Tomcat
+      - WarAnalyser
+      - WarRouter
+      - WinWebApp-Dockerfile
+      - ZuulAnalyser
+  transformerselector: ""

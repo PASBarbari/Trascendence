@@ -1,0 +1,194 @@
+apiVersion: move2kube.konveyor.io/v1alpha1
+kind: Plan
+metadata:
+  name: myproject
+spec:
+  sourceDir: Dockers
+  services:
+    chat:
+      - transformerName: Python-Dockerfile
+        paths:
+          MainPythonFilesPathType:
+            - chatservice/chat/manage.py
+          PythonFilesPathType:
+            - chatservice/chat/manage.py
+          ServiceDirectories:
+            - chatservice/chat
+        configs:
+          OriginalName:
+            originalName: chat
+          PythonConfig:
+            IsDjango: false
+    fides-celery-notification:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - celery_notification/Dockerfile
+          ServiceDirectories:
+            - celery_notification
+    fides-chat-db:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - chat_db/Dockerfile
+          ServiceDirectories:
+            - chat_db
+    fides-chatservice:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - chatservice/Dockerfile
+          ServiceDirectories:
+            - chatservice
+    fides-grafana:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - grafana/Dockerfile
+          ServiceDirectories:
+            - grafana
+    fides-login-db:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - login_db/Dockerfile
+          ServiceDirectories:
+            - login_db
+    fides-loginservice:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - loginservice/Dockerfile
+          ServiceDirectories:
+            - loginservice
+    fides-loki:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - loki/Dockerfile
+          ServiceDirectories:
+            - loki
+    fides-notification-db:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - notification_db/Dockerfile
+          ServiceDirectories:
+            - notification_db
+    fides-notification-service:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - notification_service/Dockerfile
+          ServiceDirectories:
+            - notification_service
+    fides-prometheus:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - prometheus/Dockerfile
+          ServiceDirectories:
+            - prometheus
+    fides-user-db:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - user_db/Dockerfile
+          ServiceDirectories:
+            - user_db
+    fides-usertask-db:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - usertask_db/Dockerfile
+          ServiceDirectories:
+            - usertask_db
+    fides-usertask-service:
+      - transformerName: DockerfileDetector
+        paths:
+          Dockerfile:
+            - usertask_service/Dockerfile
+          ServiceDirectories:
+            - usertask_service
+    login:
+      - transformerName: Python-Dockerfile
+        paths:
+          MainPythonFilesPathType:
+            - loginservice/login/manage.py
+          PythonFilesPathType:
+            - loginservice/login/manage.py
+          ServiceDirectories:
+            - loginservice/login
+        configs:
+          OriginalName:
+            originalName: login
+          PythonConfig:
+            IsDjango: false
+    notifications:
+      - transformerName: Python-Dockerfile
+        paths:
+          MainPythonFilesPathType:
+            - notification_service/Notifications/manage.py
+          PythonFilesPathType:
+            - notification_service/Notifications/manage.py
+          ServiceDirectories:
+            - notification_service/Notifications
+        configs:
+          OriginalName:
+            originalName: Notifications
+          PythonConfig:
+            IsDjango: false
+    task-user:
+      - transformerName: Python-Dockerfile
+        paths:
+          MainPythonFilesPathType:
+            - usertask_service/task_user/manage.py
+          PythonFilesPathType:
+            - usertask_service/task_user/manage.py
+          ServiceDirectories:
+            - usertask_service/task_user
+        configs:
+          OriginalName:
+            originalName: task_user
+          PythonConfig:
+            IsDjango: false
+  transformers:
+    ArgoCD: m2kassets/built-in/transformers/kubernetes/argocd/transformer.yaml
+    Buildconfig: m2kassets/built-in/transformers/kubernetes/buildconfig/transformer.yaml
+    CloudFoundry: m2kassets/built-in/transformers/cloudfoundry/transformer.yaml
+    ClusterSelector: m2kassets/built-in/transformers/kubernetes/clusterselector/transformer.yaml
+    ComposeAnalyser: m2kassets/built-in/transformers/compose/composeanalyser/transformer.yaml
+    ComposeGenerator: m2kassets/built-in/transformers/compose/composegenerator/transformer.yaml
+    ContainerImagesPushScriptGenerator: m2kassets/built-in/transformers/containerimagespushscript/transformer.yaml
+    DockerfileDetector: m2kassets/built-in/transformers/dockerfile/dockerfiledetector/transformer.yaml
+    DockerfileImageBuildScript: m2kassets/built-in/transformers/dockerfile/dockerimagebuildscript/transformer.yaml
+    DockerfileParser: m2kassets/built-in/transformers/dockerfile/dockerfileparser/transformer.yaml
+    DotNetCore-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/dotnetcore/transformer.yaml
+    EarAnalyser: m2kassets/built-in/transformers/dockerfilegenerator/java/earanalyser/transformer.yaml
+    EarRouter: m2kassets/built-in/transformers/dockerfilegenerator/java/earrouter/transformer.yaml
+    Golang-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/golang/transformer.yaml
+    Gradle: m2kassets/built-in/transformers/dockerfilegenerator/java/gradle/transformer.yaml
+    Jar: m2kassets/built-in/transformers/dockerfilegenerator/java/jar/transformer.yaml
+    Jboss: m2kassets/built-in/transformers/dockerfilegenerator/java/jboss/transformer.yaml
+    Knative: m2kassets/built-in/transformers/kubernetes/knative/transformer.yaml
+    Kubernetes: m2kassets/built-in/transformers/kubernetes/kubernetes/transformer.yaml
+    KubernetesVersionChanger: m2kassets/built-in/transformers/kubernetes/kubernetesversionchanger/transformer.yaml
+    Liberty: m2kassets/built-in/transformers/dockerfilegenerator/java/liberty/transformer.yaml
+    Maven: m2kassets/built-in/transformers/dockerfilegenerator/java/maven/transformer.yaml
+    Nodejs-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/nodejs/transformer.yaml
+    OperatorTransformer: m2kassets/built-in/transformers/kubernetes/operator/transformer.yaml
+    PHP-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/php/transformer.yaml
+    Parameterizer: m2kassets/built-in/transformers/kubernetes/parameterizer/transformer.yaml
+    Python-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/python/transformer.yaml
+    ReadMeGenerator: m2kassets/built-in/transformers/readmegenerator/transformer.yaml
+    Ruby-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/ruby/transformer.yaml
+    Rust-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/rust/transformer.yaml
+    Tekton: m2kassets/built-in/transformers/kubernetes/tekton/transformer.yaml
+    Tomcat: m2kassets/built-in/transformers/dockerfilegenerator/java/tomcat/transformer.yaml
+    WarAnalyser: m2kassets/built-in/transformers/dockerfilegenerator/java/waranalyser/transformer.yaml
+    WarRouter: m2kassets/built-in/transformers/dockerfilegenerator/java/warrouter/transformer.yaml
+    WinWebApp-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/windows/winweb/transformer.yaml
+    ZuulAnalyser: m2kassets/built-in/transformers/dockerfilegenerator/java/zuul/transformer.yaml
+  disabledTransformers:
+    WinConsoleApp-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/windows/winconsole/transformer.yaml
+    WinSLWebApp-Dockerfile: m2kassets/built-in/transformers/dockerfilegenerator/windows/winsilverlightweb/transformer.yaml

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: login-server-deployment
+  labels:
+    app: login-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: login-server
+  template:
+    metadata:
+      labels:
+        app: login-server
+    spec:
+      containers:
+      - name: login-server
+        image: login-server
+        ports:
+        - containerPort: 8000
+        env:
+        
+        

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: login-db-deployment
+  labels:
+    app: login-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: login-db
+  template:
+    metadata:
+      labels:
+        app: login-db
+    spec:
+      containers:
+      - name: login-db
+        image: postgres
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+           secretKeyRef:
+            name: login-db-secret
+            key: login-db
+        - name: POSTGRES_USER
+          valueFrom:
+           secretKeyRef:
+            name: login-db-secret
+            key: login-db-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+           secretKeyRef:
+            name: login-db-secret
+            key: login-db-password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: login-db-service
+spec:
+  selector:
+    app: login-db
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432

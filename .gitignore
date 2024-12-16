@@ -37,7 +37,8 @@ temp/
 *__pycache__/
 *.pyc
 .vscode/settings.json
-
+*secret.yaml
+*secret.yml
 .venv
 venv*
 *venv/
