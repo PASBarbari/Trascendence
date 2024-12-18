@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: login-namespace
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: login-server-deployment
+  namespace: login-namespace
   labels:
     app: login-server
 spec:
@@ -16,9 +22,65 @@ spec:
     spec:
       containers:
       - name: login-server
-        image: login-server
+        image: login-server:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
         env:
-        
-        
+        - name: POSTGRES_DB
+          valueFrom:
+           secretKeyRef:
+            name: login-db-secret
+            key: login-db
+        - name: POSTGRES_USER
+          valueFrom:
+           secretKeyRef:
+            name: login-db-secret
+            key: login-db-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+           secretKeyRef:
+            name: login-db-secret
+            key: login-db-password
+        - name: LOGIN_URL
+          valueFrom:
+           configMapKeyRef:
+            name: login-configmap
+            key: login_url
+        - name: CHAT_URL
+          valueFrom:
+           configMapKeyRef:
+            name: login-configmap
+            key: chat_url
+        - name: USERS_URL
+          valueFrom:
+           configMapKeyRef:
+            name: login-configmap
+            key: users_url
+        - name: NOTIFICATIONS_URL
+          valueFrom:
+           configMapKeyRef:
+            name: login-configmap
+            key: notifications_url
+        - name: POSTGRES_HOST
+          valueFrom:
+           configMapKeyRef:
+            name: login-configmap
+            key: login_db
+        - name: POSTGRES_PORT
+          value: "5432"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: login-server-service
+  namespace: login-namespace
+spec:
+  selector:
+    app: login-server
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+      nodePort: 30008

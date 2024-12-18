@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: login-configmap
+  namespace: login-namespace
+data:
+  login_url: login-service
+  chat_url: chat-service
+  users_url: users-service
+  notifications_url: notifications-service
+  login_db: login-db-service
+  chat_db: chat-db-service
+  users_db: users-db-service
+  notifications_db: notifications-db-service

@@ -1,0 +1,21 @@
+apiVersion: skaffold/v4beta11
+kind: Config
+metadata:
+  name: fides
+build:
+  artifacts:
+    - image: login-server
+      context: Back-End/Dockers/loginservice
+      docker:
+        dockerfile: Dockerfile
+    - image: postgres
+      context: Back-End/Dockers/login_db
+      docker:
+        dockerfile: Dockerfile
+manifests:
+  rawYaml:
+    - Configmap.yaml
+    - login-db-deployment.yaml
+    - login-db-secrets.yaml
+    - login-server-deployment.yaml
+    - res

@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: login-db-deployment
+  namespace: login-namespace
   labels:
     app: login-db
 spec:
@@ -40,6 +41,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: login-db-service
+  namespace: login-namespace
 spec:
   selector:
     app: login-db
