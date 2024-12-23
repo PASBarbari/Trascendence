@@ -12,10 +12,15 @@ build:
       context: Back-End/Dockers/login_db
       docker:
         dockerfile: Dockerfile
+    - image: front-end
+      context: Front-End
+      docker:
+        dockerfile: Dockerfile
 manifests:
   rawYaml:
     - Configmap.yaml
     - login-db-deployment.yaml
     - login-db-secrets.yaml
     - login-server-deployment.yaml
-    - res
+    - front-end-deployment.yaml
+    - namespaces.yaml

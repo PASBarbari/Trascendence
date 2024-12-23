@@ -254,4 +254,4 @@ class CustomIntrospect(IntrospectTokenView):
 
 @csrf_exempt
 def health_check(request):
-    return JsonResponse({'status': 'ok'})
+    return JsonResponse({'status': 'Ok'}, status=200)
