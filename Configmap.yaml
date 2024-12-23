@@ -12,3 +12,9 @@ data:
   chat_db: chat-db-service
   users_db: users-db-service
   notifications_db: notifications-db-service
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-configmap
+  namespace: frontend-namespace
