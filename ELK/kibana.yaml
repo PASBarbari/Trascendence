@@ -1,0 +1,14 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: trascendence
+  namespace: elk
+spec:
+  version: 8.13.4
+  count: 1
+  elasticsearchRef:
+    name: trascendence
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: false

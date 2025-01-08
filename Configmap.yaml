@@ -16,5 +16,5 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: frontend-configmap
-  namespace: frontend-namespace
+  name: front-end-configmap
+  namespace: front-end-namespace
