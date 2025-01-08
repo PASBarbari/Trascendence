@@ -27,20 +27,25 @@ class NotificationsGroupSerializer(serializers.ModelSerializer):
 		fields = '__all__'
 
 class UniversalNotificationSerializer(serializers.ModelSerializer):
-	notification = serializers.SerializerMethodField()
+    class Meta:
+        model = None
+        fields = '__all__'
 
-	class Meta:
-		model = BaseNotification
-		fields = ['id', 'Type', 'Sender', 'message', 'notification']
+    def __init__(self, *args, **kwargs):
+        model = kwargs.pop('model', None)
+        super().__init__(*args, **kwargs)
+        if model is not None:
+            self.Meta.model = model
 
-	def get_notification(self, obj):
-		if isinstance(obj, ImmediateNotification):
-			return ImmediateNotificationSerializer(obj).data
-		elif isinstance(obj, QueuedNotification):
-			return QueuedNotificationSerializer(obj).data
-		elif isinstance(obj, ScheduledNotification):
-			return ScheduledNotificationSerializer(obj).data
-		return None
+
+	# def get_notification(self, obj):
+	# 	if isinstance(obj, ImmediateNotification):
+	# 		return ImmediateNotificationSerializer(obj).data
+	# 	elif isinstance(obj, QueuedNotification):
+	# 		return QueuedNotificationSerializer(obj).data
+	# 	elif isinstance(obj, ScheduledNotification):
+	# 		return ScheduledNotificationSerializer(obj).data
+	# 	return None
 
 
 # class UniversalNotificationSerializer(serializers.ModelSerializer):

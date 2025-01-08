@@ -7,6 +7,13 @@
 	height: fit-content;
 }
 
+.dates {
+	font-size: 12px;
+	display: flex;
+	justify-content: center;
+	padding-bottom: 10px;
+}
+
 .separated {
 	margin: 20px;
 	/* Aggiunge uno spazio tra i div */

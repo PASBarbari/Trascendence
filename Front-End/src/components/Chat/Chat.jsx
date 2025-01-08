@@ -9,7 +9,7 @@ import { Send } from "lucide-react";
 // to test the chat you need to create 2 new chat to have the roomID that exist (hardcoded in this file)
 
 export default function Chat({ roomID, isSingleChat }) {
-	console.log("Chat", roomID, isSingleChat);
+  console.log("Chat", roomID, isSingleChat);
   const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
   const token = localStorage.getItem("token");
@@ -94,48 +94,43 @@ export default function Chat({ roomID, isSingleChat }) {
     }
   };
 
+  let lastDate = null;
+
   return (
-	<div>
-	  <div className="scrollable-content">
-		<div>
-		  {chat.map((msg, index) => (
-			<ChatBubble
-			  key={index}
-			  sender={msg.sender}
-			  date={new Date(msg.timestamp).toLocaleString()}
-			  message={msg.message}
-			  isSingleChat={isSingleChat} // Puoi cambiare questo valore in base alle tue esigenze
-			/>
-		  ))}
-		</div>
-	  </div>
-		  <form onSubmit={handleSendMessage} className="chats-input">
-			<input
-			  type="text"
-			  value={message}
-			  onChange={(e) => setMessage(e.target.value)}
-			  placeholder="Type a message"
-			/>
-			<button onClick={handleSendMessage}>
-			<Send className="icon" />
-			</button>
-		  </form>
-	</div>
-		);
-    {/*<div className={`chat separated ${isExpanded ? "expanded" : ""}`}>
-      <div className="chat-button">
-        <button className="clickable-div" onClick={handleExpand}>
-          <div className="chat-header">
-            <h1>Chat</h1>
-            <p>Ready state: {readyState}</p>
-          </div>
-        </button>
+    <div>
+      <div className="scrollable-content">
+        <div>
+          {chat.map((msg, index) => {
+            const msgDate = new Date(msg.timestamp).toLocaleDateString();
+            const showDate = lastDate !== msgDate;
+            if (showDate) {
+              lastDate = msgDate;
+            }
+            return (
+              <div key={index}>
+                {showDate && <div className="dates">{msgDate}</div>}
+                <ChatBubble
+                  sender={msg.sender}
+                  date={new Date(msg.timestamp).toLocaleTimeString()}
+                  message={msg.message}
+                  isSingleChat={isSingleChat}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
-      {isExpanded && (*/}
-			  {/*
-      )}
-      {isExpanded && (
-      )}
+      <form onSubmit={handleSendMessage} className="chats-input">
+        <input
+          type="text"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Type a message"
+        />
+        <button onClick={handleSendMessage}>
+          <Send className="icon" />
+        </button>
+      </form>
     </div>
-	*/}
+  );
 }
