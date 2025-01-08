@@ -1,8 +1,8 @@
 import "./SideChats.css";
 import React, {useEffect, useState } from "react";
-import Chat from "./Chat";
-import AddChat from "./AddChat";
-import Input from "../Input/Input";
+import Chat from "./Chat.jsx";
+import AddChat from "./AddChat.jsx";
+import Input from "../Input/Input.jsx";
 import { getCookie } from "../Cookie.jsx";
 
 //restituisce tutte le chatrooms in cui l'utente è presente
