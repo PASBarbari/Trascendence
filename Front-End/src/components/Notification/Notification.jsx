@@ -12,15 +12,15 @@ export default function Notification() {
   const { lastMessage, readyState } = useWebSocket(wsUrl);
 
   useEffect(() => {
-    if (lastMessage !== null) {
-      setMessageHistory((prev) => prev.concat(lastMessage));
-      console.log("Nuovo messaggio:", lastMessage.data);
-      alert(`New message: ${lastMessage.data}`); // Mostra un avviso a schermo
+	  if (lastMessage !== null) {
+		  setMessageHistory((prev) => prev.concat(lastMessage));
+		  console.log("Nuovo messaggio:", lastMessage.data);
+      alert(`New message: ${lastMessage.data}`);
     }
-  }, [lastMessage]);
+}, [lastMessage]);
 
-  const handleSendFriendRequest = async () => {
-    console.log("Friend ID:", friendID);
+const handleSendFriendRequest = async () => {
+	console.log("Friend ID:", friendID);
     console.log("User ID:", user_id);
     try {
       const response = await fetch("http://localhost:8002/user/addfriend", {
@@ -32,21 +32,22 @@ export default function Notification() {
           user_1: user_id,
           user_2: friendID,
         }),
-      });
+	});
 
       if (response.ok) {
-        const data = await response.json();
-        console.log("Friend Request Sent:", data);
-      } else {
+		  const data = await response.json();
+		  console.log("Friend Request Sent:", data);
+		} else {
         const errorData = await response.json();
         console.error("Error in server response:", errorData);
-      }
-    } catch (error) {
-      console.error("Error in request:", error);
-    }
+	}
+} catch (error) {
+	console.error("Error in request:", error);
+}
 
-    // Controlla lo stato della connessione WebSocket
-    if (readyState === ReadyState.OPEN) {
+// Controlla lo stato della connessione WebSocket
+if (readyState === ReadyState.OPEN) {
+	  console.log("WebSocket URL:", wsUrl);	
       console.log("WebSocket connection is active");
     } else {
       console.log("WebSocket connection is not active");
