@@ -12,3 +12,16 @@ spec:
       node.store.allow_mmap: false
   secureSettings:
   - secretName: elastic-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trascendence-es-http
+  namespace: elk
+spec:
+  selector:
+    common.k8s.elastic.co/type: elasticsearch
+  ports:
+    - protocol: TCP
+      port: 9200
+      targetPort: 9200

@@ -14,3 +14,16 @@ spec:
         disabled: false
   secureSettings:
   - secretName: kibana-credentials
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trascendence-kb-http
+  namespace: elk
+spec:
+  selector:
+    common.k8s.elastic.co/type: kibana
+  ports:
+    - protocol: TCP
+      port: 5601
+      targetPort: 5601

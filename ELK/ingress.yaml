@@ -1,0 +1,27 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trascendence-ingress-elk
+  namespace: elk
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: trascendence.42firenze.it
+    http:
+      paths:
+      - path: /elasticsearch
+        pathType: Prefix
+        backend:
+          service:
+            name: trascendence-es-http
+            port:
+              number: 9200
+      - path: /kibana
+        pathType: Prefix
+        backend:
+          service:
+            name: trascendence-kb-http
+            port:
+              number: 5601
