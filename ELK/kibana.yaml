@@ -12,3 +12,5 @@ spec:
     tls:
       selfSignedCertificate:
         disabled: false
+  secureSettings:
+  - secretName: kibana-credentials

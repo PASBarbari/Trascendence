@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: trascendence-ingress
+  namespace: front-end-namespace
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
@@ -16,17 +17,18 @@ spec:
             name: front-end-service
             port:
               number: 3000
-      - path: /elasticsearch
-        pathType: Prefix
-        backend:
-          service:
-            name: quickstart-es-http
-            port:
-              number: 9200
-      - path: /kibana
-        pathType: Prefix
-        backend:
-          service:
-            name: quickstart-kb-http
-            port:
-              number: 5601
+
+      # - path: /elasticsearch
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: quickstart-es-http
+      #       port:
+      #         number: 9200
+      # - path: /kibana
+      #   pathType: Prefix
+      #   backend:
+      #     service:
+      #       name: quickstart-kb-http
+      #       port:
+      #         number: 5601

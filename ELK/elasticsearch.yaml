@@ -10,3 +10,5 @@ spec:
     count: 1
     config:
       node.store.allow_mmap: false
+  secureSettings:
+  - secretName: elastic-credentials

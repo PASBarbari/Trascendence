@@ -36,14 +36,9 @@ NAMESPACES=$(grep 'name:' namespace.yaml | awk '{print $2}')
 
 # Step 5: Apply pre-created secrets from USB drive
 echo "Applying secrets from directory..."
-SECRETS_DIR=/path/to/usb-drive/secrets
+SECRETS_DIR=./secrets
 if [ -d "$SECRETS_DIR" ]; then
-  for secret_file in "$SECRETS_DIR"/*.yaml; do
-    echo "Applying secret: $secret_file"
-    for namespace in $NAMESPACES; do
-      kubectl apply -f "$secret_file" --namespace $namespace
-    done
-  done
+  kubecolor apply -f $SECRETS_DIR/secrets.yaml
 else
   echo "Secrets directory not found at $SECRETS_DIR. Please check the path."
   exit 1
