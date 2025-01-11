@@ -15,6 +15,10 @@ spec:
       labels:
         app: front-end
     spec:
+      hostAliases:
+      - ip: "192.168.49.2"
+        hostnames:
+        - "trascendence.42firenze.it"
       containers:
       - name: front-end
         image: front-end:1.0

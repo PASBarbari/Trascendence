@@ -10,8 +10,8 @@ spec:
     name: trascendence
   http:
     tls:
-      selfSignedCertificate:
-        disabled: false
+      certificate:
+        secretName: kibana-tls
   secureSettings:
   - secretName: kibana-credentials
 ---

@@ -5,8 +5,12 @@ metadata:
   name: trascendence-ingress-elk
   namespace: elk
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
+  tls:
+  - hosts:
+    - trascendence.42firenze.it
+    secretName: kibana-tls
   rules:
   - host: trascendence.42firenze.it
     http:
