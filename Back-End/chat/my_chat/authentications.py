@@ -76,13 +76,6 @@ def register_self():
 		app_data = response.json()
 	except json.JSONDecodeError:
 		raise Exception('Failed to parse JSON response')
-	# oauth2_settings['CLIENT_ID'] = app_data['client_id']
-	# oauth2_settings['CLIENT_SECRET'] = app_data['client_secret']
-	# oauth2_settings['TOKEN'] = app_data['access_token']	
-	# oauth2_settings['REFRESH_TOKEN'] = app_data['refresh_token']
-	# oauth2_settings['EXPIRES'] = datetime.now() + timedelta(seconds=app_data['expires_in'])
-	# oauth2_settings['token_type'] = app_data['token_type']
-	# oauth2_settings['scope'] = app_data['scope']
 
 
 #auth classes

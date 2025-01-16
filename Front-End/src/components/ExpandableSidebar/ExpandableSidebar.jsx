@@ -53,7 +53,7 @@ const getChatRooms = async () => {
 export function ExpandableSidebar() {
 	const [chats, setChats] = useState([]);
 	const [expandedChat, setExpandedChat] = useState(null);
-	const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+	const [isSidebarOpen, setIsSidebarOpen] = useState(false); // chat partono da chiuse
 	const [areChatItemsVisible, setAreChatItemsVisible] = useState(true);
 	const [activeButton, setActiveButton] = useState(null);
 	const [newMessage, setNewMessage] = useState("");

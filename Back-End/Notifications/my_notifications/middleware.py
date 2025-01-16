@@ -13,61 +13,64 @@ from Notifications.settings import oauth2_settings
 
 @database_sync_to_async
 def get_user_from_token(token, scope):
-    user = cache.get(token)
-    if user:
-        return user
+	user = cache.get(token)
+	if user:
+		return user
 
-    introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
-    client_id = oauth2_settings['CLIENT_ID']
-    client_secret = oauth2_settings['CLIENT_SECRET']
+	introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
+	client_id = oauth2_settings['CLIENT_ID']
+	client_secret = oauth2_settings['CLIENT_SECRET']
 
-    credentials = f"{client_id}:{client_secret}"
-    encoded_credentials = base64.b64encode(credentials.encode()).decode()
+	credentials = f"{client_id}:{client_secret}"
+	encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
-    headers = {
-        'Authorization': f'Basic {encoded_credentials}',
-        'Content-Type': 'application/x-www-form-urlencoded',
-    }
-    try:
-        response = requests.post(introspection_url, headers=headers, data={
-            'token': token,
-        })
-        if response.status_code == 200:
-            data = response.json()
-            if data.get('active'):
-                email = data.get('username')
-                try:
-                    user = UserProfile.objects.get(email=email)
-                    # Cache the user with a timeout (e.g., 5 minutes)
-                    cache.set(token, user, timeout=300)
-                    return user
-                except UserProfile.DoesNotExist:
-                    return AnonymousUser()
-        else:
-            return AnonymousUser()
-    except requests.RequestException as e:
-        return AnonymousUser()
+	headers = {
+		'Authorization': f'Basic {encoded_credentials}',
+		'Content-Type': 'application/x-www-form-urlencoded',
+	}
+	try:
+		response = requests.post(introspection_url, headers=headers, data={
+			'token': token,
+		})
+		if response.status_code == 200:
+			data = response.json()
+			if data.get('active'):
+				email = data.get('username')
+				try:
+					print(email)
+					user = UserProfile.objects.get(email=email)
+					print(user)
+					# Cache the user with a timeout (e.g., 5 minutes)
+					cache.set(token, user, timeout=300)
+					return user
+				except UserProfile.DoesNotExist:
+					return AnonymousUser()
+		else:
+			print('Token introspection failed:', f'{response.status_code}')
+			return AnonymousUser()
+	except requests.RequestException as e:
+		return AnonymousUser()
 
-    return AnonymousUser()
+	return AnonymousUser()
 
 class TokenAuthMiddleware(BaseMiddleware):
-    async def __call__(self, scope, receive, send):
-        query_string = parse_qs(scope["query_string"].decode())
-        if scope['path'] == '/chat/new_user/':
-            scope['user'] = AnonymousUser()
-            return await super().__call__(scope, receive, send)
-        try:
-            token = query_string.get("token")
-            if token:
-                scope["user"] = await get_user_from_token(token[0], scope)
-            else:
-                scope["user"] = AnonymousUser()
-        except Exception as e:
-            scope["user"] = AnonymousUser()
-        return await super().__call__(scope, receive, send)
+	async def __call__(self, scope, receive, send):
+		query_string = parse_qs(scope["query_string"].decode())
+		if scope['path'] == '/chat/new_user/':
+			scope['user'] = AnonymousUser()
+			return await super().__call__(scope, receive, send)
+		try:
+			token = query_string.get("token")
+			if token:
+				scope["user"] = await get_user_from_token(token[0], scope)
+			else:
+				scope["user"] = AnonymousUser()
+		except Exception as e:
+			scope["user"] = AnonymousUser()
+		return await super().__call__(scope, receive, send)
 
 def TokenAuthMiddlewareStack(inner):
-    return TokenAuthMiddleware(AuthMiddlewareStack(inner))
+	return TokenAuthMiddleware(AuthMiddlewareStack(inner))
 
 class TokenAuthMiddlewareHTTP(MiddlewareMixin):
 		def process_request(self, request):
@@ -86,7 +89,7 @@ class TokenAuthMiddlewareHTTP(MiddlewareMixin):
 						request.user = AnonymousUser()
 
 		def get_user_from_token_sync(self, token):
-       # Check if the user is already cached
+	   # Check if the user is already cached
 			user = cache.get(token)
 			if user:
 					return user
