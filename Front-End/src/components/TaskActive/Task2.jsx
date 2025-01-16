@@ -10,7 +10,7 @@ import CircularProgress from '@mui/joy/CircularProgress';
 import { getCookie } from "../Cookie.jsx";
 
 export default function Task2({ id, task, onCancel }) {
-  const [progress, setProgress] = React.useState(task.rate);
+  const [progress, setProgress] = React.useState(Number(task.rate));
 
   const handleCancel = () => {
     if (onCancel) {
@@ -30,7 +30,7 @@ export default function Task2({ id, task, onCancel }) {
             "X-CSRFToken": getCookie("csrftoken"),
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
-					body: JSON.stringify({ rate: task_rate }),
+		  body: JSON.stringify({ rate: task_rate }),
         }
       );
       if (response.ok) {
@@ -67,24 +67,26 @@ export default function Task2({ id, task, onCancel }) {
     }
   };
 
-  const handleProgressClick = () => {
-    setProgress((prevProgress) => {
-      const newProgress = Math.min(prevProgress + 10, 100);
-      updateProgress(newProgress);
-      return newProgress;
-    });
-  };
+//   const handleProgressClick = () => {
+//     setProgress((prevProgress) => {
+//       const newProgress = Math.min(prevProgress + 10, 100);
+//       updateProgress(newProgress);
+//       return newProgress;
+//     });
+//   };
 
   return (
     <Box>
       <Card orientation="horizontal">
+
+
         <CardContent>
           <CircularProgress
             variant="solid"
             value={progress}
-            onClick={handleProgressClick}
+            // onClick={handleProgressClick}
 			determinate
-            sx={{ cursor: 'pointer' }}
+            // sx={{ cursor: 'pointer' }}
           />
           <Typography sx={{ fontSize: 'xl', fontWeight: 'lg' }}>
             {task.task.name} {task.task.category}

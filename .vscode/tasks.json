@@ -4,7 +4,7 @@
         {
             "label": "Docker Compose Up",
             "type": "shell",
-            "command": "docker-compose up",
+            "command": "docker compose up",
             "options": {
                 "cwd": "${workspaceFolder}/Back-End/Dockers"
             },
@@ -43,7 +43,7 @@
         {
             "label": "Run Login Server",
             "type": "shell",
-            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver",
+            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py makemigrations my_login && python3 manage.py migrate && python3 manage.py runserver",
             "options": {
                 "cwd": "${workspaceFolder}/Back-End"
             },
@@ -62,17 +62,39 @@
             "group": "build",
             "dependsOn": "Activate Venv and Install Requirements"
         },
-				{
-					"label": "Run Task Server",
-					"type": "shell",
-					"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
-					"options": {
-							"cwd": "${workspaceFolder}/Back-End"
-					},
-					"problemMatcher": [],
-					"group": "build",
-					"dependsOn": "Activate Venv and Install Requirements"
-				},
+		{
+			"label": "Run Task Server",
+			"type": "shell",
+			"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
+			"options": {
+					"cwd": "${workspaceFolder}/Back-End"
+			},
+			"problemMatcher": [],
+			"group": "build",
+			"dependsOn": "Activate Venv and Install Requirements"
+			},
+		{
+            "label": "Run Notification Server",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd Notifications && python3 manage.py makemigrations && python3 manage.py makemigrations my_notifications && python3 manage.py migrate && python3 manage.py runserver 8003",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+		{
+            "label": "Install Front-End Dependencies",
+            "type": "shell",
+            "command": "npm install",
+            "options": {
+                "cwd": "${workspaceFolder}/Front-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Wait 10 Seconds"
+        },
         {
             "label": "Start Front-End",
             "type": "shell",
@@ -82,7 +104,7 @@
             },
             "problemMatcher": [],
             "group": "build",
-						"dependsOn": "Wait 10 Seconds"
+			"dependsOn": "Install Front-End Dependencies"
         },
         {
             "label": "Run All",
@@ -94,7 +116,8 @@
                 "Wait 10 Seconds",
                 "Run Login Server",
                 "Run Chat Server",
-								"Run Task Server",
+				"Run Task Server",
+                "Run Notification Server",
                 "Start Front-End"
             ],
             "group": "build"

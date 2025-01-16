@@ -25,12 +25,9 @@ def schedule_notification(sender, instance, created, **kwargs):
 @receiver(post_save, sender=UserProfile)
 def create_user_profile(sender, instance, created, **kwargs):
 	if created:
-		NotificationsGroup.objects.create(
-			name='Personal',
-			type='Personal',
-			members=[instance],
-			owner=instance
-		)
+		group = NotificationsGroup.objects.create(name='Personal', Type='Personal')
+		group.members.set([instance])
+		group.save()
 		logger = logging.getLogger(__name__)
 		logger.info(f'User profile created: {instance}')
 
