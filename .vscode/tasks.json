@@ -62,18 +62,26 @@
             "group": "build",
             "dependsOn": "Activate Venv and Install Requirements"
         },
-		{
-			"label": "Run Task Server",
-			"type": "shell",
-			"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
-			"options": {
-					"cwd": "${workspaceFolder}/Back-End"
-			},
-			"problemMatcher": [],
-			"group": "build",
-			"dependsOn": "Activate Venv and Install Requirements"
-			},
-		{
+        {
+            "label": "Run Task Server",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+        {
+            "label": "Wait 5 Seconds",
+            "type": "shell",
+            "command": "sleep 5",
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+        {
             "label": "Run Notification Server",
             "type": "shell",
             "command": "source venv/bin/activate && cd Notifications && python3 manage.py makemigrations && python3 manage.py makemigrations my_notifications && python3 manage.py migrate && python3 manage.py runserver 8003",
@@ -82,9 +90,9 @@
             },
             "problemMatcher": [],
             "group": "build",
-            "dependsOn": "Activate Venv and Install Requirements"
+            "dependsOn": "Wait 5 Seconds"
         },
-		{
+        {
             "label": "Install Front-End Dependencies",
             "type": "shell",
             "command": "npm install",
@@ -104,7 +112,7 @@
             },
             "problemMatcher": [],
             "group": "build",
-			"dependsOn": "Install Front-End Dependencies"
+            "dependsOn": "Install Front-End Dependencies"
         },
         {
             "label": "Run All",
@@ -116,7 +124,7 @@
                 "Wait 10 Seconds",
                 "Run Login Server",
                 "Run Chat Server",
-				"Run Task Server",
+                "Run Task Server",
                 "Run Notification Server",
                 "Start Front-End"
             ],
