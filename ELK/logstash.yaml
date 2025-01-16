@@ -49,9 +49,9 @@ spec:
               mountPath: /usr/share/logstash/config
             - name: pipeline-volume
               mountPath: /usr/share/logstash/pipeline
-            # - name: ca-certs
-            #   mountPath: /etc/logstash/certificates
-            #   readOnly: true
+            - name: ca-certs
+              mountPath: /etc/logstash/certificates
+              readOnly: true
       volumes:
         - name: config-volume
           configMap:
@@ -59,12 +59,10 @@ spec:
         - name: pipeline-volume
           configMap:
             name: logstash-pipeline
-        # - name: ca-certs
-        #   secret:
-        #     secretName: elasticsearch-es-http-certs-public
- 
+        - name: ca-certs
+          secret:
+            secretName: trascendence-es-http-certs-public
 ---
- 
 apiVersion: v1
 kind: Service
 metadata:

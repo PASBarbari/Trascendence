@@ -8,12 +8,16 @@ spec:
   count: 1
   elasticsearchRef:
     name: trascendence
-  http:
-    tls:
-      certificate:
-        secretName: kibana-tls
-  secureSettings:
-  - secretName: kibana-credentials
+  podTemplate:
+    spec:
+      containers:
+      - name: kibana
+        env:
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elastic-credentials
+              key: ELASTIC_PASSWORD
 ---
 apiVersion: v1
 kind: Service

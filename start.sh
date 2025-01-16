@@ -63,4 +63,7 @@ for namespace in $NAMESPACES; do
 done
 
 echo "Project setup complete! Access Minikube services using:"
+
+PASS=kubectl get secret -nelk trascendence-kibana-user -o=jsonpath='{.data}'
+echo "Elastic pswd: $(echo $PASS | jq -r '.password' | base64 -d)"
 minikube service list
