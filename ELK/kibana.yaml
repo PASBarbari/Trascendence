@@ -18,6 +18,29 @@ spec:
             secretKeyRef:
               name: elastic-credentials
               key: ELASTIC_PASSWORD
+        - name: FLEET_SERVER_ENABLE
+          value: "true"
+        - name: FLEET_SERVER_HOST
+          value: "0.0.0.0"
+        - name: FLEET_SERVER_PORT
+          value: "8220"
+        - name: FLEET_SERVER_CERT
+          valueFrom:
+            secretKeyRef:
+              name: fleet-server-cert
+              key: tls.crt
+        - name: FLEET_SERVER_CERT_KEY
+          valueFrom:
+            
+              name: fleet-server-cert
+              key: tls.key
+        - name: FLEET_SERVER_ELASTICSEARCH_HOST
+          value: "https://elasticsearch:9200"
+        - name: FLEET_SERVER_ELASTICSEARCH_CA
+          valueFrom:
+            secretKeyRef:
+              name: trascendence-kb-es-ca
+              key: ca.crt
 ---
 apiVersion: v1
 kind: Service

@@ -6,7 +6,6 @@ metadata:
   namespace: elk
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: nginx
@@ -18,17 +17,17 @@ spec:
   - host: mylogs.42firenze.it
     http:
       paths:
-      - path: /kibana(/|$)(.*)
+      - path: /
         pathType: ImplementationSpecific
         backend:
           service:
             name: trascendence-kb-http
             port:
               number: 5601
-      - path: /elasticsearch(/|$)(.*)
-        pathType: ImplementationSpecific
-        backend:
-          service:
-            name: trascendence-es-http
-            port:
-              number: 9200
+      # - path: /elasticsearch(/|$)(.*)
+      #   pathType: ImplementationSpecific
+      #   backend:
+      #     service:
+      #       name: trascendence-es-http
+      #       port:
+      #         number: 9200

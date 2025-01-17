@@ -7,7 +7,7 @@ sudo apt install curl git -y
 sudo apt install kubecolor -y
 
 # Exit immediately if a command exits with a non-zero status
-set -e
+set -eux
 
 echo "Starting project setup..."
 

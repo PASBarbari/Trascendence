@@ -1,4 +1,3 @@
-# filepath: /home/lollo/Documents/Fides/certs.yaml
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
@@ -10,9 +9,12 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
-    - http01:
-        ingress:
-          class: nginx
+    - dns01:
+        cloudflare:
+          email: qualcosa2001@gmail.com
+          apiKeySecretRef:
+            name: cloudflare-api-key
+            key: api-key
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -55,3 +57,17 @@ spec:
   commonName: trascendence.42firenze.it
   dnsNames:
   - trascendence.42firenze.it
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fleet-server-cert
+  namespace: elk
+spec:
+  secretName: fleet-server-cert
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: fleet-server.42firenze.it
+  dnsNames:
+  - fleet-server.42firenze.it
