@@ -66,3 +66,5 @@ Back-End/login/login/__pycache__/urls.cpython-311.pyc
 users
 users_roles
 secrets.yaml
+fleet-server.crt
+fleet-server.key

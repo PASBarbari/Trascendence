@@ -12,8 +12,8 @@ spec:
     - dns01:
         cloudflare:
           email: qualcosa2001@gmail.com
-          apiKeySecretRef:
-            name: cloudflare-api-key
+          apiTokenSecretRef:
+            name: cloudflare-api-token-secret
             key: api-key
 ---
 apiVersion: cert-manager.io/v1

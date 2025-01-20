@@ -31,11 +31,11 @@ spec:
               key: tls.crt
         - name: FLEET_SERVER_CERT_KEY
           valueFrom:
-            
+            secretKeyRef:
               name: fleet-server-cert
               key: tls.key
         - name: FLEET_SERVER_ELASTICSEARCH_HOST
-          value: "https://elasticsearch:9200"
+          value: "https://trascendence-es-http:9200"
         - name: FLEET_SERVER_ELASTICSEARCH_CA
           valueFrom:
             secretKeyRef:
