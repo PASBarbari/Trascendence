@@ -58,6 +58,7 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	queryset = Users.objects.all()
 
 class FriendList(generics.ListAPIView):
+	permissions_classes = (permissions.AllowAny,)
 	serializer_class = FriendshipsSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
