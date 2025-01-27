@@ -85,63 +85,63 @@ def register_self():
 	oauth2_settings['CLIENT_SECRET'] = app_data['client_secret']
 
 
-#auth classes
-import requests
-from django.conf import settings
-from django.core.cache import cache
-from django.contrib.auth.models import AnonymousUser
-from rest_framework.authentication import BaseAuthentication
-from rest_framework.exceptions import AuthenticationFailed
+#auth classes TODO fix
+# import requests
+# from django.conf import settings
+# from django.core.cache import cache
+# from django.contrib.auth.models import AnonymousUser
+# from rest_framework.authentication import BaseAuthentication
+# from rest_framework.exceptions import AuthenticationFailed
 
-from django.contrib.auth import get_user_model
+# from django.contrib.auth import get_user_model
 
-class TokenAuthentication(BaseAuthentication):
-    def authenticate(self, request):
-        # Get token from Authorization header
-        token = request.META.get('HTTP_AUTHORIZATION')
-        if not token:
-            return None  # No token provided; DRF will treat it as an anonymous request
+# class TokenAuthentication(BaseAuthentication):
+#     def authenticate(self, request):
+#         # Get token from Authorization header
+#         token = request.META.get('HTTP_AUTHORIZATION')
+#         if not token:
+#             return None  # No token provided; DRF will treat it as an anonymous request
 
-        token = token.replace("Bearer ", "")
-        user = self.get_user_from_token(token)
+#         token = token.replace("Bearer ", "")
+#         user = self.get_user_from_token(token)
 
-        if user is not None:
-            return (user, token)  # Return tuple (user, auth) as required by DRF
-        else:
-            raise AuthenticationFailed("Invalid or inactive token")
+#         if user is not None:
+#             return (user, token)  # Return tuple (user, auth) as required by DRF
+#         else:
+#             raise AuthenticationFailed("Invalid or inactive token")
 
-    def get_user_from_token(self, token):
-        # Check the cache for user
-        user = cache.get(token)
-        if user:
-            return user
+#     def get_user_from_token(self, token):
+#         # Check the cache for user
+#         user = cache.get(token)
+#         if user:
+#             return user
 
-        # Token introspection request
-        introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
-        client_id = oauth2_settings['CLIENT_ID']
-        client_secret = oauth2_settings['CLIENT_SECRET']
+#         # Token introspection request
+#         introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
+#         client_id = oauth2_settings['CLIENT_ID']
+#         client_secret = oauth2_settings['CLIENT_SECRET']
 
-        try:
-            response = requests.post(introspection_url, data={
-                'token': token,
-                'client_id': client_id,
-                'client_secret': client_secret,
-            })
+#         try:
+#             response = requests.post(introspection_url, data={
+#                 'token': token,
+#                 'client_id': client_id,
+#                 'client_secret': client_secret,
+#             })
 
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('active'):
-                    user_id = data.get('user_id')
-                    User = get_user_model()
-                    try:
-                        user = User.objects.get(id=user_id)
-                        # Cache user for token expiry duration (default to 5 min if not provided)
-                        expires_in = data.get('expires_in', 300)
-                        cache.set(token, user, timeout=expires_in)
-                        return user
-                    except User.DoesNotExist:
-                        pass
-        except requests.RequestException as e:
-            raise AuthenticationFailed(f"Token introspection failed: {str(e)}")
+#             if response.status_code == 200:
+#                 data = response.json()
+#                 if data.get('active'):
+#                     user_id = data.get('user_id')
+#                     User = get_user_model()
+#                     try:
+#                         user = User.objects.get(id=user_id)
+#                         # Cache user for token expiry duration (default to 5 min if not provided)
+#                         expires_in = data.get('expires_in', 300)
+#                         cache.set(token, user, timeout=expires_in)
+#                         return user
+#                     except User.DoesNotExist:
+#                         pass
+#         except requests.RequestException as e:
+#             raise AuthenticationFailed(f"Token introspection failed: {str(e)}")
 
-        return None  # Default to None if authentication fails
+#         return None  # Default to None if authentication fails
