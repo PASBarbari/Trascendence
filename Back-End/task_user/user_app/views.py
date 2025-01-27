@@ -63,8 +63,12 @@ class FriendList(generics.ListAPIView):
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
 	queryset = Friendships.objects.all()
-	# def get_queryset(self):
-	# 	return Friendships.objects.filter(accepted=True)
+	def get_queryset(self):
+		queryset = super().get_queryset()
+		user_id = self.request.query_params.get('user_id')
+		if user_id:
+			queryset = queryset.filter(Q(user_1__user_id=user_id) | Q(user_2__user_id=user_id))
+		return queryset
 
 from .notification import Microservices
 
