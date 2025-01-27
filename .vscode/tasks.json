@@ -74,9 +74,9 @@
             "dependsOn": "Activate Venv and Install Requirements"
         },
         {
-            "label": "Wait 5 Seconds",
+            "label": "Wait 15 Seconds",
             "type": "shell",
-            "command": "sleep 5",
+            "command": "sleep 15",
             "problemMatcher": [],
             "group": "build",
             "dependsOn": "Activate Venv and Install Requirements"
@@ -90,7 +90,7 @@
             },
             "problemMatcher": [],
             "group": "build",
-            "dependsOn": "Wait 5 Seconds"
+            "dependsOn": "Wait 15 Seconds"
         },
         {
             "label": "Install Front-End Dependencies",

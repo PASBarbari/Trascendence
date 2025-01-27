@@ -61,7 +61,7 @@ async def send_user_notification(user_id, notification):
 		await sync_to_async(QueuedNotification.objects.create)(
 			user_id=user_id,
 			group_id=notification.group_id,
-			message=serialized_notification.message,
+			message=serialized_notification.data,
 			is_sent=False
 		)
 		return False

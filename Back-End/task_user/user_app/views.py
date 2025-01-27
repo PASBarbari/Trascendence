@@ -58,12 +58,17 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	queryset = Users.objects.all()
 
 class FriendList(generics.ListAPIView):
+	permissions_classes = (permissions.AllowAny,)
 	serializer_class = FriendshipsSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
 	queryset = Friendships.objects.all()
-	# def get_queryset(self):
-	# 	return Friendships.objects.filter(accepted=True)
+	def get_queryset(self):
+		queryset = super().get_queryset()
+		user_id = self.request.query_params.get('user_id')
+		if user_id:
+			queryset = queryset.filter(Q(user_1__user_id=user_id) | Q(user_2__user_id=user_id))
+		return queryset
 
 from .notification import Microservices
 
@@ -90,7 +95,7 @@ class AddFriend(APIView):
 				fs.save()
 				notifi = ImmediateNotification.objects.create(
 						Sender="Users",
-						message=f'Friend request from {u1.first_name} {u1.last_name}',
+						message=f'{u1.user_id}',
 						user_id=u2.user_id,
 						group_id=None,
 				)
