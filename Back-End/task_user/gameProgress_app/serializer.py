@@ -96,3 +96,20 @@ class ProgressManageSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Progresses
 		fields = '__all__'
+  
+  
+  
+# TODO GUGLIELMO: controllare se i dati sono validi e rimuovere la roba sopra(?)
+
+from .models import Game
+class GameSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Game
+		fields = '__all__'
+  
+from .models import GameInvite
+
+class GameInviteSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = GameInvite
+		fields = '__all__'

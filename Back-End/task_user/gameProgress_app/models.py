@@ -21,3 +21,10 @@ class Game(models.Model):
 	player_2_score = models.IntegerField(min_value=0, default=0)
 	begin_date = models.DateTimeField(auto_now_add=True)
 	tournament_id = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='game', null=True)
+
+class GameInvite(models.Model):
+	id = models.AutoField(primary_key=True)
+	player_1 = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='inviter')
+	player_2 = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='invited')
+	game_id = models.ForeignKey(Game, on_delete=models.CASCADE, related_name='game', null=True)
+	accepted = models.BooleanField(default=False)

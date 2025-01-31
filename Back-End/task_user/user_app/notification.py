@@ -1,6 +1,8 @@
 from django.db import models
 import os, aiohttp
 
+# il gioco deve essere diviso in un altro microservizio, perche' e' in task_user?
+
 Microservices = {
 	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
 	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
