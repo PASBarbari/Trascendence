@@ -1,0 +1,39 @@
+TODO:
+- controllare start_table se parte tutto anche con i commenti (va cancellato il database)
+va commentato questo in start_tables.py task_user/task_app:
+    # if not Users.objects.all():
+    #     u = Users.objects.create(
+    #         user_id=1,
+    #         first_name="mario",
+    #         last_name="rossi",
+    #         birth_date="2000-1-1",
+    #         bio="bio dei miei ciglioni",
+    #         avatar=Avatars.objects.get(id=1)
+    #     )
+    #     u.save()
+    #     u = Users.objects.create(
+    #         user_id=2,
+    #         first_name="vincenzo",
+    #         last_name="bianchi",
+    #         birth_date="1999-11-4",
+    #         bio="bio dei miei ciglioni",
+    #         avatar=Avatars.objects.get(id=1)
+    #     )
+    #     u.save()
+    #     u = Users.objects.create(
+    #         user_id=3,
+    #         staff=True,
+    #         first_name="guglielmo",
+    #         last_name="duranti",
+    #         birth_date="1900-11-4",
+    #         bio="ma ti fanno anche da uomo",
+    #         avatar=Avatars.objects.get(id=1)
+    #     )
+    #     u.save()
+- addChat deve mandare una notifica all'altro utente per fargli renderizzare la pagina con updateChatList
+- probabilmente se alla registrazione metti un username gia usato, poi non ti registrera' correttamente
+- non so come testare gruppi con piu persone e addChat aggiungendo piu persone insieme
+
+DONE:
+- le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere
+- addChat deve renderizzare la chat quando aggiunta
