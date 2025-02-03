@@ -22,3 +22,17 @@ class MultipleFieldLookupMixin:
 		self.check_object_permissions(self.request, obj)
 		return obj
 
+class GameGen(generics.ListCreateAPIView):
+	permission_classes = (permissions.AllowAny,)
+	serializer_class = GamesSerializer
+	lookup_fields = ['id', 'player_1__user_id', 'player_2__user_id', 'tournament_id']
+
+	def get_queryset(self):
+		queryset = Games.objects.all()
+		if self.request.method == 'GET':
+			user_id = self.request.query_params.get('user_id')
+			if user_id:
+				My_progress = GameProgresses.objects.filter(user_id=user_id)
+				queryset = queryset.exclude(id__in=[x.game.id for x in My_progress])
+				return queryset
+		return Games.objects.all()

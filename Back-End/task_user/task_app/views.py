@@ -37,9 +37,6 @@ class TaskGen(generics.ListCreateAPIView):
 				queryset = queryset.exclude(id__in=[x.task.id for x in My_progress])
 				return queryset
 		return Tasks.objects.all()
-	
-				
-		
 
 class TaskManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
