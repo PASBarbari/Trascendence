@@ -1,0 +1,16 @@
+.notification-box {
+    width: 100%;
+    height: 100%;
+    background-color: #f5f5f5f0;
+    border-radius: 8px;
+    flex-grow: 1;
+    padding: 10px;
+}
+
+.friend-item {
+	display: flex;
+	align-items: center;
+	padding: 10px;
+	border-bottom: 1px solid #e0e0e0;
+	justify-content: space-between;
+}

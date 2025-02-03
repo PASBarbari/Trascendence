@@ -1,0 +1,24 @@
+{
+  "port": 3000,
+  "single": true,
+  "headers": {
+    "/**": {
+      "Cache-Control": "public, max-age=0, must-revalidate"
+    },
+    "/**/*.js": {
+      "Content-Type": "application/javascript"
+    },
+    "/node_modules/three/build/three.module.js": {
+      "Content-Type": "application/javascript"
+    },
+    "/node_modules/three/examples/jsm/loaders/FontLoader.js": {
+      "Content-Type": "application/javascript"
+    },
+    "/node_modules/three/examples/jsm/geometries/TextGeometry.js": {
+      "Content-Type": "application/javascript"
+    },
+    "/node_modules/three/examples/jsm/libs/tween.module.js": {
+      "Content-Type": "application/javascript"
+    }
+  }
+}
