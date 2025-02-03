@@ -1,5 +1,6 @@
 import { getCookie } from './cookie.js';
 import { getVariables } from './var.js';
+import { updateChatList } from './ExpandableSidebar.js';
 
 function renderAddChat() {
 	const addChatContainer = document.createElement('div');
@@ -42,6 +43,9 @@ function renderAddChat() {
 			if (response.ok) {
 				const data = await response.json();
 				console.log('Chat room creata:', data);
+				
+				// Aggiorna la lista delle chat
+				updateChatList();
 			} else {
 				const errorData = await response.json();
 				console.error('Errore nella risposta del server:', errorData);
