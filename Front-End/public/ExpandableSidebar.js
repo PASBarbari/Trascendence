@@ -133,6 +133,10 @@ function renderExpandableSidebar() {
     });
 }
 
+function scrollToBottom(element) {
+    element.scrollTop = element.scrollHeight;
+}
+
 function renderChatItem(chat) {
     const chatContainer = document.querySelector('.chat-container');
     const chatItem = document.createElement('div');
@@ -204,11 +208,13 @@ function renderChatItem(chat) {
                 // Aggiungi il messaggio alla chat room corrispondente
                 const chatBubble = renderChatBubble({
                     sender: data.sender,
-					date: new Date(data.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+                    date: new Date(data.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
                     message: data.message,
                     isSingleChat: chat.type === 'single'
                 });
                 chatContent.appendChild(chatBubble);
+
+                scrollToBottom(chatContent);
             };
 
             socket.onclose = () => {
@@ -236,9 +242,9 @@ function renderChatItem(chat) {
                 );
                 if (response.ok) {
                     const data = await response.json();
+                    const chatContent = chatItem.querySelector('.scrollable-content');
                     data.forEach(msg => {
                         const messageDate = new Date(msg.timestamp);
-                        const chatContent = chatItem.querySelector('.scrollable-content');
 
                         if (isFirstMessageOfDay(messageDate)) {
                             const dateMessage = document.createElement('div');
@@ -255,6 +261,8 @@ function renderChatItem(chat) {
                         });
                         chatContent.appendChild(chatBubble);
                     });
+
+                    scrollToBottom(chatContent);
                 } else {
                     console.error("Errore nella risposta del server:", response.statusText);
                 }
@@ -287,6 +295,8 @@ function renderChatItem(chat) {
             };
             socket.send(JSON.stringify(messageData));
             inputField.value = '';
+
+            scrollToBottom(chatItem.querySelector('.scrollable-content'));
         } else {
             alert("Connessione WebSocket non attiva");
         }
