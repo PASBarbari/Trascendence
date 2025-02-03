@@ -30,8 +30,10 @@ va commentato questo in start_tables.py task_user/task_app:
     #         avatar=Avatars.objects.get(id=1)
     #     )
     #     u.save()
-- addChat deve renderizzare la chat quando aggiunta e mandare una notifica all'altro utente per fargli renderizzare la pagina
+- addChat deve mandare una notifica all'altro utente per fargli renderizzare la pagina con updateChatList
 - probabilmente se alla registrazione metti un username gia usato, poi non ti registrera' correttamente
+- non so come testare gruppi con piu persone e addChat aggiungendo piu persone insieme
 
 DONE:
 - le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere
+- addChat deve renderizzare la chat quando aggiunta

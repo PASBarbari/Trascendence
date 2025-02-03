@@ -114,23 +114,28 @@ function renderExpandableSidebar() {
 	});
 
 	// Fetch chat rooms and render them
-	getChatRooms().then(chats => {
-		if (chats) {
-			chats.forEach(chat => {
-				if (!chat.room_id) {
-					console.error("Chat ID non trovato:", chat);
-					return;
-				}
+	updateChatList();
+}
 
-				renderChatItem({
-					id: chat.room_id,
-					name: chat.room_name,
-					lastMessage: chat.room_description,
-					type: chat.type
-				});
-			});
-		}
-	});
+async function updateChatList() {
+    const chats = await getChatRooms();
+    if (chats) {
+        const chatContainer = document.querySelector('.chat-container');
+        chatContainer.innerHTML = ''; // Pulisce il contenitore delle chat
+        chats.forEach(chat => {
+            if (!chat.room_id) {
+                console.error("Chat ID non trovato:", chat);
+                return;
+            }
+
+            renderChatItem({
+                id: chat.room_id,
+                name: chat.room_name,
+                lastMessage: chat.room_description,
+                type: chat.type
+            });
+        });
+    }
 }
 
 function scrollToBottom(element) {
@@ -303,4 +308,4 @@ function renderChatItem(chat) {
 	});
 }
 
-export { renderExpandableSidebar };
+export { renderExpandableSidebar, updateChatList }; 
