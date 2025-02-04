@@ -21,6 +21,11 @@ class GamesSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError('player_2_score is not valid')
 		return value
 	
+	def validate(self, data):
+		if data['player_1'] == data['player_2']:
+			raise serializers.ValidationError('player_1 and player_2 cannot be the same')
+		return data
+	
 	class Meta:
 		model = Game
 		fields = '__all__'
