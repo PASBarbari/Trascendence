@@ -36,10 +36,27 @@ class GameManage(generics.RetrieveUpdateDestroyAPIView):
 class TournamentGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = TournamentSerializer
-	lookup_fields = ['id', 'name', 'level_required', 'max_partecipants', 'winner__user_id']
+	lookup_fields = ['id', 'name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
 
 class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = TournamentSerializer
 	lookup_url_kwarg = 'id'
 	queryset = Tournament.objects.all()
+
+class JoinTournament(APIView):
+	permission_classes = (permissions.AllowAny,)
+
+	def post(self, request, *args, **kwargs):
+		tournament_id = request.data.get('tournament_id')
+		user_id = request.data.get('user_id')
+		if not tournament_id or not user_id:
+			return Response({'error': 'tournament_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+		tournament = get_object_or_404(Tournament, id=tournament_id)
+		user = get_object_or_404(Users, user_id=user_id)
+		if user in tournament.partecipants.all():
+			return Response({'error': 'user is already registered to this tournament'}, status=status.HTTP_400_BAD_REQUEST)
+		if tournament.partecipants.count() >= tournament.max_partecipants:
+			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
+		tournament.partecipants.add(user)
+		return Response({'message': 'user added to tournament'}, status=status.HTTP_200_OK)
