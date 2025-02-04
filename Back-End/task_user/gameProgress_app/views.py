@@ -54,8 +54,12 @@ class JoinTournament(APIView):
 			return Response({'error': 'tournament_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament = get_object_or_404(Tournament, id=tournament_id)
 		user = get_object_or_404(Users, user_id=user_id)
+		if tournament.winner:
+			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
 		if user in tournament.partecipants.all():
 			return Response({'error': 'user is already registered to this tournament'}, status=status.HTTP_400_BAD_REQUEST)
+		if user.level < tournament.level_required:
+			return Response({'error': 'user level is too low'}, status=status.HTTP_400_BAD_REQUEST)
 		if tournament.partecipants.count() >= tournament.max_partecipants:
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament.partecipants.add(user)
