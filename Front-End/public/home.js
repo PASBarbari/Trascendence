@@ -3,6 +3,7 @@ import { renderTaskActive } from './taskActive.js';
 import { renderNotification } from './notification.js';
 import { renderProfile } from './profile.js';
 import { renderExpandableSidebar } from './ExpandableSidebar.js';
+import { renderPongInfo } from './pongContainer.js';
 
 function renderHome() {
 	const appDiv = document.querySelector('.App');
@@ -21,6 +22,8 @@ function renderHome() {
 					<div class="task-container" id="taskAvailableContainer"></div>
 					<div class="task-container" id="taskActiveContainer"></div>
 					<div class="task-container" id="notificationContainer"></div>
+					<div class="task-container" id="pongContainer"></div>
+
 				</div>
 			</div>
 		</div>
@@ -46,6 +49,7 @@ function renderHome() {
 	renderTaskAvaiable();
 	renderTaskActive();
 	renderNotification();
+	renderPongInfo();
 }
 
 export { renderHome };
