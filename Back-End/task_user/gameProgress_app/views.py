@@ -60,3 +60,15 @@ class JoinTournament(APIView):
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament.partecipants.add(user)
 		return Response({'message': 'user added to tournament'}, status=status.HTTP_200_OK)
+
+class PlayerMatchHistory(APIView):
+	permission_classes = (permissions.AllowAny,)
+
+	def get(self, request, *args, **kwargs):
+		user_id = request.query_params.get('user_id')
+		if not user_id:
+			return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+		user = get_object_or_404(Users, user_id=user_id)
+		games = Game.objects.filter(player_1=user) | Game.objects.filter(player_2=user)
+		serializer = GamesSerializer(games, many=True)
+		return Response(serializer.data, status=status.HTTP_200_OK)
