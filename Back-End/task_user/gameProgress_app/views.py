@@ -27,12 +27,19 @@ class GameGen(generics.ListCreateAPIView):
 	serializer_class = GamesSerializer
 	lookup_fields = ['id', 'player_1__user_id', 'player_2__user_id', 'tournament_id']
 
-	def get_queryset(self):
-		queryset = Games.objects.all()
-		if self.request.method == 'GET':
-			user_id = self.request.query_params.get('user_id')
-			if user_id:
-				My_progress = GameProgresses.objects.filter(user_id=user_id)
-				queryset = queryset.exclude(id__in=[x.game.id for x in My_progress])
-				return queryset
-		return Games.objects.all()
+class GameManage(generics.RetrieveUpdateDestroyAPIView):
+	permission_classes = (permissions.AllowAny,)
+	serializer_class = GamesSerializer
+	lookup_url_kwarg = 'id'
+	queryset = Game.objects.all()
+
+class TournamentGen(generics.ListCreateAPIView):
+	permission_classes = (permissions.AllowAny,)
+	serializer_class = TournamentSerializer
+	lookup_fields = ['id', 'name', 'level_required', 'max_partecipants', 'winner__user_id']
+
+class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
+	permission_classes = (permissions.AllowAny,)
+	serializer_class = TournamentSerializer
+	lookup_url_kwarg = 'id'
+	queryset = Tournament.objects.all()
