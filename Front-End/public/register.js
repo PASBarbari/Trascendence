@@ -53,6 +53,16 @@ function renderRegister() {
 
 async function onHandleSubmit(e, username, email, password) {
 	e.preventDefault();
+	await registerUser(username, email, password, true);
+}
+
+/**
+ * Gestisce la registrazione dell'utente.
+ * 
+ * @param {boolean} isBaseRegister - true per la registrazione base, false per la registrazione multiplayer per pong.
+ * @returns {Promise<boolean>} - Ritorna true se la registrazione ha successo, altrimenti false.
+ */
+async function registerUser(username, email, password, isBaseRegister) {
 	if (email && password) {
 		console.log('Username:', username);
 		console.log('Email:', email);
@@ -70,7 +80,10 @@ async function onHandleSubmit(e, username, email, password) {
 			if (response.ok) {
 				const data = await response.json();
 				console.log('Risposta dal server:', data);
-				window.navigateTo('/login');
+				if (isBaseRegister) {
+					window.navigateTo('/login');
+				}
+				return true;
 			} else {
 				const errorData = await response.json();
 				console.error('Errore nella risposta del server:', errorData.error);
@@ -84,12 +97,15 @@ async function onHandleSubmit(e, username, email, password) {
 					alert('Si è verificato un errore. Per favore, riprova.');
 				}
 				console.error('Errore nella risposta del server:', response.statusText);
+				return false;
 			}
 		} catch (error) {
 			console.error('Errore nella richiesta:', error);
+			return false;
 		}
 	} else {
 		console.log('Per favore, inserisci sia username che password.');
+		return false;
 	}
 }
 

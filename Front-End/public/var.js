@@ -7,6 +7,9 @@ let variables = {
 	surname: null,
 	birthdate: null,
 	bio: null,
+
+	multiplayer_username: null,
+	multiplayer_id: null,
 };
 
 // Carica le variabili da localStorage se esistono
