@@ -1,7 +1,7 @@
 import { setVariables, getVariables } from './var.js';
 import { getCookie } from './cookie.js';
-import { renderLogin } from './login.js';
-import { renderRegister } from './register.js';
+import { loginUser } from './login.js';
+import { registerUser } from './register.js';
 
 function renderPongInfo() {
 	const pongInfoContainer = document.getElementById('pongContainer');
@@ -20,15 +20,151 @@ function renderPongInfo() {
 }
 
 function handleLocalePong() {
-	//redorect to pong game
+	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
 	window.location.href = '/pong';
 }
 
 function handleMultiPong() {
-	renderLogin();
+	showLoginBox();
+}
+
+function showLoginBox() {
+	const loginBox = document.createElement('div');
+	loginBox.className = 'login-box-modal';
+	loginBox.innerHTML = `
+		<div class="login_box">
+			<h1>Login</h1>
+			<div class="login_form">
+				<form class="login_form" id="loginForm">
+					<div class="mb-3">
+						<input type="email" id="loginemail" placeholder="Email" class="form-control" required />
+					</div>
+					<div class="mb-3">
+						<input type="password" id="loginpassword" placeholder="Password" class="form-control" required />
+					</div>
+					<div class="empty"></div>
+					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
+					<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
+				</form>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(loginBox);
+
+	// Aggiungi un event listener per chiudere il modale quando si clicca fuori
+	window.addEventListener('click', function(event) {
+		if (event.target === loginBox) {
+			closeLoginBox();
+		}
+	});
+
+	document.getElementById('loginForm').addEventListener('submit', async function (e) {
+		e.preventDefault();
+		const email = document.getElementById('loginemail').value;
+		const password = document.getElementById('loginpassword').value;
+		await onHandleSubmit(e, email, password);
+	});
+
+	document.getElementById('registerButton').addEventListener('click', function () {
+		closeLoginBox();
+		showRegisterBox();
+	});
+}
+
+function closeLoginBox() {
+	const loginBox = document.querySelector('.login-box-modal');
+	if (loginBox) {
+		loginBox.remove();
+	}
+}
+
+function showRegisterBox() {
+	const registerBox = document.createElement('div');
+	registerBox.className = 'register-box-modal';
+	registerBox.innerHTML = `
+		<div class="login_box">
+			<h1>Register</h1>
+			<div class="login_form">
+				<form class="login_form" id="registerForm">
+					<div class="mb-3">
+						<input type="text" id="registerusername" placeholder="Username" class="form-control" required />
+					</div>
+					<div class="mb-3">
+						<input type="email" id="registeremail" placeholder="Email" class="form-control" required />
+					</div>
+					<div class="mb-3">
+						<input type="password" id="registerpassword" placeholder="Password" class="form-control" required />
+					</div>
+					<div class="empty"></div>
+					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
+					<button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
+				</form>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(registerBox);
+
+	// Aggiungi un event listener per chiudere il modale quando si clicca fuori
+	window.addEventListener('click', function(event) {
+		if (event.target === registerBox) {
+			closeRegisterBox();
+		}
+	});
+
+	document.getElementById('registerForm').addEventListener('submit', async function (e) {
+		e.preventDefault();
+		const username = document.getElementById('registerusername').value;
+		const email = document.getElementById('registeremail').value;
+		const password = document.getElementById('registerpassword').value;
+		await onHandleRegisterSubmit(e, username, email, password);
+	});
+
+	document.getElementById('loginButton').addEventListener('click', function () {
+		closeRegisterBox();
+		showLoginBox();
+	});
+}
+
+function closeRegisterBox() {
+	const registerBox = document.querySelector('.register-box-modal');
+	if (registerBox) {
+		registerBox.remove();
+	}
+}
+
+async function onHandleSubmit(e, email, password) {
+	e.preventDefault();
+	if (email && password) {
+		console.log('Email:', email);
+		console.log('Password:', password);
+		const csrftoken = getCookie('csrftoken');
+		const loginSuccess = await loginUser(email, password, csrftoken, false);
+		if (loginSuccess) {
+			//TODO chiamata a Gu per poi aprire pong
+			window.location.href = '/pong';
+		}
+	} else {
+		console.log('Per favore, inserisci sia email che password.');
+	}
+}
+
+async function onHandleRegisterSubmit(e, username, email, password) {
+	e.preventDefault();
+	if (email && password) {
+		console.log('Username:', username);
+		console.log('Email:', email);
+		console.log('Password:', password);
+		if (await registerUser(username, email, password, false) === true) {
+			showLoginBox();
+		}
+	} else {
+		console.log('Per favore, inserisci sia username che password.');
+	}
 }
 
 window.handleLocalePong = handleLocalePong;
 window.handleMultiPong = handleMultiPong;
+window.closeLoginBox = closeLoginBox;
+window.closeRegisterBox = closeRegisterBox;
 
 export { renderPongInfo };

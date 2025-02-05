@@ -49,7 +49,7 @@ async function onHandleSubmit(e, email, password) {
 		console.log('Email:', email);
 		console.log('Password:', password);
 		const csrftoken = getCookie('csrftoken');
-		const loginSuccess = await loginUser(email, password, csrftoken);
+		const loginSuccess = await loginUser(email, password, csrftoken, true);
 		if (loginSuccess) {
 			await handleGetUser(csrftoken);
 			window.navigateTo('/home');
@@ -59,7 +59,14 @@ async function onHandleSubmit(e, email, password) {
 	}
 }
 
-async function loginUser(email, password, csrftoken) {
+
+/**
+ * Effettua il login dell'utente.
+ * 
+ * @param {boolean} isBaseLogin - true per il login base, false per il login multiplayer per pong.
+ * @returns {Promise<boolean>} - Ritorna true se il login ha successo, altrimenti false.
+ */
+async function loginUser(email, password, csrftoken, isBaseLogin) {
 	try {
 		const response = await fetch('http://localhost:8000/login/login', {
 			method: 'POST',
@@ -74,7 +81,13 @@ async function loginUser(email, password, csrftoken) {
 			const data = await response.json();
 			console.log('Risposta dal server:', data);
 
-			setVariables({ token: data.access_token });
+			if (isBaseLogin) {
+				setVariables({ token: data.access_token });
+			}
+			else {
+				setVariables({ multiplayer_username: data.username });
+				setVariables({ multiplayer_id: data.user_id });
+			}
 			return true;
 		} else {
 			const errorData = await response.json();
