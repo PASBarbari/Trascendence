@@ -134,31 +134,19 @@ function closeRegisterBox() {
 
 async function onHandleSubmit(e, email, password) {
 	e.preventDefault();
-	if (email && password) {
-		console.log('Email:', email);
-		console.log('Password:', password);
-		const csrftoken = getCookie('csrftoken');
-		const loginSuccess = await loginUser(email, password, csrftoken, false);
-		if (loginSuccess) {
-			//TODO chiamata a Gu per poi aprire pong
-			window.location.href = '/pong';
-		}
-	} else {
-		console.log('Per favore, inserisci sia email che password.');
+	const csrftoken = getCookie('csrftoken');
+	const loginSuccess = await loginUser(email, password, csrftoken, false);
+	if (loginSuccess) {
+		//TODO chiamata a Gu per poi aprire pong
+		window.location.href = '/pong';
 	}
 }
 
 async function onHandleRegisterSubmit(e, username, email, password) {
 	e.preventDefault();
-	if (email && password) {
-		console.log('Username:', username);
-		console.log('Email:', email);
-		console.log('Password:', password);
-		if (await registerUser(username, email, password, false) === true) {
-			showLoginBox();
-		}
-	} else {
-		console.log('Per favore, inserisci sia username che password.');
+	const registerSuccess = await registerUser(username, email, password, false);
+	if (registerSuccess) {
+		showLoginBox(); 
 	}
 }
 

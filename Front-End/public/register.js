@@ -124,4 +124,4 @@ function getCookie(name) {
 	return cookieValue;
 }
 
-export { renderRegister };
+export { renderRegister, registerUser };
