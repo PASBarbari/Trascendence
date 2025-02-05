@@ -267,7 +267,6 @@ const timeStep = 1000 / 60;
 
 const animate = (timestamp) => {
 	stats.begin();
-
 	requestAnimationFrame(animate);
 	const deltaTime = timestamp - previousTimestamp;
 	if (deltaTime >= timeStep) {
@@ -312,6 +311,13 @@ const animate = (timestamp) => {
 			if ((p2_move_y > 0 && p2.position.y + player.y / 2 <= ring.x / 2 - ring.h / 2)
 				|| (p2_move_y < 0 && p2.position.y - player.y / 2 >= - ring.x / 2 + ring.h / 2))
 				p2.position.y += p2_move_y;
+			if ((spawnPowerUpFlag && timestamp - lastPowerUpSpawnTime > powerUpInterval) && powerUps.length < 2) {
+				spawnPowerUp();
+				lastPowerUpSpawnTime = timestamp;
+			}
+	
+			// Handle power-up collisions
+			handlePowerUpCollision();
 		}
 		renderer.render(scene, camera);
 		stats.end();
@@ -390,6 +396,45 @@ function moveIA() {
 	}
 }
 
+let powerUps = [];
+const powerUpInterval = 5000; // 5 seconds
+let spawnPowerUpFlag = false; // Flag to control power-up spawning
+let lastPowerUpSpawnTime = 0;
+
+function spawnPowerUp() {
+    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const powerUp = new THREE.Mesh(geometry, material);
+
+    powerUp.position.set(
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 10,
+        0
+    );
+
+    scene.add(powerUp);
+    powerUps.push(powerUp);
+}
+
+function checkCollision(ball, powerUp) {
+    const ballPosition = new THREE.Vector3().setFromMatrixPosition(ball.matrixWorld);
+    const powerUpPosition = new THREE.Vector3().setFromMatrixPosition(powerUp.matrixWorld);
+
+    const distance = ballPosition.distanceTo(powerUpPosition);
+    return distance < ball_radius; // Adjust the collision distance as needed
+}
+
+function handlePowerUpCollision() {
+    powerUps.forEach((powerUp, index) => {
+        if (checkCollision(ball, powerUp)) {
+            // Handle the power-up effect here
+            console.log('Power-up collected!');
+            scene.remove(powerUp);
+            powerUps.splice(index, 1);
+        }
+    });
+}
+
 //Game restart
 
 function restart_game() {
@@ -412,6 +457,10 @@ function restart_game() {
 	look = { x: 0, y: 0, z: 0 };
 	camera.position.set(cam.x, cam.y, cam.z);
 	camera.lookAt(look.x, look.y, look.z)
+	if (powerUps.length > 0) {
+		powerUps.forEach(powerUp => scene.remove(powerUp));
+		powerUps = [];
+	}
 }
 
 //Game over
@@ -658,6 +707,7 @@ function startOnePlayerGame() {
 	isStarted = true;
 	IAisActive = true;
 	isPaused = false;
+	spawnPowerUpFlag = true;
 	animate();
 }
 

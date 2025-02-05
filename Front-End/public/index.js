@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		const routes = {
 			'/': () => navigateTo('/login'),
 			'/login': () => renderLogin(),
-			'/register': () => renderRegister(),
+			'/pong': () => renderRegister(),
 			'/home': () => renderHome(),
 			'/mine': () => window.location.href = 'https://minesweeper.online/it/',
-			'/pong': async () => {
+			'/register': async () => {
 				const { renderPong } = await import('./pong.js');
 				renderPong();
 			},
