@@ -67,35 +67,42 @@ async function onHandleSubmit(e, email, password) {
  * @returns {Promise<boolean>} - Ritorna true se il login ha successo, altrimenti false.
  */
 async function loginUser(email, password, csrftoken, isBaseLogin) {
-	try {
-		const response = await fetch('http://localhost:8000/login/login', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-CSRFToken': csrftoken,
-			},
-			body: JSON.stringify({ email, password }),
-		});
+	if (email && password) {
+		console.log('Email:', email);
+		console.log('Password:', password);
+		try {
+			const response = await fetch('http://localhost:8000/login/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-CSRFToken': csrftoken,
+				},
+				body: JSON.stringify({ email, password }),
+			});
 
-		if (response.ok) {
-			const data = await response.json();
-			console.log('Risposta dal server:', data);
+			if (response.ok) {
+				const data = await response.json();
+				console.log('Risposta dal server:', data);
 
-			if (isBaseLogin) {
-				setVariables({ token: data.access_token });
+				if (isBaseLogin) {
+					setVariables({ token: data.access_token });
+				}
+				else {
+					setVariables({ multiplayer_username: data.username });
+					setVariables({ multiplayer_id: data.user_id });
+				}
+				return true;
+			} else {
+				const errorData = await response.json();
+				console.error('Errore login:', errorData);
+				return false;
 			}
-			else {
-				setVariables({ multiplayer_username: data.username });
-				setVariables({ multiplayer_id: data.user_id });
-			}
-			return true;
-		} else {
-			const errorData = await response.json();
-			console.error('Errore login:', errorData);
+		} catch (error) {
+			console.error('Exception login:', error);
 			return false;
 		}
-	} catch (error) {
-		console.error('Exception login:', error);
+	} else {
+		console.log('Per favore, inserisci sia email che password.');
 		return false;
 	}
 }
@@ -135,4 +142,4 @@ async function handleGetUser(csrftoken) {
 	}
 }
 
-export { renderLogin };
+export { renderLogin, loginUser };
