@@ -311,7 +311,7 @@ const animate = (timestamp) => {
 			if ((p2_move_y > 0 && p2.position.y + player.y / 2 <= ring.x / 2 - ring.h / 2)
 				|| (p2_move_y < 0 && p2.position.y - player.y / 2 >= - ring.x / 2 + ring.h / 2))
 				p2.position.y += p2_move_y;
-			if ((spawnPowerUpFlag && timestamp - lastPowerUpSpawnTime > powerUpInterval) && powerUps.length < 2) {
+			if ((spawnPowerUpFlag && timestamp - lastPowerUpSpawnTime > powerUpInterval) && powerUps.length < 10) {
 				spawnPowerUp();
 				lastPowerUpSpawnTime = timestamp;
 			}
@@ -407,8 +407,8 @@ function spawnPowerUp() {
     const powerUp = new THREE.Mesh(geometry, material);
 
     powerUp.position.set(
-        (Math.random() - 0.5) * ring.y/2,
-        (Math.random() - 0.5) * ring.x/2,
+        (Math.random() - 0.5) * ring.y/1.5,
+        (Math.random() - 0.5) * ring.x/1.5,
         0
     );
 
@@ -417,10 +417,10 @@ function spawnPowerUp() {
 }
 
 function checkCollision(ball, powerUp) {
-	if (ball.position.x - ball_radius <= powerUp.position.x + 0.5 
-		&& ball.position.x + ball_radius >= powerUp.position.x - 0.5
-		&& ball.position.y - ball_radius <= powerUp.position.y + 0.5
-		&& ball.position.y + ball_radius >= powerUp.position.y - 0.5)
+	if (ball.position.x - ball_radius <= powerUp.position.x + 1.25 
+		&& ball.position.x + ball_radius >= powerUp.position.x - 1.25
+		&& ball.position.y - ball_radius <= powerUp.position.y + 1.25
+		&& ball.position.y + ball_radius >= powerUp.position.y - 1.25)
 		return true;
 }
 

@@ -5,11 +5,11 @@ import { setVariables, getVariables } from './var.js';
 import { renderNotification, initializeWebSocket } from './notification.js';
 
 document.addEventListener('DOMContentLoaded', function () {
-	if (getVariables().userId === null) {
-		navigateTo('/login'); // controlla se le variabili sono presenti sennò reindirizza a login
-	} else {
-		console.log('var presenti');
-	}
+	// if (getVariables().userId === null) {
+	// 	navigateTo('/login'); // controlla se le variabili sono presenti sennò reindirizza a login
+	// } else {
+	// 	console.log('var presenti');
+	// }
 
 	function navigateTo(path) {
 		window.history.pushState({}, path, window.location.origin + path);
@@ -20,10 +20,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		const routes = {
 			'/': () => navigateTo('/login'),
 			'/login': () => renderLogin(),
-			'/pong': () => renderRegister(),
+			'/register': () => renderRegister(),
 			'/home': () => renderHome(),
 			'/mine': () => window.location.href = 'https://minesweeper.online/it/',
-			'/register': async () => {
+			'/pong': async () => {
 				const { renderPong } = await import('./pong.js');
 				renderPong();
 			},
