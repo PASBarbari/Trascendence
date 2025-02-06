@@ -357,6 +357,8 @@ function score() {
 	if (p1_score >= maxScore || p2_score >= maxScore) {
 		game_over();
 	}
+
+	resetPowerUps();
 }
 
 //AI
@@ -396,22 +398,111 @@ function moveIA() {
 	}
 }
 
+// power-up logic
+const powerUpTypes = [
+    {
+        type: 'slowness',
+        color: 0x0000ff,
+        effect: () => {
+            console.log('Slowness power-up collected!');
+            player_speed = ring.y / 130;
+            setTimeout(() => {
+                player_speed = ring.y / 115;
+                console.log('Player speed reset to normal:', player_speed);
+            }, 5000);
+        }
+    },
+    {
+        type: 'randomAngle',
+        color: 0xff00ff,
+        effect: () => {
+            console.log('Random angle bounce power-up collected!');
+            angle = Math.floor(Math.random() * 70);
+        }
+    },
+    {
+        type: 'ninjaBall',
+        color: 0x00ff00,
+        effect: () => {
+            console.log('Ninja ball power-up collected!');
+			mat.ball.color.set('#000000');
+			mat.ball.emissive.set('#000000');
+			setTimeout(() => {
+				mat.ball.color.set('#0bff01')
+				mat.ball.emissive.set('#0bff01');
+				console.log('ball back to normal');
+            }, 5000);
+        }
+    },
+    {
+        type: 'slowerBall',
+        color: 0xff0000,
+        effect: () => {
+			let originalSpeed = ball_speed;
+            console.log('Smaller ball power-up collected!');
+            ball_speed = ring.y / 200;
+            setTimeout(() => {
+                ball_speed = originalSpeed;
+                console.log('Ball size reset to normal');
+            }, 5000);
+        }
+    },
+    {
+        type: 'smallerBall',
+        color: 0xffff00,
+        effect: () => {
+            console.log('Smaller ball power-up collected!');
+            ball.scale.set(0.5, 0.5, 0.5);
+            setTimeout(() => {
+                ball.scale.set(1, 1, 1);
+                console.log('Ball size reset to normal');
+            }, 5000);
+        }
+    },
+    {
+        type: 'changeColors',
+        color: 0x00ffff,
+        effect: () => {
+            console.log('Change colors power-up collected!');
+            const originalColors = {
+                p1: mat.p1.color.getHex(),
+                p2: mat.p2.color.getHex(),
+                ball: mat.ball.color.getHex(),
+                ring: mat.ring.color.getHex()
+            };
+            mat.p1.color.set(Math.random() * 0xffffff);
+            mat.p2.color.set(Math.random() * 0xffffff);
+            mat.ball.color.set(Math.random() * 0xffffff);
+            mat.ring.color.set(Math.random() * 0xffffff);
+            setTimeout(() => {
+                mat.p1.color.set(originalColors.p1);
+                mat.p2.color.set(originalColors.p2);
+                mat.ball.color.set(originalColors.ball);
+                mat.ring.color.set(originalColors.ring);
+                console.log('Colors reset to original');
+            }, 5000);
+        }
+    }
+];
+
 let powerUps = [];
-const powerUpInterval = 5000; // 5 seconds
+const powerUpInterval = 10000; // 5 seconds
 let spawnPowerUpFlag = false; // Flag to control power-up spawning
 let lastPowerUpSpawnTime = 0;
 
 function spawnPowerUp() {
+    const powerUpType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
     const geometry = new THREE.SphereGeometry(2.5, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const material = new THREE.MeshBasicMaterial({ color: powerUpType.color });
     const powerUp = new THREE.Mesh(geometry, material);
 
     powerUp.position.set(
-        (Math.random() - 0.5) * ring.y/1.5,
-        (Math.random() - 0.5) * ring.x/1.5,
+        (Math.random() - 0.5) * ring.y / 1.5,
+        (Math.random() - 0.5) * ring.x / 1.5,
         0
     );
 
+    powerUp.userData = { type: powerUpType.type, effect: powerUpType.effect };
     scene.add(powerUp);
     powerUps.push(powerUp);
 }
@@ -428,12 +519,36 @@ function handlePowerUpCollision() {
     powerUps.forEach((powerUp, index) => {
         if (checkCollision(ball, powerUp)) {
             // Handle the power-up effect here
-            console.log('Power-up collected!');
+            console.log(`${powerUp.userData.type} power-up collected!`);
+            powerUp.userData.effect();
             scene.remove(powerUp);
             powerUps.splice(index, 1);
         }
     });
 }
+
+function resetPowerUps() {
+    // Reset player speed
+    player_speed = ring.y / 115;
+
+    // Reset player sizes
+    p1.scale.set(1, 1, 1);
+    p2.scale.set(1, 1, 1);
+
+    // Reset ball size
+    ball.scale.set(1, 1, 1);
+
+    // Reset colors
+    mat.p1.color.set('#4deeea');
+    mat.p1.emissive.set('#4deeea');
+    mat.p2.color.set('#ffe700');
+    mat.p2.emissive.set('#ffe700');
+    mat.ball.color.set('#0bff01');
+    mat.ball.emissive.set('#0bff01');
+    mat.ring.color.set('#ff0000');
+    mat.ring.emissive.set('#0000ff');
+}
+
 
 //Game restart
 
@@ -568,6 +683,8 @@ function game_over() {
 	document.getElementById('gameOverImage').style.display = 'block';
 	const winner = p1_score >= maxScore ? 'Player 1' : 'Player 2';
 	createWinnerText(winner);
+	resetPowerUps();
+	powerUps.forEach(powerUp => scene.remove(powerUp));
 	showMainMenu();
 }
 
