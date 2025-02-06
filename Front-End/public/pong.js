@@ -402,13 +402,13 @@ let spawnPowerUpFlag = false; // Flag to control power-up spawning
 let lastPowerUpSpawnTime = 0;
 
 function spawnPowerUp() {
-    const geometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const geometry = new THREE.SphereGeometry(2.5, 32, 32);
     const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     const powerUp = new THREE.Mesh(geometry, material);
 
     powerUp.position.set(
-        (Math.random() - 0.5) * 10,
-        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * ring.y/2,
+        (Math.random() - 0.5) * ring.x/2,
         0
     );
 
@@ -417,11 +417,11 @@ function spawnPowerUp() {
 }
 
 function checkCollision(ball, powerUp) {
-    const ballPosition = new THREE.Vector3().setFromMatrixPosition(ball.matrixWorld);
-    const powerUpPosition = new THREE.Vector3().setFromMatrixPosition(powerUp.matrixWorld);
-
-    const distance = ballPosition.distanceTo(powerUpPosition);
-    return distance < ball_radius; // Adjust the collision distance as needed
+	if (ball.position.x - ball_radius <= powerUp.position.x + 0.5 
+		&& ball.position.x + ball_radius >= powerUp.position.x - 0.5
+		&& ball.position.y - ball_radius <= powerUp.position.y + 0.5
+		&& ball.position.y + ball_radius >= powerUp.position.y - 0.5)
+		return true;
 }
 
 function handlePowerUpCollision() {
@@ -717,6 +717,7 @@ function startTwoPlayerGame() {
 	isStarted = true;
 	isPaused = false;
 	IAisActive = false;
+	spawnPowerUpFlag = true;
 	animate();
 }
 
