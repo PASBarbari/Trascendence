@@ -1,9 +1,9 @@
-import { renderTaskAvaiable } from './taskAvaiable.js';
-import { renderTaskActive } from './taskActive.js';
-import { renderNotification } from './notification.js';
-import { renderProfile } from './profile.js';
-import { renderExpandableSidebar } from './ExpandableSidebar.js';
-import { renderPongInfo } from './pongContainer.js';
+import { renderTaskAvaiable } from '../task/taskAvaiable.js';
+import { renderTaskActive } from '../task/taskActive.js';
+import { renderNotification } from '../notification/notification.js';
+import { renderProfile } from '../profile/profile.js';
+import { renderExpandableSidebar } from '../chat/ExpandableSidebar.js';
+import { renderPongInfo } from '../pong/pongContainer.js';
 
 function renderHome() {
 	const appDiv = document.querySelector('.App');

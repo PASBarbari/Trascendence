@@ -1,5 +1,5 @@
-import { setVariables, getVariables } from './var.js';
-import { getCookie } from './cookie.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
 
 async function handleCompleteTask(task_id, task_rate) {
 	const { userId, token } = getVariables();

@@ -1,7 +1,8 @@
-import { getVariables } from './var.js';
+import { getVariables } from '../var.js';
 import { renderAddChat } from './AddChat.js';
 import { renderChatBubble } from './ChatBubble.js';
-import { getCookie } from './cookie.js';
+import { getCookie } from '../cookie.js';
+//import { sendMessage } from './notification.js';
 
 const displayedDates = new Set();
 
@@ -106,7 +107,7 @@ function renderExpandableSidebar() {
 	});
 
 	document.getElementById('groupChatButton').addEventListener('click', function () {
-		alert('Group Chat clicked');
+		//sendMessage(5, 'aggiorna le chat');
 	});
 
 	document.getElementById('randomChatButton').addEventListener('click', function () {

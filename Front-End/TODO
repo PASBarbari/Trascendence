@@ -34,6 +34,36 @@ va commentato questo in start_tables.py task_user/task_app:
 - probabilmente se alla registrazione metti un username gia usato, poi non ti registrera' correttamente
 - non so come testare gruppi con piu persone e addChat aggiungendo piu persone insieme
 - i primi utenti registrati non si registrano correttamente
+- implementa i TODO in pongContainer.js (backend)
+- scommenta ExpandableSidebar.js 
+	#import { sendMessage } from './notification.js';
+	#document.getElementById('groupChatButton').addEventListener('click', function () {
+	#	sendMessage(5, 'aggiorna le chat');
+	#});
+	e notification.js
+	#/**
+	# * Invia un messaggio specifico a un determinato user ID tramite WebSocket.
+	# * 
+	# * @param {number} userId - L'ID dell'utente destinatario.
+	# * @param {string} message - Il messaggio da inviare.
+	# */
+	#function sendMessage(userId, message) {
+	#	if (socket && socket.readyState === WebSocket.OPEN) {
+	#		const payload = {
+	#			type: 'message',
+	#			user_id: userId,
+	#			message: message
+	#		};
+	#		socket.send(JSON.stringify(payload));
+	#		console.log(`Messaggio inviato a user ID ${userId}:`, message);
+	#	} else {
+	#		console.error('WebSocket non è connesso.');
+	#	}
+	#}
+	#
+	#window.sendMessage = sendMessage;
+	#
+	#, sendMessage };
 
 DONE:
 - le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere

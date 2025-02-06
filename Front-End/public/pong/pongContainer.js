@@ -1,7 +1,7 @@
-import { setVariables, getVariables } from './var.js';
-import { getCookie } from './cookie.js';
-import { loginUser } from './login.js';
-import { registerUser } from './register.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
+import { loginUser } from '../login/login.js';
+import { registerUser } from '../register/register.js';
 
 function renderPongInfo() {
 	const pongInfoContainer = document.getElementById('pongContainer');

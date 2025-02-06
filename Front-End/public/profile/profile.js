@@ -1,4 +1,4 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
 
 async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId } = getVariables();

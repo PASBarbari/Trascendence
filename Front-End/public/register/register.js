@@ -1,4 +1,10 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
+
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = 'register.css';
+document.head.appendChild(link);
 
 function renderRegister() {
 	const appDiv = document.querySelector('.App');
@@ -107,21 +113,6 @@ async function registerUser(username, email, password, isBaseRegister) {
 		console.log('Per favore, inserisci sia username che password.');
 		return false;
 	}
-}
-
-function getCookie(name) {
-	let cookieValue = null;
-	if (document.cookie && document.cookie !== '') {
-		const cookies = document.cookie.split(';');
-		for (let i = 0; i < cookies.length; i++) {
-			const cookie = cookies[i].trim();
-			if (cookie.substring(0, name.length + 1) === (name + '=')) {
-				cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-				break;
-			}
-		}
-	}
-	return cookieValue;
 }
 
 export { renderRegister, registerUser };
