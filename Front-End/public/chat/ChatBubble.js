@@ -1,4 +1,4 @@
-import { getVariables } from './var.js';
+import { getVariables } from '../var.js';
 
 function renderChatBubble({ sender, date, message, isSingleChat }) {
 	const { userUsername } = getVariables();

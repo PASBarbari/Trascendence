@@ -1,5 +1,5 @@
-import { getCookie } from './cookie.js';
-import { getVariables } from './var.js';
+import { getCookie } from '../cookie.js';
+import { getVariables } from '../var.js';
 import { updateChatList } from './ExpandableSidebar.js';
 
 function renderAddChat() {

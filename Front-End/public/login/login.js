@@ -1,5 +1,5 @@
-import { setVariables, getVariables } from './var.js';
-import { getCookie } from './cookie.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
 
 function renderLogin() {
 	const appDiv = document.querySelector('.App');

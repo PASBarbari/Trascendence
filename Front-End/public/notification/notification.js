@@ -1,4 +1,4 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
 
 let messageHistory = [];
 let socket;
@@ -125,6 +125,7 @@ function initializeWebSocket() {
 
 	socket.onmessage = function (event) {
 		const message = JSON.parse(event.data);
+		
 		console.log("/----websocket notification.js----\\");
 		console.log("Nuovo messaggio:", message);
 
@@ -155,11 +156,33 @@ function initializeWebSocket() {
 	};
 }
 
+// /**
+//  * Invia un messaggio specifico a un determinato user ID tramite WebSocket.
+//  * 
+//  * @param {number} userId - L'ID dell'utente destinatario.
+//  * @param {string} message - Il messaggio da inviare.
+//  */
+// function sendMessage(userId, message) {
+// 	if (socket && socket.readyState === WebSocket.OPEN) {
+// 		const payload = {
+// 			type: 'message',
+// 			user_id: userId,
+// 			message: message
+// 		};
+// 		socket.send(JSON.stringify(payload));
+// 		console.log(`Messaggio inviato a user ID ${userId}:`, message);
+// 	} else {
+// 		console.error('WebSocket non è connesso.');
+// 	}
+// }
+
 document.addEventListener('DOMContentLoaded', function () {
 	window.renderNotification = renderNotification;
 	window.handleFriendRequest = handleFriendRequest;
 	window.getFriends = getFriends;
 	window.initializeWebSocket = initializeWebSocket;
+	// window.sendMessage = sendMessage;
 });
 
+//, sendMessage
 export { renderNotification, handleFriendRequest, getFriends, initializeWebSocket };

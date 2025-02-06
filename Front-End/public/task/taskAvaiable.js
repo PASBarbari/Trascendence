@@ -1,6 +1,6 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
 import { renderTaskActive } from './taskActive.js';
-import { getCookie } from './cookie.js';
+import { getCookie } from '../cookie.js';
 
 async function joinTasks(task_id, user_id) {
 	const { token } = getVariables();
