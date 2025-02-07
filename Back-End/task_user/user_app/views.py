@@ -65,6 +65,23 @@ class FriendList(generics.ListAPIView):
 	# def get_queryset(self):
 	# 	return Friendships.objects.filter(accepted=True)
 
+class LevelUp(APIView):
+	permission_classes = (permissions.AllowAny,)
+
+	def post(self, request):
+		user_id = request.data.get('user_id')
+		exp = request.data.get('exp')
+		if not user_id or not exp:
+			return Response({'error': 'user_id and exp are required'}, status=status.HTTP_400_BAD_REQUEST)
+		user = get_object_or_404(Users, user_id=user_id)
+		user.exp += exp
+		if user.exp >= user.level * 100:
+			user.level += 1
+			user.exp = 0
+		user.save()
+		return Response({'message': 'user level up'}, status=status.HTTP_200_OK)
+		
+
 from .notification import Microservices
 
 class AddFriend(APIView):

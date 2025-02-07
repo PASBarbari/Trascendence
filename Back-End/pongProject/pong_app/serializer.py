@@ -32,6 +32,11 @@ class TournamentSerializer(serializers.ModelSerializer):
 			raise serializers.ValidationError('name is not valid')
 		return value
 	
+	def validate_partecipants(self, value):
+		if value < 0:
+			raise serializers.ValidationError('partecipants is not valid')
+		return value
+
 	class Meta:
 		model = Tournament
 		fields = '__all__'
