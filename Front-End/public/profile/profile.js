@@ -9,7 +9,7 @@ async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId } = getVariables();
 
 	try {
-		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
+		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, { // user/levelup user_id e exp
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
@@ -36,7 +36,8 @@ async function PatchProfile(name, surname, birthdate, bio) {
 }
 
 function renderProfile() {
-	const { userUsername, userEmail, userId, name, surname, birthdate, bio } = getVariables();
+	const { userUsername, userEmail, userId, name, surname, birthdate, bio, level, exp } = getVariables();
+	console.log('level e exp:', level, exp);
 	let edit = false;
 
 	const profileDiv = document.getElementById('profile');
@@ -73,6 +74,13 @@ function renderProfile() {
 							<label for="bio">Bio</label>
 							<textarea id="bio" name="bio" readonly class="form-control readonly-input" rows="1">${bio}</textarea>
 						</div>
+
+                        <div class="profile-form-group">
+                            <label for="level" id="level">Level: ${level}</label>
+                            <input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-control readonly-input">
+                            <span id="expValue">exp: ${exp}</span>
+                        </div>
+
 					</form>
 				</div>
 				<div class="profile-card-image-container">
@@ -100,7 +108,7 @@ function renderProfile() {
 		e.preventDefault();
 		edit = !edit;
 		if (edit) {
-			form.querySelectorAll('input:not([id="username"]):not([id="user_id"]):not([id="email"]), textarea').forEach(input => {
+			form.querySelectorAll('input:not([id="username"]):not([id="user_id"]):not([id="email"]):not([id="level"]):not([id="exp"]), textarea').forEach(input => {
 				input.removeAttribute('readonly');
 				input.classList.remove('readonly-input');
 			});
@@ -148,16 +156,24 @@ function renderProfile() {
 
 			if (response.ok) {
 				const data = await response.json();
+				
+				console.log("Profile:", data);
+
 				setVariables({
 					name: data.first_name || "",
 					surname: data.last_name || "",
 					birthdate: data.birth_date || "",
-					bio: data.bio || ""
+					bio: data.bio || "",
+					level: data.level ?? "",
+					exp: data.exp ?? "",
 				});
 				document.getElementById('name').setAttribute('value', data.first_name || "");
 				document.getElementById('surname').setAttribute('value', data.last_name || "");
 				document.getElementById('birthdate').setAttribute('value', data.birth_date || "");
 				document.getElementById('bio').value = data.bio || "";
+				document.getElementById('level').setAttribute('value', data.level ?? "");
+				document.getElementById('exp').setAttribute('value', data.exp ?? "");
+				console.log('level e exp:', data.level, data.exp);
 				console.log('Variables after GetProfile:', getVariables()); // Aggiungi questo per il debug
 			} else {
 				const errorData = await response.json();

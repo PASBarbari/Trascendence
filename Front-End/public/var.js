@@ -7,6 +7,8 @@ let variables = {
 	surname: null,
 	birthdate: null,
 	bio: null,
+	level: 0,
+	exp: 0,
 
 	multiplayer_username: null,
 	multiplayer_id: null,
