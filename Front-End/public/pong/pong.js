@@ -4,6 +4,11 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { Group, remove } from 'three/addons/libs/tween.module.js';
 import Stats from 'three/addons/libs/stats.module.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/pong/pong.css';
+document.head.appendChild(link);
+
 function renderPong() {
 	document.querySelector('.App').innerHTML = `
 		<div class="gamecontainer">

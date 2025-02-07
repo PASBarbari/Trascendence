@@ -3,22 +3,11 @@ import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = 'register.css';
+link.href = '/public/register/register.css';
 document.head.appendChild(link);
 
 function renderRegister() {
 	const appDiv = document.querySelector('.App');
-
-	// Aggiungi dinamicamente i file CSS per la pagina di registrazione
-	const loginLink = document.createElement('link');
-	loginLink.rel = 'stylesheet';
-	loginLink.href = 'login.css';
-	document.head.appendChild(loginLink);
-
-	const registerLink = document.createElement('link');
-	registerLink.rel = 'stylesheet';
-	registerLink.href = 'register.css';
-	document.head.appendChild(registerLink);
 
 	appDiv.innerHTML = `
 		<div class="register">

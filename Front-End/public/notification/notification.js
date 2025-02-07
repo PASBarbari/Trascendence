@@ -1,5 +1,10 @@
 import { setVariables, getVariables } from '../var.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/notification/notification.css';
+document.head.appendChild(link);
+
 let messageHistory = [];
 let socket;
 

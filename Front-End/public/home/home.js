@@ -5,14 +5,36 @@ import { renderProfile } from '../profile/profile.js';
 import { renderExpandableSidebar } from '../chat/ExpandableSidebar.js';
 import { renderPongInfo } from '../pong/pongContainer.js';
 
+const stylesheets = [
+    '/public/home/home.css',
+    '/public/task/taskAvaiable.css',
+    '/public/task/taskActive.css',
+    '/public/notification/notification.css',
+    '/public/profile/profile.css',
+    '/public/chat/ExpandableSidebar.css',
+    '/public/pong/pongContainer.css'
+];
+
+stylesheets.forEach(href => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = href;
+    document.head.appendChild(link);
+});
+
+// const link = document.createElement('link');
+// link.rel = 'stylesheet';
+// link.href = '/public/home/home.css';
+// document.head.appendChild(link);
+
 function renderHome() {
 	const appDiv = document.querySelector('.App');
 	appDiv.innerHTML = `
 		<div class="home">
 			<div class="navbar">
-				<img src="public/logo.png" alt="logo" class="logo-image" />
+				<img src="public/home/logo.png" alt="logo" class="logo-image" />
 				<button class="propic-button" id="toggleProfileButton">
-					<img src="public/propic.jpeg" alt="propic" class="propic-image" />
+					<img src="public/home/propic.jpeg" alt="propic" class="propic-image" />
 				</button>
 			</div>
 			<div class="undernavbar">

@@ -1,14 +1,15 @@
 import { setVariables, getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/login/login.css';
+document.head.appendChild(link);
+
 function renderLogin() {
 	const appDiv = document.querySelector('.App');
 
 	// Aggiungi dinamicamente il file CSS per la pagina di login
-	const link = document.createElement('link');
-	link.rel = 'stylesheet';
-	link.href = 'login.css';
-	document.head.appendChild(link);
 
 	appDiv.innerHTML = `
 		<div class="login">

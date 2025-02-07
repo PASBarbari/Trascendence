@@ -3,6 +3,11 @@ import { getCookie } from '../cookie.js';
 import { loginUser } from '../login/login.js';
 import { registerUser } from '../register/register.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/pongContainer/pongContainer.css';
+document.head.appendChild(link);
+
 function renderPongInfo() {
 	const pongInfoContainer = document.getElementById('pongContainer');
 	pongInfoContainer.innerHTML = `
