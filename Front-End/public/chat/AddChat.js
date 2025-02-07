@@ -2,6 +2,11 @@ import { getCookie } from '../cookie.js';
 import { getVariables } from '../var.js';
 import { updateChatList } from './ExpandableSidebar.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/chat/chat.css';
+document.head.appendChild(link);
+
 function renderAddChat() {
 	const addChatContainer = document.createElement('div');
 	addChatContainer.className = 'add-chat';

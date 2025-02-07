@@ -1,5 +1,10 @@
 import { getVariables } from '../var.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/chat/chat.css';
+document.head.appendChild(link);
+
 function renderChatBubble({ sender, date, message, isSingleChat }) {
 	const { userUsername } = getVariables();
 	const isSenderMe = userUsername === sender;

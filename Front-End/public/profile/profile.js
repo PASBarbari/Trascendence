@@ -1,5 +1,10 @@
 import { setVariables, getVariables } from '../var.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/profile/profile.css';
+document.head.appendChild(link);
+
 async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId } = getVariables();
 

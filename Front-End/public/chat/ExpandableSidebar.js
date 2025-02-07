@@ -4,6 +4,11 @@ import { renderChatBubble } from './ChatBubble.js';
 import { getCookie } from '../cookie.js';
 //import { sendMessage } from './notification.js';
 
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/chat/chat.css';
+document.head.appendChild(link);
+
 const displayedDates = new Set();
 
 function isFirstMessageOfDay(date) {
