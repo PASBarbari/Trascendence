@@ -4,19 +4,25 @@ metadata:
   name: fleet-server
   namespace: elk
 spec:
+  mode: fleet
+  fleetServerEnabled: true
   version: 8.13.4
   elasticsearchRefs:
   - name: trascendence
-  config:
-    outputs:
-      default:
-        api_key: ${ELASTICSEARCH_API_KEY}
-        hosts: ["https://elasticsearch:9200"]
-    fleet:
-      hosts: ["https://trascendence-kb-http:5601"]
+  kibanaRef:
+    name: trascendence
   daemonSet:
     podTemplate:
       spec:
+        initContainers:
+        - name: copy-ca-certs
+          image: busybox
+          command: ["sh", "-c", "cp /mnt/secret-ca/ca.crt /mnt/ca/ca.crt"]
+          volumeMounts:
+          - name: secret-ca
+            mountPath: /mnt/secret-ca
+          - name: ca-certificates
+            mountPath: /mnt/ca
         containers:
         - name: agent
           env:
@@ -33,12 +39,21 @@ spec:
                 name: fleet-server-cert
                 key: tls.key
           - name: FLEET_SERVER_ELASTICSEARCH_HOST
-            value: "https://elasticsearch:9200"
+            value: "https://trascendence-es-http:9200"
           - name: FLEET_SERVER_ELASTICSEARCH_CA
             valueFrom:
               secretKeyRef:
                 name: trascendence-kb-es-ca
                 key: ca.crt
+          volumeMounts:
+          - name: ca-certificates
+            mountPath: /usr/local/share/ca-certificates
+        volumes:
+        - name: ca-certificates
+          emptyDir: {}
+        - name: secret-ca
+          secret:
+            secretName: trascendence-kb-es-ca
 ---
 apiVersion: batch/v1
 kind: Job
@@ -51,12 +66,18 @@ spec:
       serviceAccountName: api-key-generator
       containers:
       - name: generate-api-key
-        image: bitnami/kubectl:latest
+        image: debian:latest
         command: ["sh", "-c"]
         args:
           - |
-            apt-get update && apt-get install -y curl jq
-            ELASTIC_PASSWORD=$(kubectl get secret elastic-credentials -n elk -o jsonpath='{.data.ELASTIC_PASSWORD}' | base64 --decode)
+            set -eux
+            apt-get update && apt-get install -y jq apt-transport-https ca-certificates curl gnupg
+            curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+            chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
+            echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
+            chmod 644 /etc/apt/sources.list.d/kubernetes.list
+            apt-get update && apt-get install -y kubectl
+            
             API_KEY=$(curl -k -u elastic:$ELASTIC_PASSWORD -X POST "https://trascendence-es-http:9200/_security/api_key" -H "Content-Type: application/json" -d'
             {
               "name": "fleet-server-api-key",
@@ -72,18 +93,21 @@ spec:
                 }
               }
             }' | jq -r '.api_key')
+            if [ -z "$API_KEY" ]; then
+              echo "Failed to generate API key"
+              exit 1
+            fi
+            # Delete existing secret if present, then create a new one
+            kubectl delete secret elasticsearch-api-key -n elk --ignore-not-found
             kubectl create secret generic elasticsearch-api-key --from-literal=api-key=$API_KEY -n elk
         env:
         - name: ELASTIC_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: elastic-credentials
-              key: ELASTIC_USERNAME
+          value: "elastic"
         - name: ELASTIC_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: elastic-credentials
-              key: ELASTIC_PASSWORD
+              name: trascendence-es-elastic-user
+              key: elastic
       restartPolicy: OnFailure
 ---
 apiVersion: v1
@@ -100,7 +124,7 @@ metadata:
 rules:
 - apiGroups: [""]
   resources: ["secrets"]
-  verbs: ["create"]
+  verbs: ["get", "create", "delete"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
