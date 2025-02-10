@@ -67,10 +67,28 @@ class JoinTournament(APIView):
 		player = get_object_or_404(Player, user_id=user_id)
 		if tournament.partecipants >= tournament.max_partecipants:
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
+		if tournament.winner != 0:
+			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
 		player.tournaments.add(tournament)
 		tournament.partecipants += 1
 		tournament.save()
 		return Response({'message': 'user joined tournament'}, status=status.HTTP_200_OK)	
+
+class EndTournament(APIView):
+	permission_classes = (permissions.AllowAny,)
+
+	def post(self, request, *args, **kwargs):
+		tournament_id = request.data.get('tournament_id')
+		winner_id = request.data.get('winner_id')
+		if not tournament_id or not winner_id:
+			return Response({'error': 'tournament_id and winner_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+		tournament = get_object_or_404(Tournament, id=tournament_id)
+		winner = get_object_or_404(Player, user_id=winner_id)
+		if tournament.winner != 0:
+			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
+		tournament.winner = winner_id
+		tournament.save()
+		return Response({'message': 'tournament ended'}, status=status.HTTP_200_OK)
 
 class PlayerMatchHistory(APIView):
 	permission_classes = (permissions.AllowAny,)
