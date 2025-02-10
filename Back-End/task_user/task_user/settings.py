@@ -59,7 +59,6 @@ INSTALLED_APPS = [
 	'django_filters',
 	'oauth2_provider',
 	'task_app',
-	'gameProgress_app',
 	'user_app',
 	'corsheaders',
 ]
