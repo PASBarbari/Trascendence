@@ -555,6 +555,8 @@ function resetPowerUps() {
 function restart_game() {
 	p1_score = 0;
 	p2_score = 0;
+	p2_move_y = 0;
+	p1_move_y = 0;
 	wallHitPosition = 0; 1
 	document.getElementById('gameOverImage').style.display = 'none';
 	removeWinnerText();
