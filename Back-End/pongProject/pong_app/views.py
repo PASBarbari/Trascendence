@@ -22,6 +22,17 @@ class MultipleFieldLookupMixin:
 		self.check_object_permissions(self.request, obj)
 		return obj
 
+class PlayerGen(generics.ListCreateAPIView):
+	permission_classes = (permissions.AllowAny,)
+	serializer_class = PlayerSerializer
+	lookup_fields = ['user_id', 'tournaments__id']
+
+class PlayerManage(generics.RetrieveUpdateDestroyAPIView):
+	permission_classes = (permissions.AllowAny,)
+	serializer_class = PlayerSerializer
+	lookup_url_kwarg = 'user_id'
+	queryset = Player.objects.all()
+
 class GameGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = GamesSerializer
@@ -53,8 +64,10 @@ class JoinTournament(APIView):
 		if not tournament_id or not user_id:
 			return Response({'error': 'tournament_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament = get_object_or_404(Tournament, id=tournament_id)
+		player = get_object_or_404(Player, user_id=user_id)
 		if tournament.partecipants >= tournament.max_partecipants:
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
+		player.tournaments.add(tournament)
 		tournament.partecipants += 1
 		tournament.save()
 		return Response({'message': 'user joined tournament'}, status=status.HTTP_200_OK)	

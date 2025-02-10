@@ -2,9 +2,23 @@ from rest_framework import serializers
 from .models import *
 import datetime
 
+class PlayerSerializer(serializers.ModelSerializer):
+	user_id = serializers.IntegerField(primary_key=True)
+	username = serializers.CharField(max_length=255)
+	tournaments = serializers.PrimaryKeyRelatedField(queryset=Tournament.objects.all(), many=True, required=False)
+	
+	def validate_username(self, value):
+		if len(str(value)) < 1:
+			raise serializers.ValidationError('username is not valid')
+		return value
+	
+	class Meta:
+		model = Player
+		fields = '__all__'
+
 class GamesSerializer(serializers.ModelSerializer):
-	player_1 = serializers.integerField(min_value=0, required=True)
-	player_2 = serializers.integerField(min_value=0, default=0, required=False)
+	player_1 = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all())
+	player_2 = serializers.primaryKeyRelatedField(queryset=Player.objects.all(), required=False)
 	player_1_score = serializers.IntegerField(min_value=0, default=0)
 	player_2_score = serializers.IntegerField(min_value=0, default=0)
 	begin_date = serializers.DateTimeField(read_only=True)
