@@ -67,6 +67,12 @@ class FriendList(generics.ListAPIView):
 	# 	return Friendships.objects.filter(accepted=True)
 
 class LevelUp(APIView):
+	""" Use this endpoint to add exp to a user.
+
+		Args:
+			user_id (int): The id of the user.
+			exp (int): The amount of experience points to add.
+	"""
 	permission_classes = (permissions.AllowAny,)
 
 	def post(self, request):
@@ -86,85 +92,91 @@ class LevelUp(APIView):
 from .notification import Microservices
 
 class AddFriend(APIView):
-		permission_classes = (permissions.AllowAny,)
+	""" Use this endpoint to send a friend request, accept a friend request or delete a friendship.
 
-		def post(self, request):
-				serializer = FriendshipsSerializer(data=request.data)
-				serializer.is_valid(raise_exception=True)
-				u1 = Users.objects.get(user_id=serializer.data['user_1'])
-				u2 = Users.objects.get(user_id=serializer.data['user_2'])
-				if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
-						if Friendships.objects.get(user_1=u1, user_2=u2).accepted:
-								return Response({
-										'info': 'users are already friends'
-								}, status=status.HTTP_200_OK)
+		Args:
+			user_1 (int): The id of the user sending the request.
+			user_2 (int): The id of the user receiving the request.
+	"""
+	permission_classes = (permissions.AllowAny,)
+
+	def post(self, request):
+		serializer = FriendshipsSerializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		u1 = Users.objects.get(user_id=serializer.data['user_1'])
+		u2 = Users.objects.get(user_id=serializer.data['user_2'])
+		if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
+				if Friendships.objects.get(user_1=u1, user_2=u2).accepted:
 						return Response({
-								'info': 'friend request is pending'
+								'info': 'users are already friends'
 						}, status=status.HTTP_200_OK)
-				fs = Friendships.objects.create(
-						user_1=u1,
-						user_2=u2
-				)
+				return Response({
+						'info': 'friend request is pending'
+				}, status=status.HTTP_200_OK)
+		fs = Friendships.objects.create(
+				user_1=u1,
+				user_2=u2
+		)
+		fs.save()
+		notifi = ImmediateNotification.objects.create(
+				Sender="Users",
+				message=f'Friend request from {u1.first_name} {u1.last_name}',
+				user_id=u2.user_id,
+				group_id=None,
+		)
+		SendNotificationSync(notifi)
+		return Response({
+				'info': 'friend request sent'
+		}, status=status.HTTP_200_OK)
+	
+	def patch(self, request):
+		try:
+			serializer = FriendshipsSerializer(data=request.data)
+			serializer.is_valid(raise_exception=True)
+			u1 = Users.objects.get(user_id=serializer.data['user_1'])
+			u2 = Users.objects.get(user_id=serializer.data['user_2'])
+			if Friendships.objects.filter(user_1=u1, user_2=u2):
+				fs = Friendships.objects.get(user_1=u1, user_2=u2)
+				fs.accepted = True
 				fs.save()
 				notifi = ImmediateNotification.objects.create(
-						Sender="Users",
-						message=f'Friend request from {u1.first_name} {u1.last_name}',
-						user_id=u2.user_id,
-						group_id=None,
+					Sender=u2.first_name + ' ' + u2.last_name,
+					message=f'{u2.first_name} {u2.last_name} accepted your friend request',
+					user_id=u1.user_id,
+					group_id=None,
 				)
-				SendNotificationSync(notifi)
+				asyncio.create_task(SendNotification(notifi))
 				return Response({
-						'info': 'friend request sent'
+					'info': 'friend request accepted'
 				}, status=status.HTTP_200_OK)
-
-		def patch(self, request):
-				try:
-						serializer = FriendshipsSerializer(data=request.data)
-						serializer.is_valid(raise_exception=True)
-						u1 = Users.objects.get(user_id=serializer.data['user_1'])
-						u2 = Users.objects.get(user_id=serializer.data['user_2'])
-						if Friendships.objects.filter(user_1=u1, user_2=u2):
-								fs = Friendships.objects.get(user_1=u1, user_2=u2)
-								fs.accepted = True
-								fs.save()
-								notifi = ImmediateNotification.objects.create(
-										Sender=u2.first_name + ' ' + u2.last_name,
-										message=f'{u2.first_name} {u2.last_name} accepted your friend request',
-										user_id=u1.user_id,
-										group_id=None,
-								)
-								asyncio.create_task(SendNotification(notifi))
-								return Response({
-										'info': 'friend request accepted'
-								}, status=status.HTTP_200_OK)
-						else:
-								return Response({
-										'error': 'friend request not found'
-								}, status=status.HTTP_400_BAD_REQUEST)
-				except Exception as e:
-						return Response({
-								'error': str(e)
-						}, status=status.HTTP_400_BAD_REQUEST)
-
-		def delete(self, request):
-				try:
-						serializer = FriendshipsSerializer(data=request.data)
-						serializer.is_valid(raise_exception=True)
-						u1 = Users.objects.get(user_id=serializer.data['user_1'])
-						u2 = Users.objects.get(user_id=serializer.data['user_2'])
-						friendship = Friendships.objects.filter(
-								(Q(user_1=u1) & Q(user_2=u2)) | (Q(user_1=u2) & Q(user_2=u1))
-						).first()
-						if friendship:
-								friendship.delete()
-								return Response({
-										'info': 'friendship deleted'
-								}, status=status.HTTP_200_OK)
-						else:
-								return Response({
-										'error': 'friendship not found'
-								}, status=status.HTTP_400_BAD_REQUEST)
-				except Exception as e:
-						return Response({
-								'error': str(e)
-						}, status=status.HTTP_400_BAD_REQUEST)
+			else:
+				return Response({
+					'error': 'friend request not found'
+				}, status=status.HTTP_400_BAD_REQUEST)
+		except Exception as e:
+			return Response({
+				'error': str(e)
+			}, status=status.HTTP_400_BAD_REQUEST)
+	
+	def delete(self, request):
+		try:
+			serializer = FriendshipsSerializer(data=request.data)
+			serializer.is_valid(raise_exception=True)
+			u1 = Users.objects.get(user_id=serializer.data['user_1'])
+			u2 = Users.objects.get(user_id=serializer.data['user_2'])
+			friendship = Friendships.objects.filter(
+				(Q(user_1=u1) & Q(user_2=u2)) | (Q(user_1=u2) & Q(user_2=u1))
+			).first()
+			if friendship:
+				friendship.delete()
+				return Response({
+						'info': 'friendship deleted'
+				}, status=status.HTTP_200_OK)
+			else:
+				return Response({
+					'error': 'friendship not found'
+				}, status=status.HTTP_400_BAD_REQUEST)
+		except Exception as e:
+			return Response({
+				'error': str(e)
+			}, status=status.HTTP_400_BAD_REQUEST)
