@@ -106,27 +106,27 @@ class AddFriend(APIView):
 		u1 = Users.objects.get(user_id=serializer.data['user_1'])
 		u2 = Users.objects.get(user_id=serializer.data['user_2'])
 		if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
-				if Friendships.objects.get(user_1=u1, user_2=u2).accepted:
-						return Response({
-								'info': 'users are already friends'
-						}, status=status.HTTP_200_OK)
+			if Friendships.objects.get(user_1=u1, user_2=u2).accepted:
 				return Response({
-						'info': 'friend request is pending'
+					'info': 'users are already friends'
 				}, status=status.HTTP_200_OK)
+			return Response({
+				'info': 'friend request is pending'
+			}, status=status.HTTP_200_OK)
 		fs = Friendships.objects.create(
-				user_1=u1,
-				user_2=u2
+			user_1=u1,
+			user_2=u2
 		)
 		fs.save()
 		notifi = ImmediateNotification.objects.create(
-				Sender="Users",
-				message=f'Friend request from {u1.first_name} {u1.last_name}',
-				user_id=u2.user_id,
-				group_id=None,
+			Sender="Users",
+			message=f'Friend request from {u1.first_name} {u1.last_name}',
+			user_id=u2.user_id,
+			group_id=None,
 		)
 		SendNotificationSync(notifi)
 		return Response({
-				'info': 'friend request sent'
+			'info': 'friend request sent'
 		}, status=status.HTTP_200_OK)
 	
 	def patch(self, request):
