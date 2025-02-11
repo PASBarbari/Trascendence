@@ -14,128 +14,107 @@ spec:
   daemonSet:
     podTemplate:
       spec:
-        initContainers:
-        - name: copy-ca-certs
-          image: busybox
-          command: ["sh", "-c", "cp /mnt/secret-ca/ca.crt /mnt/ca/ca.crt"]
-          volumeMounts:
-          - name: secret-ca
-            mountPath: /mnt/secret-ca
-          - name: ca-certificates
-            mountPath: /mnt/ca
+        securityContext:
+          runAsUser: 0 # root
         containers:
         - name: agent
           env:
           - name: FLEET_SERVER_ENABLE
             value: "true"
+          - name: FLEET_SERVER_HOST
+            value: "0.0.0.0"
+          - name: FLEET_SERVER_PORT
+            value: "8220"
           - name: FLEET_SERVER_CERT
-            valueFrom:
-              secretKeyRef:
-                name: fleet-server-cert
-                key: tls.crt
+            value: "/usr/share/fleet-server/certs/tls.crt"
           - name: FLEET_SERVER_CERT_KEY
-            valueFrom:
-              secretKeyRef:
-                name: fleet-server-cert
-                key: tls.key
+            value: "/usr/share/fleet-server/certs/tls.key"
           - name: FLEET_SERVER_ELASTICSEARCH_HOST
             value: "https://trascendence-es-http:9200"
           - name: FLEET_SERVER_ELASTICSEARCH_CA
+            value: "/usr/share/fleet-server/ca/ca.crt"
+          - name: FLEET_SERVER_ES_CA
+            value: "/usr/share/fleet-server/ca/ca.crt"
+          - name: FLEET_SERVER_SIGNING_KEY
             valueFrom:
-              secretKeyRef:
-                name: trascendence-kb-es-ca
-                key: ca.crt
+                secretKeyRef: 
+                    name: fleet-kibana-enckey
+                    key: fleetSigningKey
+          - name: FLEET_SERVER_ENCRYPTION_KEY
+            valueFrom:
+                secretKeyRef: 
+                    name: fleet-kibana-enckey
+                    key: encryptionKey
+          ports:
+          - containerPort: 8220
+            protocol: TCP
           volumeMounts:
-          - name: ca-certificates
-            mountPath: /usr/local/share/ca-certificates
+          - name: fleet-server-cert
+            mountPath: /usr/share/fleet-server/certs
+            readOnly: true
+          - name: elasticsearch-ca
+            mountPath: /usr/share/fleet-server/ca
+            readOnly: true
         volumes:
-        - name: ca-certificates
-          emptyDir: {}
-        - name: secret-ca
+        - name: fleet-server-cert
+          secret:
+            secretName: fleet-server-cert
+        - name: elasticsearch-ca
           secret:
             secretName: trascendence-kb-es-ca
 ---
-apiVersion: batch/v1
-kind: Job
+apiVersion: v1
+kind: Service
 metadata:
-  name: generate-elasticsearch-api-key
+  name: fleet-server
   namespace: elk
 spec:
-  template:
-    spec:
-      serviceAccountName: api-key-generator
-      containers:
-      - name: generate-api-key
-        image: debian:latest
-        command: ["sh", "-c"]
-        args:
-          - |
-            set -eux
-            apt-get update && apt-get install -y jq apt-transport-https ca-certificates curl gnupg
-            curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-            chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
-            echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | tee /etc/apt/sources.list.d/kubernetes.list
-            chmod 644 /etc/apt/sources.list.d/kubernetes.list
-            apt-get update && apt-get install -y kubectl
-            
-            API_KEY=$(curl -k -u elastic:$ELASTIC_PASSWORD -X POST "https://trascendence-es-http:9200/_security/api_key" -H "Content-Type: application/json" -d'
-            {
-              "name": "fleet-server-api-key",
-              "role_descriptors": {
-                "fleet-server-role": {
-                  "cluster": ["all"],
-                  "index": [
-                    {
-                      "names": ["*"],
-                      "privileges": ["all"]
-                    }
-                  ]
-                }
-              }
-            }' | jq -r '.api_key')
-            if [ -z "$API_KEY" ]; then
-              echo "Failed to generate API key"
-              exit 1
-            fi
-            # Delete existing secret if present, then create a new one
-            kubectl delete secret elasticsearch-api-key -n elk --ignore-not-found
-            kubectl create secret generic elasticsearch-api-key --from-literal=api-key=$API_KEY -n elk
-        env:
-        - name: ELASTIC_USERNAME
-          value: "elastic"
-        - name: ELASTIC_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: trascendence-es-elastic-user
-              key: elastic
-      restartPolicy: OnFailure
+  selector:
+    agent.k8s.elastic.co/name: fleet-server
+  ports:
+    - protocol: TCP
+      port: 8220
+      targetPort: 8220
+  type: ClusterIP
 ---
-apiVersion: v1
-kind: ServiceAccount
+apiVersion: agent.k8s.elastic.co/v1alpha1
+kind: Agent
 metadata:
-  name: api-key-generator
+  name: elastic-agent
   namespace: elk
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: elk
-  name: api-key-generator-role
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get", "create", "delete"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: api-key-generator-rolebinding
-  namespace: elk
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: api-key-generator-role
-subjects:
-- kind: ServiceAccount
-  name: api-key-generator
-  namespace: elk
+spec:
+  version: 8.13.4
+  mode: fleet
+  fleetServerEnabled: false
+  kibanaRef:
+    name: trascendence
+  daemonSet:
+    podTemplate:
+      spec:
+        securityContext:
+          runAsUser: 0
+        containers:
+        - name: agent
+          env:
+          - name: FLEET_ENROLL
+            value: "true"
+          - name: FLEET_URL
+            value: "https://fleet-server:8220"
+          - name: FLEET_CA
+            valueFrom:
+              secretKeyRef:
+                name: fleet-server-agent-http-certs-internal
+                key: ca.crt
+          - name: FLEET_ENROLLMENT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: fleet-server-agent-token
+                key: token
+          volumeMounts:
+          - name: fleet-ca
+            mountPath: /usr/share/fleet-server/ca
+            readOnly: true
+        volumes:
+        - name: fleet-ca
+          secret:
+            secretName: fleet-server-agent-http-certs-internal

@@ -11,6 +11,9 @@ spec:
   config:
     xpack.fleet.agents.elasticsearch.hosts: ["https://trascendence-es-http.elk.svc:9200"]
     xpack.fleet.agents.fleet_server.hosts: ["https://fleet-server-agent-http.elk.svc:8220"]
+    xpack.encryptedSavedObjects.encryptionKey: "${SAVED_OBJECTS_KEY}"
+    xpack.fleet.agentPolicies.fleet_server.signing_key: "${FLEET_SERVER_SIGNING_KEY}"
+    xpack.security.encryptionKey: "${XPACK_ENCRYPTION_KEY}"
     xpack.fleet.packages:
       - name: system
         version: latest
@@ -79,6 +82,21 @@ spec:
             secretKeyRef:
               name: trascendence-kb-es-ca
               key: ca.crt
+        - name: XPACK_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: encryptionKey
+        - name: SAVED_OBJECTS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: savedObjectsKey
+        - name: FLEET_SERVER_SIGNING_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: fleetSigningKey
 ---
 apiVersion: v1
 kind: Service

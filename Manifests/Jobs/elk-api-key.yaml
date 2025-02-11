@@ -1,0 +1,79 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: generate-elasticsearch-api-key
+  namespace: elk
+spec:
+  template:
+    spec:
+      serviceAccountName: api-key-generator
+      containers:
+      - name: generate-api-key
+        image: debian:latest
+        command: ["sh", "-c"]
+        args:
+          - |
+            set -eux
+            apt-get update && apt-get install -y curl jq
+            ELASTIC_PASSWORD=$(kubectl get secret trascendence-es-elastic-user -n elk -o jsonpath='{.data.elastic}' | base64 --decode)
+            API_KEY=$(curl -k -u elastic:$ELASTIC_PASSWORD -X POST "https://trascendence-es-http:9200/_security/api_key" -H "Content-Type: application/json" -d'
+            {
+              "name": "fleet-server-api-key",
+              "role_descriptors": {
+                "fleet-server-role": {
+                  "cluster": ["all"],
+                  "index": [
+                    {
+                      "names": ["*"],
+                      "privileges": ["all"]
+                    }
+                  ]
+                }
+              }
+            }' | jq -r '.api_key')
+            if [ -z "$API_KEY" ]; then
+              echo "Failed to generate API key"
+              exit 1
+            fi
+            # Delete existing secret if present, then create a new one
+            kubectl delete secret elasticsearch-api-key -n elk --ignore-not-found
+            kubectl create secret generic elasticsearch-api-key --from-literal=api-key=$API_KEY -n elk
+        env:
+        - name: ELASTIC_USERNAME
+          value: "elastic"
+        - name: ELASTIC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: trascendence-es-elastic-user
+              key: elastic
+      restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: api-key-generator
+  namespace: elk
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: elk
+  name: api-key-generator-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "create", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-key-generator-rolebinding
+  namespace: elk
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: api-key-generator-role
+subjects:
+- kind: ServiceAccount
+  name: api-key-generator
+  namespace: elk
