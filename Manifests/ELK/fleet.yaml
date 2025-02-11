@@ -45,6 +45,15 @@ spec:
                 secretKeyRef: 
                     name: fleet-kibana-enckey
                     key: encryptionKey
+          - name: FLEET_SERVER_ELASTICSEARCH_INSECURE
+            value: "false"
+          - name: FLEET_SERVER_ELASTICSEARCH_USERNAME
+            value: "elastic"
+          - name: FLEET_SERVER_ELASTICSEARCH_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: elastic-credentials
+                key: ELASTIC_PASSWORD
           ports:
           - containerPort: 8220
             protocol: TCP
@@ -66,7 +75,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: fleet-server
+  name: fleet-server-agent-http
   namespace: elk
 spec:
   selector:
@@ -99,7 +108,7 @@ spec:
           - name: FLEET_ENROLL
             value: "true"
           - name: FLEET_URL
-            value: "https://fleet-server:8220"
+            value: "https://fleet-server-agent-http:8220"
           - name: FLEET_CA
             valueFrom:
               secretKeyRef:
@@ -110,6 +119,10 @@ spec:
               secretKeyRef:
                 name: fleet-server-agent-token
                 key: token
+          - name: FLEET_INSECURE
+            value: "false"
+          - name: FLEET_SERVER_POLICY_ID
+            value: "eck-fleet-server"
           volumeMounts:
           - name: fleet-ca
             mountPath: /usr/share/fleet-server/ca

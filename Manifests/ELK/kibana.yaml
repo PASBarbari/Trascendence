@@ -14,6 +14,7 @@ spec:
     xpack.encryptedSavedObjects.encryptionKey: "${SAVED_OBJECTS_KEY}"
     xpack.fleet.agentPolicies.fleet_server.signing_key: "${FLEET_SERVER_SIGNING_KEY}"
     xpack.security.encryptionKey: "${XPACK_ENCRYPTION_KEY}"
+    xpack.fleet.agents.tlsCheckDisabled: false
     xpack.fleet.packages:
       - name: system
         version: latest
