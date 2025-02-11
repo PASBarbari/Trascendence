@@ -35,6 +35,46 @@ async function PatchProfile(name, surname, birthdate, bio) {
 	}
 }
 
+async function GetProfile() {
+	const { userId, token } = getVariables();
+	try {
+		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": `Bearer ${token}`,
+			},
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			
+			console.log("Profile:", data);
+
+			setVariables({
+				name: data.first_name || "",
+				surname: data.last_name || "",
+				birthdate: data.birth_date || "",
+				bio: data.bio || "",
+				level: data.level ?? "",
+				exp: data.exp ?? "",
+			});
+			console.log('level e exp:', data.level, data.exp);
+			console.log('Variables after GetProfile:', getVariables()); // Aggiungi questo per il debug
+		} else {
+			const errorData = await response.json();
+			console.error("Errore nella risposta del server:", errorData);
+		}
+	} catch (error) {
+		console.error("Errore nella richiesta:", error);
+	}
+}
+
+async function initializeProfile() {
+	await GetProfile();
+	renderProfile();
+}
+
 function renderProfile() {
 	const { userUsername, userEmail, userId, name, surname, birthdate, bio, level, exp } = getVariables();
 	console.log('level e exp:', level, exp);
@@ -75,11 +115,11 @@ function renderProfile() {
 							<textarea id="bio" name="bio" readonly class="form-control readonly-input" rows="1">${bio}</textarea>
 						</div>
 
-                        <div class="profile-form-group">
-                            <label for="level" id="level">Level: ${level}</label>
-                            <input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-control readonly-input">
-                            <span id="expValue">exp: ${exp}</span>
-                        </div>
+						<div class="profile-form-group level">
+							<label for="level" id="level">Level: ${level}, Exp: ${exp}</label>
+							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-range readonly-input custom-range">
+							<!--span id="expValue">exp: ${exp}</span-->
+						</div>
 
 					</form>
 				</div>
@@ -143,48 +183,19 @@ function renderProfile() {
 		});
 	});
 
-	async function GetProfile() {
-		const { userId, token } = getVariables();
-		try {
-			const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"Authorization": `Bearer ${token}`,
-				},
-			});
+	// Aggiungi l'event listener per aggiornare lo stile della barra di scorrimento
+	const expInput = document.getElementById('exp');
+	// const expValueSpan = document.getElementById('expValue');
 
-			if (response.ok) {
-				const data = await response.json();
-				
-				console.log("Profile:", data);
+	expInput.addEventListener('input', function() {
+		// expValueSpan.textContent = `exp: ${expInput.value}`;
+		expInput.style.setProperty('--value', `${expInput.value}%`);
+	});
 
-				setVariables({
-					name: data.first_name || "",
-					surname: data.last_name || "",
-					birthdate: data.birth_date || "",
-					bio: data.bio || "",
-					level: data.level ?? "",
-					exp: data.exp ?? "",
-				});
-				document.getElementById('name').setAttribute('value', data.first_name || "");
-				document.getElementById('surname').setAttribute('value', data.last_name || "");
-				document.getElementById('birthdate').setAttribute('value', data.birth_date || "");
-				document.getElementById('bio').value = data.bio || "";
-				document.getElementById('level').setAttribute('value', data.level ?? "");
-				document.getElementById('exp').setAttribute('value', data.exp ?? "");
-				console.log('level e exp:', data.level, data.exp);
-				console.log('Variables after GetProfile:', getVariables()); // Aggiungi questo per il debug
-			} else {
-				const errorData = await response.json();
-				console.error("Errore nella risposta del server:", errorData);
-			}
-		} catch (error) {
-			console.error("Errore nella richiesta:", error);
-		}
-	}
-
-	GetProfile();
+	// Imposta il valore iniziale
+	expInput.style.setProperty('--value', `${expInput.value}%`);
 }
+
+initializeProfile();
 
 export { renderProfile };
