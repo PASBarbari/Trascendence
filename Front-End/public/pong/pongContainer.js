@@ -100,7 +100,6 @@ function showRegisterBox() {
 					<div class="mb-3">
 						<input type="password" id="registerpassword" placeholder="Password" class="form-control" required />
 					</div>
-					<div class="empty"></div>
 					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
 					<button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
 				</form>
