@@ -60,6 +60,12 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	queryset = Tournament.objects.all()
 
 class JoinTournament(APIView):
+	""" Use this endpoint to join a tournament.
+	
+		Args:
+			tournament_id (int): The id of the tournament.
+			user_id (int): The id of the player.
+	"""
 	permission_classes = (permissions.AllowAny,)
 
 	def post(self, request, *args, **kwargs):
@@ -79,6 +85,12 @@ class JoinTournament(APIView):
 		return Response({'message': 'user joined tournament'}, status=status.HTTP_200_OK)	
 
 class EndTournament(APIView):
+	""" Use this endpoint to end a tournament.
+	
+		Args:
+			tournament_id (int): The id of the tournament.
+			winner_id (int): The id of the player who won the tournament.
+	"""
 	permission_classes = (permissions.AllowAny,)
 
 	def post(self, request, *args, **kwargs):
@@ -95,6 +107,11 @@ class EndTournament(APIView):
 		return Response({'message': 'tournament ended'}, status=status.HTTP_200_OK)
 
 class PlayerMatchHistory(APIView):
+	""" Use this endpoint to get the match history of a player.'
+
+		Args:
+			user_id (int): The id of the player.
+	"""
 	permission_classes = (permissions.AllowAny,)
 
 	def get(self, request, *args, **kwargs):

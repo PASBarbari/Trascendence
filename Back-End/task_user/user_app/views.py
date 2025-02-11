@@ -10,6 +10,7 @@ from django.db.models import Q
 import asyncio
 from .middleware import APIKeyPermission
 from django_filters.rest_framework import DjangoFilterBackend
+
 class MultipleFieldLookupMixin:
 	"""
 	Apply this mixin to any view or viewset to get multiple field filtering
