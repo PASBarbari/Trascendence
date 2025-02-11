@@ -36,6 +36,8 @@ class PlayerManage(generics.RetrieveUpdateDestroyAPIView):
 class GameGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = GamesSerializer
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['player_1__user_id', 'player_2__user_id', 'tournament_id']
 	lookup_fields = ['id', 'player_1__user_id', 'player_2__user_id', 'tournament_id']
 
 class GameManage(generics.RetrieveUpdateDestroyAPIView):
@@ -47,6 +49,8 @@ class GameManage(generics.RetrieveUpdateDestroyAPIView):
 class TournamentGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = TournamentSerializer
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
 	lookup_fields = ['id', 'name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
 
 class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
