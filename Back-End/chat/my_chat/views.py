@@ -11,6 +11,7 @@ from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
 from .middleware import TokenAuthPermission, APIKeyPermission
 from .authentications import TokenAuthentication
+
 class GetChatMessage(generics.ListAPIView):
     serializer_class = chat_messageSerializer
     lookup_url_kwarg = 'room_id'
