@@ -124,9 +124,12 @@ function renderProfile() {
 					</form>
 				</div>
 				<div class="profile-card-image-container">
-					<div class="profile-image-circle">
-						<!-- <img src="/placeholder.svg" alt="Profile" class="profile-card-image" /> -->
-					</div>
+					<button class="profile-image-circle">
+						<img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" />
+						<div class="edit-icon-overlay">
+							<i class="bi bi-pencil"></i>
+						</div>
+					</button>
 					<div class="buttons">
 						<button id="editButton" class="edit-button btn btn-light">
 							<i class="bi bi-pencil edit-icon"></i>
@@ -143,6 +146,7 @@ function renderProfile() {
 	const form = document.getElementById('profileForm');
 	const editButton = document.getElementById('editButton');
 	const saveButton = document.getElementById('saveButton');
+	const profileImageContainer = document.querySelector('.profile-card-image-container');
 
 	editButton.addEventListener('click', function (e) {
 		e.preventDefault();
@@ -152,11 +156,13 @@ function renderProfile() {
 				input.removeAttribute('readonly');
 				input.classList.remove('readonly-input');
 			});
+			profileImageContainer.classList.add('edit-mode');
 		} else {
 			form.querySelectorAll('input, textarea').forEach(input => {
 				input.setAttribute('readonly', true);
 				input.classList.add('readonly-input');
 			});
+			profileImageContainer.classList.remove('edit-mode');
 		}
 	});
 
@@ -181,6 +187,7 @@ function renderProfile() {
 			input.setAttribute('readonly', true);
 			input.classList.add('readonly-input');
 		});
+		profileImageContainer.classList.remove('edit-mode');
 	});
 
 	// Aggiungi l'event listener per aggiornare lo stile della barra di scorrimento
