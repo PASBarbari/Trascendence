@@ -1,18 +1,13 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
+
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/register/register.css';
+document.head.appendChild(link);
 
 function renderRegister() {
 	const appDiv = document.querySelector('.App');
-
-	// Aggiungi dinamicamente i file CSS per la pagina di registrazione
-	const loginLink = document.createElement('link');
-	loginLink.rel = 'stylesheet';
-	loginLink.href = 'login.css';
-	document.head.appendChild(loginLink);
-
-	const registerLink = document.createElement('link');
-	registerLink.rel = 'stylesheet';
-	registerLink.href = 'register.css';
-	document.head.appendChild(registerLink);
 
 	appDiv.innerHTML = `
 		<div class="register">
@@ -29,7 +24,6 @@ function renderRegister() {
 						<div class="mb-3">
 							<input type="password" id="password" placeholder="Password" class="form-control" required />
 						</div>
-						<div class="empty"></div>
 						<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
 						<button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
 					</form>
@@ -53,6 +47,16 @@ function renderRegister() {
 
 async function onHandleSubmit(e, username, email, password) {
 	e.preventDefault();
+	await registerUser(username, email, password, true);
+}
+
+/**
+ * Gestisce la registrazione dell'utente.
+ * 
+ * @param {boolean} isBaseRegister - true per la registrazione base, false per la registrazione multiplayer per pong.
+ * @returns {Promise<boolean>} - Ritorna true se la registrazione ha successo, altrimenti false.
+ */
+async function registerUser(username, email, password, isBaseRegister) {
 	if (email && password) {
 		console.log('Username:', username);
 		console.log('Email:', email);
@@ -70,7 +74,10 @@ async function onHandleSubmit(e, username, email, password) {
 			if (response.ok) {
 				const data = await response.json();
 				console.log('Risposta dal server:', data);
-				window.navigateTo('/login');
+				if (isBaseRegister) {
+					window.navigateTo('/login');
+				}
+				return true;
 			} else {
 				const errorData = await response.json();
 				console.error('Errore nella risposta del server:', errorData.error);
@@ -84,28 +91,16 @@ async function onHandleSubmit(e, username, email, password) {
 					alert('Si è verificato un errore. Per favore, riprova.');
 				}
 				console.error('Errore nella risposta del server:', response.statusText);
+				return false;
 			}
 		} catch (error) {
 			console.error('Errore nella richiesta:', error);
+			return false;
 		}
 	} else {
 		console.log('Per favore, inserisci sia username che password.');
+		return false;
 	}
 }
 
-function getCookie(name) {
-	let cookieValue = null;
-	if (document.cookie && document.cookie !== '') {
-		const cookies = document.cookie.split(';');
-		for (let i = 0; i < cookies.length; i++) {
-			const cookie = cookies[i].trim();
-			if (cookie.substring(0, name.length + 1) === (name + '=')) {
-				cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-				break;
-			}
-		}
-	}
-	return cookieValue;
-}
-
-export { renderRegister };
+export { renderRegister, registerUser };
