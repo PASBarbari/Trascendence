@@ -27,7 +27,9 @@
 }
 
 .profile-image-circle {
-  background-color: #d3d3d3;
+	border: none; 
+	outline: none;
+	box-shadow: none;
   border-radius: 50%;
   width: 80px;
   height: 80px;
@@ -36,9 +38,47 @@
   justify-content: center;
 }
 
+.profile-image-circle:focus,
+.profile-image-circle:active {
+  outline: none; /* Rimuove il contorno */
+  box-shadow: none; /* Rimuove l'ombra */
+}
+
+.profile-card-image-container .profile-image-circle {
+  pointer-events: none; /* Disabilita l'interazione */
+}
+
+.profile-card-image-container.edit-mode .profile-image-circle {
+  pointer-events: auto; /* Abilita l'interazione in modalità modifica */
+}
+
+
+.profile-card-image-container.edit-mode .edit-icon-overlay {
+  display: flex;
+}
+
+.edit-icon-overlay {
+  display: none;
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(255, 255, 255, 0.246);
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-icon-overlay i {
+  color: rgb(26, 26, 26);
+  font-size: 20px;
+}
+
 .profile-card-image {
-  width: 70px;
-  height: 70px;
+  width: 77px;
+  height: 77px;
   border-radius: 50%;
 }
 
