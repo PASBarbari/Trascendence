@@ -64,3 +64,4 @@ state.r_bottom = new THREE.Mesh(new THREE.BoxGeometry(state.ring.y, state.ring.h
 state.r_top = new THREE.Mesh(new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z), state.mat.ring);
 state.r_left = new THREE.Mesh(new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z), state.mat.ring);
 state.r_right = new THREE.Mesh(new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z), state.mat.ring);
+
