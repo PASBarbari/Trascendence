@@ -9,27 +9,17 @@ from asgiref.sync import async_to_sync
 #TODO implementa i logging schiavo, e' un solo file e' facile
 
 class GameState:
-	def __init__(self, player_1, player_2, game_id):
+	def __init__(self, player1_id, player2_id, game_id, player1_pos, player2_pos, ball_pos):
 		self.game_id = game_id
-		self.player_1 = player_1
-		self.player_2 = player_2
-		self.player_1_score = 0
-		self.player_2_score = 0
-		self.player1_pos = 0
-		self.player2_pos = 0
-		self.ball_pos = 0
+		self.player1 = {"id": player1_id, "score": 0, "x": 0, "y": 0}
+		self.player2 = {"id": player2_id, "score": 0, "x": 0, "y": 0}
+		self.ball_pos = ball_pos
   
-	def movement(self, player, dir):
-		if player == self.player_1:
-			if dir == 1:
-				self.player1_pos += 1
-			else:
-				self.player1_pos -= 1
+	def movement(self, player, dir, player_speed):
+		if player == self.player1.id:
+			self.player1.y += player_speed * dir
 		else:
-			if dir == 1:
-				self.player2_pos += 1
-			else:
-				self.player2_pos -= 1
+			self.player2.y += player_speed * dir
     
 	def update(self):
 		channel_layer = get_channel_layer()
