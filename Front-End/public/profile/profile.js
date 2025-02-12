@@ -147,6 +147,7 @@ function renderProfile() {
 	const editButton = document.getElementById('editButton');
 	const saveButton = document.getElementById('saveButton');
 	const profileImageContainer = document.querySelector('.profile-card-image-container');
+	const profileImage = document.querySelector('.profile-image-circle');
 
 	editButton.addEventListener('click', function (e) {
 		e.preventDefault();
@@ -201,6 +202,32 @@ function renderProfile() {
 
 	// Imposta il valore iniziale
 	expInput.style.setProperty('--value', `${expInput.value}%`);
+
+	// Event listener per l'immagine del profilo
+	profileImage.addEventListener('click', function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		const profileImageSelector = document.createElement('div');
+		profileImageSelector.className = 'login-box-modal';
+		profileImageSelector.innerHTML = `
+			<div class="login_box">
+				<h1>Seleziona un'immagine</h1>
+				<img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" /> <!--div>TODO da finire ovviamente<div-->
+			</div>
+		`;
+		document.body.appendChild(profileImageSelector);
+
+		function closeProfileImageSelector() {
+			document.body.removeChild(profileImageSelector);
+		}
+
+		window.addEventListener('click', function(event) {
+			if (event.target === profileImageSelector) {
+				closeProfileImageSelector();
+			}
+		});
+	});
 }
 
 initializeProfile();

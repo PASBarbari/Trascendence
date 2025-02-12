@@ -82,6 +82,18 @@
   border-radius: 50%;
 }
 
+.profile-image-selector {
+	height: 600px;
+    width: 400px;
+    background-color: #00020527;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+	z-index: 100;
+}
+
 .buttons {
   display: flex;
   flex-direction: row;
