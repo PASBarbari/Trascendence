@@ -59,12 +59,17 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	queryset = Users.objects.all()
 
 class FriendList(generics.ListAPIView):
+	permissions_classes = (permissions.AllowAny,)
 	serializer_class = FriendshipsSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
 	queryset = Friendships.objects.all()
-	# def get_queryset(self):
-	# 	return Friendships.objects.filter(accepted=True)
+	def get_queryset(self):
+		queryset = super().get_queryset()
+		user_id = self.request.query_params.get('user_id')
+		if user_id:
+			queryset = queryset.filter(Q(user_1__user_id=user_id) | Q(user_2__user_id=user_id))
+		return queryset
 
 class LevelUp(APIView):
 	""" Use this endpoint to add exp to a user.
@@ -140,10 +145,14 @@ class AddFriend(APIView):
 				fs.accepted = True
 				fs.save()
 				notifi = ImmediateNotification.objects.create(
-					Sender=u2.first_name + ' ' + u2.last_name,
-					message=f'{u2.first_name} {u2.last_name} accepted your friend request',
-					user_id=u1.user_id,
-					group_id=None,
+					#Sender=u2.first_name + ' ' + u2.last_name,
+					#message=f'{u2.first_name} {u2.last_name} accepted your friend request',
+					#user_id=u1.user_id,
+					#group_id=None,
+						Sender="Users",
+						message=f'{u1.user_id}',
+						user_id=u2.user_id,
+						group_id=None,
 				)
 				asyncio.create_task(SendNotification(notifi))
 				return Response({
