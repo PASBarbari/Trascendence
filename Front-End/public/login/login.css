@@ -37,11 +37,12 @@
     justify-content: center;
     align-items: center; 
 	gap: 10px;
+	height: 300px;
 }
 
 .empty
 {
-	height: 40px;
+	height: 54px;
 }
 
 /* .background{ perche' lo stile e' differente?

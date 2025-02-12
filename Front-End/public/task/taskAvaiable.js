@@ -1,6 +1,11 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
 import { renderTaskActive } from './taskActive.js';
-import { getCookie } from './cookie.js';
+import { getCookie } from '../cookie.js';
+
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/taskAvaiable/taskAvaiable.css';
+document.head.appendChild(link);
 
 async function joinTasks(task_id, user_id) {
 	const { token } = getVariables();
