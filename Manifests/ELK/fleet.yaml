@@ -37,14 +37,14 @@ spec:
             value: "/usr/share/fleet-server/ca/ca.crt"
           - name: FLEET_SERVER_SIGNING_KEY
             valueFrom:
-                secretKeyRef: 
-                    name: fleet-kibana-enckey
-                    key: fleetSigningKey
+              secretKeyRef: 
+                name: fleet-kibana-enckey
+                key: fleetSigningKey
           - name: FLEET_SERVER_ENCRYPTION_KEY
             valueFrom:
-                secretKeyRef: 
-                    name: fleet-kibana-enckey
-                    key: encryptionKey
+              secretKeyRef: 
+                name: fleet-kibana-enckey
+                key: encryptionKey
           - name: FLEET_SERVER_ELASTICSEARCH_INSECURE
             value: "false"
           - name: FLEET_SERVER_ELASTICSEARCH_USERNAME
@@ -54,6 +54,13 @@ spec:
               secretKeyRef:
                 name: elastic-credentials
                 key: ELASTIC_PASSWORD
+          - name: FLEET_SERVER_SERVICE_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: fleet-server-service-token
+                key: token
+          - name: FLEET_SERVER_POLICY_ID
+            value: "eck-fleet-server"
           ports:
           - containerPort: 8220
             protocol: TCP

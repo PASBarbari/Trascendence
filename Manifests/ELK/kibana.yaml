@@ -9,6 +9,7 @@ spec:
   elasticsearchRef:
     name: trascendence
   config:
+    xpack.fleet.enabled: true
     xpack.fleet.agents.elasticsearch.hosts: ["https://trascendence-es-http.elk.svc:9200"]
     xpack.fleet.agents.fleet_server.hosts: ["https://fleet-server-agent-http.elk.svc:8220"]
     xpack.encryptedSavedObjects.encryptionKey: "${SAVED_OBJECTS_KEY}"
@@ -60,29 +61,6 @@ spec:
             secretKeyRef:
               name: elastic-credentials
               key: ELASTIC_PASSWORD
-        - name: FLEET_SERVER_ENABLE
-          value: "true"
-        - name: FLEET_SERVER_HOST
-          value: "0.0.0.0"
-        - name: FLEET_SERVER_PORT
-          value: "8220"
-        - name: FLEET_SERVER_CERT
-          valueFrom:
-            secretKeyRef:
-              name: fleet-server-cert
-              key: tls.crt
-        - name: FLEET_SERVER_CERT_KEY
-          valueFrom:
-            secretKeyRef:
-              name: fleet-server-cert
-              key: tls.key
-        - name: FLEET_SERVER_ELASTICSEARCH_HOST
-          value: "https://trascendence-es-http:9200"
-        - name: FLEET_SERVER_ELASTICSEARCH_CA
-          valueFrom:
-            secretKeyRef:
-              name: trascendence-kb-es-ca
-              key: ca.crt
         - name: XPACK_ENCRYPTION_KEY
           valueFrom:
             secretKeyRef:
@@ -98,6 +76,11 @@ spec:
             secretKeyRef:
               name: fleet-kibana-enckey
               key: fleetSigningKey
+        - name: FLEET_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: fleetEncryptionKey
 ---
 apiVersion: v1
 kind: Service
