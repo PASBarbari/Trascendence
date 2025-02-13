@@ -1,5 +1,10 @@
-import { setVariables, getVariables } from './var.js';
-import { getCookie } from './cookie.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
+
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/taskActive/taskActive.css';
+document.head.appendChild(link);
 
 async function handleCompleteTask(task_id, task_rate) {
 	const { userId, token } = getVariables();

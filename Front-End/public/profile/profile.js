@@ -1,10 +1,15 @@
-import { setVariables, getVariables } from './var.js';
+import { setVariables, getVariables } from '../var.js';
+
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/profile/profile.css';
+document.head.appendChild(link);
 
 async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId } = getVariables();
 
 	try {
-		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
+		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, { // user/levelup user_id e exp
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
@@ -30,8 +35,49 @@ async function PatchProfile(name, surname, birthdate, bio) {
 	}
 }
 
+async function GetProfile() {
+	const { userId, token } = getVariables();
+	try {
+		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": `Bearer ${token}`,
+			},
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			
+			console.log("Profile:", data);
+
+			setVariables({
+				name: data.first_name || "",
+				surname: data.last_name || "",
+				birthdate: data.birth_date || "",
+				bio: data.bio || "",
+				level: data.level ?? "",
+				exp: data.exp ?? "",
+			});
+			console.log('level e exp:', data.level, data.exp);
+			console.log('Variables after GetProfile:', getVariables()); // Aggiungi questo per il debug
+		} else {
+			const errorData = await response.json();
+			console.error("Errore nella risposta del server:", errorData);
+		}
+	} catch (error) {
+		console.error("Errore nella richiesta:", error);
+	}
+}
+
+async function initializeProfile() {
+	await GetProfile();
+	renderProfile();
+}
+
 function renderProfile() {
-	const { userUsername, userEmail, userId, name, surname, birthdate, bio } = getVariables();
+	const { userUsername, userEmail, userId, name, surname, birthdate, bio, level, exp } = getVariables();
+	console.log('level e exp:', level, exp);
 	let edit = false;
 
 	const profileDiv = document.getElementById('profile');
@@ -68,12 +114,22 @@ function renderProfile() {
 							<label for="bio">Bio</label>
 							<textarea id="bio" name="bio" readonly class="form-control readonly-input" rows="1">${bio}</textarea>
 						</div>
+
+						<div class="profile-form-group level">
+							<label for="level" id="level">Level: ${level}, Exp: ${exp}</label>
+							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-range readonly-input custom-range">
+							<!--span id="expValue">exp: ${exp}</span-->
+						</div>
+
 					</form>
 				</div>
 				<div class="profile-card-image-container">
-					<div class="profile-image-circle">
-						<!-- <img src="/placeholder.svg" alt="Profile" class="profile-card-image" /> -->
-					</div>
+					<button class="profile-image-circle">
+						<img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" />
+						<div class="edit-icon-overlay">
+							<i class="bi bi-pencil"></i>
+						</div>
+					</button>
 					<div class="buttons">
 						<button id="editButton" class="edit-button btn btn-light">
 							<i class="bi bi-pencil edit-icon"></i>
@@ -90,20 +146,24 @@ function renderProfile() {
 	const form = document.getElementById('profileForm');
 	const editButton = document.getElementById('editButton');
 	const saveButton = document.getElementById('saveButton');
+	const profileImageContainer = document.querySelector('.profile-card-image-container');
+	const profileImage = document.querySelector('.profile-image-circle');
 
 	editButton.addEventListener('click', function (e) {
 		e.preventDefault();
 		edit = !edit;
 		if (edit) {
-			form.querySelectorAll('input:not([id="username"]):not([id="user_id"]):not([id="email"]), textarea').forEach(input => {
+			form.querySelectorAll('input:not([id="username"]):not([id="user_id"]):not([id="email"]):not([id="level"]):not([id="exp"]), textarea').forEach(input => {
 				input.removeAttribute('readonly');
 				input.classList.remove('readonly-input');
 			});
+			profileImageContainer.classList.add('edit-mode');
 		} else {
 			form.querySelectorAll('input, textarea').forEach(input => {
 				input.setAttribute('readonly', true);
 				input.classList.add('readonly-input');
 			});
+			profileImageContainer.classList.remove('edit-mode');
 		}
 	});
 
@@ -128,42 +188,48 @@ function renderProfile() {
 			input.setAttribute('readonly', true);
 			input.classList.add('readonly-input');
 		});
+		profileImageContainer.classList.remove('edit-mode');
 	});
 
-	async function GetProfile() {
-		const { userId, token } = getVariables();
-		try {
-			const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"Authorization": `Bearer ${token}`,
-				},
-			});
+	// Aggiungi l'event listener per aggiornare lo stile della barra di scorrimento
+	const expInput = document.getElementById('exp');
+	// const expValueSpan = document.getElementById('expValue');
 
-			if (response.ok) {
-				const data = await response.json();
-				setVariables({
-					name: data.first_name || "",
-					surname: data.last_name || "",
-					birthdate: data.birth_date || "",
-					bio: data.bio || ""
-				});
-				document.getElementById('name').setAttribute('value', data.first_name || "");
-				document.getElementById('surname').setAttribute('value', data.last_name || "");
-				document.getElementById('birthdate').setAttribute('value', data.birth_date || "");
-				document.getElementById('bio').value = data.bio || "";
-				console.log('Variables after GetProfile:', getVariables()); // Aggiungi questo per il debug
-			} else {
-				const errorData = await response.json();
-				console.error("Errore nella risposta del server:", errorData);
-			}
-		} catch (error) {
-			console.error("Errore nella richiesta:", error);
+	expInput.addEventListener('input', function() {
+		// expValueSpan.textContent = `exp: ${expInput.value}`;
+		expInput.style.setProperty('--value', `${expInput.value}%`);
+	});
+
+	// Imposta il valore iniziale
+	expInput.style.setProperty('--value', `${expInput.value}%`);
+
+	// Event listener per l'immagine del profilo
+	profileImage.addEventListener('click', function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		const profileImageSelector = document.createElement('div');
+		profileImageSelector.className = 'login-box-modal';
+		profileImageSelector.innerHTML = `
+			<div class="login_box">
+				<h1>Seleziona un'immagine</h1>
+				<img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" /> <!--div>TODO da finire ovviamente<div-->
+			</div>
+		`;
+		document.body.appendChild(profileImageSelector);
+
+		function closeProfileImageSelector() {
+			document.body.removeChild(profileImageSelector);
 		}
-	}
 
-	GetProfile();
+		window.addEventListener('click', function(event) {
+			if (event.target === profileImageSelector) {
+				closeProfileImageSelector();
+			}
+		});
+	});
 }
+
+initializeProfile();
 
 export { renderProfile };

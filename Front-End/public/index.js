@@ -1,8 +1,8 @@
-import { renderLogin } from './login.js';
-import { renderRegister } from './register.js';
-import { renderHome } from './home.js';
+import { renderLogin } from './login/login.js';
+import { renderRegister } from './register/register.js';
+import { renderHome } from './home/home.js';
 import { setVariables, getVariables } from './var.js';
-import { renderNotification, initializeWebSocket } from './notification.js';
+// import { renderNotification, initializeWebSocket } from './notification/notification.js';
 
 document.addEventListener('DOMContentLoaded', function () {
 	// if (getVariables().userId === null) {
@@ -25,12 +25,13 @@ document.addEventListener('DOMContentLoaded', function () {
 			'/mine': () => window.location.href = 'https://minesweeper.online/it/',
 			'/pong': async () => {
 				const { renderPong } = await import('./game/pong.js');
+				const { renderPong } = await import('./pong/pong.js');
 				renderPong();
 			},
-			'/notifications': () => {
-				renderNotification();
-				initializeWebSocket(); // senza richiamare questo, il websocket partiva sempre
-			}
+			// '/notifications': () => {
+			// 	renderNotification();
+			// 	initializeWebSocket(); // senza richiamare questo, il websocket partiva sempre
+			// } ma che minchia e' sta roba? dimenticato
 		};
 
 		const path = window.location.pathname;
@@ -48,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					<li class="nav-item"><a class="nav-link" href="/home" data-link>Home</a></li>
 					<li class="nav-item"><a class="nav-link" href="/mine" data-link>Mine</a></li>
 					<li class="nav-item"><a class="nav-link" href="/pong" data-link>Pong</a></li>
-					<li class="nav-item"><a class="nav-link" href="/notifications" data-link>Notifications</a></li>
+					//<!--li class="nav-item"><a class="nav-link" href="/notifications" data-link>Notifications</a></li-->
 				</ul>
 			</div>
 		</nav>

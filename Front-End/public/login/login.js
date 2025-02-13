@@ -1,14 +1,15 @@
-import { setVariables, getVariables } from './var.js';
-import { getCookie } from './cookie.js';
+import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
+
+const link = document.createElement('link');
+link.rel = 'stylesheet';
+link.href = '/public/login/login.css';
+document.head.appendChild(link);
 
 function renderLogin() {
 	const appDiv = document.querySelector('.App');
 
 	// Aggiungi dinamicamente il file CSS per la pagina di login
-	const link = document.createElement('link');
-	link.rel = 'stylesheet';
-	link.href = 'login.css';
-	document.head.appendChild(link);
 
 	appDiv.innerHTML = `
 		<div class="login">
@@ -49,7 +50,7 @@ async function onHandleSubmit(e, email, password) {
 		console.log('Email:', email);
 		console.log('Password:', password);
 		const csrftoken = getCookie('csrftoken');
-		const loginSuccess = await loginUser(email, password, csrftoken);
+		const loginSuccess = await loginUser(email, password, csrftoken, true);
 		if (loginSuccess) {
 			await handleGetUser(csrftoken);
 			window.navigateTo('/home');
@@ -59,30 +60,50 @@ async function onHandleSubmit(e, email, password) {
 	}
 }
 
-async function loginUser(email, password, csrftoken) {
-	try {
-		const response = await fetch('http://localhost:8000/login/login', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-CSRFToken': csrftoken,
-			},
-			body: JSON.stringify({ email, password }),
-		});
 
-		if (response.ok) {
-			const data = await response.json();
-			console.log('Risposta dal server:', data);
+/**
+ * Effettua il login dell'utente.
+ * 
+ * @param {boolean} isBaseLogin - true per il login base, false per il login multiplayer per pong.
+ * @returns {Promise<boolean>} - Ritorna true se il login ha successo, altrimenti false.
+ */
+async function loginUser(email, password, csrftoken, isBaseLogin) {
+	if (email && password) {
+		console.log('Email:', email);
+		console.log('Password:', password);
+		try {
+			const response = await fetch('http://localhost:8000/login/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'X-CSRFToken': csrftoken,
+				},
+				body: JSON.stringify({ email, password }),
+			});
 
-			setVariables({ token: data.access_token });
-			return true;
-		} else {
-			const errorData = await response.json();
-			console.error('Errore login:', errorData);
+			if (response.ok) {
+				const data = await response.json();
+				console.log('Risposta dal server:', data);
+
+				if (isBaseLogin) {
+					setVariables({ token: data.access_token });
+				}
+				else {
+					setVariables({ multiplayer_username: data.username });
+					setVariables({ multiplayer_id: data.user_id });
+				}
+				return true;
+			} else {
+				const errorData = await response.json();
+				console.error('Errore login:', errorData);
+				return false;
+			}
+		} catch (error) {
+			console.error('Exception login:', error);
 			return false;
 		}
-	} catch (error) {
-		console.error('Exception login:', error);
+	} else {
+		console.log('Per favore, inserisci sia email che password.');
 		return false;
 	}
 }
@@ -122,4 +143,4 @@ async function handleGetUser(csrftoken) {
 	}
 }
 
-export { renderLogin };
+export { renderLogin, loginUser };
