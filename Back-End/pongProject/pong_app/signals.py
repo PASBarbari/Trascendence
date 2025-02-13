@@ -20,7 +20,7 @@ class GameState:
 		self.player1_pos = 0
 		self.player2_pos = 0
 		self.ball_pos = [0,0]
-		self.ball_vel = [0,0]
+		self.ball_angle = 0
   
 	async def start(self):
 		self.running = True
@@ -38,7 +38,6 @@ class GameState:
 			time.sleep(max(0, tick_interval - (time.monotonic() - start_time)))
 			await asyncio.sleep(tick_interval)
 	
-
 	def physics(self):
 
 
