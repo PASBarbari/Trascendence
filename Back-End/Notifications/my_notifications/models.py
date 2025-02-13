@@ -23,8 +23,15 @@ class GroupNotification(BaseNotification):
 	class Meta:
 		abstract = True
 
-class SentNotification(UserNotification, GroupNotification):
-	sent_time = models.DateTimeField(auto_now_add=True)
+class SentNotification(models.Model):
+	id = models.IntegerField(primary_key=True)
+	user_id = models.IntegerField()
+	group_id = models.IntegerField(null=True, blank=True)
+	message = models.TextField()
+	is_sent = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	def __str__(self):
+		return f'Sent at {self.send_time} to {self.user_id} or {self.group_id}'
 
 class ImmediateNotification(UserNotification, GroupNotification):
 	pass		

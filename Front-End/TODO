@@ -64,8 +64,13 @@ va commentato questo in start_tables.py task_user/task_app:
 	#window.sendMessage = sendMessage;
 	#
 	#, sendMessage };
-- aggiungi livello e exp a profile
+- se accetto un amicizia o la elimino quando gia fatta. manda una notifica all'altro utente per renderizzare la modifica
+- errore backend quando si accetta un amicizia (PATCH http://localhost:8002/user/addfriend 400 (Bad Request)
+	handleFriendRequest @ notification.js:16
+	onclick @ home:1Understand this errorAI
+	notification.js:33 Error in server response: {error: 'no running event loop'}error: "no running event loop"[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__())
 
 DONE:
+- aggiungi livello e exp a profile
 - le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere
 - addChat deve renderizzare la chat quando aggiunta
