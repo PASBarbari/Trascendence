@@ -115,12 +115,12 @@ class AddFriend(APIView):
 								fs.accepted = True
 								fs.save()
 								notifi = ImmediateNotification.objects.create(
-										Sender=u2.first_name + ' ' + u2.last_name,
+										Sender="Users",
 										message=f'{u2.first_name} {u2.last_name} accepted your friend request',
 										user_id=u1.user_id,
 										group_id=None,
 								)
-								asyncio.create_task(SendNotification(notifi))
+								SendNotificationSync(notifi)
 								return Response({
 										'info': 'friend request accepted'
 								}, status=status.HTTP_200_OK)
@@ -144,6 +144,20 @@ class AddFriend(APIView):
 						).first()
 						if friendship:
 								friendship.delete()
+								notifi = ImmediateNotification.objects.create(
+										Sender="Users",
+										message=f'deleted friendship with {u2.user_id}',
+										user_id=u1.user_id,
+										group_id=None,
+								)
+								SendNotificationSync(notifi)
+								notifi = ImmediateNotification.objects.create(
+										Sender="Users",
+										message=f'deleted friendship with {u1.user_id}',
+										user_id=u2.user_id,
+										group_id=None,
+								)
+								SendNotificationSync(notifi)
 								return Response({
 										'info': 'friendship deleted'
 								}, status=status.HTTP_200_OK)
