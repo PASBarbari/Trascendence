@@ -1,7 +1,9 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
+from .signals import GameState
 
+active_games = {}
 class GameTableConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		self.room_id = self.scope['room_id']
