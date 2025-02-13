@@ -24,13 +24,13 @@ export const animate = (timestamp) => {
         state.wallHitPosition = 0;
         state.angle =
           (state.hit_position / (state.player.h, state.player.y)) * -90;
-        if (state.ball_speed < 5 * state.player.h) state.ball_speed += 0.1;
+        if (state.ball_speed < 5 * state.player.h) state.ball_speed += 0.02;
       } else if (UTILS.p2IsHit()) {
         state.hit_position = state.ball.position.y - state.p2.position.y;
         state.wallHitPosition = 0;
         state.angle =
           180 + (state.hit_position / (state.player.h, state.player.y)) * 90;
-        if (state.ball_speed < 5 * state.player.h) state.ball_speed += 0.1;
+        if (state.ball_speed < 5 * state.player.h) state.ball_speed += 0.02;
       } else if (
         (state.wallHitPosition <= 0 &&
           state.ball.position.y + state.ball_radius + state.ball_speed >=

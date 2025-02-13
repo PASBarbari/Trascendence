@@ -4,6 +4,7 @@ import { FontLoader } from 'three/addons/loaders/FontLoader.js';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import * as UP from './powerups.js';
 import * as SETTINGS from './settings.js';
+import * as SETUP from './setup.js';
 
 
 export function createScore() {
@@ -159,6 +160,8 @@ export function restart_game() {
 	state.powerUps.forEach((powerUp) => state.scene.remove(powerUp));
 	state.powerUps = [];
   }
+  state.scene.rotation.set(0, 0, 0);
+  SETUP.initGame();
 }
 
 export function game_over() {

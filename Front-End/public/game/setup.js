@@ -68,3 +68,16 @@ export function setupGame(){
 	createScore();
 	state.renderer.render(state.scene, state.camera);
 }
+
+export function initGame(){
+	state.game.ballColor = state.mat.ball.color.getHex();
+	state.game.player1Color = state.mat.p1.color.getHex();
+	state.game.player1Emissive = state.mat.p1.emissive.getHex();
+	state.game.player2Color = state.mat.p2.color.getHex();
+	state.game.player2Emissive = state.mat.p2.emissive.getHex();
+	state.game.ringColor = state.mat.ring.color.getHex();
+	state.game.ringEmissive = state.mat.ring.emissive.getHex();
+	state.game.ballSpeed = state.ball_speed;
+	state.game.playerSpeed = state.player_speed;
+	state.game.ballRadius = state.ball_radius;
+}

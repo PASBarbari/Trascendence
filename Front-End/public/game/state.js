@@ -47,6 +47,24 @@ export let state = {
 	r_top: null,
 	r_left: null,
 	r_right: null,
+	game: {
+		ballColor: null,
+		player1Color: null,
+		player1Emissive: null,
+		player2Color: null,
+		player2Emissive: null,
+		ringColor: null,
+		ringEmissive: null,
+		ballSpeed: null,
+		playerSpeed: null,
+		ballRadius: null,
+	},
+	keys: {
+		w: false,
+		s: false,
+		ArrowUp: false,
+		ArrowDown: false,
+	},
 };
 
 state.ring.x = (9 / 16 * state.ring.y) - state.ring.h;
