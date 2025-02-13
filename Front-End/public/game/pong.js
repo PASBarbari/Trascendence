@@ -141,7 +141,7 @@ export function renderPong() {
 
 SETUP.setupGame();
 GAME.animate();
-requestAnimationFrame(GAME.animate);
+// requestAnimationFrame(GAME.animate);
 
 //Resize handler
 

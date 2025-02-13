@@ -1,7 +1,7 @@
 import { state } from './state.js';
 
 export function moveIA() {
-    const iaSpeed = state.ring.y / 200;
+    const iaSpeed = state.player_speed;
     const delay = 1;
     const timeStep = 0.01;
     let simulatedBallY = state.ball.position.y;
