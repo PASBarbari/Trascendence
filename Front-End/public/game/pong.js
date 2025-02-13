@@ -18,11 +18,16 @@ export function renderPong() {
 			<button id="settingsButton">Settings</button>
 			<button id="exitButton">Exit</button>
 		</div>
-		<div id="gameModeMenu" style="display: none;">
+		<div id="nbrOfPlayerMenu" style="display: none;">
 			<button id="onePlayerButton">1 Player</button>
 			<button id="twoPlayerButton">2 Player</button>
 			<button id="backButton">Back</button>
 		</div>
+		<div id="modeMenu" style="display: none;">
+        	<button id="classicModeButton">Classic</button>
+        	<button id="crazyModeButton">Crazy</button>
+        	<button id="backFromModeButton">Back</button>
+      </div>
 		<div id="settingsMenu" style="display: none;">
 			<div class="color-setting">
 				<label for="player1Color">Player 1 Color:</label>
@@ -71,18 +76,35 @@ export function renderPong() {
 
   document
     .getElementById("newGameButton")
-    .addEventListener("click", SETTINGS.showGameModeMenu);
+    .addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
   document
     .getElementById("settingsButton")
     .addEventListener("click", SETTINGS.showSettingsMenu);
-  document.getElementById("exitButton").addEventListener("click", SETTINGS.exitGame);
+  document
+    .getElementById("exitButton")
+    .addEventListener("click", SETTINGS.exitGame);
   document
     .getElementById("onePlayerButton")
     .addEventListener("click", SETTINGS.startOnePlayerGame);
   document
     .getElementById("twoPlayerButton")
     .addEventListener("click", SETTINGS.startTwoPlayerGame);
-  document.getElementById("backButton").addEventListener("click", SETTINGS.showMainMenu);
+  document
+    .getElementById("backButton")
+    .addEventListener("click", SETTINGS.showMainMenu);
+
+	document
+	.getElementById("classicModeButton")
+	.addEventListener("click", SETTINGS.startClassicmode);
+
+	document
+	.getElementById("crazyModeButton")
+	.addEventListener("click", SETTINGS.startCrazymode);
+
+	document
+	.getElementById("backFromModeButton")
+	.addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
+
   document
     .getElementById("saveSettingsButton")
     .addEventListener("click", SETTINGS.saveSettings);
@@ -92,7 +114,9 @@ export function renderPong() {
   document
     .getElementById("backFromSettingsButton")
     .addEventListener("click", SETTINGS.showMainMenu);
-  document.getElementById("resumeButton").addEventListener("click", SETTINGS.resumeGame);
+  document
+    .getElementById("resumeButton")
+    .addEventListener("click", SETTINGS.resumeGame);
   document
     .getElementById("exitButtonPause")
     .addEventListener("click", SETTINGS.exitGame);
@@ -154,68 +178,65 @@ window.addEventListener("resize", () => {
 //Keyboard setup
 
 document.addEventListener("keydown", function (event) {
-	if (event.key.toLowerCase() == "w"){
-		state.p1_move_y = state.player_speed
-		state.keys.w = true;
-	}
-  	if (event.key.toLowerCase() == "s")
-	{
-		state.p1_move_y = -state.player_speed;
-		state.keys.s = true;
-	}
-	if (event.key == "ArrowUp" && !state.IAisActive)
-	{
-    	state.p2_move_y = state.player_speed;
-		state.keys.ArrowUp = true;
-	}
-	if (event.key == "ArrowDown" && !state.IAisActive)
-	{
-		state.p2_move_y = -state.player_speed;
-		state.keys.ArrowDown = true;
-	}
-	if (event.key == "Escape" && state.isStarted) {
-    	if (state.isPaused) {
-    		SETTINGS.resumeGame();
-    	} else {
-    	state.isPaused = true;
-    	SETTINGS.showPauseMenu();
-    	}
-  	}
+  if (event.key.toLowerCase() == "w") {
+    state.p1_move_y = state.player_speed;
+    state.keys.w = true;
+  }
+  if (event.key.toLowerCase() == "s") {
+    state.p1_move_y = -state.player_speed;
+    state.keys.s = true;
+  }
+  if (event.key == "ArrowUp" && !state.IAisActive) {
+    state.p2_move_y = state.player_speed;
+    state.keys.ArrowUp = true;
+  }
+  if (event.key == "ArrowDown" && !state.IAisActive) {
+    state.p2_move_y = -state.player_speed;
+    state.keys.ArrowDown = true;
+  }
+  if (event.key == "Escape" && state.isStarted) {
+    if (state.isPaused) {
+      SETTINGS.resumeGame();
+    } else {
+      state.isPaused = true;
+      SETTINGS.showPauseMenu();
+    }
+  }
 });
 
 document.addEventListener("keyup", function (event) {
-if (event.key.toLowerCase() == "w") {
-	state.keys.w = false;
-	if (state.keys.s) {
-		state.p1_move_y = -state.player_speed;
-	} else {
-		state.p1_move_y = 0;
-	}
-}
-if (event.key.toLowerCase() == "s") {
-	state.keys.s = false;
-	if (state.keys.w) {
-		state.p1_move_y = state.player_speed;
-	} else {
-		state.p1_move_y = 0;
-	}
-}
-if (event.key == "ArrowUp" && !state.IAisActive) {
-	state.keys.ArrowUp = false;
-	if (state.keys.ArrowDown) {
-		state.p2_move_y = -state.player_speed;
-	} else {
-		state.p2_move_y = 0;
-	}
-}
-if (event.key == "ArrowDown" && !state.IAisActive) {
-	state.keys.ArrowDown = false;
-	if (state.keys.ArrowUp) {
-		state.p2_move_y = state.player_speed;
-	} else {
-		state.p2_move_y = 0;
-	}
-}
+  if (event.key.toLowerCase() == "w") {
+    state.keys.w = false;
+    if (state.keys.s) {
+      state.p1_move_y = -state.player_speed;
+    } else {
+      state.p1_move_y = 0;
+    }
+  }
+  if (event.key.toLowerCase() == "s") {
+    state.keys.s = false;
+    if (state.keys.w) {
+      state.p1_move_y = state.player_speed;
+    } else {
+      state.p1_move_y = 0;
+    }
+  }
+  if (event.key == "ArrowUp" && !state.IAisActive) {
+    state.keys.ArrowUp = false;
+    if (state.keys.ArrowDown) {
+      state.p2_move_y = -state.player_speed;
+    } else {
+      state.p2_move_y = 0;
+    }
+  }
+  if (event.key == "ArrowDown" && !state.IAisActive) {
+    state.keys.ArrowDown = false;
+    if (state.keys.ArrowUp) {
+      state.p2_move_y = state.player_speed;
+    } else {
+      state.p2_move_y = 0;
+    }
+  }
 });
 
 document.addEventListener("wheel", function (event) {
@@ -231,5 +252,3 @@ document.addEventListener("mousemove", function (event) {
   };
   // console.log(mouse);
 });
-
-

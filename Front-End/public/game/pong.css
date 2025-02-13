@@ -3,7 +3,7 @@ body {
     overflow: hidden;
 }
 
-#menu, #gameModeMenu, #settingsMenu, #pauseMenu {
+#menu, #nbrOfPlayerMenu, #settingsMenu, #pauseMenu, #modeMenu {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -16,7 +16,7 @@ body {
     color: blueviolet;
 }
 
-#menu button, #gameModeMenu button, #settingsMenu button, #pauseMenu button {
+#menu button, #nbrOfPlayerMenu button, #settingsMenu button, #pauseMenu button, #modeMenu button {
     display: block;
     margin: 10px auto;
     padding: 10px 20px;
@@ -47,7 +47,6 @@ body {
 #gameOverImage {
     position: absolute;
     top: 0%;
-    /* transform: translate(-50%, -50%); */
     max-width: 10%;
     max-height: 10%;
     display: none;
