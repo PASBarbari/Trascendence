@@ -5,11 +5,11 @@ import { setVariables, getVariables } from './var.js';
 // import { renderNotification, initializeWebSocket } from './notification/notification.js';
 
 document.addEventListener('DOMContentLoaded', function () {
-	if (getVariables().userId === null) {
-		navigateTo('/login'); // controlla se le variabili sono presenti sennò reindirizza a login
-	} else {
-		console.log('var presenti');
-	}
+	// if (getVariables().userId === null) {
+	// 	navigateTo('/login'); // controlla se le variabili sono presenti sennò reindirizza a login
+	// } else {
+	// 	console.log('var presenti');
+	// }
 
 	function navigateTo(path) {
 		window.history.pushState({}, path, window.location.origin + path);
@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			'/home': () => renderHome(),
 			'/mine': () => window.location.href = 'https://minesweeper.online/it/',
 			'/pong': async () => {
+				const { renderPong } = await import('./game/pong.js');
 				const { renderPong } = await import('./pong/pong.js');
 				renderPong();
 			},
