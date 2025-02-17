@@ -9,12 +9,24 @@ data:
   users_url: users-service
   notifications_url: notifications-service
   login_db: login-db-service
-  chat_db: chat-db-service
-  users_db: users-db-service
-  notifications_db: notifications-db-service
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: front-end-configmap
   namespace: front-end-namespace
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: chat-configmap
+  namespace: chat
+data:
+  login_url: login-service
+  chat_url: chat-service
+  users_url: users-service
+  notifications_url: notifications-service
+  login_db: login-db-service
+  chat_db: chat-db-service
+  users_db: users-db-service
+  notifications_db: notifications-db-service

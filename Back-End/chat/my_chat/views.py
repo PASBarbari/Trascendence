@@ -1,4 +1,5 @@
-from rest_framework import generics, filters, permissions
+from rest_framework import generics, permissions
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
 from .middleware import TokenAuthPermission, APIKeyPermission
 from .authentications import TokenAuthentication
+
 class GetChatMessage(generics.ListAPIView):
     serializer_class = chat_messageSerializer
     lookup_url_kwarg = 'room_id'
@@ -65,13 +67,9 @@ class CreateChat(generics.ListCreateAPIView):
 class GetChats(generics.ListAPIView):
     serializer_class = chat_roomSerializer
     permission_classes = [TokenAuthPermission]
-    
-    def get_queryset(self):
-        user_id = self.request.query_params.get('user_id')
-        if not user_id:
-            return ChatRoom.objects.none()
-
-        return ChatRoom.objects.filter(users__user_id=user_id)
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['users__user_id']
+    queryset = ChatRoom.objects.all()
 
 class AddUsersToChat(generics.UpdateAPIView):
 		serializer_class = chat_roomSerializer

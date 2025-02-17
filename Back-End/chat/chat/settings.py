@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -113,7 +114,6 @@ DATABASES = {
 }
 
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -192,6 +192,9 @@ REST_FRAMEWORK = {
     ],
 		'DEFAULT_PERMISSION_CLASSES': [
 				'my_chat.middleware.TokenAuthPermission',
+		],
+		'DEFAULT_FILTER_BACKENDS': [
+			'django_filters.rest_framework.DjangoFilterBackend',
 		],
 }
 
