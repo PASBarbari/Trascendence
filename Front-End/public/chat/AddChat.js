@@ -11,11 +11,15 @@ function renderAddChat() {
 	const addChatContainer = document.createElement('div');
 	addChatContainer.className = 'add-chat';
 	addChatContainer.innerHTML = `
-		<form id="addChatForm" class="add-chat">
+		<form id="addChatForm" class="d-flex flex-column">
 			<input type="text" id="roomName" placeholder="Nome del gruppo" class="form-control mb-2" />
 			<input type="text" id="roomDescription" placeholder="Descrizione" class="form-control mb-2" />
 			<input type="text" id="userIds" placeholder="Aggiungi membri con userID" class="form-control mb-2" />
-			<button type="submit" class="btn btn-primary">Add</button>
+			<div class="right-button">
+				<button type="submit" class="btn btn-outline-primary">
+					<i class="bi bi-plus"></i>
+				</button>
+			</div>
 		</form>
 	`;
 
