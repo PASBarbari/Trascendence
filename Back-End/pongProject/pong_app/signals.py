@@ -67,17 +67,30 @@ class GameState:
 		return False
 
 	def physics(self):
-		self.ball_pos[0] = self.ball_speed * math.cos(math.radians(self.angle))
-		self.ball_pos[1] = self.ball_speed * -math.sin(math.radians(self.angle))
+		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
+		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
 		if self.ball_pos[0] < 0 and self.p1_is_hit():
 				hit_pos = self.ball_position[1] - self.player1_pos[1]
 				self.angle = hit_pos / self.p_length * -90
-				self.ball_speed += 0.1 
+				if (self.ball_speed < 5 * self.p_length):
+					self.ball_speed += 0.1
 		elif self.ball_pos[0] > 0 and self.p2_is_hit():
 				hit_pos = self.ball_position[1] - self.player2_pos[1]
 				self.angle = 180 + hit_pos / self.p_length * 90
-				self.ball_speed += 0.1
-
+				if (self.ball_speed < 5 * self.p_length):
+					self.ball_speed += 0.1
+		elif self.ball_pos[1] - self.ball_radius <= 0 or self.ball_pos[1] + self.ball_radius >= ring_size[1]:
+			self.angle = -self.angle
+		elif self.ball_pos[0] - self.ball_radius <= 0:
+			self.player_2_score += 1
+			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
+			self.angle = random.uniform(70, -70)
+			self.ball_speed = 90 / 150
+		elif self.ball_pos[0] + self.ball_radius >= ring_size[0]:
+			self.player_1_score += 1
+			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
+			self.angle = random.uniform(110, 250)
+			self.ball_speed = 90 / 150
 
 	def update(self):
 		channel_layer = get_channel_layer()
