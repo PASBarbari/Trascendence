@@ -8,6 +8,7 @@ import * as UTILS from "./utils.js";
 import * as SETUP from "./setup.js";
 import * as SETTINGS from "./settings.js";
 import * as UP from "./powerups.js";
+import { initializeWebSocket } from "./serverSide.js";
 
 let previousTimestamp = 0;
 const timeStep = 1000 / 60;
@@ -91,7 +92,10 @@ export const animate = (timestamp) => {
       // Handle power-up collisions
       UP.handlePowerUpCollision();
     }
+
     state.renderer.render(state.scene, state.camera);
     state.stats.end();
   }
 };
+
+initializeWebSocket();
