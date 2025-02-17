@@ -1,4 +1,5 @@
 import { setVariables, getVariables } from '../var.js';
+import { updateChatList } from '../chat/ExpandableSidebar.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -201,6 +202,9 @@ function initializeWebSocket() {
 			// if (itemToRemove) {
 			// 	itemToRemove.remove();
 			// }
+		}
+		else if (info.includes("Chat Room")) {
+			updateChatList();
 		}
 		else {
 			renderFriendRequest();

@@ -31,47 +31,19 @@ va commentato questo in start_tables.py task_user/task_app:
     #     )
     #     u.save()
 - probabilmente se alla registrazione metti un username gia usato, poi non ti registrera' correttamente'
-- non so come testare gruppi con piu persone e addChat aggiungendo piu persone insieme
+- testare gruppi con piu persone e addChat aggiungendo piu persone insieme (apri profilo ospite) per ora se un nuovo utente si registra entra in 	tutte le chat
 - i primi utenti registrati non si registrano correttamente
 - implementa i TODO in pongContainer.js (backend)
+	
+
+DONE:
 - addChat deve mandare una notifica all'altro utente per fargli renderizzare la pagina con updateChatList'
-	scommenta ExpandableSidebar.js
-	#import { sendMessage } from './notification.js';
-	#document.getElementById('groupChatButton').addEventListener('click', function () {
-	#	sendMessage(5, 'aggiorna le chat');
-	#});
-	e notification.js
-	#/**
-	# * Invia un messaggio specifico a un determinato user ID tramite WebSocket.
-	# * 
-	# * @param {number} userId - L'ID dell'utente destinatario.
-	# * @param {string} message - Il messaggio da inviare.
-	# */
-	#function sendMessage(userId, message) {
-	#	if (socket && socket.readyState === WebSocket.OPEN) {
-	#		const payload = {
-	#			type: 'message',
-	#			user_id: userId,
-	#			message: message
-	#		};
-	#		socket.send(JSON.stringify(payload));
-	#		console.log(`Messaggio inviato a user ID ${userId}:`, message);
-	#	} else {
-	#		console.error('WebSocket non è connesso.');
-	#	}
-	#}
-	#
-	#window.sendMessage = sendMessage;
-	#
-	#, sendMessage };
+- notifica all'altro quando crei una chat
 - se accetto un amicizia o la elimino quando gia fatta. manda una notifica all'altro utente per renderizzare la modifica
+- aggiungi livello e exp a profile
+- le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere
+- addChat deve renderizzare la chat quando aggiunta
 - errore backend quando si accetta un amicizia (PATCH http://localhost:8002/user/addfriend 400 (Bad Request)
 	handleFriendRequest @ notification.js:16
 	onclick @ home:1Understand this errorAI
 	notification.js:33 Error in server response: {error: 'no running event loop'}error: "no running event loop"[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__())
-- notifica all'altro quando crei una chat
-
-DONE:
-- aggiungi livello e exp a profile
-- le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere
-- addChat deve renderizzare la chat quando aggiunta

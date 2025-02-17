@@ -9,6 +9,7 @@ link.href = '/public/chat/chat.css';
 document.head.appendChild(link);
 
 const displayedDates = new Set();
+let addChatContainer = null;
 
 function isFirstMessageOfDay(date) {
 	const dateString = date.toLocaleDateString('it-IT');
@@ -78,7 +79,6 @@ function renderExpandableSidebar() {
 
 	const toggleChatButton = document.getElementById('toggleChatButton');
 	const chatContainer = document.getElementById('chatContainer');
-	let addChatContainer = null;
 	let chatContainerOpen = false; // Variabile per gestire lo stato di apertura
 
 	toggleChatButton.addEventListener('click', function () {
@@ -123,24 +123,29 @@ function renderExpandableSidebar() {
 }
 
 async function updateChatList() {
-    const chats = await getChatRooms();
-    if (chats) {
-        const chatContainer = document.querySelector('.chat-container');
-        chatContainer.innerHTML = ''; // Pulisce il contenitore delle chat
-        chats.forEach(chat => {
-            if (!chat.room_id) {
-                console.error("Chat ID non trovato:", chat);
-                return;
-            }
+	const chats = await getChatRooms();
+	if (chats) {
+		const chatContainer = document.querySelector('.chat-container');
+		if (addChatContainer && chatContainer.contains(addChatContainer)) {
+			chatContainer.removeChild(addChatContainer);
+			addChatContainer = null;
+		}
+		
+		chatContainer.innerHTML = ''; // Pulisce il contenitore delle chat
+		chats.forEach(chat => {
+			if (!chat.room_id) {
+				console.error("Chat ID non trovato:", chat);
+				return;
+			}
 
-            renderChatItem({
-                id: chat.room_id,
-                name: chat.room_name,
-                lastMessage: chat.room_description,
-                type: chat.type
-            });
-        });
-    }
+			renderChatItem({
+				id: chat.room_id,
+				name: chat.room_name,
+				lastMessage: chat.room_description,
+				type: chat.type
+			});
+		});
+	}
 }
 
 function scrollToBottom(element) {
@@ -313,4 +318,4 @@ function renderChatItem(chat) {
 	});
 }
 
-export { renderExpandableSidebar, updateChatList }; 
+export { renderExpandableSidebar, updateChatList };
