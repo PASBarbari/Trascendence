@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: login-db-deployment
-  namespace: login-namespace
+  name: chat-db-deployment
+  namespace: chat
   labels:
-    app: login-db
+    app: chat-db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: login-db
+      app: chat-db
   template:
     metadata:
       labels:
-        app: login-db
+        app: chat-db
     spec:
       containers:
-      - name: login-db
+      - name: chat-db
         image: postgres
         ports:
         - containerPort: 5432
@@ -39,18 +39,18 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
            secretKeyRef:
-            name: login-db-secret
-            key: login-db
+            name: chat-db-secret
+            key: chat-db
         - name: POSTGRES_USER
           valueFrom:
            secretKeyRef:
-            name: login-db-secret
-            key: login-db-user
+            name: chat-db-secret
+            key: chat-db-user
         - name: POSTGRES_PASSWORD
           valueFrom:
            secretKeyRef:
-            name: login-db-secret
-            key: login-db-password
+            name: chat-db-secret
+            key: chat-db-password
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
@@ -62,11 +62,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: login-db-service
-  namespace: login-namespace
+  name: chat-db-service
+  namespace: chat
 spec:
   selector:
-    app: login-db
+    app: chat-db
   ports:
     - protocol: TCP
       port: 5432
@@ -76,7 +76,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
-  namespace: login-namespace
+  namespace: chat
 spec:
   accessModes:
     - ReadWriteOnce

@@ -191,4 +191,3 @@ class TokenAuthentication(BaseAuthentication):
     #                     pass
     #     except requests.RequestException as e:
     #         raise AuthenticationFailed(f"Token introspection failed: {str(e)}")
-

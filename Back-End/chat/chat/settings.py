@@ -101,11 +101,11 @@ oauth2_settings = {
 DATABASES = {
 	'default': {
 	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': 'chat_db',
-	'USER': 'pasquale',
-	'PASSWORD': '123',
-	'HOST': 'localhost',
-	'PORT': '5436',
+	'NAME': os.getenv('POSTGRES_DB', 'chat'),
+	'USER': os.getenv('POSTGRES_USER', 'postgres'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5432'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',
@@ -166,21 +166,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis-service:6379')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '0')
+REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '1')
+
 CACHES = {
 	'default': {
 		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': 'redis://172.18.0.1:6700/1',
+		'LOCATION': REDIS_HOST + ':' + REDIS_PORT + '/' + REDIS_CACHE_DB,
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
 		}
 	}
 }
 
+
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('172.18.0.1', 6700)],
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            'prefix': 'chat',
+            'db': REDIS_CHANNEL_DB,
         },
     }
 }

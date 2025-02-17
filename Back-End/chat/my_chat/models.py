@@ -23,7 +23,7 @@ class ChatMessage(models.Model):
 	message_id = models.AutoField(primary_key=True)
 	room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
 	message = models.TextField()
-	sender = models.TextField()
+	sender = models.ForeignKey(UserProfile, on_delete=models.SET_DEFAULT, default=1)
 	timestamp = models.DateTimeField(auto_now_add=True)
 
 def get_user_model(user_id):
