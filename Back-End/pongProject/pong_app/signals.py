@@ -24,6 +24,7 @@ class GameState:
 		self.player_2_pos = [0 , 0]
 		self.ball_pos = [0 , 0]
 		self.p_length = player_length if player_length else 10
+		self.is_started = [0 , 0]
   
 	async def start(self):
 		self.running = True
@@ -43,6 +44,9 @@ class GameState:
 
 			await self.update()
 			
+			if self.player_1_score == 5 or self.player_2_score == 5: #TODO add different games scores
+				self.running = False
+				break
 			time.sleep(max(0, tick_interval - (time.monotonic() - start_time)))
 			await asyncio.sleep(tick_interval)
 	
@@ -104,6 +108,18 @@ class GameState:
 			)
 		except Exception as e:
 			print(f"Error sending game state: {e}") #TODO logg
+
+	def up(self, player):
+		if player == self.player_1:
+			self.player_1_pos[1] += 1
+		else:
+			self.player_2_pos[1] += 1
+	
+	def down(self, player):
+		if player == self.player_1:
+			self.player_1_pos[1] -= 1
+		else:
+			self.player_2_pos[1] -= 1
 
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
