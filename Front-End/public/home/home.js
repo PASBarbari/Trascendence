@@ -1,6 +1,6 @@
 import { renderTaskAvaiable } from '../task/taskAvaiable.js';
 import { renderTaskActive } from '../task/taskActive.js';
-import { renderNotification } from '../notification/notification.js';
+import { renderNotification, initializeWebSocket } from '../notification/notification.js';
 import { renderProfile } from '../profile/profile.js';
 import { renderExpandableSidebar } from '../chat/ExpandableSidebar.js';
 import { renderPongInfo } from '../pong/pongContainer.js';
@@ -71,6 +71,7 @@ function renderHome() {
 	renderTaskAvaiable();
 	renderTaskActive();
 	renderNotification();
+	initializeWebSocket();
 	renderPongInfo();
 }
 
