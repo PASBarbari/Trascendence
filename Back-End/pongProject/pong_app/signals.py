@@ -120,6 +120,26 @@ class GameState:
 			self.player_1_pos[1] -= 1
 		else:
 			self.player_2_pos[1] -= 1
+	
+	def __dict__(self):
+		return {
+			'player_1_score': self.player_1_score,
+			'player_2_score': self.player_2_score,
+			'player_1_pos': self.player_1_pos,
+			'player_2_pos': self.player_2_pos,
+			'ball_pos': self.ball_pos,
+			'ball_speed': self.ball_speed,
+			'angle': self.angle,
+			'p_length': self.p_length,
+		}
+
+
+	def quit_game(self, player):
+		self.running = False
+		if player == self.player_1:
+			self.player_1_score = -1
+		else:
+			self.player_2_score = -1
 
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
