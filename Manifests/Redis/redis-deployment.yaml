@@ -46,7 +46,7 @@ spec:
     kind: Deployment
     name: redis-deployment
   minReplicas: 1
-  maxReplicas: 5  # Cambia in base alle esigenze
+  maxReplicas: 2  # Cambia in base alle esigenze
   metrics:
     - type: Resource
       resource:

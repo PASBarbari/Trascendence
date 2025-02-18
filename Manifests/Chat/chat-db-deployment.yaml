@@ -84,4 +84,5 @@ spec:
     requests:
       storage: 512Mi
   volumeName: postgres-pv
+  storageClassName: standard
 

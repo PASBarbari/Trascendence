@@ -20,36 +20,96 @@ spec:
         image: samybravy/chat
         ports:
         - containerPort: 8000
-    env:
-    - name: POSTGRES_DB
-      valueFrom:
-        secretKeyRef:
-          name: chat-secret
-          key: POSTGRES_DB
-    - name: POSTGRES_USER
-      valueFrom:
-        secretKeyRef:
-          name: chat-secret
-          key: POSTGRES_USER
-    - name: POSTGRES_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: chat-secret
-          key: POSTGRES_PASSWORD
-    - name: POSTGRES_HOST
-      valueFrom:
-        configMapKeyRef:
-            name: chat-configmap
-            key: chat_db
-    - name: POSTGRES_PORT
-      value: "5432"
-    - name: REDIS_HOST
-      valueFrom:
-        configMapKeyRef:
-            name: chat-configmap
-            key: redis
-    - name: REDIS_PORT
-      valueFrom:
-        configMapKeyRef:
-                name: chat-configmap
-                key: redis_port
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: chat-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: chat-db-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chat-db-secret
+              key: chat-db-password
+        - name: POSTGRES_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: chat_db
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: redis
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: redis_port
+        - name: LOGIN_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: login_url
+        - name: CHAT_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: chat_url
+        - name: USERS_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: users_url
+        - name: NOTIFICATIONS_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: notifications_url
+        - name: PONG_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: chat-configmap
+              key: pong_url
+        - name: ADMIN_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: chat-admin
+              key: admin_username
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: chat-admin
+              key: admin_password
+        - name: ADMIN_EMAIL
+          valueFrom:
+            secretKeyRef:
+              name: chat-admin
+              key: admin_email
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: chat-service
+  namespace: chat
+spec:
+  selector:
+    app: chat
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000,

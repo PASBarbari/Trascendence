@@ -28,6 +28,7 @@ data:
   chat_url: chat-service
   users_url: users-service
   notifications_url: notifications-service
+  pong_url: pong-service
   chat_db: chat-db-service
   redis: redis-service
   redis_port: "6379"
