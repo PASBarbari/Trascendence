@@ -54,6 +54,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 	async def start_game(self, event):
 		if self.room_id in active_games:
 			return
+		del player_ready[self.room_id]
 		active_games[self.room_id] = GameState(event['player1'], event['player2'], self.room_id, event.get('player_length', 10))
 		await active_games[self.room_id].start()
 
@@ -67,3 +68,18 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		self.send(text_data=json.dumps({
 			'game_state': event['game_state']
 		}))
+
+	async def game_over(self, event):
+		await self.send(text_data=json.dumps({
+			'message': 'Game Over!',
+			'game_over': True
+		}))
+		del active_games[self.room_id]
+	
+	async def quit_game(self, event, player):
+		await self.send(text_data=json.dumps({
+			'message': f'Player {player} has quit the game!',
+			'game_over': True
+		}))
+		GameState.quit_game(player)
+		del active_games[self.room_id]
