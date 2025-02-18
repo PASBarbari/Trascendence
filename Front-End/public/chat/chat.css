@@ -192,3 +192,28 @@
   color: #6b7280;
   margin: 10px 0;
 }
+
+.add-chat {
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	background-color: #f3f4f6;
+	border-radius: 8px;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+	width: 100%; /* Assicura che la larghezza rimanga costante */
+	margin-bottom: 8px;
+  }
+  
+  .add-chat input {
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: 4px;
+  }
+  
+.right-button {
+  display: flex;
+  justify-content: flex-end;
+
+}
