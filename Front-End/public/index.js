@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			// '/notifications': () => {
 			// 	renderNotification();
 			// 	initializeWebSocket(); // senza richiamare questo, il websocket partiva sempre
-			// } ma che minchia e' sta roba? dimenticato
+			// } //ma che minchia e' sta roba? dimenticato
 		};
 
 		const path = window.location.pathname;
