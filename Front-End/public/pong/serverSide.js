@@ -1,6 +1,6 @@
 import { state } from "./state.js";
 import { getVariables } from "../var.js";
-
+import { renderPong } from "./pong.js";
 
 let socket;
 
@@ -43,6 +43,7 @@ function initializeWebSocket(room_id) {
   };
   socket.onopen = function () {
       console.log("WebSocket connection is active");
+	  renderPong();
   };
   socket.onerror = function (error) {
 	console.error("WebSocket error:", error);

@@ -169,16 +169,16 @@ export function renderPong() {
 }
 
 SETUP.setupGame();
-GAME.animate();
+// GAME.animate();
 // requestAnimationFrame(GAME.animate);
 
 //Resize handler
-
 window.addEventListener("resize", () => {
   state.camera.aspect = window.innerWidth / window.innerHeight;
   state.camera.updateProjectionMatrix();
   state.renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
 
 //Keyboard setup
 
