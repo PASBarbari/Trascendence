@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: login-server-deployment
-  namespace: login-namespace
+  namespace: login
   labels:
     app: login-server
 spec:
@@ -77,7 +77,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: login-server-service
-  namespace: login-namespace
+  namespace: login
 spec:
   selector:
     app: login-server
