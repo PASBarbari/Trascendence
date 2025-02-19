@@ -6,64 +6,65 @@ from channels.auth import AuthMiddlewareStack
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 import requests , base64
-from .models import UserProfile
+from .models import Player as UserProfile
 from django.utils.deprecation import MiddlewareMixin
 from pongProject.settings import oauth2_settings
 
 @database_sync_to_async
 def get_user_from_token(token, scope):
-	user = cache.get(token)
-	if user:
-		return user
+    user = cache.get(token)
+    if user:
+        return user
 
-	introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
-	client_id = oauth2_settings['CLIENT_ID']
-	client_secret = oauth2_settings['CLIENT_SECRET']
+    introspection_url = oauth2_settings['OAUTH2_INTROSPECTION_URL']
+    client_id = oauth2_settings['CLIENT_ID']
+    client_secret = oauth2_settings['CLIENT_SECRET']
 
-	credentials = f"{client_id}:{client_secret}"
-	encoded_credentials = base64.b64encode(credentials.encode()).decode()
+    credentials = f"{client_id}:{client_secret}"
+    encoded_credentials = base64.b64encode(credentials.encode()).decode()
 
-	headers = {
-		'Authorization': f'Basic {encoded_credentials}',
-		'Content-Type': 'application/x-www-form-urlencoded',
-	}
-	try:
-			response = requests.post(introspection_url, headers=headers,data={
-			  'token': token,
-		})
-			if response.status_code == 200:
-					data = response.json()
-					if data.get('active'):
-							email = data.get('username')
-							try:
-								User = UserProfile.objects.get(email=email)
-								# Cache the user with a timeout (e.g., 5 minutes)
-								cache.set(token, User, timeout=300)
-								return user
-							except UserProfile.DoesNotExist:
-								return AnonymousUser()
-			else:
-				return AnonymousUser()
-	except requests.RequestException as e:
-		return AnonymousUser()
-		
-	return AnonymousUser()
+    headers = {
+        'Authorization': f'Basic {encoded_credentials}',
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
+    try:
+        response = requests.post(introspection_url, headers=headers, data={
+            'token': token,
+        })
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('active'):
+                email = data.get('username')
+                try:
+                    user = UserProfile.objects.get(email=email)
+                    # Cache the user with a timeout (e.g., 5 minutes)
+                    cache.set(token, user, timeout=300)
+                    return user
+                except UserProfile.DoesNotExist:
+                    return AnonymousUser()
+        else:
+            return AnonymousUser()
+    except requests.RequestException as e:
+        return AnonymousUser()
+
+    return AnonymousUser()
 
 class TokenAuthMiddleware(BaseMiddleware):
-		async def __call__(self, scope, receive, send):
-			query_string = parse_qs(scope["query_string"].decode())
-			if scope['path'] == '/chat/new_user/':
-						scope['user'] = AnonymousUser()
-						return await super().__call__(scope, receive, send)
-			try:
-					token = query_string.get("token")
-					if token:
-						scope["user"] = await get_user_from_token(token[0], scope)
-					else:
-						scope["user"] = AnonymousUser()
-			except Exception as e:
-						scope["user"] = AnonymousUser()
-			return await super().__call__(scope, receive, send)
+    async def __call__(self, scope, receive, send):
+        query_string = parse_qs(scope["query_string"].decode())
+        if scope['path'] == '/pong/player':
+            scope['user'] = AnonymousUser()
+            return await super().__call__(scope, receive, send)
+        try:
+            token = query_string.get("token")
+            if token:
+                scope["user"] = await get_user_from_token(token[0], scope)
+            else:
+                scope["user"] = AnonymousUser()
+        except Exception as e:
+            print(f"Error: {e}")
+            scope["user"] = AnonymousUser()
+        return await super().__call__(scope, receive, send)
 
 def TokenAuthMiddlewareStack(inner):
     return TokenAuthMiddleware(AuthMiddlewareStack(inner))
@@ -130,10 +131,9 @@ class TokenAuthMiddlewareHTTP(MiddlewareMixin):
 from rest_framework.permissions import BasePermission
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
-from chat.settings import oauth2_settings
+from pongProject.settings import oauth2_settings
 import requests
 import base64
-from .models import UserProfile
 
 class TokenAuthPermission(BasePermission):
 		def get_user_from_token(self, token):
@@ -183,7 +183,7 @@ class TokenAuthPermission(BasePermission):
 				return AnonymousUser()
 
 		def has_permission(self, request, view):
-				if request.path == '/chat/new_user/':
+				if request.path == '/pong/player':
 						request.user = AnonymousUser()
 						return True
 				token = request.META.get('HTTP_AUTHORIZATION')

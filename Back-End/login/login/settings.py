@@ -237,4 +237,5 @@ Microservices = {
 	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
 	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
 	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'pong': os.getenv('PONG_SERVICE', 'http://localhost:8004/pong/'),
 }

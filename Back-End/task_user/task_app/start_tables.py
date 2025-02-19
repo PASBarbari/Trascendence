@@ -9,35 +9,35 @@ def CreateTasks(**kwargs):
             name='default avatar'
         )
         a.save()
-    # if not Users.objects.all():
-    #     u = Users.objects.create(
-    #         user_id=1,
-    #         first_name="mario",
-    #         last_name="rossi",
-    #         birth_date="2000-1-1",
-    #         bio="bio dei miei ciglioni",
-    #         avatar=Avatars.objects.get(id=1)
-    #     )
-    #     u.save()
-    #     u = Users.objects.create(
-    #         user_id=2,
-    #         first_name="vincenzo",
-    #         last_name="bianchi",
-    #         birth_date="1999-11-4",
-    #         bio="bio dei miei ciglioni",
-    #         avatar=Avatars.objects.get(id=1)
-    #     )
-    #     u.save()
-    #     u = Users.objects.create(
-    #         user_id=3,
-    #         staff=True,
-    #         first_name="guglielmo",
-    #         last_name="duranti",
-    #         birth_date="1900-11-4",
-    #         bio="ma ti fanno anche da uomo",
-    #         avatar=Avatars.objects.get(id=1)
-    #     )
-    #     u.save()
+    if not Users.objects.all():
+        u = Users.objects.create(
+            user_id=1,
+            first_name="mario",
+            last_name="rossi",
+            birth_date="2000-1-1",
+            bio="bio dei miei ciglioni",
+            avatar=Avatars.objects.get(id=1)
+        )
+        u.save()
+        u = Users.objects.create(
+            user_id=2,
+            first_name="vincenzo",
+            last_name="bianchi",
+            birth_date="1999-11-4",
+            bio="bio dei miei ciglioni",
+            avatar=Avatars.objects.get(id=1)
+        )
+        u.save()
+        u = Users.objects.create(
+            user_id=3,
+            staff=True,
+            first_name="guglielmo",
+            last_name="duranti",
+            birth_date="1900-11-4",
+            bio="ma ti fanno anche da uomo",
+            avatar=Avatars.objects.get(id=1)
+        )
+        u.save()
     if not Tasks.objects.all():
         t = Tasks.objects.create(
             author=Users.objects.get(user_id=3),

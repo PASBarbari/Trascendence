@@ -39,7 +39,8 @@ class GameGen(generics.ListCreateAPIView):
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['player_1__user_id', 'player_2__user_id', 'tournament_id']
 	lookup_fields = ['id', 'player_1__user_id', 'player_2__user_id', 'tournament_id']
-
+	queryset = Game.objects.all()
+ 
 class GameManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = GamesSerializer
