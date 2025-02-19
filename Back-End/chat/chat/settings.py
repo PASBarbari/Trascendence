@@ -92,7 +92,7 @@ oauth2_settings = {
 	'EXPIRES': '',
 	'token_type': '',
 	'scope': '',
-	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
+	'SERVICE_PASSWORD': os.getenv('SERVICE_PASSWORD', '123'),
 }
 
 # Database
@@ -132,16 +132,8 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
-CELERY_BROKER_URL = 'redis://localhost:6700/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6700/0'
-CELERY_BEAT_SCHEDULE = {
-	'similar_users_chats': {
-		'task': 'my_chat.tasks.similar_users_chats',
-		'schedule': 3600, #seconds
-	},
-}
 
-BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
+# BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -231,3 +223,22 @@ LOGGING = {
         },
     },
 }
+
+
+ADMIN = {
+    'username': os.getenv('ADMIN_USERNAME', 'admin'),
+    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+}
+
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+	'Personal' : "Self",
+}
+
+CSRF_LOGIN_URL = Microservices['Login'] + '/login/get_csrf_token'
+REGISTER_URL = Microservices['Login'] + '/login/Serviceregister'

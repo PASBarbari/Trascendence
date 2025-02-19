@@ -51,6 +51,10 @@ else
   exit 1
 fi
 
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
+kubectl create namespace cert-manager
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
 # Step 6: Install Helm if not already installed
 if ! command -v helm &> /dev/null; then
   echo "Helm is not installed. Installing Helm..."

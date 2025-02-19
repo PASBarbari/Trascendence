@@ -169,29 +169,6 @@ class ServiceRegister(APIView):
 					app.save()
 					return Response({'message': 'Service created successfully', 'client_id': app.client_id, 'client_secret': app.client_secret},
 						status=status.HTTP_201_CREATED)
-
-					## Login the app as a staff user
-					# if not AppUser.objects.filter(username=service_name).exists():
-					# 	app_user = AppUser.objects.create(username=service_name, is_staff=True)
-					# 	app_user.set_password(data.get('client_secret'))
-					# 	app_user.save()
-					## Get an access token
-					# Tokenview = TokenView.as_view()
-					# token_request = HttpRequest()
-					# token_request.method = 'POST'
-					# token_request.POST = {
-					# 	'grant_type': 'client_credentials',
-			#   'client_id': app.client_id,
-		  #   'client_secret': app.client_secret,
-		  # }
-					# token_request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
-					# token_request.META['HTTP_AUTHORIZATION'] = f'Basic {app.client_id}:{app.client_secret}'
-					# token_request.META['HTTP_X_CSRFTOKEN'] = data.get('csrf_token')
-					# token_response = Tokenview(token_request)
-					# ## Return the client_id and client_secret and token
-					# token_response.data['client_id'] = app.client_id
-					# token_response.data['client_secret'] = app.client_secret
-					# return token_response
 				else:
 					return Response({'error': 'Service already exists'}, status=status.HTTP_400_BAD_REQUEST)
 			else:
