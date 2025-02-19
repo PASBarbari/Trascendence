@@ -73,6 +73,17 @@
             "group": "build",
             "dependsOn": "Activate Venv and Install Requirements"
         },
+		{
+            "label": "pong start",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd pongProject && python3 manage.py makemigrations && python3 manage.py makemigrations pong_app && python3 manage.py migrate && python3 manage.py runserver 8004",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
         {
             "label": "Wait 15 Seconds",
             "type": "shell",
@@ -125,6 +136,7 @@
                 "Login start",
                 "Chat start",
                 "Task start",
+				"pong start",
                 "Notify start",
                 "FrontEnd start"
             ],

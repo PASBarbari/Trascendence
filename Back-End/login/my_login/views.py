@@ -27,6 +27,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
 
+
+
 def get_access_token():
 	app = Application.objects.get(name='my_login')
 
@@ -65,8 +67,10 @@ def CreateOnOtherServices(user):
 	if notification_response.status_code != 201:
 		print(notification_response.json())
 		raise ValueError('Notification service failed to create user')
-
-
+	pong_response = requests.post("http://localhost:8004/pong/player", json=user_data, headers=headers)
+	if pong_response.status_code != 201:
+		raise ValueError('Pong service failed to create user')
+	return True
 
 
 class UserRegister(APIView):

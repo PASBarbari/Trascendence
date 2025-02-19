@@ -144,7 +144,7 @@ class GameState:
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
 	if created:
-		game_state = GameState(instance.player_1, instance.player_2)
+		game_state = GameState(instance.player_1, instance.player_2, instance.id, 10)
 		instance.game_state = game_state
 		instance.save()
 		logger = logging.getLogger(__name__)

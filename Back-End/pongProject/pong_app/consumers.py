@@ -5,9 +5,11 @@ from .signals import GameState
 
 active_games = {}
 player_ready = {}
+
 class GameTableConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
-		self.room_id = self.scope['room_id']
+		print('connected')
+		self.room_id = self.scope['url_route']['kwargs']['room_id']
 		self.room_group_name = f'game_{self.room_id}'
 		# Join room group
 		await self.channel_layer.group_add(

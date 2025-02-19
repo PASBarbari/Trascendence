@@ -41,6 +41,7 @@ CORS_ALLOW_CREDENTIALS = True
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,6 +53,8 @@ INSTALLED_APPS = [
 	'oauth2_provider',
 	'corsheaders',
 	'pong_app',
+	'channels',
+	'redis',
 ]
 
 MIDDLEWARE = [
@@ -63,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
+	'pong_app.middleware.TokenAuthMiddlewareHTTP',
 ]
 
 ROOT_URLCONF = 'pongProject.urls'
@@ -83,7 +87,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'pongProject.wsgi.application'
+ASGI_APPLICATION = 'pongProject.asgi.application'
 
 
 # Database
@@ -118,6 +122,25 @@ oauth2_settings = {
 	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
 }
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('172.18.0.1', 6702)],
+            "prefix": "pong",
+        },
+    }
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://172.18.0.1:6702/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
