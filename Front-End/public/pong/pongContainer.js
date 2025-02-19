@@ -2,6 +2,7 @@ import { setVariables, getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 import { loginUser } from '../login/login.js';
 import { registerUser } from '../register/register.js';
+import { createGame } from '../pong/serverSide.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -143,6 +144,7 @@ async function onHandleSubmit(e, email, password) {
 	if (loginSuccess) {
 		//TODO chiamata a Gu per poi aprire pong
 		window.location.href = '/pong';
+		createGame('player1', 'player2');
 	}
 }
 
