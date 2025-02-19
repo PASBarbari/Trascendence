@@ -107,7 +107,7 @@ function startCrazymode() {
 	state.isStarted = true;
 	state.isPaused = false;
 	state.spawnPowerUpFlag = true;
-	GAME.animate();
+	GAME.serverAnimate();
 }
 
 function startClassicmode() {
@@ -115,14 +115,14 @@ function startClassicmode() {
 	UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
-	state.spawnPowerUpFlag = true;
-	GAME.animate();
+	state.spawnPowerUpFlag = false;
+	GAME.serverAnimate();
 }
 
 function resumeGame() {
   hidePauseMenu();
   state.isPaused = false;
-  GAME.animate();
+  GAME.serverAnimate();
 }
 
 function exitGame() {

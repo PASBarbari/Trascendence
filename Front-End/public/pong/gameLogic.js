@@ -14,6 +14,7 @@ let previousTimestamp = 0;
 const timeStep = 1000 / 60;
 
 export const animate = (timestamp) => {
+	console.log("animate");
   state.stats.begin();
   requestAnimationFrame(animate);
   const deltaTime = timestamp - previousTimestamp;
@@ -98,4 +99,11 @@ export const animate = (timestamp) => {
   }
 };
 
-initializeWebSocket();
+export const serverAnimate = (data) => {
+  state.p1.position.set(data.p1.x, data.p1.y, data.p1.z);
+  state.p2.position.set(data.p2.x, data.p2.y, data.p2.z);
+  state.ball.position.set(data.ball.x, data.ball.y, data.ball.z);
+  state.p1_score = data.p1_score;
+  state.p2_score = data.p2_score;
+}
+

@@ -144,7 +144,6 @@ export function restart_game() {
   state.p1_move_y = 0;
   state.wallHitPosition = 0;
   state.lastPowerUpSpawnTime = 0;
-  document.getElementById("gameOverImage").style.display = "none";
   removeWinnerText();
   updateScore();
   state.ball.position.set(0, 0, 0);
