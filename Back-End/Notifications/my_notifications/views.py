@@ -1,23 +1,23 @@
 from django.shortcuts import render
-from rest_framework import viewsets , generics
+from rest_framework import viewsets, generics
 from rest_framework.response import Response
-from asgiref.sync import async_to_sync , sync_to_async
-from rest_framework import permissions , status
+from asgiref.sync import async_to_sync, sync_to_async
+from rest_framework import permissions, status
 from channels.layers import get_channel_layer
-from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, NotificationsGroup
-from .serializers import UniversalNotificationSerializer, UserProfileSerializer , NotificationsGroupSerializer , ImmediateNotificationSerializer , ScheduledNotificationSerializer
+from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, NotificationsGroup, SentNotification
+from .serializers import UniversalNotificationSerializer, UserProfileSerializer, NotificationsGroupSerializer, ImmediateNotificationSerializer, ScheduledNotificationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination
 from .middleware import APIKeyPermission
 
 def send_notification(user_id, group_id, notification):
-		if user_id is not None:
-			return async_to_sync(send_user_notification)(user_id, notification)
-		# elif group_id is not None:
-		# 	return send_group_notification(group_id, notification)
-		else:
-			return Response({'error': 'No user or group specified'})
+	if user_id is not None:
+		return async_to_sync(send_user_notification)(user_id, notification)
+	# elif group_id is not None:
+	# 	return send_group_notification(group_id, notification)
+	else:
+		return Response({'error': 'No user or group specified'})
 
 async def send_user_notification(user_id, notification):
 	channel_layer = get_channel_layer()
@@ -45,9 +45,10 @@ async def send_user_notification(user_id, notification):
 		
 		# Creazione della SentNotification
 		await sync_to_async(SentNotification.objects.create)(
+			id=notification.id,
 			user_id=user_id,
 			group_id=None,
-			message=serialized_notification.message,
+			message=notification.message,
 			is_sent=True
 		)
 		
@@ -61,7 +62,7 @@ async def send_user_notification(user_id, notification):
 		await sync_to_async(QueuedNotification.objects.create)(
 			user_id=user_id,
 			group_id=notification.group_id,
-			message=serialized_notification.data,
+			message=serialized_notification,
 			is_sent=False
 		)
 		return False
@@ -90,7 +91,7 @@ class CursorNotificationPagination(CursorPagination):
 	page_size = 10
 	ordering = '-creation_time'
 
-class SentNotification(generics.ListAPIView):
+class SentNotificationAPIview(generics.ListAPIView):
 	from .models import SentNotification
 	# permissionClasses = (permissions.AllowAny,)
 	serializer_class = UniversalNotificationSerializer
