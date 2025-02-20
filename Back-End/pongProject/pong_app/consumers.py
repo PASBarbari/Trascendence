@@ -22,7 +22,9 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		await self.accept()
 
 	async def disconnect(self, close_code):
-		pass
+		if self.room_id in active_games:
+			GameState.quit_game(1)
+			del active_games[self.room_id]
 
 	async def receive(self, text_data):
 		data = json.loads(text_data)

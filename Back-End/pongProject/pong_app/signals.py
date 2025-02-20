@@ -14,6 +14,7 @@ ring_size = [160 , 90]
 tick_rate = 30
 ball_radius = 2.5
 player_width = 2.5
+ring_thickness = 2.5
 class GameState:
 	def __init__(self, player_1, player_2, game_id, player_length):
 		self.game_id = game_id
@@ -26,7 +27,8 @@ class GameState:
 		self.ball_pos = [0 , 0]
 		self.p_length = player_length if player_length else 10
 		self.is_started = [0 , 0]
-  
+		self.wall_hit_pos = 0
+
 	async def start(self):
 		self.running = True
 		tick_interval = 1 / tick_rate
@@ -71,32 +73,39 @@ class GameState:
 			return True
 		return False
 
+	#TODO fixing radius and thickness and create function for score
+
 	def physics(self):
 		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
 		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
 		if self.ball_pos[0] < 0 and self.p1_is_hit():
-				hit_pos = self.ball_pos[1] - self.player_1_pos[1]
-				self.angle = hit_pos / self.p_length * -90
-				if (self.ball_speed < 5 * self.p_length):
-					self.ball_speed += 0.1
+			hit_pos = self.ball_pos[1] - self.player_1_pos[1]
+			self.wall_hit_pos = 0
+			self.angle = hit_pos / self.p_length * -90
+			if (self.ball_speed < 5 * self.p_length):
+				self.ball_speed += 0.1
 		elif self.ball_pos[0] > 0 and self.p2_is_hit():
-				hit_pos = self.ball_pos[1] - self.player_2_pos[1]
-				self.angle = 180 + hit_pos / self.p_length * 90
-				if (self.ball_speed < 5 * self.p_length):
-					self.ball_speed += 0.1
-		elif self.ball_pos[1] - ball_radius <= 0 or self.ball_pos[1] + ball_radius >= ring_size[1]:
-			self.angle = -self.angle
-		elif self.ball_pos[0] - ball_radius <= 0:
+			hit_pos = self.ball_pos[1] - self.player_2_pos[1]
+			self.wall_hit_pos = 0
+			self.angle = 180 + hit_pos / self.p_length * 90
+			if (self.ball_speed < 5 * self.p_length):
+				self.ball_speed += 0.1
+		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + ball_radius + ring_thickness + self.ball_speed >= ring_size[1] / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - ball_radius - ring_thickness - self.ball_speed <= -ring_size[1] / 2):
+			self.wall_hit_pos = self.ball_pos[1]
+			self.angle = -self.angle 
+		elif self.ball_pos[0] - ball_radius < - ring_size[0] / 2 + ring_thickness:
 			self.player_2_score += 1
-			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
+			self.ball_pos = [0, 0]
 			self.angle = random.uniform(70, -70)
 			self.ball_speed = 90 / 150
-		elif self.ball_pos[0] + ball_radius >= ring_size[0]:
+			self.wall_hit_pos = 0
+		elif self.ball_pos[0] + ball_radius > ring_size[0] / 2 - ring_thickness:
 			self.player_1_score += 1
-			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
+			self.ball_pos = [0, 0]
 			self.angle = random.uniform(110, 250)
 			self.ball_speed = 90 / 150
-
+			self.wall_hit_pos = 0
+   
 	async def update(self):
 		channel_layer = get_channel_layer()
 		try:
