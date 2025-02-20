@@ -20,9 +20,9 @@ export function renderPong() {
 	contentDiv.innerHTML = `
 	<div class="gamecontainer">
 		<div id="menu">
-		<button id="newGameButton">New Game</button>
-		<button id="settingsButton">Settings</button>
-		<button id="exitButton">Exit</button>
+			<button id="newGameButton">New Game</button>
+			<button id="settingsButton">Settings</button>
+			<button id="exitButton">Exit</button>
 		</div>
 		<div id="nbrOfPlayerMenu" style="display: none;">
 			<button id="onePlayerButton">1 Player</button>
@@ -76,7 +76,7 @@ export function renderPong() {
 			<button id="exitButtonPause">Exit</button>
 		</div>
 		<img id="gameOverImage" src="public/gungeon.png" alt="Game Over" style="display: none;">
-		<script type="module" src="/main.js"></script>
+		<div id="threejs-container"></div>
 	</div>
 	`;
 
@@ -167,22 +167,46 @@ export function renderPong() {
   });
 
   document.getElementById("menu").style.display = "block";
+
+    // Inizializza il renderer di Three.js
+    if (!state.renderer) {
+        state.renderer = new THREE.WebGLRenderer({ antialias: true });
+        state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+    }
+
+    // Inizializza la scena e la camera
+    if (!state.scene) {
+        state.scene = new THREE.Scene();
+    }
+
+    if (!state.camera) {
+        state.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        state.camera.position.z = 5;
+    }
+
+    // Aggiungi il canvas di Three.js al DOM
+    const threejsContainer = document.getElementById('threejs-container');
+    if (threejsContainer && state.renderer.domElement) {
+        threejsContainer.appendChild(state.renderer.domElement);
+    } else {
+        console.error('threejsContainer o state.renderer.domElement non trovato');
+    }
+
+    // Inizializza il gioco
+    SETUP.setupGame();
+    GAME.animate();
 }
 
-SETUP.setupGame();
-GAME.animate();
-// requestAnimationFrame(GAME.animate);
-
 //Resize handler
-
 window.addEventListener("resize", () => {
-  state.camera.aspect = window.innerWidth / window.innerHeight;
-  state.camera.updateProjectionMatrix();
-  state.renderer.setSize(window.innerWidth, window.innerHeight);
+    if (state.camera && state.renderer) {
+        state.camera.aspect = window.innerWidth / window.innerHeight;
+        state.camera.updateProjectionMatrix();
+        state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+    }
 });
 
 //Keyboard setup
-
 document.addEventListener("keydown", function (event) {
   if (event.key.toLowerCase() == "w") {
     state.p1_move_y = state.player_speed;
@@ -251,10 +275,15 @@ document.addEventListener("wheel", function (event) {
 });
 
 document.addEventListener("mousemove", function (event) {
-  const rect = state.renderer.domElement.getBoundingClientRect();
-  const mouse = {
-    x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-    y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
-  };
-  // console.log(mouse);
+    if (state.renderer && state.renderer.domElement) {
+        const rect = state.renderer.domElement.getBoundingClientRect();
+        const mouse = {
+            x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+            y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+        };
+        // console.log(mouse);
+    }
 });
+
+SETUP.setupGame();
+GAME.animate();
