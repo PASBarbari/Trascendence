@@ -106,6 +106,6 @@ export const animate = (timestamp) => {
 	}
 };
 
-export const serverAnimate = (data) => {
-	
+export const serverAnimate = () => {
+	state.renderer.render(state.scene, state.camera)
 };
