@@ -6,6 +6,9 @@
   align-items: flex-start;
   flex-direction: column;
   justify-content: flex-start;
+  border-top-left-radius: 12px;
+  padding: 10px;
+
 }
 
 .navbar {
@@ -38,16 +41,17 @@
 }
 
 .content {
-  border-top-left-radius: 12px;
   background-color: rgba(1, 25, 78, 0.05);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-evenly;
   align-content: flex-start;
-  width: 100%;
-  padding: 10px;
+  width: fit-content;
   gap: 10px;
   overflow-y: auto;
+  height: fit-content;
+  border-top-left-radius: 12px;
+
 }
 
 p {

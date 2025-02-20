@@ -6,6 +6,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+	border-top-left-radius: 12px;
+
 }
 
 .register
@@ -16,6 +18,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+	border-top-left-radius: 12px;
+
 }
 
 .login_box

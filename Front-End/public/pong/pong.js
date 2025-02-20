@@ -171,7 +171,7 @@ export function renderPong() {
   // Inizializza il renderer di Three.js
   if (!state.renderer) {
     state.renderer = new THREE.WebGLRenderer({ antialias: true });
-    state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+    state.renderer.setSize(window.innerWidth, window.innerHeight);
   }
 
   // Inizializza la scena e la camera
@@ -196,11 +196,11 @@ export function renderPong() {
   } else {
     console.error("threejsContainer o state.renderer.domElement non trovato");
   }
-
-  // Inizializza il gioco
-  SETUP.setupGame();
-  GAME.animate();
 }
+
+// Inizializza il gioco
+SETUP.setupGame();
+GAME.animate();
 
 //Resize handler
 window.addEventListener("resize", () => {
@@ -289,6 +289,3 @@ document.addEventListener("mousemove", function (event) {
     // console.log(mouse);
   }
 });
-
-SETUP.setupGame();
-GAME.animate();
