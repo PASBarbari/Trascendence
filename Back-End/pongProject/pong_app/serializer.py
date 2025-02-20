@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import *
 import datetime
 
+
 class PlayerSerializer(serializers.ModelSerializer):
     # def validate_username(self, value):
     #     if len(str(value)) < 1:
@@ -49,3 +50,13 @@ class TournamentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tournament
         fields = '__all__'
+        
+class GameStateSerializer(serializers.Serializer):
+    player_1_score = serializers.IntegerField()
+    player_2_score = serializers.IntegerField()
+    player_1_pos = serializers.ListField(child=serializers.IntegerField())
+    player_2_pos = serializers.ListField(child=serializers.IntegerField())
+    ball_pos = serializers.ListField(child=serializers.FloatField())
+    ball_speed = serializers.FloatField()
+    angle = serializers.FloatField()
+    p_length = serializers.IntegerField()

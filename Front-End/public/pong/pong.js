@@ -166,9 +166,10 @@ export function renderPong() {
   });
 
   document.getElementById("menu").style.display = "block";
+  
+  SETUP.setupGame();
 }
 
-SETUP.setupGame();
 // GAME.animate();
 // requestAnimationFrame(GAME.animate);
 
@@ -249,11 +250,11 @@ document.addEventListener("wheel", function (event) {
   state.camera.position.set(state.cam.x, state.cam.y, state.cam.z);
 });
 
-document.addEventListener("mousemove", function (event) {
-  const rect = state.renderer.domElement.getBoundingClientRect();
-  const mouse = {
-    x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-    y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
-  };
-  // console.log(mouse);
-});
+// document.addEventListener("mousemove", function (event) {
+//   const rect = state.renderer.domElement.getBoundingClientRect();
+//   const mouse = {
+//     x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+//     y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+//   };
+//   // console.log(mouse);
+// });

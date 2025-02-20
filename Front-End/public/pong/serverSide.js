@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { getVariables } from "../var.js";
 import { renderPong } from "./pong.js";
+import * as GAME from "./gameLogic.js";
 
 let socket;
 
@@ -20,7 +21,7 @@ async function createGame(player_1, player_2) {
       const data = await response.json();
       console.log("Game created:", data);
       const room_id = data.id;
-      initializeWebSocket(room_id);
+      initializeWebSocket(room_id);	  
     } else {
       const errorData = await response.json();
       console.error("Errore in createGame:", errorData);
@@ -37,16 +38,20 @@ function initializeWebSocket(room_id) {
   socket.onmessage = function (event) {
       const message = JSON.parse(event.data);
       console.log("Nuovo messaggio:", message);
-      if (message.type === "game_update") {
-          updateGameState(message.data);
+      if (message.type === "game_state") {
+		console.log("game_state");
+        updateGameState(message.data);
+      } else if (message.ready) {
+		console.log("ready");
+		// GAME.start(message);
       }
   };
   socket.onopen = function () {
       console.log("WebSocket connection is active");
-	  renderPong();
+      renderPong();
   };
   socket.onerror = function (error) {
-	console.error("WebSocket error:", error);
+    console.error("WebSocket error:", error);
   };
   socket.onclose = function () {
       console.log("token:", token);
@@ -75,4 +80,5 @@ function updateGameState(data) {
 //     return { token };
 // }
 
-export { createGame, initializeWebSocket, updateGameState };
+
+export { createGame, initializeWebSocket, updateGameState, socket };

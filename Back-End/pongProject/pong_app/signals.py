@@ -8,6 +8,7 @@ import logging
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
+from .serializer import GameStateSerializer
 
 ring_size = [160 , 90]
 tick_rate = 30
@@ -39,33 +40,33 @@ class GameState:
 
 		while self.running:
 			start_time = time.monotonic()
-			
-			await self.physics()
+
+			self.physics()
 
 			await self.update()
 			
 			if self.player_1_score == 5 or self.player_2_score == 5: #TODO add different games scores
 				self.running = False
 				break
-			time.sleep(max(0, tick_interval - (time.monotonic() - start_time)))
-			await asyncio.sleep(tick_interval)
+			elapsed = time.monotonic() - start_time
+			await asyncio.sleep(max(0, tick_interval - elapsed))
 	
 	def p1_is_hit(self):
 		if (
-			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player1_pos[0] + self.player_width / 2 and
-			self.ball_pos[0] - self.ball_speed > self.player1_pos[0] - self.player_width / 2 and
-			self.ball_pos[1] - self.ball_radius <= self.player1_pos[1] + self.player_height / 2 and
-			self.ball_pos[1] + self.ball_radius >= self.player1_pos[1] - self.player_height / 2
+			self.ball_pos[0] - ball_radius - self.ball_speed <= self.player_1_pos[0] + player_width / 2 and
+			self.ball_pos[0] - self.ball_speed > self.player_1_pos[0] - player_width / 2 and
+			self.ball_pos[1] - ball_radius <= self.player_1_pos[1] + self.p_length / 2 and
+			self.ball_pos[1] + ball_radius >= self.player_1_pos[1] - self.p_length / 2
 		):
 			return True
 		return False
 
 	def p2_is_hit(self):
 		if (
-			self.ball_pos[0] + self.ball_radius + self.ball_speed >= self.player2_pos[0] - self.player_width / 2 and
-			self.ball_pos[0] + self.ball_speed < self.player2_pos[0] + self.player_width / 2 and
-			self.ball_pos[1] - self.ball_radius <= self.player2_pos[1] + self.player_height / 2 and
-			self.ball_pos[1] + self.ball_radius >= self.player2_pos[1] - self.player_height / 2
+			self.ball_pos[0] + ball_radius + self.ball_speed >= self.player_2_pos[0] - player_width / 2 and
+			self.ball_pos[0] + self.ball_speed < self.player_2_pos[0] + player_width / 2 and
+			self.ball_pos[1] - ball_radius <= self.player_2_pos[1] + self.p_length / 2 and
+			self.ball_pos[1] + ball_radius >= self.player_2_pos[1] - self.p_length / 2
 		):
 			return True
 		return False
@@ -74,36 +75,38 @@ class GameState:
 		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
 		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
 		if self.ball_pos[0] < 0 and self.p1_is_hit():
-				hit_pos = self.ball_position[1] - self.player1_pos[1]
+				hit_pos = self.ball_pos[1] - self.player_1_pos[1]
 				self.angle = hit_pos / self.p_length * -90
 				if (self.ball_speed < 5 * self.p_length):
 					self.ball_speed += 0.1
 		elif self.ball_pos[0] > 0 and self.p2_is_hit():
-				hit_pos = self.ball_position[1] - self.player2_pos[1]
+				hit_pos = self.ball_pos[1] - self.player_2_pos[1]
 				self.angle = 180 + hit_pos / self.p_length * 90
 				if (self.ball_speed < 5 * self.p_length):
 					self.ball_speed += 0.1
-		elif self.ball_pos[1] - self.ball_radius <= 0 or self.ball_pos[1] + self.ball_radius >= ring_size[1]:
+		elif self.ball_pos[1] - ball_radius <= 0 or self.ball_pos[1] + ball_radius >= ring_size[1]:
 			self.angle = -self.angle
-		elif self.ball_pos[0] - self.ball_radius <= 0:
+		elif self.ball_pos[0] - ball_radius <= 0:
 			self.player_2_score += 1
 			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
 			self.angle = random.uniform(70, -70)
 			self.ball_speed = 90 / 150
-		elif self.ball_pos[0] + self.ball_radius >= ring_size[0]:
+		elif self.ball_pos[0] + ball_radius >= ring_size[0]:
 			self.player_1_score += 1
 			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
 			self.angle = random.uniform(110, 250)
 			self.ball_speed = 90 / 150
 
-	def update(self):
+	async def update(self):
 		channel_layer = get_channel_layer()
 		try:
-			async_to_sync(channel_layer.group_send)(
+			serialized_data = GameStateSerializer(self.to_dict()).data
+			# print(f"Sent game state: {serialized_data}")
+			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
 					'type': 'game_state',
-					'game_state': self.__dict__
+					'game_state': serialized_data
 				}
 			)
 		except Exception as e:
@@ -121,7 +124,7 @@ class GameState:
 		else:
 			self.player_2_pos[1] -= 1
 	
-	def __dict__(self):
+	def to_dict(self):
 		return {
 			'player_1_score': self.player_1_score,
 			'player_2_score': self.player_2_score,
