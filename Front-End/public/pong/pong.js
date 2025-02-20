@@ -16,8 +16,8 @@ link.href = '/public/pong/pong.css';
 document.head.appendChild(link);
 
 export function renderPong() {
-	const contentDiv = document.getElementById('content');
-	contentDiv.innerHTML = `
+  const contentDiv = document.getElementById("content");
+  contentDiv.innerHTML = `
 	<div class="gamecontainer">
 		<div id="menu">
 			<button id="newGameButton">New Game</button>
@@ -99,17 +99,17 @@ export function renderPong() {
     .getElementById("backButton")
     .addEventListener("click", SETTINGS.showMainMenu);
 
-	document
-	.getElementById("classicModeButton")
-	.addEventListener("click", SETTINGS.startClassicmode);
+  document
+    .getElementById("classicModeButton")
+    .addEventListener("click", SETTINGS.startClassicmode);
 
-	document
-	.getElementById("crazyModeButton")
-	.addEventListener("click", SETTINGS.startCrazymode);
+  document
+    .getElementById("crazyModeButton")
+    .addEventListener("click", SETTINGS.startCrazymode);
 
-	document
-	.getElementById("backFromModeButton")
-	.addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
+  document
+    .getElementById("backFromModeButton")
+    .addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
 
   document
     .getElementById("saveSettingsButton")
@@ -168,42 +168,47 @@ export function renderPong() {
 
   document.getElementById("menu").style.display = "block";
 
-    // Inizializza il renderer di Three.js
-    if (!state.renderer) {
-        state.renderer = new THREE.WebGLRenderer({ antialias: true });
-        state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
-    }
+  // Inizializza il renderer di Three.js
+  if (!state.renderer) {
+    state.renderer = new THREE.WebGLRenderer({ antialias: true });
+    state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+  }
 
-    // Inizializza la scena e la camera
-    if (!state.scene) {
-        state.scene = new THREE.Scene();
-    }
+  // Inizializza la scena e la camera
+  if (!state.scene) {
+    state.scene = new THREE.Scene();
+  }
 
-    if (!state.camera) {
-        state.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        state.camera.position.z = 5;
-    }
+  if (!state.camera) {
+    state.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    state.camera.position.z = 5;
+  }
 
-    // Aggiungi il canvas di Three.js al DOM
-    const threejsContainer = document.getElementById('threejs-container');
-    if (threejsContainer && state.renderer.domElement) {
-        threejsContainer.appendChild(state.renderer.domElement);
-    } else {
-        console.error('threejsContainer o state.renderer.domElement non trovato');
-    }
+  // Aggiungi il canvas di Three.js al DOM
+  const threejsContainer = document.getElementById("threejs-container");
+  if (threejsContainer && state.renderer.domElement) {
+    threejsContainer.appendChild(state.renderer.domElement);
+  } else {
+    console.error("threejsContainer o state.renderer.domElement non trovato");
+  }
 
-    // Inizializza il gioco
-    SETUP.setupGame();
-    GAME.animate();
+  // Inizializza il gioco
+  SETUP.setupGame();
+  GAME.animate();
 }
 
 //Resize handler
 window.addEventListener("resize", () => {
-    if (state.camera && state.renderer) {
-        state.camera.aspect = window.innerWidth / window.innerHeight;
-        state.camera.updateProjectionMatrix();
-        state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
-    }
+  if (state.camera && state.renderer) {
+    state.camera.aspect = window.innerWidth / window.innerHeight;
+    state.camera.updateProjectionMatrix();
+    state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+  }
 });
 
 //Keyboard setup
@@ -275,14 +280,14 @@ document.addEventListener("wheel", function (event) {
 });
 
 document.addEventListener("mousemove", function (event) {
-    if (state.renderer && state.renderer.domElement) {
-        const rect = state.renderer.domElement.getBoundingClientRect();
-        const mouse = {
-            x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-            y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
-        };
-        // console.log(mouse);
-    }
+  if (state.renderer && state.renderer.domElement) {
+    const rect = state.renderer.domElement.getBoundingClientRect();
+    const mouse = {
+      x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+    };
+    // console.log(mouse);
+  }
 });
 
 SETUP.setupGame();
