@@ -7,59 +7,55 @@ link.href = '/public/login/login.css';
 document.head.appendChild(link);
 
 function renderLogin() {
-	const appDiv = document.querySelector('.App');
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = `
+        <div class="login">
+            <div class="login_box">
+                <h1>Login</h1>
+                <div class="login_form">
+                    <form class="login_form" id="loginForm">
+                        <div class="mb-3">
+                            <input type="email" id="email" placeholder="Email" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" id="password" placeholder="Password" class="form-control" required />
+                        </div>
+                        <div class="empty"></div>
+                        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
+                        <button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
 
-	// Aggiungi dinamicamente il file CSS per la pagina di login
+    document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        await onHandleSubmit(e, email, password);
+    });
 
-	appDiv.innerHTML = `
-		<div class="login">
-			<div class="login_box">
-				<h1>Login</h1>
-				<div class="login_form">
-					<form class="login_form" id="loginForm">
-						<div class="mb-3">
-							<input type="email" id="email" placeholder="Email" class="form-control" required />
-						</div>
-						<div class="mb-3">
-							<input type="password" id="password" placeholder="Password" class="form-control" required />
-						</div>
-						<div class="empty"></div>
-						<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
-						<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
-					</form>
-				</div>
-			</div>
-		</div>
-	`;
-
-	document.getElementById('loginForm').addEventListener('submit', async function (e) {
-		e.preventDefault();
-		const email = document.getElementById('email').value;
-		const password = document.getElementById('password').value;
-		await onHandleSubmit(e, email, password);
-	});
-
-	document.getElementById('registerButton').addEventListener('click', function () {
-		window.navigateTo('/register');
-	});
+    document.getElementById('registerButton').addEventListener('click', function () {
+        window.navigateTo('#register');
+    });
 }
 
 async function onHandleSubmit(e, email, password) {
-	e.preventDefault();
-	if (email && password) {
-		console.log('Email:', email);
-		console.log('Password:', password);
-		const csrftoken = getCookie('csrftoken');
-		const loginSuccess = await loginUser(email, password, csrftoken, true);
-		if (loginSuccess) {
-			await handleGetUser(csrftoken);
-			window.navigateTo('/home');
-		}
-	} else {
-		console.log('Per favore, inserisci sia email che password.');
-	}
+    e.preventDefault();
+    if (email && password) {
+        console.log('Email:', email);
+        console.log('Password:', password);
+        const csrftoken = getCookie('csrftoken');
+        const loginSuccess = await loginUser(email, password, csrftoken, true);
+        if (loginSuccess) {
+            await handleGetUser(csrftoken);
+            window.navigateTo('#home');
+        }
+    } else {
+        console.log('Per favore, inserisci sia email che password.');
+    }
 }
-
 
 /**
  * Effettua il login dell'utente.
