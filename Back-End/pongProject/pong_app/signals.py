@@ -21,8 +21,8 @@ class GameState:
 		self.player_2 = player_2
 		self.player_1_score = 0
 		self.player_2_score = 0
-		self.player_1_pos = [0 , 0]
-		self.player_2_pos = [0 , 0]
+		self.player_1_pos = [-64 , 0]
+		self.player_2_pos = [64 , 0]
 		self.ball_pos = [0 , 0]
 		self.p_length = player_length if player_length else 10
 		self.is_started = [0 , 0]

@@ -79,8 +79,9 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		active_games[self.room_id].down(data, player)
 
 	async def game_state(self, data):
-		print(data)
+		# print(data)
 		await self.send(text_data=json.dumps({
+			'type': 'game_state',
 			'game_state': data['game_state']
 		}))
 
