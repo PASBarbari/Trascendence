@@ -37,15 +37,8 @@ export const animate = (timestamp) => {
 					state.ball_speed += 0.1;
 			} else if (
 				(state.wallHitPosition <= 0 &&
-					state.ball.position.y +
-						state.ball_radius +
-						state.ball_speed >=
-						state.ring.x / 2) ||
-				(state.wallHitPosition >= 0 &&
-					state.ball.position.y -
-						state.ball_radius -
-						state.ball_speed <=
-						-state.ring.x / 2)
+					state.ball.position.y + state.ball_radius + state.ball_speed >= state.ring.x / 2) ||
+				(state.wallHitPosition >= 0 &&state.ball.position.y - state.ball_radius - state.ball_speed <= -state.ring.x / 2)
 			) {
 				state.wallHitPosition = state.ball.position.y;
 				state.angle *= -1;
