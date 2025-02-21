@@ -4,7 +4,7 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.conf import settings
 from datetime import datetime, timedelta
-from chat.settings import oauth2_settings
+from chat.settings import oauth2_settings , OAUTH2_APP_NAME
 import json
 
 def login_self():
@@ -42,7 +42,7 @@ def register_self():
 	register_url = 'http://localhost:8000/login/Serviceregister'
     
 	data = {
-		'name': 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
+		'name': OAUTH2_APP_NAME,
 		'service_password': oauth2_settings['SERVICE_PASSWORD'],
 		'client_type': 'confidential',
 		'authorization_grant_type': 'password',
