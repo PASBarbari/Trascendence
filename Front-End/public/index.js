@@ -39,14 +39,14 @@ const routes = {
 };
 
 const navigateTo = (path) => {
-    window.location.hash = path;
+    const hashParts = window.location.hash.split('&').slice(1); // Mantieni solo gli stati dei div
+    const newHash = `#${path}&${hashParts.join('&')}`;
+    window.location.hash = newHash;
 };
 
 const locationHandler = async () => {
-    var location = window.location.hash.replace("#", "");
-    if (location.length == 0) {
-        location = "login";
-    }
+    const hashParts = window.location.hash.replace("#", "").split('&');
+    const location = hashParts[0] || "login";
     const route = routes[location] || routes["404"];
     if (route.template) {
         const html = await fetch(route.template).then((response) => response.text());
@@ -56,6 +56,21 @@ const locationHandler = async () => {
     }
     document.title = route.title;
     document.querySelector('meta[name="description"]').setAttribute("content", route.description);
+
+    // Gestisci gli stati dei div aperti
+    hashParts.slice(1).forEach(part => {
+        const [key, value] = part.split('-');
+        if (key === 'chatContainer' && value === 'open') {
+            const chatContainer = document.getElementById('chatContainer');
+            if (chatContainer) {
+                chatContainer.classList.add('open');
+                const toggleChatButton = document.getElementById('toggleChatButton');
+                if (toggleChatButton) {
+                    toggleChatButton.innerHTML = `<i class="bi bi-chevron-left"></i>`;
+                }
+            }
+        }
+    });
 };
 
 const initializeApp = () => {

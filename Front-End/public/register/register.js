@@ -40,7 +40,7 @@ function renderRegister() {
     });
 
     document.getElementById('loginButton').addEventListener('click', function () {
-        window.navigateTo('#login');
+        window.navigateTo('login');
     });
 }
 
@@ -74,7 +74,7 @@ async function registerUser(username, email, password, isBaseRegister) {
 				const data = await response.json();
 				console.log('Risposta dal server:', data);
 				if (isBaseRegister) {
-					window.navigateTo('#login');
+					window.navigateTo('login');
 				}
 				return true;
 			} else {

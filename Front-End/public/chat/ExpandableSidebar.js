@@ -89,6 +89,24 @@ function renderExpandableSidebar() {
 		` : `
 			<i class="bi bi-chevron-right"></i>
 		`;
+
+		// Aggiungi uno stato alla cronologia
+		const currentHash = window.location.hash.split('&')[0];
+		const newHash = `${currentHash}&chatContainer-${chatContainerOpen ? 'open' : 'closed'}`;
+		history.pushState({ chatContainerOpen }, '', newHash);
+	});
+
+	// Gestisci l'evento popstate
+	window.addEventListener('popstate', (event) => {
+		if (event.state && event.state.chatContainerOpen !== undefined) {
+			chatContainerOpen = event.state.chatContainerOpen;
+			chatContainer.classList.toggle('open', chatContainerOpen);
+			toggleChatButton.innerHTML = chatContainerOpen ? `
+				<i class="bi bi-chevron-left"></i>
+			` : `
+				<i class="bi bi-chevron-right"></i>
+			`;
+		}
 	});
 
 	document.getElementById('createChatButton').addEventListener('click', function () {

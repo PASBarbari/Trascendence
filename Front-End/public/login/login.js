@@ -37,7 +37,7 @@ function renderLogin() {
     });
 
     document.getElementById('registerButton').addEventListener('click', function () {
-        window.navigateTo('#register');
+        window.navigateTo('register');
     });
 }
 
