@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { state } from "./state.js";
-import { createScore } from "./utils.js";
+import { createScore, restart_game } from "./utils.js";
 import Stats from 'three/addons/libs/stats.module.js';
+import * as UTILS from "./utils.js";
 
 //Scene setup
 
@@ -67,6 +68,8 @@ export function setupGame(){
 	state.scene.add(game);
 	createScore();
 	state.renderer.render(state.scene, state.camera);
+
+	// UTILS.restart_game();
 }
 
 export function initGame(){

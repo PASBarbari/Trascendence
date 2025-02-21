@@ -36,6 +36,8 @@ export let state = {
     renderer: null,
     p1: null,
     p2: null,
+	p1_id: null,
+	p2_id: null,
     ball: null,
     ring3D: null,
     stats: null,
