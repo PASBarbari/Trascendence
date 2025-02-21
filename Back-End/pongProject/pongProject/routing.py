@@ -1,4 +1,12 @@
-from django.urls import re_path
+from django.urls import re_path , path
+"""
+This module defines the URL routing for WebSocket connections in the pongProject application.
+
+Routes:
+	websocket_urlpatterns (list): A list of URL patterns for WebSocket connections.
+		- re_path(r'ws/pong/(?P<room_id>\d+)/$', consumers.GameTableConsumer.as_asgi()): 
+		  Routes WebSocket connections to the GameTableConsumer based on the room_id parameter.
+"""
 from pong_app import consumers
 
 websocket_urlpatterns = [

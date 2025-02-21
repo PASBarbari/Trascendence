@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			'/home': () => renderHome(),
 			'/mine': () => window.location.href = 'https://minesweeper.online/it/',
 			'/pong': async () => {
-				const { renderPong } = await import('./pong/pong.js');
+				const { renderPong } = await import('./pong/serverSide.js');
 				renderPong();
 			},
 			// '/notifications': () => {

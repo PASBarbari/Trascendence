@@ -166,94 +166,37 @@ export function renderPong() {
   });
 
   document.getElementById("menu").style.display = "block";
+  
+  SETUP.setupGame();
 }
 
-SETUP.setupGame();
-GAME.animate();
+// GAME.animate();
 // requestAnimationFrame(GAME.animate);
 
 //Resize handler
-
 window.addEventListener("resize", () => {
   state.camera.aspect = window.innerWidth / window.innerHeight;
   state.camera.updateProjectionMatrix();
   state.renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+
 //Keyboard setup
 
-document.addEventListener("keydown", function (event) {
-  if (event.key.toLowerCase() == "w") {
-    state.p1_move_y = state.player_speed;
-    state.keys.w = true;
-  }
-  if (event.key.toLowerCase() == "s") {
-    state.p1_move_y = -state.player_speed;
-    state.keys.s = true;
-  }
-  if (event.key == "ArrowUp" && !state.IAisActive) {
-    state.p2_move_y = state.player_speed;
-    state.keys.ArrowUp = true;
-  }
-  if (event.key == "ArrowDown" && !state.IAisActive) {
-    state.p2_move_y = -state.player_speed;
-    state.keys.ArrowDown = true;
-  }
-  if (event.key == "Escape" && state.isStarted) {
-    if (state.isPaused) {
-      SETTINGS.resumeGame();
-    } else {
-      state.isPaused = true;
-      SETTINGS.showPauseMenu();
-    }
-  }
-});
 
-document.addEventListener("keyup", function (event) {
-  if (event.key.toLowerCase() == "w") {
-    state.keys.w = false;
-    if (state.keys.s) {
-      state.p1_move_y = -state.player_speed;
-    } else {
-      state.p1_move_y = 0;
-    }
-  }
-  if (event.key.toLowerCase() == "s") {
-    state.keys.s = false;
-    if (state.keys.w) {
-      state.p1_move_y = state.player_speed;
-    } else {
-      state.p1_move_y = 0;
-    }
-  }
-  if (event.key == "ArrowUp" && !state.IAisActive) {
-    state.keys.ArrowUp = false;
-    if (state.keys.ArrowDown) {
-      state.p2_move_y = -state.player_speed;
-    } else {
-      state.p2_move_y = 0;
-    }
-  }
-  if (event.key == "ArrowDown" && !state.IAisActive) {
-    state.keys.ArrowDown = false;
-    if (state.keys.ArrowUp) {
-      state.p2_move_y = state.player_speed;
-    } else {
-      state.p2_move_y = 0;
-    }
-  }
-});
+
+
 
 document.addEventListener("wheel", function (event) {
   state.cam.z += event.deltaY / 10;
   state.camera.position.set(state.cam.x, state.cam.y, state.cam.z);
 });
 
-document.addEventListener("mousemove", function (event) {
-  const rect = state.renderer.domElement.getBoundingClientRect();
-  const mouse = {
-    x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-    y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
-  };
-  // console.log(mouse);
-});
+// document.addEventListener("mousemove", function (event) {
+//   const rect = state.renderer.domElement.getBoundingClientRect();
+//   const mouse = {
+//     x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+//     y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+//   };
+//   // console.log(mouse);
+// });

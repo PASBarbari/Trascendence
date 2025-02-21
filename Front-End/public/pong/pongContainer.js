@@ -2,6 +2,7 @@ import { setVariables, getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 import { loginUser } from '../login/login.js';
 import { registerUser } from '../register/register.js';
+import { createGame } from './serverSide.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -26,7 +27,8 @@ function renderPongInfo() {
 
 function handleLocalePong() {
 	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
-	window.location.href = '/pong';
+	createGame(9, 10);
+	//window.location.href = '/pong';
 }
 
 function handleMultiPong() {
