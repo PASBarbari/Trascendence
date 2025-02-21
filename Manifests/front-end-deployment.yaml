@@ -21,8 +21,7 @@ spec:
         - "trascendence.42firenze.it"
       containers:
       - name: front-end
-        image: front-end:1.0
-        imagePullPolicy: IfNotPresent
+        image: marcor42/frontend:latest
         resources:
           limits:
             memory: "512Mi"
