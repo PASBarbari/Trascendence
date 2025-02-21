@@ -114,8 +114,8 @@ class GameState:
 			self.player_1_pos[1] += self.player_1_move
 		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness):
 			self.player_2_pos[1] += self.player_2_move
-
-	async def update(self):
+	
+  async def update(self):
 		channel_layer = get_channel_layer()
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
