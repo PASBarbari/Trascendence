@@ -163,6 +163,7 @@ OAUTH2_PROVIDER = {
     },
     # 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
 		'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
+	'REDIRECT_URI': 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html',
 }
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/

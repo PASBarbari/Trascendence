@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import datetime
 from pathlib import Path
 import secrets , os
 
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
 	'channels',
 	'celery',
 	'redis',
+	'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -186,19 +188,20 @@ CACHES = {
 }
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('172.18.0.1', 6700)],
-        },
-    }
+	'default': {
+		'BACKEND': 'channels_redis.core.RedisChannelLayer',
+		'CONFIG': {
+			"hosts": [('172.18.0.1', 6700)],
+		},
+	}
 }
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'my_chat.authentications.TokenAuthentication',
-    ],
+	'DEFAULT_AUTHENTICATION_CLASSES': [
+		'my_chat.authentications.TokenAuthentication',
+		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+	],
 		'DEFAULT_PERMISSION_CLASSES': [
 				'my_chat.middleware.TokenAuthPermission',
 		],
@@ -208,26 +211,60 @@ REST_FRAMEWORK = {
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'loki': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
-            'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
-        },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'handlers': {
+		'loki': {
+			'class': 'logging.StreamHandler',
+			'formatter': 'detailed',
+			'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+		},
+	},
+	'loggers': {
+		'django': {
+			'handlers': ['loki'],
+			'level': 'INFO',
+			'propagate': True,
+		},
+	},
+	'formatters': {
+		'detailed': {
+			'format': '{levelname} {asctime} {module} {message}',
+			'style': '{',
+		},
+	},
+}
+
+OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Personal' : "Self",
+}
+
+# filepath: /home/lollo/Documents/Fides/Back-End/chat/chat/settings.py
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Your App API - Swagger': {
+            'type': 'oauth2',
+            'authorizationUrl': f"{Microservices['Login']}/o/authorize",
+            'tokenUrl': f"{Microservices['Login']}/o/token/",
+            'flow': 'accessCode',
+            'scopes': {
+                'read:groups': 'read groups',
+            }
+        }
     },
-    'loggers': {
-        'django': {
-            'handlers': ['loki'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-    'formatters': {
-        'detailed': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
+    'OAUTH2_CONFIG': {
+        'clientId': f'{oauth2_settings["CLIENT_ID"]}',
+        'clientSecret': f'{oauth2_settings["CLIENT_SECRET"]}',
+        'appName': f'{OAUTH2_APP_NAME}',
     },
 }
+
+# OAUTH2_REDIRECT_URL = f"{Microservices['Login']}/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
+# OAUTH2_REDIRECT_URL = 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html'
