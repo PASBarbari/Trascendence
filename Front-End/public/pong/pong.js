@@ -183,67 +183,9 @@ window.addEventListener("resize", () => {
 
 //Keyboard setup
 
-document.addEventListener("keydown", function (event) {
-  if (event.key.toLowerCase() == "w") {
-    state.p1_move_y = state.player_speed;
-    state.keys.w = true;
-  }
-  if (event.key.toLowerCase() == "s") {
-    state.p1_move_y = -state.player_speed;
-    state.keys.s = true;
-  }
-  if (event.key == "ArrowUp" && !state.IAisActive) {
-    state.p2_move_y = state.player_speed;
-    state.keys.ArrowUp = true;
-  }
-  if (event.key == "ArrowDown" && !state.IAisActive) {
-    state.p2_move_y = -state.player_speed;
-    state.keys.ArrowDown = true;
-  }
-  if (event.key == "Escape" && state.isStarted) {
-    if (state.isPaused) {
-      SETTINGS.resumeGame();
-    } else {
-      state.isPaused = true;
-      SETTINGS.showPauseMenu();
-    }
-  }
-});
 
-document.addEventListener("keyup", function (event) {
-  if (event.key.toLowerCase() == "w") {
-    state.keys.w = false;
-    if (state.keys.s) {
-      state.p1_move_y = -state.player_speed;
-    } else {
-      state.p1_move_y = 0;
-    }
-  }
-  if (event.key.toLowerCase() == "s") {
-    state.keys.s = false;
-    if (state.keys.w) {
-      state.p1_move_y = state.player_speed;
-    } else {
-      state.p1_move_y = 0;
-    }
-  }
-  if (event.key == "ArrowUp" && !state.IAisActive) {
-    state.keys.ArrowUp = false;
-    if (state.keys.ArrowDown) {
-      state.p2_move_y = -state.player_speed;
-    } else {
-      state.p2_move_y = 0;
-    }
-  }
-  if (event.key == "ArrowDown" && !state.IAisActive) {
-    state.keys.ArrowDown = false;
-    if (state.keys.ArrowUp) {
-      state.p2_move_y = state.player_speed;
-    } else {
-      state.p2_move_y = 0;
-    }
-  }
-});
+
+
 
 document.addEventListener("wheel", function (event) {
   state.cam.z += event.deltaY / 10;
