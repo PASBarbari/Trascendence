@@ -3,7 +3,7 @@ import { renderRegister } from './register/register.js';
 import { renderHome } from './home/home.js';
 import { renderPong } from './pong/pong.js';
 import { renderExpandableSidebar } from './chat/ExpandableSidebar.js';
-//import { renderProfile } from './profile/profile.js';
+import { renderProfile } from './profile/profile.js';
 
 const routes = {
     404: {
@@ -75,8 +75,24 @@ const locationHandler = async () => {
 
 const initializeApp = () => {
     renderExpandableSidebar();
-    //renderProfile();
     locationHandler();
+
+    // Aggiungi listener per il pulsante propic-button
+    const toggleProfileButton = document.getElementById('toggleProfileButton');
+    toggleProfileButton.addEventListener('click', () => {
+        const profileDiv = document.getElementById('profile');
+        if (profileDiv) {
+            const isOpen = profileDiv.style.display === 'block';
+            profileDiv.style.display = isOpen ? 'none' : 'block';
+            if (!isOpen) {
+                renderProfile();
+            }
+            // Aggiorna l'URL per riflettere lo stato del div del profilo
+            const currentHash = window.location.hash.split('&')[0];
+            const newHash = `${currentHash}&profile-${isOpen ? 'closed' : 'open'}`;
+            history.pushState({ profileOpen: !isOpen }, '', newHash);
+        }
+    });
 };
 
 window.addEventListener("hashchange", locationHandler);

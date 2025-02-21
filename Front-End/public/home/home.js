@@ -24,16 +24,16 @@ function renderHome() {
     const contentDiv = document.getElementById('content');
     contentDiv.innerHTML = `
         <div class="home">
-            <div class="undernavbar">
-                <div class="expandable-sidebar-container"></div>
-                <div class="content">
+            <!--div class="undernavbar"-->
+                <!--div class="expandable-sidebar-container"></div-->
+                <!--div class="content"-->
                     <div class="profile" id="profile" style="display: none;"></div>
                     <div class="task-container" id="taskAvailableContainer"></div>
                     <div class="task-container" id="taskActiveContainer"></div>
                     <div class="task-container" id="notificationContainer"></div>
                     <div class="task-container" id="pongContainer"></div>
-                </div>
-            </div>
+                <!--/div-->
+            <!--/div-->
         </div>
     `;
 
