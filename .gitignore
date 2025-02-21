@@ -68,3 +68,5 @@ users_roles
 secrets.yaml
 fleet-server.crt
 fleet-server.key
+Manifests/secrets.yaml
+

@@ -33,9 +33,30 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+ALLOWED_HOSTS = [
+	'localhost',
+	'127.0.0.1',
+	'http://localhost:8000',
+	'http://localhost:8001',
+	'http://localhost:3000',
+]
+
+CORS_ALLOWED_ORIGINS = [
+	'http://localhost:8000',
+	'http://localhost:8001',
+	'http://localhost:3000',
+]
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+]
+
 # Application definition
 
 INSTALLED_APPS = [
+	'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +70,8 @@ INSTALLED_APPS = [
 	'django_redis',
 	'django_filters',
 	'my_notifications',
+	'rest_framework',
+	'redis',
 ]
 
 MIDDLEWARE = [
@@ -60,8 +83,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
-	'my_notifications.middleware.TokenAuthMiddlewareHTTP',
-	'my_notifications.middleware.APIKeyAuthMiddleware',
+	# 'my_notifications.middleware.TokenAuthMiddlewareHTTP',
+	# 'my_notifications.middleware.APIKeyAuthMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -100,7 +123,7 @@ DATABASES = {
 		'USER': 'pasquale',
 		'PASSWORD': '123',
 		'HOST': 'localhost',
-		'PORT': '5437',
+		'PORT': '5438',
 	},
     'backup': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -122,8 +145,8 @@ oauth2_settings = {
 
 REST_FRAMEWORK = {
 	'DEFAULT_PERMISSION_CLASSES': [
-		'my_notifications.middleware.TokenAuthPermission',
-		'my_notifications.middleware.APIKeyAuthPermission',
+		# 'my_notifications.middleware.TokenAuthPermission',
+		'my_notifications.middleware.APIKeyPermission',
 	],
 }
 

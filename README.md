@@ -109,3 +109,10 @@ Starting ASGI/Daphne version 4.1.2 development server at http://0.0.0.0:8000/
 Quit the server with CONTROL-C.
 ASGI APPLICATION LOADED
 (venv) ➜  Manifests git:(k8s) ✗ 
+
+Front end post support
+Index db
+Back end post support
+going from RESTAPI to gRPC
+Devops
+Argocd and jenkins

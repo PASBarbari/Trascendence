@@ -5,26 +5,33 @@ from .consumers import UserNotificationConsumer
 
 class BaseNotification(models.Model):
 	id = models.AutoField(primary_key=True)
-	Sender = models.CharField(max_length=20, choices=Microservices)
+	Sender = models.CharField(max_length=200, choices=[(key, key) for key in Microservices.keys()])
 	message = models.TextField()
 	is_sent = models.BooleanField(default=False)
 	class Meta:
 		abstract = True
 
 class UserNotification(BaseNotification):
-	user_id = models.IntegerField(default=None)
+	user_id = models.IntegerField(default=None, null=True)
 
 	class Meta:
 		abstract = True
 
 class GroupNotification(BaseNotification):
-	group_id = models.IntegerField(default=None)
+	group_id = models.IntegerField(default=None, null=True)
 
 	class Meta:
 		abstract = True
 
-class SentNotification(UserNotification, GroupNotification):
-	sent_time = models.DateTimeField(auto_now_add=True)
+class SentNotification(models.Model):
+	id = models.IntegerField(primary_key=True)
+	user_id = models.IntegerField()
+	group_id = models.IntegerField(null=True, blank=True)
+	message = models.TextField()
+	is_sent = models.BooleanField(default=False)
+	created_at = models.DateTimeField(auto_now_add=True)
+	def __str__(self):
+		return f'Sent at {self.send_time} to {self.user_id} or {self.group_id}'
 
 class ImmediateNotification(UserNotification, GroupNotification):
 	pass		

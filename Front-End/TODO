@@ -1,0 +1,49 @@
+TODO:
+- controllare start_table se parte tutto anche con i commenti (va cancellato il database)
+va commentato questo in start_tables.py task_user/task_app:
+    # if not Users.objects.all():
+    #     u = Users.objects.create(
+    #         user_id=1,
+    #         first_name="mario",
+    #         last_name="rossi",
+    #         birth_date="2000-1-1",
+    #         bio="bio dei miei ciglioni",
+    #         avatar=Avatars.objects.get(id=1)
+    #     )
+    #     u.save()
+    #     u = Users.objects.create(
+    #         user_id=2,
+    #         first_name="vincenzo",
+    #         last_name="bianchi",
+    #         birth_date="1999-11-4",
+    #         bio="bio dei miei ciglioni",
+    #         avatar=Avatars.objects.get(id=1)
+    #     )
+    #     u.save()
+    #     u = Users.objects.create(
+    #         user_id=3,
+    #         staff=True,
+    #         first_name="guglielmo",
+    #         last_name="duranti",
+    #         birth_date="1900-11-4",
+    #         bio="ma ti fanno anche da uomo",
+    #         avatar=Avatars.objects.get(id=1)
+    #     )
+    #     u.save()
+- probabilmente se alla registrazione metti un username gia usato, poi non ti registrera' correttamente'
+- testare gruppi con piu persone e addChat aggiungendo piu persone insieme (apri profilo ospite) per ora se un nuovo utente si registra entra in 	tutte le chat
+- i primi utenti registrati non si registrano correttamente
+- implementa i TODO in pongContainer.js (backend)
+	
+
+DONE:
+- addChat deve mandare una notifica all'altro utente per fargli renderizzare la pagina con updateChatList'
+- notifica all'altro quando crei una chat
+- se accetto un amicizia o la elimino quando gia fatta. manda una notifica all'altro utente per renderizzare la modifica
+- aggiungi livello e exp a profile
+- le chat devono aprirsi con già la barra di scorrimento in basso. al ricevimento di un messaggio, devono scorrere
+- addChat deve renderizzare la chat quando aggiunta
+- errore backend quando si accetta un amicizia (PATCH http://localhost:8002/user/addfriend 400 (Bad Request)
+	handleFriendRequest @ notification.js:16
+	onclick @ home:1Understand this errorAI
+	notification.js:33 Error in server response: {error: 'no running event loop'}error: "no running event loop"[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__())

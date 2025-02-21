@@ -122,7 +122,7 @@ services:
       dockerfile: Dockerfile
     container_name: container_notification_db
     ports:
-      - "5437:5432"
+      - "5438:5432"
     networks:
       - back-end
     healthcheck:

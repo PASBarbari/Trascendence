@@ -4,7 +4,7 @@
         {
             "label": "Docker Compose Up",
             "type": "shell",
-            "command": "docker-compose up",
+            "command": "docker compose up",
             "options": {
                 "cwd": "${workspaceFolder}/Back-End/Dockers"
             },
@@ -41,9 +41,9 @@
             "dependsOn": "Check and Create Venv"
         },
         {
-            "label": "Run Login Server",
+            "label": "Login start",
             "type": "shell",
-            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver",
+            "command": "source venv/bin/activate && cd login && python3 manage.py makemigrations && python3 manage.py makemigrations my_login && python3 manage.py migrate && python3 manage.py runserver",
             "options": {
                 "cwd": "${workspaceFolder}/Back-End"
             },
@@ -52,7 +52,7 @@
             "dependsOn": "Activate Venv and Install Requirements"
         },
         {
-            "label": "Run Chat Server",
+            "label": "Chat start",
             "type": "shell",
             "command": "source venv/bin/activate && cd chat && python3 manage.py makemigrations && python3 manage.py makemigrations my_chat && python3 manage.py migrate && python3 manage.py runserver 8001",
             "options": {
@@ -62,19 +62,49 @@
             "group": "build",
             "dependsOn": "Activate Venv and Install Requirements"
         },
-				{
-					"label": "Run Task Server",
-					"type": "shell",
-					"command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
-					"options": {
-							"cwd": "${workspaceFolder}/Back-End"
-					},
-					"problemMatcher": [],
-					"group": "build",
-					"dependsOn": "Activate Venv and Install Requirements"
-				},
         {
-            "label": "Start Front-End",
+            "label": "Task start",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd task_user && python3 manage.py makemigrations && python3 manage.py makemigrations task_app user_app && python3 manage.py migrate && python3 manage.py runserver 8002",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+        {
+            "label": "Wait 15 Seconds",
+            "type": "shell",
+            "command": "sleep 15",
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Activate Venv and Install Requirements"
+        },
+        {
+            "label": "Notify start",
+            "type": "shell",
+            "command": "source venv/bin/activate && cd Notifications && python3 manage.py makemigrations && python3 manage.py makemigrations my_notifications && python3 manage.py migrate && python3 manage.py runserver 8003",
+            "options": {
+                "cwd": "${workspaceFolder}/Back-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Wait 15 Seconds"
+        },
+        {
+            "label": "Install Front-End Dependencies",
+            "type": "shell",
+            "command": "npm install",
+            "options": {
+                "cwd": "${workspaceFolder}/Front-End"
+            },
+            "problemMatcher": [],
+            "group": "build",
+            "dependsOn": "Wait 10 Seconds"
+        },
+        {
+            "label": "FrontEnd start",
             "type": "shell",
             "command": "npm start",
             "options": {
@@ -82,7 +112,7 @@
             },
             "problemMatcher": [],
             "group": "build",
-						"dependsOn": "Wait 10 Seconds"
+            "dependsOn": "Install Front-End Dependencies"
         },
         {
             "label": "Run All",
@@ -92,10 +122,11 @@
             "dependsOn": [
                 "Docker Compose Up",
                 "Wait 10 Seconds",
-                "Run Login Server",
-                "Run Chat Server",
-								"Run Task Server",
-                "Start Front-End"
+                "Login start",
+                "Chat start",
+                "Task start",
+                "Notify start",
+                "FrontEnd start"
             ],
             "group": "build"
         }

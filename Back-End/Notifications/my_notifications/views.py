@@ -1,56 +1,71 @@
 from django.shortcuts import render
-from rest_framework import viewsets , generics
+from rest_framework import viewsets, generics
 from rest_framework.response import Response
-from asgiref.sync import async_to_sync
-from rest_framework import permissions , status
+from asgiref.sync import async_to_sync, sync_to_async
+from rest_framework import permissions, status
 from channels.layers import get_channel_layer
-from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, NotificationsGroup
-from .serializers import UniversalNotificationSerializer, UserProfileSerializer , NotificationsGroupSerializer
+from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, NotificationsGroup, SentNotification
+from .serializers import UniversalNotificationSerializer, UserProfileSerializer, NotificationsGroupSerializer, ImmediateNotificationSerializer, ScheduledNotificationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination
-from .middleware import TokenAuthMiddlewareHTTP, APIKeyPermission
-class NotificationViewSet(viewsets.ViewSet):
-	def send_notification(self, user_id, group_id, notification):
-		if user_id is not None:
-			return self.send_user_notification(user_id, notification)
-		elif group_id is not None:
-			return self.send_group_notification(group_id, notification)
-		else:
-			return Response({'error': 'No user or group specified'})
-	
-	def send_user_notification(user_id, notification):
-		channel_layer = get_channel_layer()
-		serialized_notification = UniversalNotificationSerializer(notification)
-		is_online = async_to_sync(channel_layer.group_send)(
-			f'notifications_{user_id}',
+from .middleware import APIKeyPermission
+
+def send_notification(user_id, group_id, notification):
+	if user_id is not None:
+		return async_to_sync(send_user_notification)(user_id, notification)
+	# elif group_id is not None:
+	# 	return send_group_notification(group_id, notification)
+	else:
+		return Response({'error': 'No user or group specified'})
+
+async def send_user_notification(user_id, notification):
+	channel_layer = get_channel_layer()
+	if isinstance(notification, ImmediateNotification):
+		model = ImmediateNotification
+	elif isinstance(notification, QueuedNotification):
+		model = QueuedNotification
+	elif isinstance(notification, ScheduledNotification):
+		model = ScheduledNotification
+	else:
+		raise ValueError("Unsupported notification type")
+
+	serialized_notification = UniversalNotificationSerializer(notification, model=model).data
+	print(f'Sending notification to user {user_id}')
+		
+	try:
+		await channel_layer.group_send(
+			f'user_notifications_{user_id}',
 			{
-				'type': 'check_online',
-				'text': 'Checking if user is online'
+				'type': 'send_notification',
+				'message': serialized_notification,
 			}
 		)
-		if is_online:
-			sent = async_to_sync(channel_layer.group_send)(
-				f'notifications_{user_id}',
-				{
-					'type': 'notification',
-					'text': serialized_notification
-				}
-			)
-			if sent is True:
-				SentNotification.objects.create(
-					is_sent=True,
-					UserNotification=serialized_notification
-				)
-				notification.delete()
-				return sent
-			return sent
-		else:
-			QueuedNotification.objects.create(
-				is_sent=False,
-				UserNotification=serialized_notification
-			)
-			return False
+		print(f"Notification sent to user {user_id}")
+		
+		# Creazione della SentNotification
+		await sync_to_async(SentNotification.objects.create)(
+			id=notification.id,
+			user_id=user_id,
+			group_id=None,
+			message=notification.message,
+			is_sent=True
+		)
+		
+		# Cancellazione della vecchia ImmediateNotification
+		await sync_to_async(notification.delete)()
+		return True
+	except Exception as e:
+		print(f"Error sending notification: {e}")
+		
+		# Creazione della QueuedNotification
+		await sync_to_async(QueuedNotification.objects.create)(
+			user_id=user_id,
+			group_id=notification.group_id,
+			message=serialized_notification,
+			is_sent=False
+		)
+		return False
 
 class NewUser(generics.CreateAPIView):
 	permissionClasses = [APIKeyPermission]
@@ -59,19 +74,24 @@ class NewUser(generics.CreateAPIView):
 
 class NewNotification(generics.CreateAPIView):
 	permission_classes = [APIKeyPermission]
-	serializers = UniversalNotificationSerializer
+
 	def get_queryset(self):
 		ImmediateNotifications = ImmediateNotification.objects.all()
-		QueuedNotifications = QueuedNotification.objects.all()
 		ScheduledNotifications = ScheduledNotification.objects.all()
-		return ImmediateNotifications.union(QueuedNotifications, ScheduledNotifications)
+		return ImmediateNotifications.union(ScheduledNotifications)
 
+	def get_serializer_class(self):
+		send_time = self.request.data.get('send_time', None)
+		if send_time is None:
+			return ImmediateNotificationSerializer
+		else:
+			return ScheduledNotificationSerializer
 
 class CursorNotificationPagination(CursorPagination):
 	page_size = 10
 	ordering = '-creation_time'
 
-class SentNotification(generics.ListAPIView):
+class SentNotificationAPIview(generics.ListAPIView):
 	from .models import SentNotification
 	# permissionClasses = (permissions.AllowAny,)
 	serializer_class = UniversalNotificationSerializer
@@ -99,7 +119,7 @@ class AddUserToGroupView(APIView):
 
 			try:
 				group = NotificationsGroup.objects.get(id=group_id)
-				group.users.add(user_id)
+				group.users.set([user_id])  # Usa il metodo set() per assegnare l'utente al gruppo
 				group.save()
 				return Response({'success': 'User added to group'}, status=status.HTTP_200_OK)
 			except NotificationsGroup.DoesNotExist:

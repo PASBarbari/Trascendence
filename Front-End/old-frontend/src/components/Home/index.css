@@ -1,0 +1,121 @@
+.home {
+  height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at -200px 230px, #f2f2fa 0%, #00115080 85%, #001150 100%);
+
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.navbar {
+	width: 100%;
+	height: 50px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.undernavbar {
+	flex: 1;
+	width: 100vw;
+	display: flex;
+	height: calc(100vh - 200px);
+	/*align-items: center;
+	justify-content: center;*/
+}
+
+.sidebar {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.content {
+	border-top-left-radius: 12px;
+	background-color: rgba(1, 25, 78, 0.05);
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-evenly;
+	align-content: flex-start;
+	width: 100%;
+	height: calc(100% - 20px);
+	padding: 10px;
+	gap: 10px;
+	overflow-y: auto;
+}
+
+.task-container {
+    flex: 1 1 45%;
+    min-width: 300px;
+    max-width: 100%;
+}
+
+.box {
+	width: 100px;
+	height: 100%;
+	background-color:#f5f5f5f0;;
+	border-radius: 8px;
+	flex-grow: 1;
+	min-width: 400px;
+	max-width: 800px;
+	max-height: 600px
+}
+
+.logo-image {
+	cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+}
+
+.propic-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.propic-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 100%;
+	padding: 2px;
+}
+
+.chat-buttons {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	width: 50px;
+	padding: 2px;
+}
+
+.propic-button img {
+    display: block;
+}
+
+.chat-image {
+	padding-top: 5px;
+	width: 25px;
+	height: 25px;
+}
+
+.expandable-sidebar-container {
+	display: flex;
+	height: 100%;
+	background-color: none;
+  }
