@@ -66,7 +66,7 @@ echo "Deploying Helm chart..."
 for namespace in $NAMESPACES; do
   helm install project-$namespace ./helm-chart --namespace $namespace --create-namespace
 done
-
+# helm repo add minio https://helm.min.io/
 # Step 8: Verify deployment
 echo "Verifying deployment..."
 for namespace in $NAMESPACES; do
