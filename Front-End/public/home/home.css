@@ -40,7 +40,7 @@
   padding: 10px;
 }
 
-.content {
+.content-home {
   background-color: rgba(1, 25, 78, 0.05);
   display: flex;
   flex-wrap: wrap;
@@ -49,7 +49,7 @@
   width: fit-content;
   gap: 10px;
   overflow-y: auto;
-  height: fit-content;
+  height: 100%;
   border-top-left-radius: 12px;
 
 }
