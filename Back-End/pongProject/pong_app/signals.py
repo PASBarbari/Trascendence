@@ -11,7 +11,7 @@ import time, asyncio
 from .serializer import GameStateSerializer
 
 ring_size = [160 , 90]
-tick_rate = 30
+tick_rate = 60
 # self.ball_radius = 2.5
 # self.p_width = 2
 # ring_thickness = 3
@@ -41,6 +41,7 @@ class GameState:
 		self.ring_thickness = 0
 		self.is_started = [0 , 0]
 		self.wall_hit_pos = 0
+		self.avg_frame_time = [0 , 1]
 
 	async def start(self):
 		self.running = True
@@ -53,7 +54,7 @@ class GameState:
 
 		# print(f"Game {self.__dict__} started")
 		while self.ball_speed == 0:
-			await asyncio.sleep(1)
+			await asyncio.sleep(0.1)
 		while self.running:
 			start_time = time.monotonic()
 
@@ -66,6 +67,7 @@ class GameState:
 				self.running = False
 				break
 			elapsed = time.monotonic() - start_time
+			self.avg_frame_time += [elapsed, 1]
 			await asyncio.sleep(max(0, tick_interval - elapsed))
 	
 	def p1_is_hit(self):
