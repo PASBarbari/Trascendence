@@ -109,18 +109,40 @@ function startCrazymode() {
 	state.isPaused = false;
 	state.spawnPowerUpFlag = true;
 	// Send a message to the backend indicating that both players are ready
-	socket.send(
-		JSON.stringify({
-			type: "player_ready",
-			player: 0,
-		})
-	);
-	socket.send(
-		JSON.stringify({
-			type: "player_ready",
-			player: 1,
-		})
-	);
+	if (socket && socket.readyState === WebSocket.OPEN) {
+		console.log("Sending player_ready message to the server");
+		socket.send(
+			JSON.stringify({
+				type: "player_ready",
+				player: 0,
+			})
+		);
+		socket.send(
+			JSON.stringify({
+				type: "player_ready",
+				player: 1,
+			})
+		);
+		socket.send(
+			JSON.stringify({
+				type: "game_init",
+				ring_length: state.ring.length,
+				ring_height: state.ring.height,
+				ring_width: state.ring.width,
+				ring_thickness: state.ring.thickness,
+				p_length: state.player.length,
+				p_width: state.player.width,
+				p_height: state.player.height,
+				ball_radius: state.ball_radius,
+				player_1_pos: [state.p1.position.x, state.p1.position.y],
+				player_2_pos: [state.p2.position.x, state.p2.position.y],
+				p_speed: state.player.speed,
+				ball_speed: state.ball_speed,
+			})
+		);
+	} else {
+		console.error("Socket is not open. Cannot send player_ready message.");
+	}
 }
 
 function startClassicmode() {
@@ -144,6 +166,24 @@ function startClassicmode() {
 				player: 1,
 			})
 		);
+		socket.send(
+			JSON.stringify({
+				type: "game_init",
+				ring_length: state.ring.length,
+				ring_height: state.ring.height,
+				ring_width: state.ring.width,
+				ring_thickness: state.ring.thickness,
+				p_length: state.player.length,
+				p_width: state.player.width,
+				p_height: state.player.height,
+				ball_radius: state.ball_radius,
+				ball_speed: state.ball_speed,
+				player_1_pos: [state.p1.position.x, state.p1.position.y],
+				player_2_pos: [state.p2.position.x, state.p2.position.y],
+			})
+		);
+	} else {
+		console.error("Socket is not open. Cannot send player_ready message.");
 	}
 }
 

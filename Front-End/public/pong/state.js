@@ -6,7 +6,7 @@ export let state = {
 	cam: { x: 0, y: 0, z: 100 },
 	ring: {
 		length: 0,
-		heigth: (window.innerHeight * 15) / 100,
+		height: (window.innerHeight * 15) / 100,
 		width: 10,
 		thickness: 3,
 	},
@@ -104,18 +104,18 @@ export let state = {
 	},
 };
 
-state.ring.length = (9 / 16) * state.ring.heigth - state.ring.thickness;
+state.ring.length = (9 / 16) * state.ring.height - state.ring.thickness;
 state.player.length = state.ring.length / 6;
-state.player_speed = state.ring.heigth / 115;
-state.ball_radius = state.ring.heigth / 80;
-state.ball_speed = state.ring.heigth / 150;
+state.player_speed = state.ring.height / 115;
+state.ball_radius = state.ring.height / 80;
+state.ball_speed = state.ring.height / 150;
 state.angle = Math.floor(Math.random() * 70);
 if (state.angle % 2) state.angle *= -1;
 if (state.angle % 3) state.angle += 180;
 state.stats = new Stats();
 state.r_bottom = new THREE.Mesh(
 	new THREE.BoxGeometry(
-		state.ring.heigth,
+		state.ring.height,
 		state.ring.thickness,
 		state.ring.width
 	),
@@ -123,7 +123,7 @@ state.r_bottom = new THREE.Mesh(
 );
 state.r_top = new THREE.Mesh(
 	new THREE.BoxGeometry(
-		state.ring.heigth,
+		state.ring.height,
 		state.ring.thickness,
 		state.ring.width
 	),

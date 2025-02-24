@@ -48,7 +48,7 @@ function spawnPowerUp() {
 	const powerUp = new THREE.Mesh(geometry, material);
 
 	powerUp.position.set(
-		((Math.random() - 0.5) * state.ring.heigth) / 1.5,
+		((Math.random() - 0.5) * state.ring.height) / 1.5,
 		((Math.random() - 0.5) * state.ring.length) / 1.5,
 		0
 	);

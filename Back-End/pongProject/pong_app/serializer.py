@@ -59,4 +59,13 @@ class GameStateSerializer(serializers.Serializer):
     ball_pos = serializers.ListField(child=serializers.FloatField())
     ball_speed = serializers.FloatField()
     angle = serializers.FloatField()
+    ring_length = serializers.IntegerField()
+    ring_height = serializers.IntegerField()
+    ring_width = serializers.IntegerField()
+    ring_thickness = serializers.IntegerField()
     p_length = serializers.IntegerField()
+    p_height = serializers.IntegerField()
+    p_width = serializers.IntegerField()
+    ball_radius = serializers.IntegerField()
+    p_speed = serializers.IntegerField()
+    
