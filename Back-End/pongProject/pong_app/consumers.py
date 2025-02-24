@@ -74,11 +74,15 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 	async def up(self, data):
 		player = data['player']
-		active_games[self.room_id].up(data, player)
+		active_games[self.room_id].up(player)
 
 	async def down(self, data):
 		player = data['player']
-		active_games[self.room_id].down(data, player)
+		active_games[self.room_id].down(player)
+
+	async def stop(self, data):
+		player = data['player']
+		active_games[self.room_id].stop(player)
 
 	async def game_state(self, data):
 		# print(data)
@@ -108,6 +112,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		'player_ready': player_ready,
 		'up': up,
 		'down': down,
+		'stop': stop,
 		'game_state': game_state,
 		'game_over': game_over,
 		'quit_game': quit_game,
