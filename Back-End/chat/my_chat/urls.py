@@ -13,4 +13,4 @@ urlpatterns = [
 	path('chat_data/', views.DownloadChatRoomData.as_view()),
 	path('user_similarities/', views.DownloadSimilaritiesData.as_view()),
 	path('chat_rooms/<int:room_id>/add_user/', views.AddUsersToChat.as_view()),
-	]
+]

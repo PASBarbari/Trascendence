@@ -1,0 +1,96 @@
+apiVersion: kibana.k8s.elastic.co/v1
+kind: Kibana
+metadata:
+  name: trascendence
+  namespace: elk
+spec:
+  version: 8.13.4
+  count: 1
+  elasticsearchRef:
+    name: trascendence
+  config:
+    xpack.fleet.enabled: true
+    xpack.fleet.agents.elasticsearch.hosts: ["https://trascendence-es-http.elk.svc:9200"]
+    xpack.fleet.agents.fleet_server.hosts: ["https://fleet-server-agent-http.elk.svc:8220"]
+    xpack.encryptedSavedObjects.encryptionKey: "${SAVED_OBJECTS_KEY}"
+    xpack.fleet.agentPolicies.fleet_server.signing_key: "${FLEET_SERVER_SIGNING_KEY}"
+    xpack.security.encryptionKey: "${XPACK_ENCRYPTION_KEY}"
+    xpack.fleet.agents.tlsCheckDisabled: false
+    xpack.fleet.packages:
+      - name: system
+        version: latest
+      - name: elastic_agent
+        version: latest
+      - name: fleet_server
+        version: latest
+    xpack.fleet.agentPolicies:
+      - name: Fleet Server on ECK policy
+        id: eck-fleet-server
+        namespace: default
+        is_managed: true
+        monitoring_enabled:
+          - logs
+          - metrics
+        unenroll_timeout: 900
+        package_policies:
+        - name: fleet_server-1
+          id: fleet_server-1
+          package:
+            name: fleet_server
+      - name: Elastic Agent on ECK policy
+        id: eck-agent
+        namespace: default
+        is_managed: true
+        monitoring_enabled:
+          - logs
+          - metrics
+        unenroll_timeout: 900
+        is_default: true
+        package_policies:
+          - name: system-1
+            id: system-1
+            package:
+              name: system
+  podTemplate:
+    spec:
+      containers:
+      - name: kibana
+        env:
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elastic-credentials
+              key: ELASTIC_PASSWORD
+        - name: XPACK_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: encryptionKey
+        - name: SAVED_OBJECTS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: savedObjectsKey
+        - name: FLEET_SERVER_SIGNING_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: fleetSigningKey
+        - name: FLEET_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: fleet-kibana-enckey
+              key: fleetEncryptionKey
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trascendence-kb-http
+  namespace: elk
+spec:
+  selector:
+    common.k8s.elastic.co/type: kibana
+  ports:
+    - protocol: TCP
+      port: 5601
+      targetPort: 5601
