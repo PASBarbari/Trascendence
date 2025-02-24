@@ -29,24 +29,51 @@ API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+}
+
 ALLOWED_HOSTS = [
-	'localhost',
-	'127.0.0.1',
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://localhost:3000',
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'trascendence.42firenze.it',
+    Microservices['Login'],
+    Microservices['Chat'],
+    Microservices['Users'],
+    Microservices['Notifications'],
+    Microservices['Pong'],
 ]
+    
 
 CORS_ALLOWED_ORIGINS = [
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://localhost:3000',
+	'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'trascendence.42firenze.it',
+    Microservices['Login'],
+    Microservices['Chat'],
+    Microservices['Users'],
+    Microservices['Notifications'],
+    Microservices['Pong'],
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'trascendence.42firenze.it',
+    Microservices['Login'],
+    Microservices['Chat'],
+    Microservices['Users'],
+    Microservices['Notifications'],
+    Microservices['Pong'],
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -114,12 +141,16 @@ WSGI_APPLICATION = 'login.wsgi.application'
 
 DATABASES = {
 	'default': {
-		'ENGINE': 'django.db.backends.postgresql',
-		'NAME': 'login_db',
-		'USER': 'pasquale',
-		'PASSWORD' : '123',
-		'HOST': 'localhost',
-		'PORT': '5435',
+	'ENGINE': 'django.db.backends.postgresql',
+	'NAME': os.getenv('POSTGRES_DB', 'login_db'),
+	'USER': os.getenv('POSTGRES_USER', 'postgres'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5432'),
+	},
+	'backup': {
+	'ENGINE': 'django.db.backends.sqlite3',
+	'NAME': str(BASE_DIR / 'db.sqlite3'),
 	}
 }
 
@@ -165,8 +196,7 @@ OAUTH2_PROVIDER = {
         'groups': 'Access to your groups',
     },
     # 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
-		'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
-	'REDIRECT_URI': 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html',
+	'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
 }
 
 SIMPLE_JWT = {
@@ -196,12 +226,10 @@ USE_I18N = True
 
 USE_TZ = True
 client = {
-	'CLIENT_ID' : '',
-	'CLIENT_SECRET' : '',
+	'CLIENT_ID' : os.getenv('CLIENT_ID', ''),
+	'CLIENT_SECRET' : os.getenv('CLIENT_SECRET', ''),
 }
 
-client['CLIENT_ID'] = 'fIdyZIRNl-ZdCVxwTs7UtcTfCy_gWVQpR_JMlr9aho8' #.env
-client['CLIENT_SECRET'] = 'OET0Drwd9vtChBjunLvrVfGsf3nCtSOBAmVauPOfMqUkcObkC9_2VFvsfbu-0rDbnz9lD5tpEvGJw5nScsGjGw'
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -229,6 +257,12 @@ LOGGING = {
     },
 }
 
+ADMIN = {
+    'username': os.getenv('ADMIN_USERNAME', 'admin'),
+    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+}
+
 # LOGGING = {
 #     'version': 1,
 #     'disable_existing_loggers': False,
@@ -253,9 +287,3 @@ LOGGING = {
 #     	    },
 # 	    },
 # }
-Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-}
