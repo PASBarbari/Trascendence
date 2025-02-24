@@ -5,15 +5,19 @@ from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from oauth2_provider.models import Application
-from login.settings import client
+from login.settings import client , admin
 
 User = get_user_model()
 
 
 def create_oauth2_application_and_superuser(**kwargs):
 	# Create superuser if it doesn't exist
-	if not User.objects.filter(email='pasquale@example.com').exists():
-		User.objects.create_superuser(email='pasquale@example.com', password='123')
+	if not User.objects.filter(email=admin['email']).exists():
+		User.objects.create_superuser(
+            username=admin['username'],
+            email=admin['email'],
+            password=admin['password']
+        )
 
 		# Create OAuth2 application if it doesn't exist
 	if Application.objects.filter(name = 'my_login').exists():

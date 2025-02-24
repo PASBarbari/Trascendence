@@ -27,16 +27,7 @@ API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-	'localhost',
-	'127.0.0.1',
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://127.0.0.1',
-	'http://localhost:3000/home',
-	'http://localhost:3000/login',
-	'http://localhost:3000/register'
-]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -103,7 +94,7 @@ oauth2_settings = {
 	'EXPIRES': '',
 	'token_type': '',
 	'scope': '',
-	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
+	'SERVICE_PASSWORD': os.getenv('SERVICE_PASSWORD', '123'),
 }
 
 # Database
@@ -112,11 +103,11 @@ oauth2_settings = {
 DATABASES = {
 	'default': {
 	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': 'chat_db',
-	'USER': 'pasquale',
-	'PASSWORD': '123',
-	'HOST': 'localhost',
-	'PORT': '5436',
+	'NAME': os.getenv('POSTGRES_DB', 'chat'),
+	'USER': os.getenv('POSTGRES_USER', 'postgres'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5432'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',
@@ -143,16 +134,8 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
-CELERY_BROKER_URL = 'redis://localhost:6700/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6700/0'
-CELERY_BEAT_SCHEDULE = {
-	'similar_users_chats': {
-		'task': 'my_chat.tasks.similar_users_chats',
-		'schedule': 3600, #seconds
-	},
-}
 
-BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
+# BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -177,23 +160,31 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis-service:6379')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '0')
+REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '1')
+
 CACHES = {
 	'default': {
 		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': 'redis://172.18.0.1:6700/1',
+		'LOCATION': REDIS_HOST + ':' + REDIS_PORT + '/' + REDIS_CACHE_DB,
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
 		}
 	}
 }
 
+
+
 CHANNEL_LAYERS = {
-	'default': {
-		'BACKEND': 'channels_redis.core.RedisChannelLayer',
-		'CONFIG': {
-			"hosts": [('172.18.0.1', 6700)],
-		},
-	}
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            'prefix': 'chat',
+        },
+    }
 }
 
 
@@ -266,5 +257,22 @@ SWAGGER_SETTINGS = {
     },
 }
 
+ADMIN = {
+    'username': os.getenv('ADMIN_USERNAME', 'admin'),
+    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+}
+
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+	'Personal' : "Self",
+}
+
+CSRF_LOGIN_URL = Microservices['Login'] + '/login/get_csrf_token'
+REGISTER_URL = Microservices['Login'] + '/login/Serviceregister'
 # OAUTH2_REDIRECT_URL = f"{Microservices['Login']}/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
 # OAUTH2_REDIRECT_URL = 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html'
