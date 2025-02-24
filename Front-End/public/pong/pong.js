@@ -178,6 +178,7 @@ window.addEventListener("resize", () => {
   state.camera.aspect = window.innerWidth / window.innerHeight;
   state.camera.updateProjectionMatrix();
   state.renderer.setSize(window.innerWidth, window.innerHeight);
+  state.renderer.render(state.scene, state.camera);
 });
 
 

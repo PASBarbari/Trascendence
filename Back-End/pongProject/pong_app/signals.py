@@ -13,11 +13,10 @@ from .serializer import GameStateSerializer
 ring_size = [160 , 90]
 tick_rate = 30
 ball_radius = 2.5
-player_width = 2.5
-ring_thickness = 2.5
-player_speed = 1
-ball_acc = 0.5
-
+player_width = 2
+ring_thickness = 3
+player_speed = 0.1
+ball_acc = 0.1
 class GameState:
 	def __init__(self, player_1, player_2, game_id, player_length):
 		self.game_id = game_id
@@ -49,6 +48,7 @@ class GameState:
 			start_time = time.monotonic()
 
 			self.physics()
+			self.movement()
 
 			await self.update()
 			
@@ -130,23 +130,33 @@ class GameState:
 		except Exception as e:
 			print(f"Error sending game state: {e}") #TODO logg
 
+	def movement(self):
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness / 2):
+			self.player_1_pos[1] += player_speed
+		elif (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness / 2):
+			self.player_1_pos[1] -= player_speed
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness / 2):
+			self.player_2_pos[1] += player_speed
+		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness / 2):
+			self.player_2_pos[1] -= player_speed
+
 	def up(self, player):
 		print(f"Player {player} up")
 		if player == self.player_1.user_id:
-			self.player_1_pos[1] += player_speed
-		else:
-			self.player_2_pos[1] += player_speed
+			self.player_1_move = 1
+		elif player == self.player_2.user_id:
+			self.player_2_move = 1
 	
 	def down(self, player):
 		if player == self.player_1.user_id:
-			self.player_1_pos[1] -= player_speed
-		else:
-			self.player_2_pos[1] -= player_speed
+			self.player_1_move = -1
+		elif player == self.player_2.user_id:
+			self.player_2_move = -1
    
 	def stop(self, player):
 		if player == self.player_1.user_id:
 			self.player_1_move = 0
-		else:
+		elif player == self.player_2.user_id:
 			self.player_2_move = 0
 	
 	def to_dict(self):
