@@ -61,7 +61,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	'my_chat.middleware.TokenAuthMiddlewareHTTP',
+	# 'my_chat.middleware.TokenAuthMiddlewareHTTP',
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
@@ -104,11 +104,11 @@ oauth2_settings = {
 DATABASES = {
 	'default': {
 	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': os.getenv('POSTGRES_DB', 'chat'),
-	'USER': os.getenv('POSTGRES_USER', 'postgres'),
-	'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+	'NAME': os.getenv('POSTGRES_DB', 'chat_db'),
+	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
 	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5432'),
+	'PORT': os.getenv('POSTGRES_PORT', '5436'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',
@@ -192,8 +192,9 @@ CHANNEL_LAYERS = {
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': [
 		'my_chat.authentications.TokenAuthentication',
+		'rest_framework_simplejwt.authentication.JWTAuthentication',
 		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-	],
+		],
 		'DEFAULT_PERMISSION_CLASSES': [
 				'my_chat.middleware.TokenAuthPermission',
 		],

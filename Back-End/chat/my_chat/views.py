@@ -14,7 +14,7 @@ from .middleware import TokenAuthPermission, APIKeyPermission
 from .authentications import TokenAuthentication
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -70,11 +70,11 @@ class GetChatInfo(generics.RetrieveAPIView):
 
 class new_user(generics.ListCreateAPIView):
 	serializer_class = userSerializer
+	authentication_classes = [JWTAuthentication]
 	queryset = UserProfile.objects.all()
 
 	def get_permissions(self):
 		if self.request.method == 'POST':
-			print("POST here")
 			self.permission_classes = [APIKeyPermission]
 		else:
 			self.permission_classes = (permissions.AllowAny,)
