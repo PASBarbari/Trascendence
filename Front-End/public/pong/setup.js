@@ -25,7 +25,7 @@ export function setupGame() {
 
 	state.r_bottom = new THREE.Mesh(
 		new THREE.BoxGeometry(
-			state.ring.heigth,
+			state.ring.height,
 			state.ring.thickness,
 			state.ring.width
 		),
@@ -33,7 +33,7 @@ export function setupGame() {
 	);
 	state.r_top = new THREE.Mesh(
 		new THREE.BoxGeometry(
-			state.ring.heigth,
+			state.ring.height,
 			state.ring.thickness,
 			state.ring.width
 		),
@@ -67,12 +67,12 @@ export function setupGame() {
 		0
 	);
 	state.r_left.position.set(
-		-((state.ring.heigth - state.ring.thickness) / 2),
+		-((state.ring.height - state.ring.thickness) / 2),
 		0,
 		0
 	);
 	state.r_right.position.set(
-		(state.ring.heigth - state.ring.thickness) / 2,
+		(state.ring.height - state.ring.thickness) / 2,
 		0,
 		0
 	);
@@ -97,8 +97,8 @@ export function setupGame() {
 		),
 		state.mat.p2
 	);
-	state.p1.position.set(-((state.ring.heigth * 2) / 5), 0, 0);
-	state.p2.position.set((state.ring.heigth * 2) / 5, 0, 0);
+	state.p1.position.set(-((state.ring.height * 2) / 5), 0, 0);
+	state.p2.position.set((state.ring.height * 2) / 5, 0, 0);
 
 	//Ball setup
 

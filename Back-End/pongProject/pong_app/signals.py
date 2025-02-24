@@ -12,10 +12,10 @@ from .serializer import GameStateSerializer
 
 ring_size = [160 , 90]
 tick_rate = 30
-ball_radius = 2.5
-player_width = 2
-ring_thickness = 3
-player_speed = 0.1
+# self.ball_radius = 2.5
+# self.p_width = 2
+# ring_thickness = 3
+# self.p_speed = 0.1
 ball_acc = 0.1
 class GameState:
 	def __init__(self, player_1, player_2, game_id, player_length):
@@ -24,12 +24,21 @@ class GameState:
 		self.player_2 = player_2
 		self.player_1_score = 0
 		self.player_2_score = 0
-		self.player_1_pos = [-64 , 0]
-		self.player_2_pos = [64 , 0]
+		self.player_1_pos = [0 , 0]
+		self.player_2_pos = [0 , 0]
 		self.player_1_move = 0
 		self.player_2_move = 0
 		self.ball_pos = [0 , 0]
-		self.p_length = player_length if player_length else 10
+		self.p_length = 0
+		self.p_height = 0
+		self.p_width = 0
+		self.p_speed = 0
+		self.ball_radius = 0
+		self.ball_speed = 0
+		self.ring_length = 0
+		self.ring_height = 0
+		self.ring_width = 0
+		self.ring_thickness = 0
 		self.is_started = [0 , 0]
 		self.wall_hit_pos = 0
 
@@ -42,8 +51,9 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		self.ball_speed = 90 / 150
 		# print(f"Game {self.__dict__} started")
+		while self.ball_speed == 0:
+			await asyncio.sleep(1)
 		while self.running:
 			start_time = time.monotonic()
 
@@ -60,20 +70,20 @@ class GameState:
 	
 	def p1_is_hit(self):
 		if (
-			self.ball_pos[0] - ball_radius - self.ball_speed <= self.player_1_pos[0] + player_width / 2 and
-			self.ball_pos[0] - self.ball_speed > self.player_1_pos[0] - player_width / 2 and
-			self.ball_pos[1] - ball_radius <= self.player_1_pos[1] + self.p_length / 2 and
-			self.ball_pos[1] + ball_radius >= self.player_1_pos[1] - self.p_length / 2
+			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player_1_pos[0] + self.p_width / 2 and
+			self.ball_pos[0] - self.ball_speed > self.player_1_pos[0] - self.p_width / 2 and
+			self.ball_pos[1] - self.ball_radius <= self.player_1_pos[1] + self.p_length / 2 and
+			self.ball_pos[1] + self.ball_radius >= self.player_1_pos[1] - self.p_length / 2
 		):
 			return True
 		return False
 
 	def p2_is_hit(self):
 		if (
-			self.ball_pos[0] + ball_radius + self.ball_speed >= self.player_2_pos[0] - player_width / 2 and
-			self.ball_pos[0] + self.ball_speed < self.player_2_pos[0] + player_width / 2 and
-			self.ball_pos[1] - ball_radius <= self.player_2_pos[1] + self.p_length / 2 and
-			self.ball_pos[1] + ball_radius >= self.player_2_pos[1] - self.p_length / 2
+			self.ball_pos[0] + self.ball_radius + self.ball_speed >= self.player_2_pos[0] - self.p_width / 2 and
+			self.ball_pos[0] + self.ball_speed < self.player_2_pos[0] + self.p_width / 2 and
+			self.ball_pos[1] - self.ball_radius <= self.player_2_pos[1] + self.p_length / 2 and
+			self.ball_pos[1] + self.ball_radius >= self.player_2_pos[1] - self.p_length / 2
 		):
 			return True
 		return False
@@ -95,24 +105,24 @@ class GameState:
 			self.angle = 180 + hit_pos / self.p_length * 90
 			if (self.ball_speed < 5 * self.p_length):
 				self.ball_speed += ball_acc
-		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + ball_radius + ring_thickness + self.ball_speed >= ring_size[1] / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - ball_radius - ring_thickness - self.ball_speed <= -ring_size[1] / 2):
+		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= ring_size[1] / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -ring_size[1] / 2):
 			self.wall_hit_pos = self.ball_pos[1]
 			self.angle = -self.angle 
-		elif self.ball_pos[0] - ball_radius < - ring_size[0] / 2 + ring_thickness:
+		elif self.ball_pos[0] - self.ball_radius < - ring_size[0] / 2 + self.ring_thickness:
 			self.player_2_score += 1
 			self.ball_pos = [0, 0]
 			self.angle = random.uniform(70, -70)
 			self.ball_speed = 90 / 150
 			self.wall_hit_pos = 0
-		elif self.ball_pos[0] + ball_radius > ring_size[0] / 2 - ring_thickness:
+		elif self.ball_pos[0] + self.ball_radius > ring_size[0] / 2 - self.ring_thickness:
 			self.player_1_score += 1
 			self.ball_pos = [0, 0]
 			self.angle = random.uniform(110, 250)
 			self.ball_speed = 90 / 150
 			self.wall_hit_pos = 0
-		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness):
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness):
 			self.player_1_pos[1] += self.player_1_move
-		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness):
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness):
 			self.player_2_pos[1] += self.player_2_move
 	
 	async def update(self):
@@ -131,14 +141,14 @@ class GameState:
 			print(f"Error sending game state: {e}") #TODO logg
 
 	def movement(self):
-		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness / 2):
-			self.player_1_pos[1] += player_speed
-		elif (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness / 2):
-			self.player_1_pos[1] -= player_speed
-		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - ring_thickness / 2):
-			self.player_2_pos[1] += player_speed
-		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + ring_thickness / 2):
-			self.player_2_pos[1] -= player_speed
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness / 2):
+			self.player_1_pos[1] += self.p_speed
+		elif (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness / 2):
+			self.player_1_pos[1] -= self.p_speed
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness / 2):
+			self.player_2_pos[1] += self.p_speed
+		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness / 2):
+			self.player_2_pos[1] -= self.p_speed
 
 	def up(self, player):
 		print(f"Player {player} up")
@@ -168,7 +178,15 @@ class GameState:
 			'ball_pos': self.ball_pos,
 			'ball_speed': self.ball_speed,
 			'angle': self.angle,
+			'ring_length': self.ring_length,
+			'ring_height': self.ring_height,
+			'ring_width': self.ring_width,
+			'ring_thickness': self.ring_thickness,
 			'p_length': self.p_length,
+			'p_height': self.p_height,
+			'p_width': self.p_width,
+			'ball_radius': self.ball_radius,
+			'p_speed': self.p_speed
 		}
 
 

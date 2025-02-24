@@ -30,7 +30,7 @@ export function createScore() {
 			state.scoreText = new THREE.Mesh(geometry, state.mat.score);
 			state.scoreText.position.set(
 				centerOffset,
-				state.ring.heigth / 3,
+				state.ring.height / 3,
 				0
 			);
 			state.scene.add(state.scoreText);
@@ -93,7 +93,7 @@ export function score() {
 	state.wallHitPosition = 0;
 	updateScore();
 	state.ball.position.set(0, 0, 0);
-	state.ball_speed = state.ring.heigth / 150;
+	state.ball_speed = state.ring.height / 150;
 	state.angle = Math.floor(Math.random() * 70);
 	if (state.angle % 2) state.angle *= -1;
 	if (state.angle % 3) state.angle += 180;
@@ -158,9 +158,9 @@ export function restart_game() {
 	removeWinnerText();
 	updateScore();
 	state.ball.position.set(0, 0, 0);
-	state.ball_speed = state.ring.heigth / 150;
-	state.p1.position.set(-((state.ring.heigth * 2) / 5), 0, 0);
-	state.p2.position.set((state.ring.heigth * 2) / 5, 0, 0);
+	state.ball_speed = state.ring.height / 150;
+	state.p1.position.set(-((state.ring.height * 2) / 5), 0, 0);
+	state.p2.position.set((state.ring.height * 2) / 5, 0, 0);
 	state.angle = Math.floor(Math.random() * 70);
 	if (state.angle % 2) state.angle *= -1;
 	if (state.angle % 3) state.angle += 180;
