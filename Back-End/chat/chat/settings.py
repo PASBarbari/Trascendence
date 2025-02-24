@@ -50,6 +50,7 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	'rest_framework_simplejwt',
 	'my_chat',
 	'oauth2_provider',
 	'django_filters',
