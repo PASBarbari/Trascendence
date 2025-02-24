@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import datetime
 from pathlib import Path
 import secrets , os
 
@@ -21,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c-&5anrd7(h=4(s2+_@-&gwvt2*pr+$d4t82*3@wuev&0n&nb('
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
 API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
 	'channels',
 	'celery',
 	'redis',
+	'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -181,16 +183,16 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             "hosts": [(REDIS_HOST, REDIS_PORT)],
             'prefix': 'chat',
-            'db': REDIS_CHANNEL_DB,
         },
     }
 }
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'my_chat.authentications.TokenAuthentication',
-    ],
+	'DEFAULT_AUTHENTICATION_CLASSES': [
+		'my_chat.authentications.TokenAuthentication',
+		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+	],
 		'DEFAULT_PERMISSION_CLASSES': [
 				'my_chat.middleware.TokenAuthPermission',
 		],
@@ -200,30 +202,60 @@ REST_FRAMEWORK = {
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'loki': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
-            'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['loki'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-    'formatters': {
-        'detailed': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'handlers': {
+		'loki': {
+			'class': 'logging.StreamHandler',
+			'formatter': 'detailed',
+			'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+		},
+	},
+	'loggers': {
+		'django': {
+			'handlers': ['loki'],
+			'level': 'INFO',
+			'propagate': True,
+		},
+	},
+	'formatters': {
+		'detailed': {
+			'format': '{levelname} {asctime} {module} {message}',
+			'style': '{',
+		},
+	},
 }
 
+OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Personal' : "Self",
+}
+
+# filepath: /home/lollo/Documents/Fides/Back-End/chat/chat/settings.py
+
+SWAGGER_SETTINGS = {
+    'USE_SESSION_AUTH': False,
+    'SECURITY_DEFINITIONS': {
+        'Your App API - Swagger': {
+            'type': 'oauth2',
+            'authorizationUrl': f"{Microservices['Login']}/o/authorize",
+            'tokenUrl': f"{Microservices['Login']}/o/token/",
+            'flow': 'accessCode',
+            'scopes': {
+                'read:groups': 'read groups',
+            }
+        }
+    },
+    'OAUTH2_CONFIG': {
+        'clientId': f'{oauth2_settings["CLIENT_ID"]}',
+        'clientSecret': f'{oauth2_settings["CLIENT_SECRET"]}',
+        'appName': f'{OAUTH2_APP_NAME}',
+    },
+}
 
 ADMIN = {
     'username': os.getenv('ADMIN_USERNAME', 'admin'),
@@ -242,3 +274,5 @@ Microservices = {
 
 CSRF_LOGIN_URL = Microservices['Login'] + '/login/get_csrf_token'
 REGISTER_URL = Microservices['Login'] + '/login/Serviceregister'
+# OAUTH2_REDIRECT_URL = f"{Microservices['Login']}/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
+# OAUTH2_REDIRECT_URL = 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html'

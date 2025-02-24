@@ -4,6 +4,7 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.conf import settings
 from datetime import datetime, timedelta
+from chat.settings import oauth2_settings , OAUTH2_APP_NAME
 import json
 from chat.settings import Microservices , CSRF_LOGIN_URL, REGISTER_URL, oauth2_settings
 
@@ -42,7 +43,7 @@ def register_self():
 	register_url = REGISTER_URL
     
 	data = {
-		'name': 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
+		'name': OAUTH2_APP_NAME,
 		'service_password': oauth2_settings['SERVICE_PASSWORD'],
 		'client_type': 'confidential',
 		'authorization_grant_type': 'password',
