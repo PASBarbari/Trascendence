@@ -29,8 +29,8 @@ from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 def get_jwt_token_for_user(user):
-    refresh = RefreshToken.for_user(user)
-    return str(refresh.access_token)
+	refresh = RefreshToken.for_user(user)
+	return str(refresh.access_token)
 
 def get_access_token():
 	app = Application.objects.get(name='my_login')
@@ -48,9 +48,10 @@ def CreateOnOtherServices(user):
 	Chat_url = Microservices['Chat'] + "/chat/new_user/"
 	Notification_url = Microservices['Notifications'] + "/notification/add_user"
 	User_url = Microservices['Users'] + "/user/user"
+	# jwt_token = get_jwt_token_for_user(user)
 	headers = {
 		'Content-Type': 'application/json',
-		'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+		# 'Authorization': f'Bearer {jwt_token}',
 		'X-API-KEY': settings.API_KEY,
 	}
 
@@ -63,8 +64,9 @@ def CreateOnOtherServices(user):
 	# if user_response.status_code != 201:
 	# 	print(user_response.json())
 	# 	raise ValueError('User service failed to create user')
-	chat_response = requests.post(Chat_url, json=user_data)
+	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 	if chat_response.status_code != 201:
+		print(chat_response.json())
 		raise ValueError('Chat service failed to create user')
 	# notification_response = requests.post(Notification_url, json=user_data, headers=headers)
 	# if notification_response.status_code != 201:
@@ -211,10 +213,8 @@ class UserLogout(APIView):
 		
 
 class UserView(APIView):
-	permission_classes = (permissions.IsAuthenticated, TokenHasScope , TokenHasReadWriteScope)
-	authentication_classes = (OAuth2Authentication,)
+	permission_classes = (permissions.IsAuthenticated,)
 	##
-	required_scopes = ['read']
 	def get(self, request):
 		serializer = UserSerializer(request.user)
 		user = AppUser.objects.get(username=serializer.data['username'])
@@ -245,4 +245,4 @@ class CustomIntrospect(IntrospectTokenView):
 
 @csrf_exempt
 def health_check(request):
-    return JsonResponse({'status': 'ok'})
+	return JsonResponse({'status': 'ok'})
