@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 import time, asyncio
 from .serializer import GameStateSerializer
 
-ring_size = [160 , 90]
+# ring_size = [160 , 90]
 tick_rate = 60
 # self.ball_radius = 2.5
 # self.p_width = 2
@@ -52,7 +52,7 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		# print(f"Game {self.__dict__} started")
+		print(f"Game {self.__dict__} started")
 		while self.ball_speed == 0:
 			await asyncio.sleep(0.1)
 		while self.running:
@@ -107,24 +107,13 @@ class GameState:
 			self.angle = 180 + hit_pos / self.p_length * 90
 			if (self.ball_speed < 5 * self.p_length):
 				self.ball_speed += ball_acc
-		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= ring_size[1] / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -ring_size[1] / 2):
+		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= self.ring_height / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -self.ring_height / 2):
 			self.wall_hit_pos = self.ball_pos[1]
 			self.angle = -self.angle 
-		elif self.ball_pos[0] - self.ball_radius < - ring_size[0] / 2 + self.ring_thickness:
-			self.player_2_score += 1
-			self.ball_pos = [0, 0]
-			self.angle = random.uniform(70, -70)
-			self.ball_speed = 90 / 150
-			self.wall_hit_pos = 0
-		elif self.ball_pos[0] + self.ball_radius > ring_size[0] / 2 - self.ring_thickness:
-			self.player_1_score += 1
-			self.ball_pos = [0, 0]
-			self.angle = random.uniform(110, 250)
-			self.ball_speed = 90 / 150
-			self.wall_hit_pos = 0
-		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness):
+		self.check_score()
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
 			self.player_1_pos[1] += self.player_1_move
-		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness):
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
 			self.player_2_pos[1] += self.player_2_move
 	
 	async def update(self):
@@ -142,14 +131,29 @@ class GameState:
 		except Exception as e:
 			print(f"Error sending game state: {e}") #TODO logg
 
+	def check_score(self):
+		if self.ball_pos[0] - self.ball_radius <= -self.ring_length / 2:
+			self.player_2_score += 1
+			self.reset_ball(random.uniform(70, -70))
+		elif self.ball_pos[0] + self.ball_radius >= self.ring_length / 2 + self.ring_thickness:
+			self.player_1_score += 1
+			self.reset_ball(random.uniform(110, 250))
+   
+	def reset_ball(self, angle):
+		self.ball_pos = [0, 0]
+		self.angle = angle
+		self.ball_speed = 90 / 150
+		self.wall_hit_pos = 0
+
+
 	def movement(self):
-		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness / 2):
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness / 2):
 			self.player_1_pos[1] += self.p_speed
-		elif (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness / 2):
+		elif (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness / 2):
 			self.player_1_pos[1] -= self.p_speed
-		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < ring_size[1] / 2 - self.ring_thickness / 2):
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness / 2):
 			self.player_2_pos[1] += self.p_speed
-		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -ring_size[1] / 2 + self.ring_thickness / 2):
+		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness / 2):
 			self.player_2_pos[1] -= self.p_speed
 
 	def up(self, player):
