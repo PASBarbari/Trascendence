@@ -10,12 +10,13 @@ from asgiref.sync import async_to_sync
 from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
-from .middleware import TokenAuthPermission, APIKeyPermission , ServiceAuthentication
+from .middleware import TokenAuthPermission, APIKeyPermission , ServiceAuthentication, JWTAuthMiddleware , JWTAuth
 from .authentications import TokenAuthentication
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 import logging
+from .Permissions import ChatRoomPermissions
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -32,7 +33,8 @@ class GetChatMessage(generics.ListAPIView):
 	"""
 	serializer_class = chat_messageSerializer
 	lookup_url_kwarg = 'room_id'
-	permission_classes = [IsAuthenticated]
+	authentication_classes = [JWTAuth]
+	permission_classes = [ChatRoomPermissions]
 
 	@swagger_auto_schema(
 		manual_parameters=[
@@ -42,14 +44,7 @@ class GetChatMessage(generics.ListAPIView):
 	def get_queryset(self):
 		room_id = self.kwargs.get(self.lookup_url_kwarg)
 		return ChatMessage.objects.filter(room_id=room_id)
-		# user = self.request.user
 
-		# if isinstance(user, AnonymousUser):
-		#	 raise ValueError('User is not authenticated')
-
-		# if not ChatRoom.objects.filter(room_id=room_id, users=user).exists():
-		#	 raise ValueError('User is not in the room')
-		#	 return ChatMessage.objects.none()
 
 
 class GetChatInfo(generics.RetrieveAPIView):
@@ -78,7 +73,7 @@ class new_user(generics.ListCreateAPIView):
             self.authentication_classes = [ServiceAuthentication]
         else:
             self.permission_classes = (permissions.IsAuthenticated,)
-            self.authentication_classes = (TokenAuthentication, JWTAuthentication)
+            self.authentication_classes = (JWTAuthentication,)
         return super().get_permissions()
         
     def perform_create(self, serializer):
@@ -93,7 +88,7 @@ class CreateChat(generics.ListCreateAPIView):
 
 class GetChats(generics.ListAPIView):
 	serializer_class = chat_roomSerializer
-	permission_classes = [TokenAuthPermission]
+	permission_classes = [IsAuthenticated]
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['users__user_id']
 	queryset = ChatRoom.objects.all()

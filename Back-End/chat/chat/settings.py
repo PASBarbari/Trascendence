@@ -161,42 +161,38 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-REDIS_HOST = os.getenv('REDIS_HOST', 'redis-service:6379')
-REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = os.getenv('REDIS_PORT', '6700')
 REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '0')
 REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '1')
 
 CACHES = {
 	'default': {
 		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': REDIS_HOST + ':' + REDIS_PORT + '/' + REDIS_CACHE_DB,
+		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
 		}
 	}
 }
 
-
-
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
-            'prefix': 'chat',
-        },
-    }
+	'default': {
+		'BACKEND': 'channels_redis.core.RedisChannelLayer',
+		'CONFIG': {
+			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
+			'prefix': 'chat',
+		},
+	}
 }
 
 
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': [
-		'my_chat.authentications.TokenAuthentication',
-		'rest_framework_simplejwt.authentication.JWTAuthentication',
-		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+		'my_chat.authentications.JWTAuth',
 		],
 		'DEFAULT_PERMISSION_CLASSES': [
-				'my_chat.middleware.TokenAuthPermission',
+				'my_chat.permissions.IsAuthenticated',
 		],
 		'DEFAULT_FILTER_BACKENDS': [
 			'django_filters.rest_framework.DjangoFilterBackend',
@@ -240,29 +236,29 @@ Microservices = {
 # filepath: /home/lollo/Documents/Fides/Back-End/chat/chat/settings.py
 
 SWAGGER_SETTINGS = {
-    'USE_SESSION_AUTH': False,
-    'SECURITY_DEFINITIONS': {
-        'Your App API - Swagger': {
-            'type': 'oauth2',
-            'authorizationUrl': f"{Microservices['Login']}/o/authorize",
-            'tokenUrl': f"{Microservices['Login']}/o/token/",
-            'flow': 'accessCode',
-            'scopes': {
-                'read:groups': 'read groups',
-            }
-        }
-    },
-    'OAUTH2_CONFIG': {
-        'clientId': f'{oauth2_settings["CLIENT_ID"]}',
-        'clientSecret': f'{oauth2_settings["CLIENT_SECRET"]}',
-        'appName': f'{OAUTH2_APP_NAME}',
-    },
+	'USE_SESSION_AUTH': False,
+	'SECURITY_DEFINITIONS': {
+		'Your App API - Swagger': {
+			'type': 'oauth2',
+			'authorizationUrl': f"{Microservices['Login']}/o/authorize",
+			'tokenUrl': f"{Microservices['Login']}/o/token/",
+			'flow': 'accessCode',
+			'scopes': {
+				'read:groups': 'read groups',
+			}
+		}
+	},
+	'OAUTH2_CONFIG': {
+		'clientId': f'{oauth2_settings["CLIENT_ID"]}',
+		'clientSecret': f'{oauth2_settings["CLIENT_SECRET"]}',
+		'appName': f'{OAUTH2_APP_NAME}',
+	},
 }
 
 ADMIN = {
-    'username': os.getenv('ADMIN_USERNAME', 'admin'),
-    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
-    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+	'username': os.getenv('ADMIN_USERNAME', 'admin'),
+	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
 Microservices = {
@@ -270,7 +266,7 @@ Microservices = {
 	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
 	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
 	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-    'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
 	'Personal' : "Self",
 }
 
