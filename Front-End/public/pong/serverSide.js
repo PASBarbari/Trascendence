@@ -2,6 +2,7 @@ import { state } from "./state.js";
 import { getVariables } from "../var.js";
 import { renderPong } from "./pong.js";
 import * as GAME from "./gameLogic.js";
+import * as UTILS from "./utils.js";
 
 let socket;
 
@@ -78,6 +79,9 @@ function updateGameState(game_state) {
 	state.ball.position.set(game_state.ball_pos[0], game_state.ball_pos[1]);
 
 	// Update scores
+	if (game_state.player_1_score !== state.p1_score ||
+		game_state.player_2_score !== state.p2_score)
+		UTILS.updateScore();
 	state.p1_score = game_state.player_1_score;
 	state.p2_score = game_state.player_2_score;
 	GAME.serverAnimate();
