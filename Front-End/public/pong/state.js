@@ -104,7 +104,7 @@ export let state = {
 	},
 };
 
-state.ring.length = (9 / 16) * state.ring.height - state.ring.thickness;
+state.ring.length = (9 / 16) * state.ring.height;
 state.player.length = state.ring.length / 6;
 state.player_speed = state.ring.height / 115;
 state.ball_radius = state.ring.height / 80;
