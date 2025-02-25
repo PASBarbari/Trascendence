@@ -6,7 +6,7 @@ export let state = {
 	cam: { x: 0, y: 0, z: 100 },
 	ring: {
 		length: 0,
-		height: (window.innerHeight * 15) / 100,
+		height: window.innerHeight / 10,
 		width: 10,
 		thickness: 3,
 	},
@@ -104,8 +104,8 @@ export let state = {
 	},
 };
 
-state.ring.length = (9 / 16) * state.ring.height;
-state.player.length = state.ring.length / 6;
+state.ring.length = (16 / 9) * state.ring.height;
+state.player.length = state.ring.length / 12;
 state.player_speed = state.ring.height / 115;
 state.ball_radius = state.ring.height / 80;
 state.ball_speed = state.ring.height / 150;
@@ -115,7 +115,7 @@ if (state.angle % 3) state.angle += 180;
 state.stats = new Stats();
 state.r_bottom = new THREE.Mesh(
 	new THREE.BoxGeometry(
-		state.ring.height,
+		state.ring.length,
 		state.ring.thickness,
 		state.ring.width
 	),
@@ -123,7 +123,7 @@ state.r_bottom = new THREE.Mesh(
 );
 state.r_top = new THREE.Mesh(
 	new THREE.BoxGeometry(
-		state.ring.height,
+		state.ring.length,
 		state.ring.thickness,
 		state.ring.width
 	),
@@ -132,7 +132,7 @@ state.r_top = new THREE.Mesh(
 state.r_left = new THREE.Mesh(
 	new THREE.BoxGeometry(
 		state.ring.thickness,
-		state.ring.length,
+		state.ring.height,
 		state.ring.width
 	),
 	state.mat.ring
@@ -140,7 +140,7 @@ state.r_left = new THREE.Mesh(
 state.r_right = new THREE.Mesh(
 	new THREE.BoxGeometry(
 		state.ring.thickness,
-		state.ring.length,
+		state.ring.height,
 		state.ring.width
 	),
 	state.mat.ring
