@@ -10,11 +10,12 @@ from asgiref.sync import async_to_sync
 from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
-from .middleware import TokenAuthPermission, APIKeyPermission
+from .middleware import TokenAuthPermission, APIKeyPermission , ServiceAuthentication
 from .authentications import TokenAuthentication
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
+import logging
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -64,21 +65,26 @@ class GetChatInfo(generics.RetrieveAPIView):
 
 		if not ChatRoom.objects.filter(room_id=room_id, users=user).exists():
 			raise ValueError('User is not in the room')
-			return ChatRoom.objects.none()
 
 		return ChatRoom.objects.filter(room_id=room_id)
 
 class new_user(generics.ListCreateAPIView):
-	serializer_class = userSerializer
-	authentication_classes = [JWTAuthentication]
-	queryset = UserProfile.objects.all()
+    serializer_class = userSerializer
+    queryset = UserProfile.objects.all()
 
-	def get_permissions(self):
-		if self.request.method == 'POST':
-			self.permission_classes = [APIKeyPermission]
-		else:
-			self.permission_classes = (permissions.AllowAny,)
-		return super().get_permissions()
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            self.permission_classes = []  # No need for permissions as authentication will handle it
+            self.authentication_classes = [ServiceAuthentication]
+        else:
+            self.permission_classes = (permissions.IsAuthenticated,)
+            self.authentication_classes = (TokenAuthentication, JWTAuthentication)
+        return super().get_permissions()
+        
+    def perform_create(self, serializer):
+        # You can add additional logging for audit purposes
+        # logger.info(f"Creating new user from service: {self.request.headers.get('User-Agent')}")
+        return serializer.save()
 
 
 class CreateChat(generics.ListCreateAPIView):
