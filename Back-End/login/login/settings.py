@@ -34,58 +34,61 @@ Microservices = {
 	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
 	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
 	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-    'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
 }
 
 ALLOWED_HOSTS = [
-    'localhost',
-    '127.0.0.1',
-    '[::1]',
-    'trascendence.42firenze.it',
-    Microservices['Login'],
-    Microservices['Chat'],
-    Microservices['Users'],
-    Microservices['Notifications'],
-    Microservices['Pong'],
+	'localhost',
+	'localhost:3000',
+	'127.0.0.1',
+	'[::1]',
+	'trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
 ]
-    
+		
 
 CORS_ALLOWED_ORIGINS = [
-	'localhost',
-    '127.0.0.1',
-    '[::1]',
-    'trascendence.42firenze.it',
-    Microservices['Login'],
-    Microservices['Chat'],
-    Microservices['Users'],
-    Microservices['Notifications'],
-    Microservices['Pong'],
+	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'localhost',
-    '127.0.0.1',
-    '[::1]',
-    'trascendence.42firenze.it',
-    Microservices['Login'],
-    Microservices['Chat'],
-    Microservices['Users'],
-    Microservices['Notifications'],
-    Microservices['Pong'],
+	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
 ]
 
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+	'accept',
+	'accept-encoding',
+	'authorization',
+	'content-type',
+	'dnt',
+	'origin',
+	'user-agent',
+	'x-csrftoken',
+	'x-requested-with',
 ]
 
 # Application definition
@@ -105,32 +108,32 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+	'corsheaders.middleware.CorsMiddleware',
+	'django.middleware.security.SecurityMiddleware',
+	'django.contrib.sessions.middleware.SessionMiddleware',
+	'django.middleware.common.CommonMiddleware',
+	'django.middleware.csrf.CsrfViewMiddleware',
+	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	'django.contrib.messages.middleware.MessageMiddleware',
+	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'login.urls'
 
 TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
+	{
+		'BACKEND': 'django.template.backends.django.DjangoTemplates',
+		'DIRS': [],
+		'APP_DIRS': True,
+		'OPTIONS': {
+			'context_processors': [
+				'django.template.context_processors.debug',
+				'django.template.context_processors.request',
+				'django.contrib.auth.context_processors.auth',
+				'django.contrib.messages.context_processors.messages',
+			],
+		},
+	},
 ]
 
 WSGI_APPLICATION = 'login.wsgi.application'
@@ -143,10 +146,10 @@ DATABASES = {
 	'default': {
 	'ENGINE': 'django.db.backends.postgresql',
 	'NAME': os.getenv('POSTGRES_DB', 'login_db'),
-	'USER': os.getenv('POSTGRES_USER', 'postgres'),
-	'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'postgres'),
+	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
 	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5432'),
+	'PORT': os.getenv('POSTGRES_PORT', '5435'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',
@@ -158,61 +161,61 @@ DATABASES = {
 AUTH_USER_MODEL = 'my_login.AppUser'
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+	'DEFAULT_AUTHENTICATION_CLASSES': (
 		'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-    ),
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
+		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+	),
+	'DEFAULT_PERMISSION_CLASSES': (
+		'rest_framework.permissions.IsAuthenticated',
+	),
 }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+	{
+		'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+	},
+	{
+		'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+	},
+	{
+		'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+	},
+	{
+		'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+	},
 ]
 
 OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
-    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 36000,
-    'ROTATE_REFRESH_TOKENS': True,
-    'SCOPES': {
-        'read': 'Read scope',
-        'write': 'Write scope',
-        'groups': 'Access to your groups',
-    },
-    # 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
+	'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
+	'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
+	'REFRESH_TOKEN_EXPIRE_SECONDS': 36000,
+	'ROTATE_REFRESH_TOKENS': True,
+	'SCOPES': {
+		'read': 'Read scope',
+		'write': 'Write scope',
+		'groups': 'Access to your groups',
+	},
+	# 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
 	'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
+	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+	'ROTATE_REFRESH_TOKENS': True,
+	'BLACKLIST_AFTER_ROTATION': True,
+	'ALGORITHM': 'HS256',
 	# 'ISSUER': 'login',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'USER_ID_FIELD': 'id',
-    'USER_ID_CLAIM': 'user_id',
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
+	'SIGNING_KEY': SECRET_KEY,
+	'VERIFYING_KEY': None,
+	'AUTH_HEADER_TYPES': ('Bearer',),
+	'USER_ID_FIELD': 'user_id',
+	'USER_ID_CLAIM': 'user_id',
+	'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+	'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
 # Internationalization
@@ -225,6 +228,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
 client = {
 	'CLIENT_ID' : os.getenv('CLIENT_ID', ''),
 	'CLIENT_SECRET' : os.getenv('CLIENT_SECRET', ''),
@@ -244,17 +248,23 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SERVICE_PASSWORD = os.getenv('SERVICE_PASSWORD','123') # this is the password that the service will use to authenticate itself to the OAuth2 server
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-        },
-    },
-    'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG',
-    },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'handlers': {
+		'console': {
+			'class': 'logging.StreamHandler',
+		},
+	},
+	'root': {
+		'handlers': ['console'],
+		'level': 'DEBUG',
+	},
+}
+
+ADMIN = {
+	'username': os.getenv('ADMIN_USERNAME', 'admin'),
+	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
 ADMIN = {
@@ -264,26 +274,26 @@ ADMIN = {
 }
 
 # LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'handlers': {
-#         'loki': {
-#             'class': 'logging.StreamHandler',
-#             'formatter': 'detailed',
-#             'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
-#         },
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['loki'],
-#             'level': 'INFO',
-#             'propagate': True,
-#         },
-#     },
-#     'formatters': {
-#         'detailed': {
-#             'format': '{levelname} {asctime} {module} {message}',
-#             'style': '{',
-#     	    },
-# 	    },
+#	 'version': 1,
+#	 'disable_existing_loggers': False,
+#	 'handlers': {
+#		 'loki': {
+#			 'class': 'logging.StreamHandler',
+#			 'formatter': 'detailed',
+#			 'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+#		 },
+#	 },
+#	 'loggers': {
+#		 'django': {
+#			 'handlers': ['loki'],
+#			 'level': 'INFO',
+#			 'propagate': True,
+#		 },
+#	 },
+#	 'formatters': {
+#		 'detailed': {
+#			 'format': '{levelname} {asctime} {module} {message}',
+#			 'style': '{',
+#	 		},
+# 		},
 # }

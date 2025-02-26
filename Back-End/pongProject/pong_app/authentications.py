@@ -10,8 +10,8 @@ import json
 def login_self():
 	login_url = 'http://localhost:8000/login/login'
 	data = {
-		'email': 'chat@chat.me',
-		'password' : 'chat_password',
+		'email': 'pong@pong.me',
+		'password' : 'pong_password',
 	}
 
 	response = requests.post(login_url, json=data)
@@ -23,9 +23,9 @@ def login_self():
 def user_register_self():
 	register_url = 'http://localhost:8000/login/register'
 	data = {
-		'email': 'chat@chat.me',
-		'username': 'my_chat',
-		'password': 'chat_password',
+		'email': 'pong@pong.me',
+		'username': 'my_pong',
+		'password': 'pong_password',
 	}
 	response = requests.post(register_url, json=data)
 	
@@ -42,7 +42,7 @@ def register_self():
 	register_url = 'http://localhost:8000/login/Serviceregister'
     
 	data = {
-		'name': 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
+		'name': 'pong_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
 		'service_password': oauth2_settings['SERVICE_PASSWORD'],
 		'client_type': 'confidential',
 		'authorization_grant_type': 'password',
@@ -86,13 +86,13 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 import base64 ,requests
-from chat.settings import oauth2_settings
-from my_chat.models import UserProfile
+from pongProject.settings import oauth2_settings
+from .models import UserProfile
 from django.contrib.auth import get_user_model
 
 class TokenAuthentication(BaseAuthentication):
 		def authenticate(self, request):
-				if request.path == '/chat/new_user/':
+				if request.path == '/pong/new_user/':
 						request.user = AnonymousUser()
 						return None
 				token = request.META.get('HTTP_AUTHORIZATION')

@@ -16,8 +16,9 @@ link.href = '/public/pong/pong.css';
 document.head.appendChild(link);
 
 export function renderPong() {
-  document.querySelector(".App").innerHTML = `
-		<div class="gamecontainer">
+  const contentDiv = document.getElementById("content");
+  contentDiv.innerHTML = `
+	<div class="gamecontainer">
 		<div id="menu">
 			<button id="newGameButton">New Game</button>
 			<button id="settingsButton">Settings</button>
@@ -29,53 +30,53 @@ export function renderPong() {
 			<button id="backButton">Back</button>
 		</div>
 		<div id="modeMenu" style="display: none;">
-        	<button id="classicModeButton">Classic</button>
-        	<button id="crazyModeButton">Crazy</button>
-        	<button id="backFromModeButton">Back</button>
+			<button id="classicModeButton">Classic</button>
+			<button id="crazyModeButton">Crazy</button>
+			<button id="backFromModeButton">Back</button>
       </div>
 		<div id="settingsMenu" style="display: none;">
-			<div class="color-setting">
-				<label for="player1Color">Player 1 Color:</label>
-				<div class="color-pickers">
-					<input type="color" id="player1Color" name="player1Color" value="#4deeea">
-					<input type="color" id="player1Emissive" name="player1Emissive" value="#4deeea">
-				</div>
+		<div class="color-setting">
+			<label for="player1Color">Player 1 Color:</label>
+			<div class="color-pickers">
+			<input type="color" id="player1Color" name="player1Color" value="#4deeea">
+			<input type="color" id="player1Emissive" name="player1Emissive" value="#4deeea">
 			</div>
-			<div class="color-setting">
-				<label for="player2Color">Player 2 Color:</label>
-				<div class="color-pickers">
-					<input type="color" id="player2Color" name="player2Color" value="#ffe700">
-					<input type="color" id="player2Emissive" name="player2Emissive" value="#ffe700">
-				</div>
+		</div>
+		<div class="color-setting">
+			<label for="player2Color">Player 2 Color:</label>
+			<div class="color-pickers">
+			<input type="color" id="player2Color" name="player2Color" value="#ffe700">
+			<input type="color" id="player2Emissive" name="player2Emissive" value="#ffe700">
 			</div>
-			<div class="color-setting">
-				<label for="ballColor">Ball Color:</label>
-				<div class="color-pickers">
-					<input type="color" id="ballColor" name="ballColor" value="#0bff01">
-					<input type="color" id="ballEmissive" name="ballEmissive" value="#00ff00">
-				</div>
+		</div>
+		<div class="color-setting">
+			<label for="ballColor">Ball Color:</label>
+			<div class="color-pickers">
+			<input type="color" id="ballColor" name="ballColor" value="#0bff01">
+			<input type="color" id="ballEmissive" name="ballEmissive" value="#00ff00">
 			</div>
-			<div class="color-setting">
-				<label for="ringColor">Ring Color:</label>
-				<div class="color-pickers">
-					<input type="color" id="ringColor" name="ringColor" value="#ff0000">
-					<input type="color" id="ringEmissive" name="ringEmissive" value="#0000ff">
-				</div>
+		</div>
+		<div class="color-setting">
+			<label for="ringColor">Ring Color:</label>
+			<div class="color-pickers">
+			<input type="color" id="ringColor" name="ringColor" value="#ff0000">
+			<input type="color" id="ringEmissive" name="ringEmissive" value="#0000ff">
 			</div>
-			<div class="color-setting">
-				<label for="showStats">Show Stats:</label>
-				<input type="checkbox" id="showStats" name="showStats">
-			</div>
-			<button id="saveSettingsButton">Save</button>
-			<button id="resetSettingsButton">Reset</button>
-			<button id="backFromSettingsButton">Back</button>
+		</div>
+		<div class="color-setting">
+			<label for="showStats">Show Stats:</label>
+			<input type="checkbox" id="showStats" name="showStats">
+		</div>
+		<button id="saveSettingsButton">Save</button>
+		<button id="resetSettingsButton">Reset</button>
+		<button id="backFromSettingsButton">Back</button>
 		</div>
 		<div id="pauseMenu" style="display: none;">
 			<button id="resumeButton">Resume Game</button>
 			<button id="exitButtonPause">Exit</button>
 		</div>
 		<img id="gameOverImage" src="public/gungeon.png" alt="Game Over" style="display: none;">
-		<script type="module" src="/main.js"></script>
+		<div id="threejs-container"></div>
 	</div>
 	`;
 
@@ -98,17 +99,17 @@ export function renderPong() {
     .getElementById("backButton")
     .addEventListener("click", SETTINGS.showMainMenu);
 
-	document
-	.getElementById("classicModeButton")
-	.addEventListener("click", SETTINGS.startClassicmode);
+  document
+    .getElementById("classicModeButton")
+    .addEventListener("click", SETTINGS.startClassicmode);
 
-	document
-	.getElementById("crazyModeButton")
-	.addEventListener("click", SETTINGS.startCrazymode);
+  document
+    .getElementById("crazyModeButton")
+    .addEventListener("click", SETTINGS.startCrazymode);
 
-	document
-	.getElementById("backFromModeButton")
-	.addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
+  document
+    .getElementById("backFromModeButton")
+    .addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
 
   document
     .getElementById("saveSettingsButton")
@@ -166,94 +167,68 @@ export function renderPong() {
   });
 
   document.getElementById("menu").style.display = "block";
-}
 
+//--TODO merge pong
+  // Inizializza il renderer di Three.js
+  if (!state.renderer) {
+    state.renderer = new THREE.WebGLRenderer({ antialias: true });
+    state.renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  // Inizializza la scena e la camera
+  if (!state.scene) {
+    state.scene = new THREE.Scene();
+  }
+
+  if (!state.camera) {
+    state.camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      1000
+    );
+    state.camera.position.z = 5;
+  }
+
+  // Aggiungi il canvas di Three.js al DOM
+  const threejsContainer = document.getElementById("threejs-container");
+  if (threejsContainer && state.renderer.domElement) {
+    threejsContainer.appendChild(state.renderer.domElement);
+  } else {
+    console.error("threejsContainer o state.renderer.domElement non trovato");
+  }
+}
+//-- fine TODO merge pong
+
+// Inizializza il gioco
 SETUP.setupGame();
-GAME.animate();
+//--GAME.animate();
+
+  
+//--}
+
+// GAME.animate();
 // requestAnimationFrame(GAME.animate);
 
 //Resize handler
-
 window.addEventListener("resize", () => {
   state.camera.aspect = window.innerWidth / window.innerHeight;
   state.camera.updateProjectionMatrix();
   state.renderer.setSize(window.innerWidth, window.innerHeight);
+  state.renderer.render(state.scene, state.camera); //--TODO
 });
 
-//Keyboard setup
-
-document.addEventListener("keydown", function (event) {
-  if (event.key.toLowerCase() == "w") {
-    state.p1_move_y = state.player_speed;
-    state.keys.w = true;
-  }
-  if (event.key.toLowerCase() == "s") {
-    state.p1_move_y = -state.player_speed;
-    state.keys.s = true;
-  }
-  if (event.key == "ArrowUp" && !state.IAisActive) {
-    state.p2_move_y = state.player_speed;
-    state.keys.ArrowUp = true;
-  }
-  if (event.key == "ArrowDown" && !state.IAisActive) {
-    state.p2_move_y = -state.player_speed;
-    state.keys.ArrowDown = true;
-  }
-  if (event.key == "Escape" && state.isStarted) {
-    if (state.isPaused) {
-      SETTINGS.resumeGame();
-    } else {
-      state.isPaused = true;
-      SETTINGS.showPauseMenu();
-    }
-  }
-});
-
-document.addEventListener("keyup", function (event) {
-  if (event.key.toLowerCase() == "w") {
-    state.keys.w = false;
-    if (state.keys.s) {
-      state.p1_move_y = -state.player_speed;
-    } else {
-      state.p1_move_y = 0;
-    }
-  }
-  if (event.key.toLowerCase() == "s") {
-    state.keys.s = false;
-    if (state.keys.w) {
-      state.p1_move_y = state.player_speed;
-    } else {
-      state.p1_move_y = 0;
-    }
-  }
-  if (event.key == "ArrowUp" && !state.IAisActive) {
-    state.keys.ArrowUp = false;
-    if (state.keys.ArrowDown) {
-      state.p2_move_y = -state.player_speed;
-    } else {
-      state.p2_move_y = 0;
-    }
-  }
-  if (event.key == "ArrowDown" && !state.IAisActive) {
-    state.keys.ArrowDown = false;
-    if (state.keys.ArrowUp) {
-      state.p2_move_y = state.player_speed;
-    } else {
-      state.p2_move_y = 0;
-    }
-  }
-});
 
 document.addEventListener("wheel", function (event) {
   state.cam.z += event.deltaY / 10;
   state.camera.position.set(state.cam.x, state.cam.y, state.cam.z);
 });
 
-document.addEventListener("mousemove", function (event) {
-  const rect = state.renderer.domElement.getBoundingClientRect();
-  const mouse = {
-    x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-    y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
-  };
-  // console.log(mouse);
-});
+// document.addEventListener("mousemove", function (event) {
+//   const rect = state.renderer.domElement.getBoundingClientRect();
+//   const mouse = {
+//     x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
+//     y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
+//   };
+//   // console.log(mouse);
+// });

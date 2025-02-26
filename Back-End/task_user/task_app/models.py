@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from .dictionaries import TASK_CATEGORIES
-from user_app.models import Users
+from user_app.models import UserProfile
 
 # Create your models here.
 # class Categories(models.Model):
@@ -11,7 +11,7 @@ from user_app.models import Users
 
 class Tasks(models.Model):
 	id = models.AutoField(primary_key=True, unique=True)
-	author = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, related_name="creator")
+	author = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name="creator")
 	name = models.CharField(max_length=255)
 	description = models.TextField()
 	duration = models.DurationField()
@@ -24,7 +24,7 @@ class Tasks(models.Model):
 class Progresses(models.Model):
 	id = models.AutoField(primary_key=True, unique=True)
 	task = models.ForeignKey(Tasks, on_delete=models.CASCADE, related_name="job")
-	user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name="joiner")
+	user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="joiner")
 	rate = models.DecimalField(max_digits=6, decimal_places=3, default=0)
 	begin_date = models.DateTimeField(auto_now_add=True)
 	last_modified = models.DateTimeField(auto_now=True)

@@ -7,47 +7,46 @@ link.href = '/public/register/register.css';
 document.head.appendChild(link);
 
 function renderRegister() {
-	const appDiv = document.querySelector('.App');
+    const contentDiv = document.getElementById('content');
+    contentDiv.innerHTML = `
+        <div class="register">
+            <div class="login_box">
+                <h1>Register</h1>
+                <div class="login_form">
+                    <form class="login_form" id="registerForm">
+                        <div class="mb-3">
+                            <input type="text" id="username" placeholder="Username" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <input type="email" id="email" placeholder="Email" class="form-control" required />
+                        </div>
+                        <div class="mb-3">
+                            <input type="password" id="password" placeholder="Password" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
+                        <button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
 
-	appDiv.innerHTML = `
-		<div class="register">
-			<div class="login_box">
-				<h1>Register</h1>
-				<div class="login_form">
-					<form class="login_form" id="registerForm">
-						<div class="mb-3">
-							<input type="text" id="username" placeholder="Username" class="form-control" required />
-						</div>
-						<div class="mb-3">
-							<input type="email" id="email" placeholder="Email" class="form-control" required />
-						</div>
-						<div class="mb-3">
-							<input type="password" id="password" placeholder="Password" class="form-control" required />
-						</div>
-						<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
-						<button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
-					</form>
-				</div>
-			</div>
-		</div>
-	`;
+    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        await onHandleSubmit(e, username, email, password);
+    });
 
-	document.getElementById('registerForm').addEventListener('submit', async function (e) {
-		e.preventDefault();
-		const username = document.getElementById('username').value;
-		const email = document.getElementById('email').value;
-		const password = document.getElementById('password').value;
-		await onHandleSubmit(e, username, email, password);
-	});
-
-	document.getElementById('loginButton').addEventListener('click', function () {
-		window.navigateTo('/login');
-	});
+    document.getElementById('loginButton').addEventListener('click', function () {
+        window.navigateTo('#login');
+    });
 }
 
 async function onHandleSubmit(e, username, email, password) {
-	e.preventDefault();
-	await registerUser(username, email, password, true);
+    e.preventDefault();
+    await registerUser(username, email, password, true);
 }
 
 /**
@@ -75,7 +74,7 @@ async function registerUser(username, email, password, isBaseRegister) {
 				const data = await response.json();
 				console.log('Risposta dal server:', data);
 				if (isBaseRegister) {
-					window.navigateTo('/login');
+					window.navigateTo('#login');
 				}
 				return true;
 			} else {

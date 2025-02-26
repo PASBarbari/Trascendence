@@ -10,7 +10,7 @@ from rest_framework import permissions, status
 from .validations import custom_validation, validate_email, validate_password
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication , TokenHasScope, TokenHasReadWriteScope
 from .errors import error_codes
-from oauth2_provider.models import AccessToken , Application, RefreshToken
+from oauth2_provider.models import AccessToken , Application
 from oauthlib.common import generate_token
 from django.http import HttpRequest, JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
@@ -26,6 +26,13 @@ from login.settings import Microservices
 from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
+from rest_framework_simplejwt.tokens import RefreshToken
+
+def get_jwt_token_for_user(user):
+	refresh = RefreshToken.for_user(user)
+	return str(refresh.access_token)
+
+
 
 def get_access_token():
 	app = Application.objects.get(name='my_login')
@@ -43,9 +50,10 @@ def CreateOnOtherServices(user):
 	Chat_url = Microservices['Chat'] + "/chat/new_user/"
 	Notification_url = Microservices['Notifications'] + "/notification/add_user"
 	User_url = Microservices['Users'] + "/user/user"
+	# jwt_token = get_jwt_token_for_user(user)
 	headers = {
 		'Content-Type': 'application/json',
-		'Authorization': f'Bearer {get_access_token()}',
+		# 'Authorization': f'Bearer {jwt_token}',
 		'X-API-KEY': settings.API_KEY,
 	}
 
@@ -54,19 +62,22 @@ def CreateOnOtherServices(user):
 		'username': user.username,
 		'email': user.email,
 	}
-	user_response = requests.post(User_url, json=user_data, headers=headers)
-	if user_response.status_code != 201:
-		print(user_response.json())
-		raise ValueError('User service failed to create user')
+	# user_response = requests.post(User_url, json=user_data, headers=headers)
+	# if user_response.status_code != 201:
+	# 	print(user_response.json())
+	# 	raise ValueError('User service failed to create user')
 	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 	if chat_response.status_code != 201:
+		print(chat_response.json())
 		raise ValueError('Chat service failed to create user')
 	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
 	if notification_response.status_code != 201:
 		print(notification_response.json())
 		raise ValueError('Notification service failed to create user')
-
-
+	pong_response = requests.post("http://localhost:8004/pong/player", json=user_data, headers=headers)
+	if pong_response.status_code != 201:
+		raise ValueError('Pong service failed to create user')
+	return True
 
 
 class UserRegister(APIView):
@@ -96,7 +107,6 @@ class UserLogin(APIView):
 
 			data = request.data
 
-			
 			# Validate email and password
 			if not validate_email(data):
 				return Response({'error': 'Invalid email'}, status=status.HTTP_400_BAD_REQUEST)
@@ -111,39 +121,48 @@ class UserLogin(APIView):
 			
 			# Prepare data for tocken request
 
-			headers = {
-				'Content-Type': 'application/x-www-form-urlencoded',
-				'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',
-				'Accept': 'application/json',
-				'X-CSRFToken': get_token(request),
-			}
+			refresh = RefreshToken.for_user(user)
+			access_token = str(refresh.access_token)
+			refresh_token = str(refresh)
 
-			token_data = {
-				'grant_type': 'password',
-				'username': data.get('email'),
-				'password': data.get('password'),
-				'client_id': client['CLIENT_ID'],
-				'client_secret': client['CLIENT_SECRET'],
-				'scope': 'read write',
-			}
+			return Response({
+				'access_token': access_token,
+				'refresh_token': refresh_token},
+			status=status.HTTP_200_OK)
 
-			# Make token request
-
-			token_view = TokenView.as_view()
-			token_request = HttpRequest()
-			token_request.method = 'POST'
-			token_request.POST = token_data
-			token_request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
-			token_request.META['HTTP_AUTHORIZATION'] = f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}'
-			token_request.META['HTTP_X_CSRFTOKEN'] = get_token(request)
-
-			token_response = token_view(token_request)
-
-
-			return token_response
 		except Exception as e:
 				return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 		return Response(status=status.HTTP_400_BAD_REQUEST)
+			# headers = {
+			# 	'Content-Type': 'application/x-www-form-urlencoded',
+			# 	'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',
+			# 	'Accept': 'application/json',
+			# 	'X-CSRFToken': get_token(request),
+			# }
+
+			# token_data = {
+			# 	'grant_type': 'password',
+			# 	'username': data.get('email'),
+			# 	'password': data.get('password'),
+			# 	'client_id': client['CLIENT_ID'],
+			# 	'client_secret': client['CLIENT_SECRET'],
+			# 	'scope': 'read write',
+			# }
+
+			# # Make token request
+
+			# token_view = TokenView.as_view()
+			# token_request = HttpRequest()
+			# token_request.method = 'POST'
+			# token_request.POST = token_data
+			# token_request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+			# token_request.META['HTTP_AUTHORIZATION'] = f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}'
+			# token_request.META['HTTP_X_CSRFTOKEN'] = get_token(request)
+
+			# token_response = token_view(token_request)
+
+
+			# return token_response
 
 
 class ServiceRegister(APIView):
@@ -198,10 +217,8 @@ class UserLogout(APIView):
 		
 
 class UserView(APIView):
-	permission_classes = (permissions.IsAuthenticated, TokenHasScope , TokenHasReadWriteScope)
-	authentication_classes = (OAuth2Authentication,)
+	permission_classes = (permissions.IsAuthenticated,)
 	##
-	required_scopes = ['read']
 	def get(self, request):
 		serializer = UserSerializer(request.user)
 		user = AppUser.objects.get(username=serializer.data['username'])
@@ -232,4 +249,4 @@ class CustomIntrospect(IntrospectTokenView):
 
 @csrf_exempt
 def health_check(request):
-    return JsonResponse({'status': 'ok'})
+	return JsonResponse({'status': 'ok'})

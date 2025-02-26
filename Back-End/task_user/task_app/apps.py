@@ -8,7 +8,6 @@ class TaskAppConfig(AppConfig):
 		try:
 			# from .authentications import register_self , user_register_self
 			from .admin import create_superuser
-			from .start_tables import CreateTasksSignal
 			#user_register_self()
 			#print("User login successful")
 			# register_self()

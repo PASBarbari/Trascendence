@@ -246,8 +246,6 @@ propcache==0.2.0
     #   yarl
 psycopg==3.2.3
     # via -r Back-End/requirements.in
-psycopg2-binary==2.9.9
-    # via -r Back-End/requirements.in
 pyasn1==0.6.1
     # via
     #   -r Back-End/requirements.in
