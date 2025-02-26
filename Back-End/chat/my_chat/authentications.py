@@ -4,45 +4,46 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.conf import settings
 from datetime import datetime, timedelta
-from chat.settings import oauth2_settings
+from chat.settings import oauth2_settings , OAUTH2_APP_NAME
 import json
+from chat.settings import Microservices , CSRF_LOGIN_URL, REGISTER_URL, oauth2_settings
 
-def login_self():
-	login_url = 'http://localhost:8000/login/login'
-	data = {
-		'email': 'chat@chat.me',
-		'password' : 'chat_password',
-	}
+# def login_self():
+# 	login_url = f'{Microservices['Login']}/login/login'
+# 	data = {
+# 		'email': 'chat@chat.me',
+# 		'password' : 'chat_password',
+# 	}
 
-	response = requests.post(login_url, json=data)
+# 	response = requests.post(login_url, json=data)
 
-	if response.status_code != 200:
-		raise Exception('Failed to login user')
-	return response.json()
+# 	if response.status_code != 200:
+# 		raise Exception('Failed to login user')
+# 	return response.json()
 
-def user_register_self():
-	register_url = 'http://localhost:8000/login/register'
-	data = {
-		'email': 'chat@chat.me',
-		'username': 'my_chat',
-		'password': 'chat_password',
-	}
-	response = requests.post(register_url, json=data)
+# def user_register_self():
+# 	register_url = 'http://localhost:8000/login/register'
+# 	data = {
+# 		'email': 'chat@chat.me',
+# 		'username': 'my_chat',
+# 		'password': 'chat_password',
+# 	}
+# 	response = requests.post(register_url, json=data)
 	
-	if response.status_code == 400:
-		login_self()
-	elif response.status_code != 201:
-		raise Exception('Failed to register user')
-	else:
-		login_self()
+# 	if response.status_code == 400:
+# 		login_self()
+# 	elif response.status_code != 201:
+# 		raise Exception('Failed to register user')
+# 	else:
+# 		login_self()
 
 
 def register_self():
-	csrf_url = 'http://localhost:8000/login/get_csrf_token'
-	register_url = 'http://localhost:8000/login/Serviceregister'
+	csrf_url = CSRF_LOGIN_URL
+	register_url = REGISTER_URL
     
 	data = {
-		'name': 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S'),
+		'name': OAUTH2_APP_NAME,
 		'service_password': oauth2_settings['SERVICE_PASSWORD'],
 		'client_type': 'confidential',
 		'authorization_grant_type': 'password',
@@ -191,4 +192,3 @@ class TokenAuthentication(BaseAuthentication):
     #                     pass
     #     except requests.RequestException as e:
     #         raise AuthenticationFailed(f"Token introspection failed: {str(e)}")
-

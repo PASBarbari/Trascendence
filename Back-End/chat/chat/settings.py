@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import datetime
 from pathlib import Path
 import secrets , os
 
@@ -21,21 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-c-&5anrd7(h=4(s2+_@-&gwvt2*pr+$d4t82*3@wuev&0n&nb('
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
 API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-	'localhost',
-	'127.0.0.1',
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://127.0.0.1',
-	'http://localhost:3000/home',
-	'http://localhost:3000/login',
-	'http://localhost:3000/register'
-]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -49,6 +41,7 @@ INSTALLED_APPS = [
 	'django.contrib.messages',
 	'django.contrib.staticfiles',
 	'rest_framework',
+	'rest_framework_simplejwt',
 	'my_chat',
 	'oauth2_provider',
 	'django_filters',
@@ -56,6 +49,7 @@ INSTALLED_APPS = [
 	'channels',
 	'celery',
 	'redis',
+	'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -67,7 +61,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	'my_chat.middleware.TokenAuthMiddlewareHTTP',
+	# 'my_chat.middleware.TokenAuthMiddlewareHTTP',
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
@@ -101,7 +95,7 @@ oauth2_settings = {
 	'EXPIRES': '',
 	'token_type': '',
 	'scope': '',
-	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
+	'SERVICE_PASSWORD': os.getenv('SERVICE_PASSWORD', '123'),
 }
 
 # Database
@@ -110,11 +104,11 @@ oauth2_settings = {
 DATABASES = {
 	'default': {
 	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': 'chat_db',
-	'USER': 'pasquale',
-	'PASSWORD': '123',
-	'HOST': 'localhost',
-	'PORT': '5436',
+	'NAME': os.getenv('POSTGRES_DB', 'chat_db'),
+	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5436'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',
@@ -141,16 +135,8 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
-CELERY_BROKER_URL = 'redis://localhost:6700/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6700/0'
-CELERY_BEAT_SCHEDULE = {
-	'similar_users_chats': {
-		'task': 'my_chat.tasks.similar_users_chats',
-		'schedule': 3600, #seconds
-	},
-}
 
-BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
+# BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
@@ -175,10 +161,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = os.getenv('REDIS_PORT', '6700')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '0')
+REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '1')
+
 CACHES = {
 	'default': {
 		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': 'redis://172.18.0.1:6700/1',
+		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
 		}
@@ -186,21 +177,22 @@ CACHES = {
 }
 
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('172.18.0.1', 6700)],
-        },
-    }
+	'default': {
+		'BACKEND': 'channels_redis.core.RedisChannelLayer',
+		'CONFIG': {
+			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
+			'prefix': 'chat',
+		},
+	}
 }
 
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'my_chat.authentications.TokenAuthentication',
-    ],
+	'DEFAULT_AUTHENTICATION_CLASSES': [
+		'my_chat.middleware.JWTAuth',
+		],
 		'DEFAULT_PERMISSION_CLASSES': [
-				'my_chat.middleware.TokenAuthPermission',
+				'my_chat.Permissions.IsAuthenticated',
 		],
 		'DEFAULT_FILTER_BACKENDS': [
 			'django_filters.rest_framework.DjangoFilterBackend',
@@ -208,26 +200,77 @@ REST_FRAMEWORK = {
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'loki': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'detailed',
-            'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['loki'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-    'formatters': {
-        'detailed': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
+	'version': 1,
+	'disable_existing_loggers': False,
+	'handlers': {
+		'loki': {
+			'class': 'logging.StreamHandler',
+			'formatter': 'detailed',
+			'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+		},
+	},
+	'loggers': {
+		'django': {
+			'handlers': ['loki'],
+			'level': 'INFO',
+			'propagate': True,
+		},
+	},
+	'formatters': {
+		'detailed': {
+			'format': '{levelname} {asctime} {module} {message}',
+			'style': '{',
+		},
+	},
 }
+
+OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Personal' : "Self",
+}
+
+# filepath: /home/lollo/Documents/Fides/Back-End/chat/chat/settings.py
+
+SWAGGER_SETTINGS = {
+	'USE_SESSION_AUTH': False,
+	'SECURITY_DEFINITIONS': {
+		'Your App API - Swagger': {
+			'type': 'oauth2',
+			'authorizationUrl': f"{Microservices['Login']}/o/authorize",
+			'tokenUrl': f"{Microservices['Login']}/o/token/",
+			'flow': 'accessCode',
+			'scopes': {
+				'read:groups': 'read groups',
+			}
+		}
+	},
+	'OAUTH2_CONFIG': {
+		'clientId': f'{oauth2_settings["CLIENT_ID"]}',
+		'clientSecret': f'{oauth2_settings["CLIENT_SECRET"]}',
+		'appName': f'{OAUTH2_APP_NAME}',
+	},
+}
+
+ADMIN = {
+	'username': os.getenv('ADMIN_USERNAME', 'admin'),
+	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+}
+
+Microservices = {
+	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
+	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+	'Personal' : "Self",
+}
+
+CSRF_LOGIN_URL = Microservices['Login'] + '/login/get_csrf_token'
+REGISTER_URL = Microservices['Login'] + '/login/Serviceregister'
+# OAUTH2_REDIRECT_URL = f"{Microservices['Login']}/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
+# OAUTH2_REDIRECT_URL = 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html'

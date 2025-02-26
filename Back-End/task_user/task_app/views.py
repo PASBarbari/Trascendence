@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Tasks, Progresses
 from .serializer import TasksSerializer, ProgressesSerializer, ProgressManageSerializer, ProgressesReadSerializer
-from user_app.models import Users
+from user_app.models import UserProfile
 from django_filters.rest_framework import DjangoFilterBackend
 
 class MultipleFieldLookupMixin:
@@ -98,7 +98,7 @@ class GetTasksByUser(APIView):
 	permission_classes = (permissions.AllowAny,)
 	def get(self, request):
 		prog = Progresses.objects.all()
-		usr = Users.objects.all()
+		usr = UserProfile.objects.all()
 		ans = dict()
 		for x in usr:
 			row = []

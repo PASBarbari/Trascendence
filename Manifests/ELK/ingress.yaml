@@ -1,0 +1,33 @@
+# filepath: /home/lollo/Documents/Fides/ELK/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trascendence-ingress-elk
+  namespace: elk
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - mylogs.42firenze.it
+    secretName: kibana-tls
+  rules:
+  - host: mylogs.42firenze.it
+    http:
+      paths:
+      - path: /
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: trascendence-kb-http
+            port:
+              number: 5601
+      # - path: /elasticsearch(/|$)(.*)
+      #   pathType: ImplementationSpecific
+      #   backend:
+      #     service:
+      #       name: trascendence-es-http
+      #       port:
+      #         number: 9200
