@@ -8,11 +8,15 @@ import logging
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
+from .serializer import GameStateSerializer
 
-ring_size = [160 , 90]
-tick_rate = 30
-ball_radius = 2.5
-player_width = 2.5
+# ring_size = [160 , 90]
+tick_rate = 60
+# self.ball_radius = 2.5
+# self.p_width = 2
+# ring_thickness = 3
+# self.p_speed = 0.1
+ball_acc = 0.1
 class GameState:
 	def __init__(self, player_1, player_2, game_id, player_length):
 		self.game_id = game_id
@@ -22,10 +26,23 @@ class GameState:
 		self.player_2_score = 0
 		self.player_1_pos = [0 , 0]
 		self.player_2_pos = [0 , 0]
+		self.player_1_move = 0
+		self.player_2_move = 0
 		self.ball_pos = [0 , 0]
-		self.p_length = player_length if player_length else 10
+		self.p_length = 0
+		self.p_height = 0
+		self.p_width = 0
+		self.p_speed = 0
+		self.ball_radius = 0
+		self.ball_speed = 0
+		self.ring_length = 0
+		self.ring_height = 0
+		self.ring_width = 0
+		self.ring_thickness = 0
 		self.is_started = [0 , 0]
-  
+		self.wall_hit_pos = 0
+		self.avg_frame_time = [0 , 1]
+
 	async def start(self):
 		self.running = True
 		tick_interval = 1 / tick_rate
@@ -35,93 +52,130 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		self.ball_speed = 90 / 150
-
+		print(f"Game {self.__dict__} started")
+		while self.ball_speed == 0:
+			await asyncio.sleep(0.1)
 		while self.running:
 			start_time = time.monotonic()
-			
-			await self.physics()
+
+			self.physics()
+			self.movement()
 
 			await self.update()
 			
 			if self.player_1_score == 5 or self.player_2_score == 5: #TODO add different games scores
 				self.running = False
 				break
-			time.sleep(max(0, tick_interval - (time.monotonic() - start_time)))
-			await asyncio.sleep(tick_interval)
+			elapsed = time.monotonic() - start_time
+			self.avg_frame_time += [elapsed, 1]
+			await asyncio.sleep(max(0, tick_interval - elapsed))
 	
 	def p1_is_hit(self):
 		if (
-			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player1_pos[0] + self.player_width / 2 and
-			self.ball_pos[0] - self.ball_speed > self.player1_pos[0] - self.player_width / 2 and
-			self.ball_pos[1] - self.ball_radius <= self.player1_pos[1] + self.player_height / 2 and
-			self.ball_pos[1] + self.ball_radius >= self.player1_pos[1] - self.player_height / 2
+			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player_1_pos[0] + self.p_width / 2 and
+			self.ball_pos[0] - self.ball_speed > self.player_1_pos[0] - self.p_width / 2 and
+			self.ball_pos[1] - self.ball_radius <= self.player_1_pos[1] + self.p_length / 2 and
+			self.ball_pos[1] + self.ball_radius >= self.player_1_pos[1] - self.p_length / 2
 		):
 			return True
 		return False
 
 	def p2_is_hit(self):
 		if (
-			self.ball_pos[0] + self.ball_radius + self.ball_speed >= self.player2_pos[0] - self.player_width / 2 and
-			self.ball_pos[0] + self.ball_speed < self.player2_pos[0] + self.player_width / 2 and
-			self.ball_pos[1] - self.ball_radius <= self.player2_pos[1] + self.player_height / 2 and
-			self.ball_pos[1] + self.ball_radius >= self.player2_pos[1] - self.player_height / 2
+			self.ball_pos[0] + self.ball_radius + self.ball_speed >= self.player_2_pos[0] - self.p_width / 2 and
+			self.ball_pos[0] + self.ball_speed < self.player_2_pos[0] + self.p_width / 2 and
+			self.ball_pos[1] - self.ball_radius <= self.player_2_pos[1] + self.p_length / 2 and
+			self.ball_pos[1] + self.ball_radius >= self.player_2_pos[1] - self.p_length / 2
 		):
 			return True
 		return False
+
+	#TODO fixing radius and thickness and create function for score
 
 	def physics(self):
 		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
 		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
 		if self.ball_pos[0] < 0 and self.p1_is_hit():
-				hit_pos = self.ball_position[1] - self.player1_pos[1]
-				self.angle = hit_pos / self.p_length * -90
-				if (self.ball_speed < 5 * self.p_length):
-					self.ball_speed += 0.1
+			hit_pos = self.ball_pos[1] - self.player_1_pos[1]
+			self.wall_hit_pos = 0
+			self.angle = hit_pos / self.p_length * -90
+			if (self.ball_speed < 5 * self.p_length):
+				self.ball_speed += ball_acc
 		elif self.ball_pos[0] > 0 and self.p2_is_hit():
-				hit_pos = self.ball_position[1] - self.player2_pos[1]
-				self.angle = 180 + hit_pos / self.p_length * 90
-				if (self.ball_speed < 5 * self.p_length):
-					self.ball_speed += 0.1
-		elif self.ball_pos[1] - self.ball_radius <= 0 or self.ball_pos[1] + self.ball_radius >= ring_size[1]:
-			self.angle = -self.angle
-		elif self.ball_pos[0] - self.ball_radius <= 0:
-			self.player_2_score += 1
-			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
-			self.angle = random.uniform(70, -70)
-			self.ball_speed = 90 / 150
-		elif self.ball_pos[0] + self.ball_radius >= ring_size[0]:
-			self.player_1_score += 1
-			self.ball_pos = [ring_size[0] / 2, ring_size[1] / 2]
-			self.angle = random.uniform(110, 250)
-			self.ball_speed = 90 / 150
-
-	def update(self):
+			hit_pos = self.ball_pos[1] - self.player_2_pos[1]
+			self.wall_hit_pos = 0
+			self.angle = 180 + hit_pos / self.p_length * 90
+			if (self.ball_speed < 5 * self.p_length):
+				self.ball_speed += ball_acc
+		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= self.ring_height / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -self.ring_height / 2):
+			self.wall_hit_pos = self.ball_pos[1]
+			self.angle = -self.angle 
+		self.check_score()
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
+			self.player_1_pos[1] += self.player_1_move
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
+			self.player_2_pos[1] += self.player_2_move
+	
+	async def update(self):
 		channel_layer = get_channel_layer()
 		try:
-			async_to_sync(channel_layer.group_send)(
+			serialized_data = GameStateSerializer(self.to_dict()).data
+			# print(f"Sent game state: {serialized_data}")
+			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
 					'type': 'game_state',
-					'game_state': self.__dict__
+					'game_state': serialized_data
 				}
 			)
 		except Exception as e:
 			print(f"Error sending game state: {e}") #TODO logg
 
+	def check_score(self):
+		if self.ball_pos[0] - self.ball_radius <= -self.ring_length / 2:
+			self.player_2_score += 1
+			self.reset_ball(random.uniform(70, -70))
+		elif self.ball_pos[0] + self.ball_radius >= self.ring_length / 2 + self.ring_thickness:
+			self.player_1_score += 1
+			self.reset_ball(random.uniform(110, 250))
+   
+	def reset_ball(self, angle):
+		self.ball_pos = [0, 0]
+		self.angle = angle
+		self.ball_speed = 90 / 150
+		self.wall_hit_pos = 0
+
+
+	def movement(self):
+		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness / 2):
+			self.player_1_pos[1] += self.p_speed
+		elif (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness / 2):
+			self.player_1_pos[1] -= self.p_speed
+		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness / 2):
+			self.player_2_pos[1] += self.p_speed
+		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness / 2):
+			self.player_2_pos[1] -= self.p_speed
+
 	def up(self, player):
-		if player == self.player_1:
-			self.player_1_pos[1] += 1
-		else:
-			self.player_2_pos[1] += 1
+		print(f"Player {player} up")
+		if player == self.player_1.user_id:
+			self.player_1_move = 1
+		elif player == self.player_2.user_id:
+			self.player_2_move = 1
 	
 	def down(self, player):
-		if player == self.player_1:
-			self.player_1_pos[1] -= 1
-		else:
-			self.player_2_pos[1] -= 1
+		if player == self.player_1.user_id:
+			self.player_1_move = -1
+		elif player == self.player_2.user_id:
+			self.player_2_move = -1
+   
+	def stop(self, player):
+		if player == self.player_1.user_id:
+			self.player_1_move = 0
+		elif player == self.player_2.user_id:
+			self.player_2_move = 0
 	
-	def __dict__(self):
+	def to_dict(self):
 		return {
 			'player_1_score': self.player_1_score,
 			'player_2_score': self.player_2_score,
@@ -130,21 +184,30 @@ class GameState:
 			'ball_pos': self.ball_pos,
 			'ball_speed': self.ball_speed,
 			'angle': self.angle,
+			'ring_length': self.ring_length,
+			'ring_height': self.ring_height,
+			'ring_width': self.ring_width,
+			'ring_thickness': self.ring_thickness,
 			'p_length': self.p_length,
+			'p_height': self.p_height,
+			'p_width': self.p_width,
+			'ball_radius': self.ball_radius,
+			'p_speed': self.p_speed
 		}
 
 
-	def quit_game(self, player):
+	def quit_game(self):
+		print(f"Game {self.game_id} quit")
 		self.running = False
-		if player == self.player_1:
-			self.player_1_score = -1
-		else:
-			self.player_2_score = -1
+		# if player == self.player_1:
+		# 	self.player_1_score = -1
+		# else:
+		# 	self.player_2_score = -1
 
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
 	if created:
-		game_state = GameState(instance.player_1, instance.player_2)
+		game_state = GameState(instance.player_1, instance.player_2, instance.id, 10)
 		instance.game_state = game_state
 		instance.save()
 		logger = logging.getLogger(__name__)

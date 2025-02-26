@@ -32,6 +32,8 @@ def get_jwt_token_for_user(user):
 	refresh = RefreshToken.for_user(user)
 	return str(refresh.access_token)
 
+
+
 def get_access_token():
 	app = Application.objects.get(name='my_login')
 
@@ -68,12 +70,14 @@ def CreateOnOtherServices(user):
 	if chat_response.status_code != 201:
 		print(chat_response.json())
 		raise ValueError('Chat service failed to create user')
-	# notification_response = requests.post(Notification_url, json=user_data, headers=headers)
-	# if notification_response.status_code != 201:
-	# 	print(notification_response.json())
-	# 	raise ValueError('Notification service failed to create user')
-
-
+	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
+	if notification_response.status_code != 201:
+		print(notification_response.json())
+		raise ValueError('Notification service failed to create user')
+	pong_response = requests.post("http://localhost:8004/pong/player", json=user_data, headers=headers)
+	if pong_response.status_code != 201:
+		raise ValueError('Pong service failed to create user')
+	return True
 
 
 class UserRegister(APIView):
