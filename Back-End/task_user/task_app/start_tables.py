@@ -1,5 +1,5 @@
 from .models import Tasks
-from user_app.models import Avatars, Users
+from user_app.models import Avatars, UserProfile
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
 

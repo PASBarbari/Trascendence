@@ -10,7 +10,7 @@ from asgiref.sync import async_to_sync
 from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer
-from .middleware import TokenAuthPermission, APIKeyPermission , ServiceAuthentication, JWTAuthMiddleware , JWTAuth
+from .middleware import ServiceAuthentication, JWTAuthMiddleware , JWTAuth
 from .authentications import TokenAuthentication
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi

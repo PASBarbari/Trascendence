@@ -189,10 +189,10 @@ CHANNEL_LAYERS = {
 
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': [
-		'my_chat.authentications.JWTAuth',
+		'my_chat.middleware.JWTAuth',
 		],
 		'DEFAULT_PERMISSION_CLASSES': [
-				'my_chat.permissions.IsAuthenticated',
+				'my_chat.Permissions.IsAuthenticated',
 		],
 		'DEFAULT_FILTER_BACKENDS': [
 			'django_filters.rest_framework.DjangoFilterBackend',
