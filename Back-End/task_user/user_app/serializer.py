@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Avatars, Friendships
+from .models import UserProfile, Avatars, Friendships
 import datetime
 
 class AvatarsSerializer(serializers.ModelSerializer):
@@ -23,7 +23,7 @@ class UsersSerializer(serializers.ModelSerializer):
 	last_modified = serializers.DateTimeField(read_only=True)
     
 	class Meta:
-		model = Users
+		model = UserProfile
 		fields = '__all__'
 
 

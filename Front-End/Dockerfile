@@ -1,11 +1,16 @@
-FROM node:latest
+FROM node:hydrogen-alpine
 
 WORKDIR /app
 
-RUN npm install -g serve
+COPY package*.json ./
+COPY public ./public
+COPY index.html ./
+COPY .serve.json ./
 
-COPY ./build ./build
+RUN npm install --only=production
+
+RUN npm install -g serve
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "build", "-l", "3000"]
+CMD ["npm", "start"]

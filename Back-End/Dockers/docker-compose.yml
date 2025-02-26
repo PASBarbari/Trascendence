@@ -19,24 +19,24 @@ services:
     env_file:
       - ./usertask_service/.env
 
-  usertask_service:
-    build:
-      context: ./usertask_service
-      dockerfile: Dockerfile
-    container_name: container_usertask_service
-    ports:
-      - "8002:8000"
-    networks:
-      - usertask_network
-      - auth_network
-      - notification_network
-    depends_on:
-      usertask_db:
-        condition: service_healthy
-      loginservice:
-        condition: service_healthy
-    env_file:
-      - ./usertask_service/.env
+  # usertask_service:
+  #   build:
+  #     context: ./usertask_service
+  #     dockerfile: Dockerfile
+  #   container_name: container_usertask_service
+  #   ports:
+  #     - "8002:8000"
+  #   networks:
+  #     - usertask_network
+  #     - auth_network
+  #     - notification_network
+  #   depends_on:
+  #     usertask_db:
+  #       condition: service_healthy
+  #     loginservice:
+  #       condition: service_healthy
+  #   env_file:
+  #     - ./usertask_service/.env
 
   login_db:
     build:
@@ -56,26 +56,26 @@ services:
     env_file:
       - ./loginservice/.env
 
-  loginservice:
-    build:
-      context: ./loginservice
-      dockerfile: Dockerfile
-    container_name: container_loginService
-    ports:
-      - "8000:8000"
-    networks:
-      - login_network
-      - auth_network
-    env_file:
-      - ./loginservice/.env
-    depends_on:
-      login_db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/login/health/ || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
+  # loginservice:
+  #   build:
+  #     context: ./loginservice
+  #     dockerfile: Dockerfile
+  #   container_name: container_loginService
+  #   ports:
+  #     - "8000:8000"
+  #   networks:
+  #     - login_network
+  #     - auth_network
+  #   env_file:
+  #     - ./loginservice/.env
+  #   depends_on:
+  #     login_db:
+  #       condition: service_healthy
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl -f http://localhost:8000/login/health/ || exit 1"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
 
   chat_db:
     build:
@@ -95,26 +95,27 @@ services:
     env_file:
       - ./chatservice/.env
   
-  chatservice:
-    build:
-      context: ./chatservice
-      dockerfile: Dockerfile
-    container_name: container_chat_service
-    ports:
-      - "8001:8000"
-    networks:
-      - chat_network
-      - notification_network
-      - auth_network
-    depends_on:
-      chat_db:
-        condition: service_healthy
-      redis_chat:
-        condition: service_healthy
-      loginservice:
-        condition: service_healthy
-    env_file:
-      - ./chatservice/.env
+
+  # chatservice:
+  #   build:
+  #     context: ./chatservice
+  #     dockerfile: Dockerfile
+  #   container_name: container_chat_service
+  #   ports:
+  #     - "8001:8000"
+  #   networks:
+  #     - chat_network
+  #     - notification_network
+  #     - auth_network
+  #   depends_on:
+  #     chat_db:
+  #       condition: service_healthy
+  #     redis_chat:
+  #       condition: service_healthy
+  #     loginservice:
+  #       condition: service_healthy
+  #   env_file:
+  #     - ./chatservice/.env
 
   notification_db:
     build:
@@ -131,17 +132,18 @@ services:
       timeout: 10s
       retries: 5
 
-  notification_service:
-    build:
-      context: ./notification_service
-      dockerfile: Dockerfile
-    container_name: container_notification_service
-    ports:
-      - "8003:8000"
-    networks:
-      - internal_notification_network
-      - auth_network
-      - notification_network
+  # notification_service:
+  #   build:
+  #     context: ./notification_service
+  #     dockerfile: Dockerfile
+  #   container_name: container_notification_service
+  #   ports:
+  #     - "8003:8000"
+  #   networks:
+  #     - internal_notification_network
+  #     - auth_network
+  #     - notification_network
+
 
   redis_chat:
     image: "redis:latest"
@@ -193,85 +195,86 @@ services:
   #     - notification_db
   #     - redis_notification
 
-  prometheus:
-    build:
-      context: ./prometheus
-      dockerfile: Dockerfile
-    container_name: prometheus
-    ports:
-      - "9091:9090"
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    networks:
-      - exporters_network
-      - logging_network
+  # prometheus:
+  #   build:
+  #     context: ./prometheus
+  #     dockerfile: Dockerfile
+  #   container_name: prometheus
+  #   ports:
+  #     - "9091:9090"
+  #   volumes:
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+  #   networks:
+  #     - exporters_network
+  #     - logging_network
 
-  loki:
-    build:
-      context: ./loki
-      dockerfile: Dockerfile
-    container_name: loki
-    ports:
-      - "3101:3100"
-    volumes:
-      - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
-      - loki-data:/var/lib/loki
-    networks:
-      - exporters_network
-      - logging_network
+  # loki:
+  #   build:
+  #     context: ./loki
+  #     dockerfile: Dockerfile
+  #   container_name: loki
+  #   ports:
+  #     - "3101:3100"
+  #   volumes:
+  #     - ./loki/loki-config.yaml:/etc/loki/local-config.yaml
+  #     - loki-data:/var/lib/loki
+  #   networks:
+  #     - exporters_network
+  #     - logging_network
 
-  grafana:
-    build:
-      context: ./grafana
-      dockerfile: Dockerfile
-    container_name: grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin  # TODO: Change this password
-    volumes:
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
-      - grafana-data:/var/lib/grafana
-    depends_on:
-      - prometheus
-      - loki
-    networks:
-      - logging_network
-      - exporters_network
-  promtail:
-    image: grafana/promtail:latest
-    container_name: promtail
-    volumes:
-      - /var/log:/var/log
-      - ./promtail/promtail-config.yaml:/etc/promtail/config.yaml
-      - ./promtail/positions.yaml:/tmp/positions.yaml  # Persist positions file
-    networks:
-      - back-end
-    depends_on:
-      - loki
-  postgres_exporter:
-    image: prometheuscommunity/postgres-exporter
-    container_name: postgres_exporter
-    environment:
-      DATA_SOURCE_NAME: "postgresql://pasquale:123@container_usertask_db:5432/usertask_db?sslmode=disable,postgresql://pasquale:123@container_login_db:5432/login_db?sslmode=disable,postgresql://pasquale:123@container_chat_db:5432/chat_db?sslmode=disable"
-    ports:
-      - "9187:9187"
-    networks:
-      - exporters_network
-    depends_on:
-      - usertask_db
-      - login_db
-      - chat_db
+  # grafana:
+  #   build:
+  #     context: ./grafana
+  #     dockerfile: Dockerfile
+  #   container_name: grafana
+  #   ports:
+  #     - "3001:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin  # TODO: Change this password
+  #   volumes:
+  #     - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+  #     - grafana-data:/var/lib/grafana
+  #   depends_on:
+  #     - prometheus
+  #     - loki
+  #   networks:
+  #     - logging_network
+  #     - exporters_network
+  # promtail:
+  #   image: grafana/promtail:latest
+  #   container_name: promtail
+  #   volumes:
+  #     - /var/log:/var/log
+  #     - ./promtail/promtail-config.yaml:/etc/promtail/config.yaml
+  #     - ./promtail/positions.yaml:/tmp/positions.yaml  # Persist positions file
+  #   networks:
+  #     - back-end
+  #   depends_on:
+  #     - loki
+  # postgres_exporter:
+  #   image: prometheuscommunity/postgres-exporter
+  #   container_name: postgres_exporter
+  #   environment:
+  #     DATA_SOURCE_NAME: "postgresql://pasquale:123@container_usertask_db:5432/usertask_db?sslmode=disable,postgresql://pasquale:123@container_login_db:5432/login_db?sslmode=disable,postgresql://pasquale:123@container_chat_db:5432/chat_db?sslmode=disable"
+  #   ports:
+  #     - "9187:9187"
+  #   networks:
+  #     - exporters_network
+  #   depends_on:
+  #     - usertask_db
+  #     - login_db
+  #     - chat_db
 
-  redis_exporter:
-    image: bitnami/redis-exporter:latest
-    container_name: redis_exporter
-    environment:
-      - REDIS_ADDR=redis:6379
-    ports:
-      - "9121:9121"
-    networks:
-      - exporters_network
+  # redis_exporter:
+  #   image: bitnami/redis-exporter:latest
+  #   container_name: redis_exporter
+  #   environment:
+  #     - REDIS_ADDR=redis:6379
+  #   ports:
+  #     - "9121:9121"
+  #   networks:
+  #     - exporters_network
+
 volumes:
   prometheus_data: {}
   loki-data: {}
