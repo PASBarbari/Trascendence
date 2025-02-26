@@ -23,7 +23,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 	async def disconnect(self, close_code):
 		if self.room_id in active_games:
-			GameState.quit_game()
+			active_games[self.room_id].quit_game()
 			del active_games[self.room_id]
 
 	async def receive(self, text_data):
