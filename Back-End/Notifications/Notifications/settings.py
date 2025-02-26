@@ -106,7 +106,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Notifications.wsgi.application'
+# WSGI_APPLICATION = 'Notifications.wsgi.application'
 ASGI_APPLICATION = 'Notifications.asgi.application'
 
 
@@ -116,7 +116,7 @@ ASGI_APPLICATION = 'Notifications.asgi.application'
 DATABASES = {
 	'default': {
 		'ENGINE': 'django.db.backends.postgresql',
-		'NAME': 'Notification_db',
+		'NAME': 'notification_db',
 		'USER': 'pasquale',
 		'PASSWORD': '123',
 		'HOST': 'localhost',

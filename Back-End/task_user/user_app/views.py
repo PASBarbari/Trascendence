@@ -62,6 +62,7 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 
 class FriendList(generics.ListAPIView):
 	permissions_classes = (permissions.IsAuthenticated,)
+	authentication_classes = [JWTAuth]
 	serializer_class = FriendshipsSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']

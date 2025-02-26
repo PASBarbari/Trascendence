@@ -143,12 +143,12 @@ class JWTAuthMiddleware(BaseMiddleware):
 		else:
 			# Try to get token from headers (less common for WebSockets but possible)
 			headers = dict(scope['headers'])
-			auth_header = headers.get(b'authorization')
+			auth_header = headers.get(b'Authorization')
 			if auth_header:
 				token_str = auth_header.decode()
 				if token_str.startswith('Bearer '):
 					token = token_str[7:]  # Remove 'Bearer ' prefix
-		
+
 		if token:
 			# Get user from token
 			try:

@@ -50,10 +50,10 @@ def CreateOnOtherServices(user):
 	Chat_url = Microservices['Chat'] + "/chat/new_user/"
 	Notification_url = Microservices['Notifications'] + "/notification/add_user"
 	User_url = Microservices['Users'] + "/user/user"
-	# jwt_token = get_jwt_token_for_user(user)
+	jwt_token = get_jwt_token_for_user(user)
 	headers = {
 		'Content-Type': 'application/json',
-		# 'Authorization': f'Bearer {jwt_token}',
+		'Authorization': f'Bearer {jwt_token}',
 		'X-API-KEY': settings.API_KEY,
 	}
 
@@ -62,10 +62,11 @@ def CreateOnOtherServices(user):
 		'username': user.username,
 		'email': user.email,
 	}
-	# user_response = requests.post(User_url, json=user_data, headers=headers)
-	# if user_response.status_code != 201:
-	# 	print(user_response.json())
-	# 	raise ValueError('User service failed to create user')
+	user_response = requests.post(User_url, json=user_data, headers=headers)
+	if user_response.status_code != 201:
+		print(f'user resp{user_response.status_code}')
+		print(user_response.json())
+		raise ValueError('User service failed to create user')
 	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 	if chat_response.status_code != 201:
 		print(chat_response.json())
@@ -88,6 +89,7 @@ class UserRegister(APIView):
 			serializer = UserRegisterSerializer(data=clean_data)
 			if serializer.is_valid(raise_exception=True):
 				user = serializer.create(clean_data)
+				print(user)
 				if user:
 					serializer.data['password'] = user.password
 					CreateOnOtherServices(user)

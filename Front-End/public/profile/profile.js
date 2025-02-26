@@ -13,6 +13,7 @@ async function PatchProfile(name, surname, birthdate, bio) {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
+				"Authorization": `Bearer ${getVariables().token}`,
 			},
 			body: JSON.stringify({
 				account_id: userId,

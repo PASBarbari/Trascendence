@@ -1,4 +1,3 @@
-version: '3.8'
 # TODO add the celery wrokers and the celery beat
 services:
   usertask_db:
