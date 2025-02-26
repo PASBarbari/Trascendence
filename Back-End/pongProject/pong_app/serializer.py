@@ -2,55 +2,70 @@ from rest_framework import serializers
 from .models import *
 import datetime
 
+
 class PlayerSerializer(serializers.ModelSerializer):
-	user_id = serializers.IntegerField(primary_key=True)
-	username = serializers.CharField(max_length=255)
-	tournaments = serializers.PrimaryKeyRelatedField(queryset=Tournament.objects.all(), many=True, required=False)
-	
-	def validate_username(self, value):
-		if len(str(value)) < 1:
-			raise serializers.ValidationError('username is not valid')
-		return value
-	
-	class Meta:
-		model = Player
-		fields = '__all__'
+    # def validate_username(self, value):
+    #     if len(str(value)) < 1:
+    #         raise serializers.ValidationError('username is not valid')
+    #     return value
+    
+    class Meta:
+        model = Player
+        fields = '__all__'
 
 class GamesSerializer(serializers.ModelSerializer):
-	player_1 = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all())
-	player_2 = serializers.primaryKeyRelatedField(queryset=Player.objects.all(), required=False)
-	player_1_score = serializers.IntegerField(min_value=0, default=0)
-	player_2_score = serializers.IntegerField(min_value=0, default=0)
-	begin_date = serializers.DateTimeField(read_only=True)
-	tournament_id = serializers.PrimaryKeyRelatedField(queryset=Tournament.objects.all(), required=False)
-	
-	def validate(self, data):
-		if data['player_1'] == data['player_2']:
-			raise serializers.ValidationError('player_1 and player_2 cannot be the same')
-		return data
-	
-	class Meta:
-		model = Game
-		fields = '__all__'
+    # player_1 = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all())
+    # player_2 = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(), required=False)
+    # player_1_score = serializers.IntegerField(min_value=0, default=0)
+    # player_2_score = serializers.IntegerField(min_value=0, default=0)
+    # begin_date = serializers.DateTimeField(read_only=True, default=datetime.datetime.now)
+    # tournament_id = serializers.PrimaryKeyRelatedField(queryset=Tournament.objects.all(), required=False)
+    
+    def validate(self, data):
+        if data['player_1'] == data['player_2']:
+            raise serializers.ValidationError('player_1 and player_2 cannot be the same')
+        return data
+    class Meta:
+        model = Game
+        fields = '__all__'
 
 class TournamentSerializer(serializers.ModelSerializer):
-	name = serializers.CharField(max_length=255)
-	begin_date = serializers.DateTimeField(read_only=True)
-	level_required = serializers.IntegerField(min_value=0)
-	partecipants = serializers.integerField(min_value=0, default=0)
-	max_partecipants = serializers.IntegerField(min_value=4)
-	winner = serializers.integerField(min_value=0, default=0)
+    name = serializers.CharField(max_length=255)
+    begin_date = serializers.DateTimeField(read_only=True, default=datetime.datetime.now)
+    level_required = serializers.IntegerField(min_value=0)
+    participants = serializers.IntegerField(min_value=0, default=0)
+    max_participants = serializers.IntegerField(min_value=4)
+    winner = serializers.IntegerField(min_value=0, default=0)
 
-	def validate_name(self, value):
-		if len(str(value)) < 1:
-			raise serializers.ValidationError('name is not valid')
-		return value
-	
-	def validate_partecipants(self, value):
-		if value < 0:
-			raise serializers.ValidationError('partecipants is not valid')
-		return value
+    def validate_name(self, value):
+        if len(str(value)) < 1:
+            raise serializers.ValidationError('name is not valid')
+        return value
+    
+    def validate_participants(self, value):
+        if value < 0:
+            raise serializers.ValidationError('participants is not valid')
+        return value
 
-	class Meta:
-		model = Tournament
-		fields = '__all__'
+    class Meta:
+        model = Tournament
+        fields = '__all__'
+        
+class GameStateSerializer(serializers.Serializer):
+    player_1_score = serializers.IntegerField()
+    player_2_score = serializers.IntegerField()
+    player_1_pos = serializers.ListField(child=serializers.IntegerField())
+    player_2_pos = serializers.ListField(child=serializers.IntegerField())
+    ball_pos = serializers.ListField(child=serializers.FloatField())
+    ball_speed = serializers.FloatField()
+    angle = serializers.FloatField()
+    ring_length = serializers.IntegerField()
+    ring_height = serializers.IntegerField()
+    ring_width = serializers.IntegerField()
+    ring_thickness = serializers.IntegerField()
+    p_length = serializers.IntegerField()
+    p_height = serializers.IntegerField()
+    p_width = serializers.IntegerField()
+    ball_radius = serializers.IntegerField()
+    p_speed = serializers.IntegerField()
+    
