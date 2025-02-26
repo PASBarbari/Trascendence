@@ -1,68 +1,69 @@
 import { renderLogin } from './login/login.js';
 import { renderRegister } from './register/register.js';
 import { renderHome } from './home/home.js';
-import { setVariables, getVariables } from './var.js';
-// import { renderNotification, initializeWebSocket } from './notification/notification.js';
+import { renderPong } from './pong/pong.js';
+import { renderExpandableSidebar } from './chat/ExpandableSidebar.js';
+//import { renderProfile } from './profile/profile.js';
 
-document.addEventListener('DOMContentLoaded', function () {
-	// if (getVariables().userId === null) {
-	// 	navigateTo('/login'); // controlla se le variabili sono presenti sennò reindirizza a login
-	// } else {
-	// 	console.log('var presenti');
-	// }
+const routes = {
+    404: {
+        template: "/templates/404.html",
+        title: "404",
+        description: "Page not found",
+    },
+    "/": {
+        render: renderLogin,
+        title: "Login",
+        description: "This is the login page",
+    },
+    login: {
+        render: renderLogin,
+        title: "Login",
+        description: "This is the login page",
+    },
+    register: {
+        render: renderRegister,
+        title: "Register",
+        description: "This is the register page",
+    },
+    home: {
+        render: renderHome,
+        title: "Home",
+        description: "This is the home page",
+    },
+    pong: {
+        render: renderPong,
+        title: "Pong",
+        description: "This is the pong game",
+    }
+};
 
-	function navigateTo(path) {
-		window.history.pushState({}, path, window.location.origin + path);
-		handleRoute();
-	}
+const navigateTo = (path) => {
+    window.location.hash = path;
+};
 
-	async function handleRoute() {
-		const routes = {
-			'/': () => navigateTo('/login'),
-			'/login': () => renderLogin(),
-			'/register': () => renderRegister(),
-			'/home': () => renderHome(),
-			'/mine': () => window.location.href = 'https://minesweeper.online/it/',
-			'/pong': async () => {
-				const { renderPong } = await import('./pong/pong.js');
-				renderPong();
-			},
-			// '/notifications': () => {
-			// 	renderNotification();
-			// 	initializeWebSocket(); // senza richiamare questo, il websocket partiva sempre
-			// } //ma che minchia e' sta roba? dimenticato
-		};
+const locationHandler = async () => {
+    var location = window.location.hash.replace("#", "");
+    if (location.length == 0) {
+        location = "login";
+    }
+    const route = routes[location] || routes["404"];
+    if (route.template) {
+        const html = await fetch(route.template).then((response) => response.text());
+        document.getElementById("content").innerHTML = html;
+    } else if (route.render) {
+        route.render();
+    }
+    document.title = route.title;
+    document.querySelector('meta[name="description"]').setAttribute("content", route.description);
+};
 
-		const path = window.location.pathname;
-		const route = routes[path] || routes['/login'];
-		route();
-	}
+const initializeApp = () => {
+    renderExpandableSidebar();
+    //renderProfile();
+    locationHandler();
+};
 
-	document.querySelector('.App').innerHTML = `
-		<nav class="navbar navbar-expand-lg navbar-light bg-light">
-			<a class="navbar-brand" href="#">Navbar</a>
-			<div class="collapse navbar-collapse">
-				<ul class="navbar-nav mr-auto">
-					<li class="nav-item"><a class="nav-link" href="/login" data-link>Login</a></li>
-					<li class="nav-item"><a class="nav-link" href="/register" data-link>Register</a></li>
-					<li class="nav-item"><a class="nav-link" href="/home" data-link>Home</a></li>
-					<li class="nav-item"><a class="nav-link" href="/mine" data-link>Mine</a></li>
-					<li class="nav-item"><a class="nav-link" href="/pong" data-link>Pong</a></li>
-					//<!--li class="nav-item"><a class="nav-link" href="/notifications" data-link>Notifications</a></li-->
-				</ul>
-			</div>
-		</nav>
-		<div class="content"></div>
-	`;
-
-	document.querySelectorAll('[data-link]').forEach(link => {
-		link.addEventListener('click', function (event) {
-			event.preventDefault();
-			navigateTo(event.target.getAttribute('href'));
-		});
-	});
-
-	window.onpopstate = handleRoute;
-	window.navigateTo = navigateTo; // Assicurati che navigateTo sia accessibile globalmente
-	handleRoute();
-});
+window.addEventListener("hashchange", locationHandler);
+window.addEventListener("load", initializeApp);
+window.navigateTo = navigateTo;
