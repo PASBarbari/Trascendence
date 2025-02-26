@@ -1,11 +1,11 @@
 from rest_framework import serializers
 from .models import Tasks, Progresses
-from user_app.models import Users
+from user_app.models import UserProfile
 from .dictionaries import TASK_CATEGORIES
 import datetime
 
 class TasksSerializer(serializers.ModelSerializer):
-	author = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all())
+	author = serializers.PrimaryKeyRelatedField(queryset=UserProfile.objects.all())
 	name = serializers.CharField(max_length=255)
 	description = serializers.CharField()
 	duration = serializers.DurationField()
@@ -34,7 +34,7 @@ class TasksSerializer(serializers.ModelSerializer):
 
 class ProgressesSerializer(serializers.ModelSerializer):
 	task = serializers.PrimaryKeyRelatedField(queryset=Tasks.objects.all(), many=False)
-	user = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
+	user = serializers.PrimaryKeyRelatedField(queryset=UserProfile.objects.all(), many=False)
 	rate = serializers.DecimalField(max_digits=6, decimal_places=3, default=0)
 	begin_date = serializers.DateTimeField(read_only=True)
 	last_modified = serializers.DateTimeField(read_only=True)
@@ -62,7 +62,7 @@ class ProgressesSerializer(serializers.ModelSerializer):
 
 class ProgressesReadSerializer(serializers.ModelSerializer):
     task = TasksSerializer()
-    user = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
+    user = serializers.PrimaryKeyRelatedField(queryset=UserProfile.objects.all(), many=False)
     rate = serializers.DecimalField(max_digits=6, decimal_places=3, default=0)
     begin_date = serializers.DateTimeField(read_only=True)
     last_modified = serializers.DateTimeField(read_only=True)

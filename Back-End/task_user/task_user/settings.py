@@ -26,7 +26,7 @@ def arise(exception):
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-7&!j-$l_bhb60^ce0cwgnp+9=sylmv@sy(fu)d-vylz!b=g!ur'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -49,13 +49,14 @@ CSRF_TRUSTED_ORIGINS = [
 # Application definition
 
 INSTALLED_APPS = [
-  'django.contrib.admin',
-  'django.contrib.auth',
-  'django.contrib.contenttypes',
-  'django.contrib.sessions',
-  'django.contrib.messages',
-  'django.contrib.staticfiles',
+	'django.contrib.admin',
+	'django.contrib.auth',
+	'django.contrib.contenttypes',
+	'django.contrib.sessions',
+	'django.contrib.messages',
+	'django.contrib.staticfiles',
 	'rest_framework',
+	'rest_framework_simplejwt',
 	'django_filters',
 	'oauth2_provider',
 	'task_app',
@@ -146,14 +147,14 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CELERY_BROKER_URL = 'redis://localhost:6702/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6702/0'
-CELERY_BEAT_SCHEDULE = {
-	'task_notify': {
-		'task': 'task_app.celerity_task.task_notify',
-		'schedule': crontab(minute=0, hour=10),
-	},
-}
+# CELERY_BROKER_URL = 'redis://localhost:6702/0'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6702/0'
+# CELERY_BEAT_SCHEDULE = {
+# 	'task_notify': {
+# 		'task': 'task_app.celerity_task.task_notify',
+# 		'schedule': crontab(minute=0, hour=10),
+# 	},
+# }
 
 
 # Internationalization
@@ -179,7 +180,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-	# TODO riaggiungere 'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+	'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+	'DEFAULT_AUTHENTICATION_CLASSES': ['user_app.middleware.JWTAuth'],
 
 }
 

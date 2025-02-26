@@ -1,0 +1,9 @@
+apiVersion: move2kube.konveyor.io/v1alpha1
+kind: ImageMetadata
+spec:
+  tags:
+    - srcs-redis:latest
+  ports: []
+  accessedDirs:
+    - ""
+  userID: -1

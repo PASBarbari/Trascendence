@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u+0oqxb+f!fa)0f_m6ezqtb*m-86^vxt$9rn%-_nbxc3@qo_@0'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
 API_KEY = os.getenv('API_KEY', '123')
 
 def arise(exception):
@@ -29,9 +29,6 @@ def arise(exception):
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
-
 
 ALLOWED_HOSTS = [
 	'localhost',
@@ -144,10 +141,15 @@ oauth2_settings = {
 }
 
 REST_FRAMEWORK = {
-	'DEFAULT_PERMISSION_CLASSES': [
-		# 'my_notifications.middleware.TokenAuthPermission',
-		'my_notifications.middleware.APIKeyPermission',
+	'DEFAULT_AUTHENTICATION_CLASSES': [
+		'my_notifications.middleware.JWTAuth',
 	],
+	'DEFAULT_PERMISSION_CLASSES': [
+		'rest_framework.permissions.IsAuthenticated',
+	],
+	'DEFAULT_FILTER_BACKENDS': [
+		'django_filters.rest_framework.DjangoFilterBackend'
+	]
 }
 
 
@@ -170,12 +172,12 @@ CHANNEL_LAYERS = {
     }
 }
 
-CELERY_BROKER_URL = 'redis://localhost:6701/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6701/0'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
+# CELERY_BROKER_URL = 'redis://localhost:6701/0'
+# CELERY_RESULT_BACKEND = 'redis://localhost:6701/0'
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
+# CELERY_RESULT_SERIALIZER = 'json'
+# CELERY_TIMEZONE = 'UTC'
 
 
 # Password validation

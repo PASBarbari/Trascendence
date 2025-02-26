@@ -2,14 +2,14 @@ from django.shortcuts import render
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
 from asgiref.sync import async_to_sync, sync_to_async
-from rest_framework import permissions, status
+from rest_framework import status
 from channels.layers import get_channel_layer
 from .models import ImmediateNotification, QueuedNotification, ScheduledNotification, NotificationsGroup, SentNotification
 from .serializers import UniversalNotificationSerializer, UserProfileSerializer, NotificationsGroupSerializer, ImmediateNotificationSerializer, ScheduledNotificationSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination
-from .middleware import APIKeyPermission
+from .middleware import ServiceAuthentication
 
 def send_notification(user_id, group_id, notification):
 	if user_id is not None:
@@ -68,13 +68,14 @@ async def send_user_notification(user_id, notification):
 		return False
 
 class NewUser(generics.CreateAPIView):
-	permissionClasses = [APIKeyPermission]
+	permission_classes = []
+	authentication_classes = [ServiceAuthentication]
 	serializer_class = UserProfileSerializer
 	fields = ['user_id', 'email', 'is_online']
 
 class NewNotification(generics.CreateAPIView):
-	permission_classes = [APIKeyPermission]
-
+	permission_classes = []
+	authentication_classes = [ServiceAuthentication]
 	def get_queryset(self):
 		ImmediateNotifications = ImmediateNotification.objects.all()
 		ScheduledNotifications = ScheduledNotification.objects.all()
