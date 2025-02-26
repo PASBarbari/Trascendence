@@ -6,10 +6,10 @@ class PongAppConfig(AppConfig):
 	name = 'pong_app'
 
 	def ready(self):
-		import pong_app.signals
 		try:
-			from .authentications import register_self , user_register_self
-			register_self()
+			import pong_app.signals
+			# from .authentications import register_self , user_register_self
+			# register_self()
 		except Exception as e:
 			print(f"Error during registration: {e}")
 	

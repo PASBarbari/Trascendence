@@ -13,7 +13,7 @@ class Tournament(models.Model):
 	max_partecipants = models.IntegerField()
 	winner = models.IntegerField(default=0)
 
-class Player(models.Model):
+class UserProfile(models.Model):
 	user_id = models.IntegerField(primary_key=True)
 	username = models.CharField(max_length=255)
 	email = models.EmailField()
@@ -21,8 +21,8 @@ class Player(models.Model):
 
 class Game(models.Model):
 	id = models.AutoField(primary_key=True)
-	player_1 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_1')
-	player_2 = models.ForeignKey(Player, on_delete=models.CASCADE, related_name='player_2', null=True)
+	player_1 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_1')
+	player_2 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_2', null=True)
 	player_1_score = models.IntegerField(default=0)
 	player_2_score = models.IntegerField(default=0)
 	begin_date = models.DateTimeField(auto_now_add=True)

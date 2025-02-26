@@ -10,7 +10,7 @@ class PlayerSerializer(serializers.ModelSerializer):
     #     return value
     
     class Meta:
-        model = Player
+        model = UserProfile
         fields = '__all__'
 
 class GamesSerializer(serializers.ModelSerializer):
