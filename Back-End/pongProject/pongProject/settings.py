@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 	'rest_framework',
 	'django_filters',
-	'oauth2_provider',
 	'corsheaders',
 	'pong_app',
 	'channels',
@@ -109,18 +108,6 @@ DATABASES = {
 }
 
 import secrets
-
-oauth2_settings = {
-	'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
-	'CLIENT_ID': secrets.token_urlsafe(32),
-	'CLIENT_SECRET': secrets.token_urlsafe(64),
-	'TOKEN': '',
-	'REFRESH_TOKEN': '',
-	'EXPIRES': '',
-	'token_type': '',
-	'scope': '',
-	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
-}
 
 CHANNEL_LAYERS = {
     'default': {
