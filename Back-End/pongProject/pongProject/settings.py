@@ -67,7 +67,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
-	'pong_app.middleware.TokenAuthMiddlewareHTTP',
 ]
 
 ROOT_URLCONF = 'pongProject.urls'
@@ -187,5 +186,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 	'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
-	'DEFAULT_AUTHENTICATION_CLASSES': ['pong_app.middleware.JWTauth'],
+	'DEFAULT_AUTHENTICATION_CLASSES': ['pong_app.middleware.JWTAuth'],
 }

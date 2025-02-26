@@ -8,7 +8,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
 import os
-from pong_app.middleware import TokenAuthMiddlewareStack
+from pong_app.middleware import JWTAuthMiddlewareStack
 from django.core.asgi import get_asgi_application
 from pongProject.routing import websocket_urlpatterns
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -17,7 +17,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pongProject.settings')
 
 application = ProtocolTypeRouter ({
 	"http": get_asgi_application(),
-	"websocket": TokenAuthMiddlewareStack(
+	"websocket": JWTAuthMiddlewareStack(
 		URLRouter(websocket_urlpatterns)
 	),
 })

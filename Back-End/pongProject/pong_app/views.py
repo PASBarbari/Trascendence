@@ -31,7 +31,7 @@ class PlayerManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (permissions.AllowAny,)
 	serializer_class = PlayerSerializer
 	lookup_url_kwarg = 'user_id'
-	queryset = Player.objects.all()
+	queryset = UserProfile.objects.all()
 
 class GameGen(generics.ListCreateAPIView):
 	permission_classes = (permissions.AllowAny,)
@@ -75,7 +75,7 @@ class JoinTournament(APIView):
 		if not tournament_id or not user_id:
 			return Response({'error': 'tournament_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament = get_object_or_404(Tournament, id=tournament_id)
-		player = get_object_or_404(Player, user_id=user_id)
+		player = get_object_or_404(UserProfile, user_id=user_id)
 		if tournament.partecipants >= tournament.max_partecipants:
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
 		if tournament.winner != 0:
@@ -100,7 +100,7 @@ class EndTournament(APIView):
 		if not tournament_id or not winner_id:
 			return Response({'error': 'tournament_id and winner_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament = get_object_or_404(Tournament, id=tournament_id)
-		winner = get_object_or_404(Player, user_id=winner_id)
+		winner = get_object_or_404(UserProfile, user_id=winner_id)
 		if tournament.winner != 0:
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
 		tournament.winner = winner_id

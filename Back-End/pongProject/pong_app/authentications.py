@@ -87,7 +87,7 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 import base64 ,requests
 from pongProject.settings import oauth2_settings
-from .models import Player
+from .models import UserProfile
 from django.contrib.auth import get_user_model
 
 class TokenAuthentication(BaseAuthentication):
@@ -132,7 +132,7 @@ class TokenAuthentication(BaseAuthentication):
 							data = response.json()
 							if data.get('active'):
 									email = data.get('username')
-									User = Player.objects.get(email=email)
+									User = UserProfile.objects.get(email=email)
 									try:
 										# Cache the user with a timeout (e.g., 5 minutes)
 											cache.set(token, User, timeout=300)
