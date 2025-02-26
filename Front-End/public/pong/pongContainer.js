@@ -27,8 +27,8 @@ function renderPongInfo() {
 
 function handleLocalePong() {
 	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
-	createGame(9, 10);
-	//window.location.href = '/pong';
+  createGame(9, 10);
+	window.navigateTo('#pong');
 }
 
 function handleMultiPong() {
@@ -144,7 +144,7 @@ async function onHandleSubmit(e, email, password) {
 	const loginSuccess = await loginUser(email, password, csrftoken, false);
 	if (loginSuccess) {
 		//TODO chiamata a Gu per poi aprire pong
-		window.location.href = '/pong';
+		window.navigateTo('#pong');
 	}
 }
 
