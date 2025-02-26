@@ -95,6 +95,7 @@ services:
     env_file:
       - ./chatservice/.env
   
+
   # chatservice:
   #   build:
   #     context: ./chatservice
@@ -143,6 +144,7 @@ services:
   #     - auth_network
   #     - notification_network
 
+
   redis_chat:
     image: "redis:latest"
     ports:
@@ -155,7 +157,6 @@ services:
     networks:
       - chat_network
       - exporters_network
-
 
   redis_notification:
     image: "redis:latest"
@@ -273,6 +274,7 @@ services:
   #     - "9121:9121"
   #   networks:
   #     - exporters_network
+
 volumes:
   prometheus_data: {}
   loki-data: {}
