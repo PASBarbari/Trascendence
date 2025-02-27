@@ -103,7 +103,7 @@ class EndTournament(APIView):
 		winner = get_object_or_404(UserProfile, user_id=winner_id)
 		if tournament.winner != 0:
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
-		tournament.winner = winner_id
+		tournament.winner = winner.user_id
 		tournament.save()
 		return Response({'message': 'tournament ended'}, status=status.HTTP_200_OK)
 
