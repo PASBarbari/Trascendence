@@ -28,7 +28,7 @@ def arise(exception):
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', True)
 
 ALLOWED_HOSTS = []
 
