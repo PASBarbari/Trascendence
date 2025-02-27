@@ -58,3 +58,7 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+.threejs-canvas {
+	border-radius: 12px;
+}
