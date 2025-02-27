@@ -1,14 +1,15 @@
 # praticamente quando un modello viene creato ricveve il segnale e fa quello che gli chiedi
 import math
 import random
+from django.shortcuts import render, get_object_or_404
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from .models import Game
+from .models import *
 import logging
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
-from .serializer import GameStateSerializer
+from .serializer import *
 
 # ring_size = [160 , 90]
 tick_rate = 60
@@ -18,7 +19,7 @@ tick_rate = 60
 # self.p_speed = 0.1
 ball_acc = 0.1
 class GameState:
-	def __init__(self, player_1, player_2, game_id, player_length):
+	def __init__(self, player_1, player_2, game_id, player_length, tournament_id):
 		self.game_id = game_id
 		self.player_1 = player_1
 		self.player_2 = player_2
@@ -42,6 +43,7 @@ class GameState:
 		self.is_started = [0 , 0]
 		self.wall_hit_pos = 0
 		self.avg_frame_time = [0 , 1]
+		self.tournament_id = tournament_id
 
 	async def start(self):
 		self.running = True
@@ -69,7 +71,17 @@ class GameState:
 			elapsed = time.monotonic() - start_time
 			self.avg_frame_time += [elapsed, 1]
 			await asyncio.sleep(max(0, tick_interval - elapsed))
-	
+		self.game_end()
+
+	def game_end(self):
+		if self.tournament_id:
+			Game.objects.update_or_create(
+				player_1_score = self.player_1_score,
+				player_2_score = self.player_2_score,
+				tournament_id = self.tournament_id
+			)
+		
+
 	def p1_is_hit(self):
 		if (
 			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player_1_pos[0] + self.p_width / 2 and
@@ -199,20 +211,112 @@ class GameState:
 	def quit_game(self):
 		print(f"Game {self.game_id} quit")
 		self.running = False
-		# if player == self.player_1:
-		# 	self.player_1_score = -1
-		# else:
-		# 	self.player_2_score = -1
+		#TODO set to 0 who quit
+# @receiver(post_save, sender=Game)
+# def start_game(sender, instance, created, **kwargs):
+# 	if created:
+# 		game_state = GameState(instance.player_1, instance.player_2, instance.id, 10)
+# 		instance.game_state = game_state
+# 		instance.save()
+# 		logger = logging.getLogger(__name__)
+# 		logger.info(f'Game started: {instance}')
+# 	else:
+# 		logger = logging.getLogger(__name__)
+# 		logger.info(f'Game already started: {instance}')
+ 
+class TournamentState:
+	def __init__(self, *args, **kwargs):
+		self.id = kwargs['tournament_id']
+		self.name = kwargs['name']
+		self.max_p = kwargs['max_p']
+		self.req_lvl = kwargs['req_lvl']
+		self.nbr_player = 1
+		self.players = []
+		self.next_round = []
+		self.players.append(kwargs['player_id'])
+		self.creator = kwargs['player_id']
+	
+	def add_player(self, player):
+		p = get_object_or_404(UserProfile, user_id=player['user_id'])
+		if player['user_id'] in self.players:
+			return 'Player already in the tournament'
+		if p.level < self.req_lvl:
+			return 'Player level is too low'
+		if self.nbr_player >= self.max_p:
+			return 'Tournament is full'
+		self.nbr_player += 1
+		self.players.append(player['user_id'])
+		return 'Player added to the tournament'
 
-@receiver(post_save, sender=Game)
-def start_game(sender, instance, created, **kwargs):
-	if created:
-		game_state = GameState(instance.player_1, instance.player_2, instance.id, 10)
-		instance.game_state = game_state
-		instance.save()
-		logger = logging.getLogger(__name__)
-		logger.info(f'Game started: {instance}')
-	else:
-		logger = logging.getLogger(__name__)
-		logger.info(f'Game already started: {instance}')
-  
+	def start(self):
+		if self.nbr_player < 3:
+			return {
+				"type": "error",
+				'error':'Not enough players'
+			}
+		self.players = random.shuffle(self.players)
+		self.max_p = len(self.players)
+		next_2pow = int(math.pow(2, math.ceil(math.log2(self.nbr_player))))
+		nbr_bye = next_2pow - self.nbr_player
+		self.partecipants = self.players
+		self.partecipants.extend([0] * nbr_bye)
+		self.half = len(self.partecipants) / 2
+		first = self.partecipants[0:self.half]
+		last = self.partecipants[self.half:]
+		self.next_round = []
+		for pair in zip(first, last):
+			if pair[0] == 0:
+				self.next_round.append(pair[1])
+			elif pair[1] == 0:
+				self.next_round.append(pair[0])
+			else:
+				self.create_game(pair[0], pair[1])
+		return {
+			'type' : 'success',
+			'success' : 'Tournament started'
+		}
+
+	def brackets(self, *args, **kwargs):
+		try:
+			if self.partecipants.get(kwargs['winner']) == None:
+				return 'Player not in the tournament'
+			self.next_round.append(kwargs['winner'])
+			if len(self.next_round) == self.half:
+				self.partecipants = self.next_round
+				self.next_round = []
+				if len(self.partecipants) == 1:
+					self.winner = self.partecipants[0]
+					self.save_tournament()
+					return 'Tournament ended'
+				else:
+					self.half = len(self.partecipants) / 2
+					first = self.partecipants[0:self.half]
+					last = self.partecipants[self.half:]
+					for pair in zip(first, last):
+						if pair[0] == 0:
+							self.next_round.append(pair[1])
+						elif pair[1] == 0:
+							self.next_round.append(pair[0])
+						else:
+							self.create_game(pair[0], pair[1])
+			else:
+				return 'Game registered successfully'
+		except Exception as e:
+			return f'Error registering game: {e}'
+			
+
+	def save_tournament(self):
+		t = get_object_or_404(Tournament, id=self.id)
+		t.winner = self.winner
+		t.save()
+		
+	def create_game(self, player_1, player_2):
+		get_channel_layer().group_send(
+			f'tournament_{self.id}',
+			{
+				'type': 'create_game',
+				'player_1': player_1,
+				'player_2': player_2,
+				'tournament_id': self.id
+			}
+		)

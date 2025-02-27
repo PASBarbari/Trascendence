@@ -10,5 +10,5 @@ User = get_user_model()
 @receiver(post_migrate)
 def create_superuser(sender, **kwargs):
     if not User.objects.filter(email=ADMIN['email']).exists():
-        User.objects.create_superuser(username=ADMIN['username'], email=ADMIN['email'], password=ADMIN['password'])
+        User.objects.create_superuser(email=ADMIN['email'], password=ADMIN['password'])
         print('Superuser created successfully.')
