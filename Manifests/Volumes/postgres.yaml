@@ -4,7 +4,7 @@ metadata:
   name: postgres-pv
 spec:
   capacity:
-    storage: 4Gi
+    storage: 5Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
