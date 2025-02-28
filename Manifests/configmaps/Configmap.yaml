@@ -32,3 +32,20 @@ data:
   chat_db: chat-db-service
   redis: redis-service
   redis_port: "6379"
+  redis_db: "0"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pong-configmap
+  namespace: pong
+data:
+  login_url: login-service
+  chat_url: chat-service
+  users_url: users-service
+  notifications_url: notifications-service
+  pong_url: pong-service
+  chat_db: chat-db-service
+  redis: redis-service
+  redis_port: "6379"
+  redis_db: "2"

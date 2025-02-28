@@ -1,11 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 
-cd /chat
+set -e
 
-# Apply datab
-python3 manage.py makemigrations
-python3 manage.py makemigrations my_chat
-python3 manage.py migrate
+# migrations at startup
+python manage.py makemigrations
+python manage.py makemigrations my_login
+python manage.py migrate
 
-# Star
-python3 manage.py runserver 0.0.0.0:8000
+# For development
+if [ "$DEBUG" = "True" ]; then
+    python manage.py runserver 0.0.0.0:8000
+else
+    # For production use Gunicorn (WSGI server)
+    gunicorn login.wsgi:application --bind 0.0.0.0:8000 || { echo "Gunicorn failed to start"; exit 1; }
+fi
