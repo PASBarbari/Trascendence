@@ -64,7 +64,7 @@ def get_user_from_token(token):
 
 		# Retrieve the user from the database
 		try:
-			user = UserProfile.objects.get(id=user_id)
+			user = UserProfile.objects.get(user_id=user_id)
 			# Cache the user with a timeout (e.g., 5 minutes)
 			cache.set(token, user, timeout=300)
 			return user
@@ -78,6 +78,7 @@ class JWTAuth(JWTAuthentication):
 	"""
 	Enhanced JWT authentication class with caching support and improved error handling.
 	"""
+	user_id_claim = 'user_id'
 	def authenticate(self, request):
 		# Skip authentication for specific paths if needed
 		if request.path.endswith('/chat/new_user/') and request.method == 'POST':
@@ -117,10 +118,34 @@ class JWTAuth(JWTAuthentication):
 			except Exception as e:
 				# Log the error but don't cache exceptions
 				logger.warning(f"JWT authentication failed: {str(e)}")
+				logger.warning(f"Token details: {token[:10]}...{token[-10:]}")
+				try:
+					decoded = AccessToken(token)
+					user_id = decoded.get('user_id')
+					logger.warning(f"User ID from token: {user_id}, exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
+				except Exception as inner_e:
+							logger.warning(f"Token decode failed: {str(inner_e)}")
 				return None
 		
 		# No auth header or not a Bearer token
 		return super().authenticate(request)
+	def get_user(self, validated_token):
+		"""
+		Sovrascrive il metodo get_user per utilizzare UserProfile invece del modello User standard
+		"""
+		try:
+			user_id = validated_token[self.user_id_claim]
+			
+			# Cerca l'utente nel modello UserProfile
+			user = UserProfile.objects.get(user_id=user_id)
+			
+			return user
+		except UserProfile.DoesNotExist:
+			logger.warning(f"User ID {user_id} from token not found in UserProfile")
+			return None
+		except Exception as e:
+			logger.error(f"Error getting user from token: {str(e)}")
+			return None
 
 class JWTAuthMiddleware(BaseMiddleware):
 	"""
@@ -143,12 +168,12 @@ class JWTAuthMiddleware(BaseMiddleware):
 		else:
 			# Try to get token from headers (less common for WebSockets but possible)
 			headers = dict(scope['headers'])
-			auth_header = headers.get(b'Authorization')
+			auth_header = headers.get(b'authorization')
 			if auth_header:
 				token_str = auth_header.decode()
 				if token_str.startswith('Bearer '):
 					token = token_str[7:]  # Remove 'Bearer ' prefix
-
+		
 		if token:
 			# Get user from token
 			try:
@@ -176,7 +201,7 @@ class JWTAuthMiddleware(BaseMiddleware):
 				
 			# Retrieve the user from the database
 			try:
-				user = UserProfile.objects.get(id=user_id)
+				user = UserProfile.objects.get(user_id=user_id)
 				# Cache the user with a timeout (e.g., 5 minutes)
 				cache.set(f"jwt_ws_user_{token}", user, timeout=300)
 				return user
@@ -241,7 +266,7 @@ def JWTAuthMiddlewareStack(inner):
 
 # 			# Retrieve the user from the database
 # 			try:
-# 				user = UserProfile.objects.get(id=user_id)
+# 				user = UserProfile.objects.get(user_id=user_id)
 # 				# Cache the user with a timeout (e.g., 5 minutes)
 # 				cache.set(token, user, timeout=300)
 # 				return user
@@ -265,7 +290,7 @@ def JWTAuthMiddlewareStack(inner):
 
 # 			# Retrieve the user from the database
 # 			try:
-# 				user = UserProfile.objects.get(id=user_id)
+# 				user = UserProfile.objects.get(user_id=user_id)
 # 				# Cache the user with a timeout (e.g., 5 minutes)
 # 				cache.set(token, user, timeout=300)
 # 				return user

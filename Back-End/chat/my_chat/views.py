@@ -16,7 +16,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 import logging
-from .Permissions import ChatRoomPermissions
+from .Permissions import ChatRoomPermissions , IsAuthenticatedUserProfile , IsOwnUserProfile
+
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -72,7 +73,7 @@ class new_user(generics.ListCreateAPIView):
             self.permission_classes = []  # No need for permissions as authentication will handle it
             self.authentication_classes = [ServiceAuthentication]
         else:
-            self.permission_classes = (permissions.IsAuthenticated,)
+            self.permission_classes = (IsAuthenticatedUserProfile,)
             self.authentication_classes = (JWTAuthentication,)
         return super().get_permissions()
         
@@ -88,7 +89,8 @@ class CreateChat(generics.ListCreateAPIView):
 
 class GetChats(generics.ListAPIView):
 	serializer_class = chat_roomSerializer
-	permission_classes = [IsAuthenticated]
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['users__user_id']
 	queryset = ChatRoom.objects.all()

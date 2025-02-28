@@ -72,6 +72,18 @@ async function GetProfile() {
 }
 
 async function initializeProfile() {
+    if (document.readyState === 'loading') {
+        await new Promise(resolve => {
+            document.addEventListener('DOMContentLoaded', resolve);
+        });
+    }
+    
+    // Verifica che l'elemento esista
+    if (!document.getElementById('profile')) {
+        console.error("TODO remove Elemento #profile non trovato nel DOM");
+        return;
+    }
+
 	await GetProfile();
 	renderProfile();
 }
@@ -231,6 +243,6 @@ function renderProfile() {
 	});
 }
 
-initializeProfile();
+// initializeProfile();
 
-export { renderProfile };
+export { renderProfile, initializeProfile };

@@ -2,6 +2,7 @@ import logging
 from rest_framework.permissions import BasePermission
 from django.core.cache import cache
 from .models import ChatRoom, UserProfile, ChatMember
+from django.contrib.auth.models import AnonymousUser
 
 logger = logging.getLogger('django')
 
@@ -268,3 +269,33 @@ class ChatRoomPermissions(BasePermission):
 			return IsChatMember().has_object_permission(request, view, obj)
 			
 		return False
+	
+class IsAuthenticatedUserProfile(BasePermission):
+    """
+    Permesso personalizzato per il modello UserProfile.
+    Verifica semplicemente se l'utente è autenticato (non è AnonymousUser).
+    """
+    def has_permission(self, request, view):
+        return request.user is not None and not isinstance(request.user, AnonymousUser)
+
+class IsOwnUserProfile(BasePermission):
+    """
+    Permesso che verifica se l'utente sta accedendo ai propri dati.
+    Da usare per le richieste che manipolano dati utente.
+    """
+    def has_permission(self, request, view):
+        # Verifica prima se l'utente è autenticato
+        if not IsAuthenticatedUserProfile().has_permission(request, view):
+            return False
+            
+        # Per le viste che usano l'ID utente nell'URL
+        user_id = view.kwargs.get('user_id')
+        if user_id and str(request.user.user_id) == str(user_id):
+            return True
+            
+        # Per le richieste che usano l'ID utente nei parametri query
+        user_id_param = request.query_params.get('user_id')
+        if user_id_param and str(request.user.user_id) == str(user_id_param):
+            return True
+            
+        return False

@@ -35,6 +35,7 @@ async function getChatRooms() {
 				headers: {
 					'Content-Type': 'application/json',
 					'Authorization': `Bearer ${token}`,
+					'X-CSRFToken': getCookie('csrftoken'),
 				},
 			}
 		);
