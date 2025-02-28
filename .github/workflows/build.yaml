@@ -49,7 +49,7 @@ jobs:
       id: chat-changes
       if: ${{ github.event.inputs.specific_service == '' || github.event.inputs.specific_service == 'chat' }}
       run: |
-        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Services/Chat/"; then
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Back-End/chat/"; then
           echo "changed=true" >> $GITHUB_OUTPUT
         elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           echo "changed=true" >> $GITHUB_OUTPUT
@@ -62,7 +62,7 @@ jobs:
       if: ${{ steps.chat-changes.outputs.changed == 'true' }}
       uses: docker/build-push-action@v4
       with:
-        context: ./Services/Chat
+        context: ./Back-End/chat
         push: true
         tags: |
           ${{ secrets.DOCKER_HUB_USERNAME }}/chat:latest
@@ -73,7 +73,7 @@ jobs:
       id: login-changes
       if: ${{ github.event.inputs.specific_service == '' || github.event.inputs.specific_service == 'login' }}
       run: |
-        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Services/Login/"; then
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Back-End/login/"; then
           echo "changed=true" >> $GITHUB_OUTPUT
         elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
           echo "changed=true" >> $GITHUB_OUTPUT
@@ -86,13 +86,13 @@ jobs:
       if: ${{ steps.login-changes.outputs.changed == 'true' }}
       uses: docker/build-push-action@v4
       with:
-        context: ./Services/Login
+        context: ./Back-End/login
         push: true
         tags: |
           ${{ secrets.DOCKER_HUB_USERNAME }}/login-server:latest
           ${{ secrets.DOCKER_HUB_USERNAME }}/login-server:${{ steps.version.outputs.version }}
 
-    # Check for changes in Frontend
+    # Check for changes in Frontend (assuming it's at root level)
     - name: Check Frontend changes
       id: frontend-changes
       if: ${{ github.event.inputs.specific_service == '' || github.event.inputs.specific_service == 'frontend' }}
@@ -115,3 +115,75 @@ jobs:
         tags: |
           ${{ secrets.DOCKER_HUB_USERNAME }}/frontend:latest
           ${{ secrets.DOCKER_HUB_USERNAME }}/frontend:${{ steps.version.outputs.version }}
+
+    # Check for changes in Pong Service
+    - name: Check Pong changes
+      id: pong-changes
+      if: ${{ github.event.inputs.specific_service == '' || github.event.inputs.specific_service == 'pong' }}
+      run: |
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Back-End/pongProject/"; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    # Build Pong Service if changed
+    - name: Build and push Pong Service
+      if: ${{ steps.pong-changes.outputs.changed == 'true' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: ./Back-End/pongProject
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_HUB_USERNAME }}/pong-server:latest
+          ${{ secrets.DOCKER_HUB_USERNAME }}/pong-server:${{ steps.version.outputs.version }}
+
+    # Check for changes in Notifications Service
+    - name: Check Notifications changes
+      id: notifications-changes
+      if: ${{ github.event.inputs.specific_service == '' || github.event.inputs.specific_service == 'notifications' }}
+      run: |
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Back-End/Notifications/"; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    # Build Notifications Service if changed
+    - name: Build and push Notifications Service
+      if: ${{ steps.notifications-changes.outputs.changed == 'true' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: ./Back-End/Notifications
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_HUB_USERNAME }}/notifications-server:latest
+          ${{ secrets.DOCKER_HUB_USERNAME }}/notifications-server:${{ steps.version.outputs.version }}
+
+    # Check for changes in Task User Service
+    - name: Check Task User changes
+      id: task-user-changes
+      if: ${{ github.event.inputs.specific_service == '' || github.event.inputs.specific_service == 'task-user' }}
+      run: |
+        if git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -q "^Back-End/task_user/"; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+
+    # Build Task User Service if changed
+    - name: Build and push Task User Service
+      if: ${{ steps.task-user-changes.outputs.changed == 'true' }}
+      uses: docker/build-push-action@v4
+      with:
+        context: ./Back-End/task_user
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_HUB_USERNAME }}/task-user-server:latest
+          ${{ secrets.DOCKER_HUB_USERNAME }}/task-user-server:${{ steps.version.outputs.version }}
