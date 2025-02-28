@@ -244,7 +244,8 @@ propcache==0.2.0
     #   -r Back-End/requirements.in
     #   aiohttp
     #   yarl
-psycopg==3.2.3
+psycopg==3.2.5
+psycopg-binary==3.2.5
     # via -r Back-End/requirements.in
 pyasn1==0.6.1
     # via
