@@ -18,6 +18,8 @@ COPY --from=builder /install /usr/local/lib/python3.11/site-packages/
 COPY . /app
 WORKDIR /app
 
+RUN python3 -m pip install daphne
+
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
