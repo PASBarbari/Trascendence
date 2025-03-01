@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from rest_framework import permissions, status, generics, filters
 from rest_framework.views import APIView
@@ -5,6 +6,7 @@ from rest_framework.response import Response
 from .models import *
 from .serializer import *
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.csrf import csrf_exempt
 
 class MultipleFieldLookupMixin:
 	"""
@@ -122,3 +124,7 @@ class PlayerMatchHistory(APIView):
 		games = Game.objects.filter(player_1=user_id) | Game.objects.filter(player_2=user_id)
 		serializer = GamesSerializer(games, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
+
+@csrf_exempt
+def health_check(request):
+	return JsonResponse({'status': 'ok'})

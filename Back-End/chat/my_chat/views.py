@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions
 from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +17,7 @@ from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
 import logging
 from .Permissions import ChatRoomPermissions
+from django.views.decorators.csrf import csrf_exempt
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -166,3 +167,7 @@ class DownloadSimilaritiesData(APIView):
 		}
 		response = HttpResponse(data, headers)
 		return Response(response, status=status.HTTP_200_OK)
+
+@csrf_exempt
+def health_check(request):
+	return JsonResponse({'status': 'ok'})

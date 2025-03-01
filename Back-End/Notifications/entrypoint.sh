@@ -2,9 +2,12 @@
 
 set -e
 
+export DJANGO_SETTINGS_MODULE=Notifications.settings
+
+
 # migrations at startup
 python manage.py makemigrations
-python manage.py makemigrations pong_app
+python manage.py makemigrations my_notifications
 python manage.py migrate
 
 # For development

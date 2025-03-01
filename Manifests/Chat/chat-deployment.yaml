@@ -18,6 +18,7 @@ spec:
       containers:
       - name: chat-deployment
         image: bombatomica/chat
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         resources:

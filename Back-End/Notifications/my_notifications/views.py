@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render
 from rest_framework import viewsets, generics
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.views import APIView
 from rest_framework.pagination import CursorPagination
 from .middleware import ServiceAuthentication
+from django.views.decorators.csrf import csrf_exempt
 
 def send_notification(user_id, group_id, notification):
 	if user_id is not None:
@@ -127,3 +129,7 @@ class AddUserToGroupView(APIView):
 				return Response({'error': 'Group not found'}, status=status.HTTP_404_NOT_FOUND)
 		else:
 			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@csrf_exempt
+def health_check(request):
+	return JsonResponse({'status': 'ok'})
