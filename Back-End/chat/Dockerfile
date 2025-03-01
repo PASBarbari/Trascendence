@@ -18,8 +18,8 @@ COPY --from=builder /install /usr/local/lib/python3.11/site-packages/
 COPY . /app
 WORKDIR /app
 
-COPY entrypoint.sh /entrypoint.sh
+COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
-ENTRYPOINT ["/entrypoint.sh"]
+CMD [ "sh", "/entrypoint.sh" ]

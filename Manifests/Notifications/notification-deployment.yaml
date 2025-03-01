@@ -114,11 +114,11 @@ spec:
             secretKeyRef:
               name: notifications-admin
               key: admin_email
-        - name: SECRET_KEY
+        - name: secret-key
           valueFrom:
             secretKeyRef:
-              name: notifications-admin
-              key: secret_key
+              name: notifications-api
+              key: secret-key
         - name: DEBUG
           value: "False"
 ---

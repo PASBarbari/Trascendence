@@ -99,11 +99,11 @@ spec:
            secretKeyRef:
             name: login-secret
             key: admin_username
-        - name: SECRET_KEY
+        - name: secret-key
           valueFrom:
            secretKeyRef:
             name: login-secret
-            key: secret_key
+            key: secret-key
         - name: DEBUG
           value: "False"
 ---

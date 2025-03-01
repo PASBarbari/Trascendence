@@ -112,6 +112,11 @@ spec:
             secretKeyRef:
               name: user-admin
               key: admin_email
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: user-admin
+              key: secret-key
 ---
 apiVersion: v1
 kind: Service
