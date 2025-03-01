@@ -1,45 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pong-deployment
-  namespace: pong
+  name: user-deployment
+  namespace: user
   labels:
-    app: pong
+    app: user
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pong
+      app: user
   template:
     metadata:
       labels:
-        app: pong
+        app: user
     spec:
       initContainers:
-        - name: init-pong-db
+        - name: init-user-db
           image: busybox
           command: ['sh', '-c', 'until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB; do echo waiting for postgres; sleep 2; done;']
           env:
           - name: POSTGRES_DB
             valueFrom:
               secretKeyRef:
-                name: pong-db-secret
-                key: pong-db
+                name: user-db-secret
+                key: user-db
           - name: POSTGRES_USER
             valueFrom:
               secretKeyRef:
-                name: pong-db-secret
-                key: pong-db-user
+                name: user-db-secret
+                key: user-db-user
           - name: POSTGRES_HOST
             valueFrom:
               configMapKeyRef:
-                name: pong-configmap
-                key: pong_db
+                name: user-configmap
+                key: user_db
           - name: POSTGRES_PORT
             value: "5432"
       containers:
-      - name: pong-deployment
-        image: bombatomica/pong
+      - name: user-deployment
+        image: bombatomica/user
         ports:
         - containerPort: 8000
         resources:
@@ -53,98 +53,78 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: pong-db-secret
-              key: pong-db
+              name: user-db-secret
+              key: user-db
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: pong-db-secret
-              key: pong-db-user
+              name: user-db-secret
+              key: user-db-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pong-db-secret
-              key: pong-db-password
+              name: user-db-secret
+              key: user-db-password
         - name: POSTGRES_HOST
           valueFrom:
             configMapKeyRef:
-              name: pong-configmap
-              key: pong_db
+              name: user-configmap
+              key: user_db
         - name: POSTGRES_PORT
           value: "5432"
-        - name: REDIS_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: pong-configmap
-              key: redis
-        - name: REDIS_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: pong-configmap
-              key: redis_port
-        - name: REDIS_DB
-          valueFrom:
-            configMapKeyRef:
-              name: pong-configmap
-              key: redis_db
         - name: LOGIN_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: pong-configmap
+              name: user-configmap
               key: login_url
-        - name: CHAT_SERVICE
-          valueFrom:
-            configMapKeyRef:
-              name: pong-configmap
-              key: chat_url
         - name: USERS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: pong-configmap
-              key: users_url
+              name: user-configmap
+              key: user_url
         - name: NOTIFICATIONS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: pong-configmap
-              key: pong_url
+              name: user-configmap
+              key: notifications_url
+        - name: CHAT_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: user-configmap
+              key: chat_url
         - name: PONG_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: pong-configmap
+              name: user-configmap
               key: pong_url
         - name: ADMIN_USERNAME
           valueFrom:
             secretKeyRef:
-              name: pong-admin
+              name: user-admin
               key: admin_username
         - name: ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: pong-admin
+              name: user-admin
               key: admin_password
         - name: ADMIN_EMAIL
           valueFrom:
             secretKeyRef:
-              name: pong-admin
+              name: user-admin
               key: admin_email
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: pong-admin
-              key: secret_key
-        - name: DEBUG
-          value: "False"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: pong-service
-  namespace: pong
+  name: user-service
+  namespace: user
+  labels:
+    app: user
 spec:
   selector:
-    app: pong
-  ports:
-  - protocol: TCP
-    port: 8000
-    targetPort: 8000
+    app: user
   type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

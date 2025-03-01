@@ -28,6 +28,16 @@ spec:
             - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
           initialDelaySeconds: 5
           periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U $POSTGRES_USER -d $POSTGRES_DB
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 5
         resources:
           limits:
             memory: "512Mi"
@@ -51,13 +61,15 @@ spec:
            secretKeyRef:
             name: pong-db-secret
             key: pong-db-password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
         volumeMounts:
         - name: postgres-storage
           mountPath: /var/lib/postgresql/data
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: postgres-pvc
+          claimName: pong-postgres-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -83,5 +95,5 @@ spec:
   resources:
     requests:
       storage: 512Mi
-  volumeName: postgres-pv
+  volumeName: postgres-pv-pong
   storageClassName: standard

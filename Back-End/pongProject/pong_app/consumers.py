@@ -19,12 +19,41 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		await self.channel_layer.group_add(
 			self.channel_name
 		)
-
+	# Store player identification
+		user = self.scope.get('user', None)
+		if user and not user.is_anonymous:
+			self.player_id = user.id
+		else:
+		# Get from query parameters or other source
+			query_string = self.scope.get('query_string', b'').decode()
+			query_params = dict(qp.split('=') for qp in query_string.split('&') if '=' in qp)
+			self.player_id = query_params.get('player_id')
 		await self.accept()
 
 	async def disconnect(self, close_code):
+		print(f"Disconnected: {self.room_id} with code {close_code}")
+		
+		# Handle unexpected disconnections
 		if self.room_id in active_games:
-			active_games[self.room_id].quit_game()
+			# Get the game state
+			game_state = active_games[self.room_id]
+			
+			# Identify disconnected player (you need to store this during connect)
+			player = getattr(self, 'player_id', None)
+			
+			# Send notification to other players
+			await self.channel_layer.group_send(
+				self.channel_name,
+				{
+					'type': 'quit_game',
+					'player': player,
+					'message': f'Player disconnected unexpectedly',
+					'game_over': True
+				}
+			)
+			
+			# Clean up game resources
+			game_state.quit_game()
 			del active_games[self.room_id]
 
 	async def receive(self, text_data):
@@ -153,6 +182,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		await self.accept()
 		
 
+	#TODO handle disconnection
 	async def disconnect(self, close_code):
 		if self.room_id in active_games:
 			active_games[self.room_id].quit_game()
@@ -247,6 +277,12 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 				'type' : 'error',
 				'error' : 'Tournament empty'
 			}))
+
+	async def tournament_cancelled(self, data):
+		await self.send(text_data=json.dumps({
+			'type': 'tournament_cancelled',
+			'message': data['message']
+		}))
 
 	message_handlers = {
 		'join': join,
