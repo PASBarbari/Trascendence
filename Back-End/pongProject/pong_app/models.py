@@ -12,7 +12,7 @@ class Tournament(models.Model):
 	partecipants = models.IntegerField(default=0)
 	max_partecipants = models.IntegerField()
 	winner = models.ForeignKey('UserProfile', on_delete=models.SET_NULL, related_name='winner', null=True)
-	creator = models.ForeignKey('UserProfile', on_delete=models.SET_NULL, related_name='creator')
+	creator = models.ForeignKey('UserProfile', on_delete=models.SET_NULL, related_name='creator', null=True)
 
 class UserProfile(models.Model):
 	user_id = models.IntegerField(primary_key=True)
