@@ -28,12 +28,17 @@ API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
 
+def ensure_scheme(url):
+    if url and not url.startswith(('http://', 'https://')):
+        return f"http://{url}"
+    return url
+
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+    'Login': ensure_scheme(os.getenv('LOGIN_SERVICE', 'http://localhost:8000')),
+    'Chat': ensure_scheme(os.getenv('CHAT_SERVICE', 'http://localhost:8001')),
+    'Users': ensure_scheme(os.getenv('USERS_SERVICE', 'http://localhost:8002')),
+    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003')),
+    'Pong': ensure_scheme(os.getenv('PONG_SERVICE', 'http://localhost:8004')),
 }
 
 ALLOWED_HOSTS = [
