@@ -8,6 +8,7 @@ data:
   chat_url: chat-service
   users_url: users-service
   notifications_url: notifications-service
+  pong_url: pong-service
   login_db: login-db-service
   redis: redis-service
   redis_port: "6379"
@@ -45,7 +46,7 @@ data:
   users_url: users-service
   notifications_url: notifications-service
   pong_url: pong-service
-  chat_db: chat-db-service
+  pong_db: pong-db-service
   redis: redis-service
   redis_port: "6379"
   redis_db: "2"
@@ -61,7 +62,7 @@ data:
   users_url: users-service
   notifications_url: notifications-service
   pong_url: pong-service
-  chat_db: chat-db-service
+  user_db: user-db-service
   redis: redis-service
   redis_port: "6379"
   redis_db: "4"
@@ -77,7 +78,7 @@ data:
   users_url: users-service
   notifications_url: notifications-service
   pong_url: pong-service
-  chat_db: chat-db-service
+  notifications_db: notifications-db-service
   redis: redis-service
   redis_port: "6379"
   redis_db: "6"

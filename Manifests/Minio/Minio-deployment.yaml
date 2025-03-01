@@ -31,7 +31,7 @@ spec:
                 secretKeyRef:
                   name: minio-credentials
                   key: accesskey
-            - name: MINIO_SECRET_KEY
+            - name: MINIO_secret-key
               valueFrom:
                 secretKeyRef:
                   name: minio-credentials

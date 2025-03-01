@@ -105,11 +105,11 @@ spec:
             secretKeyRef:
               name: chat-admin
               key: admin_email
-        - name: SECRET_KEY
+        - name: secret-key
           valueFrom:
             secretKeyRef:
               name: chat-admin
-              key: secret_key
+              key: secret-key
         - name: DEBUG
           value: "False"
 ---

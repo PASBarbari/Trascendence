@@ -17,7 +17,7 @@ spec:
     spec:
       initContainers:
         - name: init-pong-db
-          image: busybox
+          image: postgres:alpine
           command: ['sh', '-c', 'until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB; do echo waiting for postgres; sleep 2; done;']
           env:
           - name: POSTGRES_DB
@@ -40,6 +40,7 @@ spec:
       containers:
       - name: pong-deployment
         image: bombatomica/pong
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         resources:
@@ -131,7 +132,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: pong-admin
-              key: secret_key
+              key: secret-key
         - name: DEBUG
           value: "False"
 ---
