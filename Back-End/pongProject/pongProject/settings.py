@@ -109,7 +109,7 @@ INSTALLED_APPS = [
 	'corsheaders',
 	'pong_app',
 	'channels',
-	'redis',
+	'django_redis',
 ]
 
 MIDDLEWARE = [
