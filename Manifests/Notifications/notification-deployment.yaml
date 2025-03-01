@@ -1,25 +1,34 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-deployment
-  namespace: chat
+  name: notifications-deployment
+  namespace: notifications
   labels:
-    app: chat
+    app: notifications-server
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chat
+      app: notifications-server
   template:
     metadata:
       labels:
-        app: chat
+        app: notifications-server
     spec:
+      initContainers:
+      - name: init-notifications-server
+        image: busybox
+        command: ['sh', '-c', 'echo "Waiting for the database service"; while ! nc -z notifications-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
       containers:
-      - name: chat-deployment
-        image: bombatomica/chat
+      - name: notifications-server
+        image: bombatomica/notifications
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
+        readinessProbe:
+          httpGet:
+            path: /notifications/health
+            port: 8000
         resources:
           limits:
             memory: "512Mi"
@@ -31,84 +40,84 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: chat-db-secret
-              key: chat-db
+              name: notifications-db-secret
+              key: notifications-db
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: chat-db-secret
-              key: chat-db-user
+              name: notifications-db-secret
+              key: notifications-db-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: chat-db-secret
-              key: chat-db-password
+              name: notifications-db-secret
+              key: notifications-db-password
         - name: POSTGRES_HOST
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
-              key: chat_db
+              name: notifications-configmap
+              key: notifications_db
         - name: POSTGRES_PORT
           value: "5432"
         - name: REDIS_HOST
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: redis
         - name: REDIS_PORT
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: redis_port
         - name: REDIS_DB
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: redis_db
         - name: LOGIN_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: login_url
         - name: CHAT_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: chat_url
         - name: USERS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: users_url
         - name: NOTIFICATIONS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: notifications_url
         - name: PONG_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: notifications-configmap
               key: pong_url
         - name: ADMIN_USERNAME
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: notifications-admin
               key: admin_username
         - name: ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: notifications-admin
               key: admin_password
         - name: ADMIN_EMAIL
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: notifications-admin
               key: admin_email
         - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: notifications-admin
               key: secret_key
         - name: DEBUG
           value: "False"
@@ -116,11 +125,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-service
-  namespace: chat
+  name: notifications-server-service
+  namespace: notifications
 spec:
   selector:
-    app: chat
+    app: notifications-server
+  type: LoadBalancer
   ports:
     - protocol: TCP
       port: 8000
