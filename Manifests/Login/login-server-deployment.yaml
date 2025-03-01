@@ -22,7 +22,7 @@ spec:
       containers:
       - name: login-server
         image: bombatomica/login
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         readinessProbe:
@@ -99,10 +99,10 @@ spec:
            secretKeyRef:
             name: login-secret
             key: admin_username
-        - name: secret-key
+        - name: SECRET_KEY
           valueFrom:
            secretKeyRef:
-            name: login-secret
+            name: login-api
             key: secret-key
         - name: DEBUG
           value: "False"

@@ -1,20 +1,18 @@
 # Use a stable Python version
 FROM python:3.11-alpine AS base
 
-RUN apk add --no-cache postgresql-libs
+RUN apk add --no-cache postgresql-libs bash
 
 FROM base AS builder
 
-RUN mkdir -p /install
-WORKDIR /install
-
 COPY requirements.txt .
 
-RUN pip install --target=/install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 FROM base
 
-COPY --from=builder /install /usr/local/lib/python3.11/site-packages/
+COPY --from=builder /usr/local /usr/local
+
 COPY . /app
 WORKDIR /app
 
@@ -22,4 +20,4 @@ COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
-CMD [ "sh", "/entrypoint.sh" ]
+CMD [ "/bin/bash","/entrypoint.sh" ]
