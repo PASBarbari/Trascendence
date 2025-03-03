@@ -11,7 +11,7 @@ function renderLogin() {
     contentDiv.innerHTML = `
         <div class="login">
             <div class="login_box">
-                <h1>Login</h1>
+                <h1>Login Aconra sesso </h1>
                 <div class="login_form">
                     <form class="login_form" id="loginForm">
                         <div class="mb-3">
@@ -107,7 +107,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 async function handleGetUser(csrftoken) {
 	try {
 		const { token } = getVariables();
-		const response = await fetch('http://localhost:8000/login/user', {
+		const response = await fetch('trascendence.42firenze.it/api/login/user', {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',

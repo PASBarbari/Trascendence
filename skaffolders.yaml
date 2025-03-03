@@ -1,0 +1,16 @@
+apiVersion: skaffold/v2beta26
+kind: Config
+metadata:
+  name: trascendence
+build:
+  artifacts:
+    - image: trascendence-frontend
+      context: Front-End
+      docker:
+        dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+      - ./Manifests/Ingresses/*.yaml
+      - ./Manifests/front-end-deployment.yaml
+    #   - ./Manifests/Deployments/*.yaml
