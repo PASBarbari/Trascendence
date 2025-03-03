@@ -1,14 +1,15 @@
 #!/bin/sh
 
-# Run migrations at startup
-python manage.py makemigrations
-python manage.py makemigrations my_chat
+set -e
+
+# migrations at startup
+python manage.py makemigrations user_app task_app
 python manage.py migrate
 
 # For development
-if [ "$DEBUG" = True ]; then
-    python manage.py runserver 0.0.0.0:8000 || { echo "Runserver failed to start"; exit 1; }
+if [ "$DEBUG" = "True" ]; then
+    python manage.py runserver 0.0.0.0:8000
 else
-    # For production use Daphne (ASGI server)
-    daphne -b 0.0.0.0 -p 8000 chat.asgi:application || { echo "Daphne failed to start"; exit 1; }
+    # For production use Gunicorn (WSGI server)
+    gunicorn task_user.wsgi:application --bind 0.0.0.0:8000 || { echo "Gunicorn failed to start"; exit 1; }
 fi

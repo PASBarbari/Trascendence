@@ -16,9 +16,9 @@ spec:
         app: user
     spec:
       initContainers:
-        - name: init-user-db
+        - name: init-user-server
           image: busybox
-          command: ['sh', '-c', 'until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB; do echo waiting for postgres; sleep 2; done;']
+          command: ['sh', '-c', 'echo "Waiting for the database service"; while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do sleep 1; done; echo "Database service is up and running"']
           env:
           - name: POSTGRES_DB
             valueFrom:
@@ -82,7 +82,7 @@ spec:
           valueFrom:
             configMapKeyRef:
               name: user-configmap
-              key: user_url
+              key: users_url
         - name: NOTIFICATIONS_SERVICE
           valueFrom:
             configMapKeyRef:
