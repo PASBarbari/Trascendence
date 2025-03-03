@@ -180,7 +180,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		)
 
 		await self.accept()
-		
+
 
 	#TODO handle disconnection
 	async def disconnect(self, close_code):
