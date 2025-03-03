@@ -26,28 +26,74 @@ API_KEY = os.getenv('API_KEY', '123')
 def arise(exception):
 	raise(exception)
 
+def ensure_scheme(url):
+    if url and not url.startswith(('http://', 'https://')):
+        return f"http://{url}"
+    return url
+
+Microservices = {
+    'Login': ensure_scheme(os.getenv('LOGIN_SERVICE', 'http://localhost:8000')),
+    'Chat': ensure_scheme(os.getenv('CHAT_SERVICE', 'http://localhost:8001')),
+    'Users': ensure_scheme(os.getenv('USERS_SERVICE', 'http://localhost:8002')),
+    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003')),
+    'Pong': ensure_scheme(os.getenv('PONG_SERVICE', 'http://localhost:8004')),
+}
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
 
 ALLOWED_HOSTS = [
 	'localhost',
+	'localhost:3000',
 	'127.0.0.1',
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://localhost:3000',
+	'[::1]',
+	'trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
 ]
 
 CORS_ALLOWED_ORIGINS = [
-	'http://localhost:8000',
-	'http://localhost:8001',
 	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
+	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+]
+
+CORS_ALLOW_HEADERS = [
+	'accept',
+	'accept-encoding',
+	'authorization',
+	'content-type',
+	'dnt',
+	'origin',
+	'user-agent',
+	'x-csrftoken',
+	'x-requested-with',
 ]
 
 # Application definition
@@ -80,8 +126,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
-	# 'my_notifications.middleware.TokenAuthMiddlewareHTTP',
-	# 'my_notifications.middleware.APIKeyAuthMiddleware',
 ]
 
 REST_FRAMEWORK = {
@@ -115,17 +159,17 @@ ASGI_APPLICATION = 'Notifications.asgi.application'
 
 DATABASES = {
 	'default': {
-		'ENGINE': 'django.db.backends.postgresql',
-		'NAME': 'Notification_db',
-		'USER': 'pasquale',
-		'PASSWORD': '123',
-		'HOST': 'localhost',
-		'PORT': '5438',
+	'ENGINE': 'django.db.backends.postgresql',
+	'NAME': os.getenv('POSTGRES_DB', 'notification_db'),
+	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5439'),
 	},
-    'backup': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+	'backup': {
+	'ENGINE': 'django.db.backends.sqlite3',
+	'NAME': str(BASE_DIR / 'db.sqlite3'),
+	}
 }
 
 oauth2_settings = {
@@ -153,23 +197,31 @@ REST_FRAMEWORK = {
 }
 
 
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = os.getenv('REDIS_PORT', '6700')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '3')
+REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '4')
+
 CACHES = {
 	'default': {
 		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': 'redis://172.18.0.1:6701/1',
+		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
 		}
 	}
 }
 
+
+
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('172.18.0.1', 6701)],
-        },
-    }
+	'default': {
+		'BACKEND': 'channels_redis.core.RedisChannelLayer',
+		'CONFIG': {
+			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
+			'prefix': 'notifications',
+		},
+	}
 }
 
 # CELERY_BROKER_URL = 'redis://localhost:6701/0'
@@ -222,17 +274,15 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Microservices
-Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-	'Personal' : "Self",
-}
-
 Types = {
 	'IM' : 'Immediate',
 	'QU' : 'Queued',
 	'SC' : 'Scheduled',
 	'SE' : 'Sent',
+}
+
+ADMIN = {
+	'username': os.getenv('ADMIN_USERNAME', 'admin'),
+	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
