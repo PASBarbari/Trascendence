@@ -27,15 +27,22 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%p
 #'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c'
 API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', True)
+
+def ensure_scheme(url):
+    if url and not url.startswith(('http://', 'https://')):
+        return f"http://{url}"
+    return url
 
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+    'Login': ensure_scheme(os.getenv('LOGIN_SERVICE', 'http://localhost:8000')),
+    'Chat': ensure_scheme(os.getenv('CHAT_SERVICE', 'http://localhost:8001')),
+    'Users': ensure_scheme(os.getenv('USERS_SERVICE', 'http://localhost:8002')),
+    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003')),
+    'Pong': ensure_scheme(os.getenv('PONG_SERVICE', 'http://localhost:8004')),
 }
+
+K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
 
 ALLOWED_HOSTS = [
 	'localhost',
@@ -43,6 +50,12 @@ ALLOWED_HOSTS = [
 	'127.0.0.1',
 	'[::1]',
 	'trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+] + K8S_ALLOWED_HOSTS + [
 	Microservices['Login'],
 	Microservices['Chat'],
 	Microservices['Users'],
@@ -108,10 +121,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-	'corsheaders.middleware.CorsMiddleware',
+	'my_login.middleware.HealthCheckMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',
+	'corsheaders.middleware.CorsMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
@@ -265,12 +279,6 @@ ADMIN = {
 	'username': os.getenv('ADMIN_USERNAME', 'admin'),
 	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
 	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
-}
-
-ADMIN = {
-    'username': os.getenv('ADMIN_USERNAME', 'admin'),
-    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
-    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
 # LOGGING = {

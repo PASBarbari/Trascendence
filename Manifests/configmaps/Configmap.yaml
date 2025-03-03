@@ -8,6 +8,7 @@ data:
   chat_url: chat-service
   users_url: users-service
   notifications_url: notifications-service
+  pong_url: pong-service
   login_db: login-db-service
   redis: redis-service
   redis_port: "6379"
@@ -32,3 +33,52 @@ data:
   chat_db: chat-db-service
   redis: redis-service
   redis_port: "6379"
+  redis_db: "0"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pong-configmap
+  namespace: pong
+data:
+  login_url: login-service
+  chat_url: chat-service
+  users_url: users-service
+  notifications_url: notifications-service
+  pong_url: pong-service
+  pong_db: pong-db-service
+  redis: redis-service
+  redis_port: "6379"
+  redis_db: "2"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-configmap
+  namespace: user
+data:
+  login_url: login-service
+  chat_url: chat-service
+  users_url: users-service
+  notifications_url: notifications-service
+  pong_url: pong-service
+  user_db: user-db-service
+  redis: redis-service
+  redis_port: "6379"
+  redis_db: "4"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: notifications-configmap
+  namespace: notifications
+data:
+  login_url: login-service
+  chat_url: chat-service
+  users_url: users-service
+  notifications_url: notifications-service
+  pong_url: pong-service
+  notifications_db: notifications-db-service
+  redis: redis-service
+  redis_port: "6379"
+  redis_db: "6"

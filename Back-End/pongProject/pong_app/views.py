@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from rest_framework import permissions, status, generics, filters
 from rest_framework.views import APIView
@@ -8,6 +9,7 @@ from .models import UserProfile
 from .middleware import ServiceAuthentication , JWTAuth
 from django.contrib.auth.models import AnonymousUser
 from django_filters.rest_framework import DjangoFilterBackend
+from django.views.decorators.csrf import csrf_exempt
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
     """
@@ -141,7 +143,7 @@ class EndTournament(APIView):
 		winner = get_object_or_404(UserProfile, user_id=winner_id)
 		if tournament.winner != 0:
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
-		tournament.winner = winner_id
+		tournament.winner = winner.user_id
 		tournament.save()
 		return Response({'message': 'tournament ended'}, status=status.HTTP_200_OK)
 
@@ -160,3 +162,7 @@ class PlayerMatchHistory(APIView):
 		games = Game.objects.filter(player_1=user_id) | Game.objects.filter(player_2=user_id)
 		serializer = GamesSerializer(games, many=True)
 		return Response(serializer.data, status=status.HTTP_200_OK)
+
+@csrf_exempt
+def health_check(request):
+	return JsonResponse({'status': 'ok'})

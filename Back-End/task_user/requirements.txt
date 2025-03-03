@@ -29,7 +29,8 @@ multidict==6.1.0
 oauthlib==3.2.2
 prompt_toolkit==3.0.48
 propcache==0.2.1
-psycopg==3.2.3
+psycopg==3.2.5
+psycopg-binary==3.2.5
 pycparser==2.22
 python-dateutil==2.9.0.post0
 redis==5.2.0
@@ -42,3 +43,8 @@ urllib3==2.2.3
 vine==5.1.0
 wcwidth==0.2.13
 yarl==1.18.3
+djangorestframework-simplejwt==5.4.0
+    # via -r Back-End/requirements.in
+drf-yasg==1.21.8
+    # via -r Back-End/requirements.in
+gunicorn==21.2.0

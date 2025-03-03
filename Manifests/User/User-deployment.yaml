@@ -1,23 +1,45 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-deployment
-  namespace: chat
+  name: user-deployment
+  namespace: user
   labels:
-    app: chat
+    app: user
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chat
+      app: user
   template:
     metadata:
       labels:
-        app: chat
+        app: user
     spec:
+      initContainers:
+        - name: init-user-server
+          image: busybox
+          command: ['sh', '-c', 'echo "Waiting for the database service"; while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do sleep 1; done; echo "Database service is up and running"']
+          env:
+          - name: POSTGRES_DB
+            valueFrom:
+              secretKeyRef:
+                name: user-db-secret
+                key: user-db
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: user-db-secret
+                key: user-db-user
+          - name: POSTGRES_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: user-configmap
+                key: user_db
+          - name: POSTGRES_PORT
+            value: "5432"
       containers:
-      - name: chat-deployment
-        image: bombatomica/chat
+      - name: user-deployment
+        image: bombatomica/user
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -32,96 +54,82 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: chat-db-secret
-              key: chat-db
+              name: user-db-secret
+              key: user-db
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: chat-db-secret
-              key: chat-db-user
+              name: user-db-secret
+              key: user-db-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: chat-db-secret
-              key: chat-db-password
+              name: user-db-secret
+              key: user-db-password
         - name: POSTGRES_HOST
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
-              key: chat_db
+              name: user-configmap
+              key: user_db
         - name: POSTGRES_PORT
           value: "5432"
-        - name: REDIS_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: chat-configmap
-              key: redis
-        - name: REDIS_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: chat-configmap
-              key: redis_port
-        - name: REDIS_DB
-          valueFrom:
-            configMapKeyRef:
-              name: chat-configmap
-              key: redis_db
         - name: LOGIN_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: user-configmap
               key: login_url
-        - name: CHAT_SERVICE
-          valueFrom:
-            configMapKeyRef:
-              name: chat-configmap
-              key: chat_url
         - name: USERS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: user-configmap
               key: users_url
         - name: NOTIFICATIONS_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: user-configmap
               key: notifications_url
+        - name: CHAT_SERVICE
+          valueFrom:
+            configMapKeyRef:
+              name: user-configmap
+              key: chat_url
         - name: PONG_SERVICE
           valueFrom:
             configMapKeyRef:
-              name: chat-configmap
+              name: user-configmap
               key: pong_url
         - name: ADMIN_USERNAME
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: user-admin
               key: admin_username
         - name: ADMIN_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: user-admin
               key: admin_password
         - name: ADMIN_EMAIL
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: user-admin
               key: admin_email
-        - name: secret-key
+        - name: SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: chat-admin
+              name: user-admin
               key: secret-key
-        - name: DEBUG
-          value: "False"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-service
-  namespace: chat
+  name: user-service
+  namespace: user
+  labels:
+    app: user
 spec:
   selector:
-    app: chat
+    app: user
+  type: LoadBalancer
   ports:
     - protocol: TCP
       port: 8000

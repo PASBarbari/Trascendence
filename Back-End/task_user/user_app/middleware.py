@@ -1,67 +1,48 @@
-# filepath: /home/lollo/Documents/Fides/Back-End/chat/my_chat/middleware.py
-from urllib.parse import parse_qs
-from channels.middleware import BaseMiddleware
-from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
-from channels.auth import AuthMiddlewareStack
 from django.core.cache import cache
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.permissions import BasePermission
 from .models import UserProfile
 import logging
 from rest_framework import authentication, exceptions
+from rest_framework.permissions import BasePermission
 from django.conf import settings
+
 logger = logging.getLogger('django')
 
 class ServiceAuthentication(authentication.BaseAuthentication):
-	"""
-	Authentication class specifically for inter-service communication.
-	Authenticates requests from other microservices using API keys and optionally JWT tokens.
-	"""
-	def authenticate(self, request):
-		# Only apply this authentication to the new_user endpoint
-		if not request.path.endswith('/chat/new_user/') or request.method != 'POST':
-			return None
-			
-		# Check for API key
-		api_key = request.headers.get('X-API-KEY')
-		if not api_key or api_key != settings.API_KEY:
-			logger.warning(f"Invalid API key attempt: {api_key}")
-			raise exceptions.AuthenticationFailed('Invalid API key')
-			
-		# For additional security, you could also validate the JWT token
-		# if you want to ensure the request comes from an authenticated service
-		auth_header = request.headers.get('Authorization')
-		if auth_header and auth_header.startswith('Bearer '):
-			token = auth_header.replace('Bearer ', '')
-			try:
-				# You could validate the token or extract service info
-				# This is optional since we're already validating with API key
-				decoded_token = AccessToken(token)
-				# You could check for specific claims that identify the service
-				# service_name = decoded_token.get('service_name')
-				logger.info(f"Request from authenticated service")
-			except Exception as e:
-				# We don't fail here since API key was valid
-				logger.warning(f"JWT token validation failed: {str(e)}")
-		
-		# Return None for user since this is service-to-service authentication
-		# The view will handle creating the user based on the request data
-		return (AnonymousUser(), None)
+    """
+    Authentication class for inter-service communication.
+    Uses API keys instead of channels-based auth.
+    """
+    def authenticate(self, request):
+        # Only apply this authentication to specific endpoints
+        if not request.path.endswith('/task/api/endpoint/') or request.method != 'POST':
+            return None
+            
+        # Check for API key
+        api_key = request.headers.get('X-API-KEY')
+        if not api_key or api_key != settings.API_KEY:
+            logger.warning(f"Invalid API key attempt: {api_key}")
+            raise exceptions.AuthenticationFailed('Invalid API key')
+        
+        # Return anonymous user for service-to-service authentication
+        return (AnonymousUser(), None)
 
-@database_sync_to_async
+
 def get_user_from_token(token):
-	try:
-		# Decode the token
-		access_token = AccessToken(token)
-		user_id = access_token['user_id']
-		
-		# Check if the user is already cached
-		user = cache.get(token)
-		if user:
-			return user
-
+    """
+    Synchronous version of token validation (no channels dependency)
+    """
+    try:
+        # Decode the token
+        access_token = AccessToken(token)
+        user_id = access_token['user_id']
+        
+        # Check if the user is already cached
+        user = cache.get(token)
+        if user:
+            return user
 		# Retrieve the user from the database
 		try:
 			user = UserProfile.objects.get(user_id=user_id)
@@ -148,75 +129,62 @@ class JWTAuth(JWTAuthentication):
 			logger.error(f"Error getting user from token: {str(e)}")
 			return None
 
-class JWTAuthMiddleware(BaseMiddleware):
-	"""
-	JWT Authentication middleware for WebSocket connections.
-	Extracts the JWT token from query parameters or headers and authenticates the user.
-	"""
-	async def __call__(self, scope, receive, send):
-		# Skip authentication for specific paths if needed
-		if scope['path'] == '/chat/new_user/':
-			scope['user'] = AnonymousUser()
-			return await super().__call__(scope, receive, send)
+class APIKeyPermission(BasePermission):
+    """
+    Simple API key permission class
+    """
+    def has_permission(self, request, view):
+        api_key = request.headers.get('X-API-KEY')
+        if api_key:
+            return api_key == settings.API_KEY
+        return False
 		
-		# Try to get token from query string first
-		query_string = parse_qs(scope["query_string"].decode())
-		token = None
+# 		# Try to get token from query string first
+# 		query_string = parse_qs(scope["query_string"].decode())
+# 		token = None
 		
-		if 'token' in query_string:
-			# Token from query param: ws://example.com/ws/chat/1/?token=<jwt_token>
-			token = query_string['token'][0]
-		else:
-			# Try to get token from headers (less common for WebSockets but possible)
-			headers = dict(scope['headers'])
-			auth_header = headers.get(b'authorization')
-			if auth_header:
-				token_str = auth_header.decode()
-				if token_str.startswith('Bearer '):
-					token = token_str[7:]  # Remove 'Bearer ' prefix
+# 		if 'token' in query_string:
+# 			# Token from query param: ws://example.com/ws/chat/1/?token=<jwt_token>
+# 			token = query_string['token'][0]
+# 		else:
+# 			# Try to get token from headers (less common for WebSockets but possible)
+# 			headers = dict(scope['headers'])
+# 			auth_header = headers.get(b'authorization')
+# 			if auth_header:
+# 				token_str = auth_header.decode()
+# 				if token_str.startswith('Bearer '):
+# 					token = token_str[7:]  # Remove 'Bearer ' prefix
 		
-		if token:
-			# Get user from token
-			try:
-				scope['user'] = await self.get_user_from_jwt(token)
-				logger.info(f"WebSocket authenticated user: {scope['user']}")
-			except Exception as e:
-				logger.error(f"WebSocket JWT authentication failed: {str(e)}")
-				scope['user'] = AnonymousUser()
-		else:
-			scope['user'] = AnonymousUser()
+# 		if token:
+# 			# Get user from token
+# 			try:
+# 				scope['user'] = await self.get_user_from_jwt(token)
+# 				logger.info(f"WebSocket authenticated user: {scope['user']}")
+# 			except Exception as e:
+# 				logger.error(f"WebSocket JWT authentication failed: {str(e)}")
+# 				scope['user'] = AnonymousUser()
+# 		else:
+# 			scope['user'] = AnonymousUser()
 			
-		return await super().__call__(scope, receive, send)
+# 		return await super().__call__(scope, receive, send)
 		
-	@database_sync_to_async
-	def get_user_from_jwt(self, token):
-		try:
-			# Decode the JWT token
-			access_token = AccessToken(token)
-			user_id = access_token['user_id']
+# 	@database_sync_to_async
+# 	def get_user_from_jwt(self, token):
+# 		try:
+# 			# Decode the JWT token
+# 			access_token = AccessToken(token)
+# 			user_id = access_token['user_id']
 			
-			# Check if the user is already cached
-			user = cache.get(f"jwt_ws_user_{token}")
-			if user:
-				return user
-				
-			# Retrieve the user from the database
-			try:
-				user = UserProfile.objects.get(user_id=user_id)
-				# Cache the user with a timeout (e.g., 5 minutes)
-				cache.set(f"jwt_ws_user_{token}", user, timeout=300)
-				return user
-			except UserProfile.DoesNotExist:
-				return AnonymousUser()
-		except Exception as e:
-			logger.error(f"JWT token validation failed: {str(e)}")
-			return AnonymousUser()
+# 			# Check if the user is already cached
+# 			user = cache.get(f"jwt_ws_user_{token}")
+# 			if user:
+# 				return user
 
-def JWTAuthMiddlewareStack(inner):
-	"""
-	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
-	"""
-	return JWTAuthMiddleware(AuthMiddlewareStack(inner))
+# def JWTAuthMiddlewareStack(inner):
+# 	"""
+# 	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
+# 	"""
+# 	return JWTAuthMiddleware(AuthMiddlewareStack(inner))
 
 # class TokenAuthMiddleware(BaseMiddleware):
 # 	async def __call__(self, scope, receive, send):

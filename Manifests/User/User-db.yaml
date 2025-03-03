@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chat-db-deployment
-  namespace: chat
+  name: user-db-deployment
+  namespace: user
   labels:
-    app: chat-db
+    app: user-db
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: chat-db
+      app: user-db
   template:
     metadata:
       labels:
-        app: chat-db
+        app: user-db
     spec:
       containers:
-      - name: chat-db
+      - name: user-db
         image: postgres
         ports:
         - containerPort: 5432
@@ -49,18 +49,18 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
            secretKeyRef:
-            name: chat-db-secret
-            key: chat-db
+            name: user-db-secret
+            key: user-db
         - name: POSTGRES_USER
           valueFrom:
            secretKeyRef:
-            name: chat-db-secret
-            key: chat-db-user
+            name: user-db-secret
+            key: user-db-user
         - name: POSTGRES_PASSWORD
           valueFrom:
            secretKeyRef:
-            name: chat-db-secret
-            key: chat-db-password
+            name: user-db-secret
+            key: user-db-password
         - name: PGDATA
           value: /var/lib/postgresql/data/pgdata
         volumeMounts:
@@ -69,16 +69,16 @@ spec:
       volumes:
       - name: postgres-storage
         persistentVolumeClaim:
-          claimName: chat-postgres-pvc
+          claimName: user-postgres-pvc
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: chat-db-service
-  namespace: chat
+  name: user-db-service
+  namespace: user
 spec:
   selector:
-    app: chat-db
+    app: user-db
   ports:
     - protocol: TCP
       port: 5432
@@ -87,14 +87,13 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: chat-postgres-pvc
-  namespace: chat
+  name: user-postgres-pvc
+  namespace: user
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 512Mi
-  volumeName: postgres-pv-chat
+  volumeName: postgres-pv-user
   storageClassName: standard
-

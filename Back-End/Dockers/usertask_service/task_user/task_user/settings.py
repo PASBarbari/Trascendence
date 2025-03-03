@@ -29,7 +29,7 @@ def arise(exception):
 SECRET_KEY = 'django-insecure-7&!j-$l_bhb60^ce0cwgnp+9=sylmv@sy(fu)d-vylz!b=g!ur'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', True)
 
 ALLOWED_HOSTS = []
 

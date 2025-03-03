@@ -1,23 +1,23 @@
-FROM python:3.14.0a5-slim-bookworm
+# Use a stable Python version
+FROM python:3.11-alpine AS base
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    libffi-dev \
-    && apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache postgresql-libs bash
 
-COPY . /login
-COPY ./requirements.txt /login/requirements.txt
-WORKDIR /login
+FROM base AS builder
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt .
 
-EXPOSE 8000
+RUN pip install --no-cache-dir -r requirements.txt
+
+FROM base
+
+COPY --from=builder /usr/local /usr/local
+
+COPY . /app
+WORKDIR /app
 
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE 8000
+CMD [ "/bin/bash","/entrypoint.sh" ]

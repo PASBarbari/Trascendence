@@ -21,14 +21,21 @@ spec:
         command: ['sh', '-c', 'echo "Waiting for the database service"; while ! nc -z login-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
       containers:
       - name: login-server
-        image: login-server:1.0
-        imagePullPolicy: IfNotPresent
+        image: bombatomica/login
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         readinessProbe:
           httpGet:
             path: /login/health
             port: 8000
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
         env:
         - name: POSTGRES_DB
           valueFrom:
@@ -65,6 +72,11 @@ spec:
            configMapKeyRef:
             name: login-configmap
             key: notifications_url
+        - name: PONG_URL
+          valueFrom:
+           configMapKeyRef:
+            name: login-configmap
+            key: pong_url
         - name: POSTGRES_HOST
           valueFrom:
            configMapKeyRef:
@@ -72,6 +84,28 @@ spec:
             key: login_db
         - name: POSTGRES_PORT
           value: "5432" 
+        - name: ADMIN_EMAIL
+          valueFrom:
+           secretKeyRef:
+            name: login-secret
+            key: admin_email
+        - name: ADMIN_PASSWORD
+          valueFrom:
+           secretKeyRef:
+            name: login-secret
+            key: admin_password
+        - name: ADMIN_USERNAME
+          valueFrom:
+           secretKeyRef:
+            name: login-secret
+            key: admin_username
+        - name: SECRET_KEY
+          valueFrom:
+           secretKeyRef:
+            name: login-api
+            key: secret-key
+        - name: DEBUG
+          value: "False"
 ---
 apiVersion: v1
 kind: Service
@@ -86,4 +120,3 @@ spec:
     - protocol: TCP
       port: 8000
       targetPort: 8000
-      nodePort: 30008

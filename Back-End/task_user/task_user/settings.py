@@ -30,21 +30,81 @@ def arise(exception):
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', True)
 
-ALLOWED_HOSTS = []
+def ensure_scheme(url):
+    if url and not url.startswith(('http://', 'https://')):
+        return f"http://{url}"
+    return url
+
+Microservices = {
+    'Login': ensure_scheme(os.getenv('LOGIN_SERVICE', 'http://localhost:8000')),
+    'Chat': ensure_scheme(os.getenv('CHAT_SERVICE', 'http://localhost:8001')),
+    'Users': ensure_scheme(os.getenv('USERS_SERVICE', 'http://localhost:8002')),
+    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003')),
+    'Pong': ensure_scheme(os.getenv('PONG_SERVICE', 'http://localhost:8004')),
+}
+
+K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
+
+ALLOWED_HOSTS = [
+	'localhost',
+	'localhost:3000',
+	'127.0.0.1',
+	'[::1]',
+	'trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+] + K8S_ALLOWED_HOSTS + [
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+]
+		
 
 CORS_ALLOWED_ORIGINS = [
-	'http://localhost:8000',
-	'http://localhost:8001',
-	'http://localhost:8002',
 	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:3000',
+	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+]
+
+CORS_ALLOW_HEADERS = [
+	'accept',
+	'accept-encoding',
+	'authorization',
+	'content-type',
+	'dnt',
+	'origin',
+	'user-agent',
+	'x-csrftoken',
+	'x-requested-with',
 ]
 
 # Application definition
@@ -102,17 +162,17 @@ WSGI_APPLICATION = 'task_user.wsgi.application'
 
 DATABASES = {
 	'default': {
-		'ENGINE': 'django.db.backends.postgresql',
-		'NAME': 'usertask_db',
-		'USER': 'pasquale',
-		'PASSWORD' : '123',
-		'HOST': 'localhost',
-		'PORT': '5434',
+	'ENGINE': 'django.db.backends.postgresql',
+	'NAME': os.getenv('POSTGRES_DB', 'usertask_db'),
+	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+	'PORT': os.getenv('POSTGRES_PORT', '5435'),
 	},
-    'backup': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+	'backup': {
+	'ENGINE': 'django.db.backends.sqlite3',
+	'NAME': str(BASE_DIR / 'db.sqlite3'),
+	}
 }
 
 import secrets
@@ -184,6 +244,12 @@ REST_FRAMEWORK = {
 	'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
 	'DEFAULT_AUTHENTICATION_CLASSES': ['user_app.middleware.JWTAuth'],
 
+}
+
+ADMIN = {
+	'username': os.getenv('ADMIN_USERNAME', 'admin'),
+	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
 MEDIA_ROOT = BASE_DIR / 'media/'
