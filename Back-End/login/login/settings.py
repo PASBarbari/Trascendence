@@ -281,12 +281,6 @@ ADMIN = {
 	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
-ADMIN = {
-    'username': os.getenv('ADMIN_USERNAME', 'admin'),
-    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
-    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
-}
-
 # LOGGING = {
 #	 'version': 1,
 #	 'disable_existing_loggers': False,
