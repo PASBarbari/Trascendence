@@ -6,6 +6,8 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
     
     # WebSocket
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
@@ -21,8 +23,8 @@ spec:
   - host: trascendence.42firenze.it
     http:
       paths:
-      - path: /api/chat/
-        pathType: Prefix
+      - path: /api/chat(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: chat-service
