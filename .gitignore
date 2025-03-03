@@ -70,3 +70,4 @@ fleet-server.crt
 fleet-server.key
 Manifests/secrets.yaml
 
+skaffold
