@@ -42,12 +42,20 @@ Microservices = {
     'Pong': ensure_scheme(os.getenv('PONG_SERVICE', 'http://localhost:8004')),
 }
 
+K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
+
 ALLOWED_HOSTS = [
 	'localhost',
 	'localhost:3000',
 	'127.0.0.1',
 	'[::1]',
 	'trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+] + K8S_ALLOWED_HOSTS + [
 	Microservices['Login'],
 	Microservices['Chat'],
 	Microservices['Users'],
@@ -113,10 +121,11 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-	'corsheaders.middleware.CorsMiddleware',
+	'my_login.middleware.HealthCheckMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',
+	'corsheaders.middleware.CorsMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
