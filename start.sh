@@ -18,6 +18,8 @@ sudo apt-get install -y kubectl
 sudo apt install kubecolor kubelet -y
 echo "Starting project setup..."
 
+sudo apt autoremove -y
+
 # Step 1: Install Minikube if not already installed
 if ! command -v minikube &> /dev/null; then
   echo "Minikube is not installed. Installing Minikube..."
@@ -26,6 +28,7 @@ if ! command -v minikube &> /dev/null; then
   rm minikube-linux-amd64
 fi
 
+
 # Step 2: Start Minikube
 echo "Starting Minikube..."
 minikube start --cpus=8 --memory=8192 --driver=docker
@@ -33,6 +36,8 @@ minikube start --cpus=8 --memory=8192 --driver=docker
 # Step 3: Set Minikube context for kubectl
 echo "Setting up Minikube context..."
 kubecolor config use-context minikube
+
+minikube addons enable ingress
 
 # Step 4: Create Kubernetes namespaces from namespace.yaml
 echo "Creating namespaces from namespace.yaml..."

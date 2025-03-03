@@ -23,6 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
 API_KEY = os.getenv('API_KEY', '123')
 
+# Aggiungi queste impostazioni
+FORCE_SCRIPT_NAME = '/api/notifications'
+
 def arise(exception):
 	raise(exception)
 

@@ -19,6 +19,9 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 API_KEY = os.getenv('API_KEY', '123')
 
+# Aggiungi queste impostazioni
+FORCE_SCRIPT_NAME = '/api/user'
+
 def arise(exception):
 	raise(exception)
 

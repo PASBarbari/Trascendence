@@ -5,7 +5,7 @@ from oauth2_provider import views as oauth2_views
 from my_login.views import CustomIntrospect
 
 urlpatterns = [
-  path('admin/', admin.site.urls),
+	path('admin/', admin.site.urls),
 	path('login/', include('my_login.urls')),
 	path('o/', include(oauth2_urls)),
 ]
