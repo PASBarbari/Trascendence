@@ -71,3 +71,4 @@ fleet-server.key
 Manifests/secrets.yaml
 
 skaffold
+Manifests/skaffold
