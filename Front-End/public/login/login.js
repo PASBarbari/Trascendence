@@ -11,7 +11,7 @@ function renderLogin() {
     contentDiv.innerHTML = `
         <div class="login">
             <div class="login_box">
-                <h1>Login Aconra sesso </h1>
+                <h1>Login</h1>
                 <div class="login_form">
                     <form class="login_form" id="loginForm">
                         <div class="mb-3">

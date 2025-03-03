@@ -30,6 +30,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 from django.views.decorators.csrf import csrf_exempt
 
+
 def get_jwt_token_for_user(user):
 	refresh = RefreshToken.for_user(user)
 	return str(refresh.access_token)

@@ -15,5 +15,5 @@ if [ "$DEBUG" = True ]; then
     python manage.py runserver 0.0.0.0:8000
 else
     # For production use Daphne (ASGI server)
-    daphne -b 0.0.0.0 -p 8000 Notifications.asgi:application || { echo "Daphne failed to start"; exit 1; }
+    daphne -b 0.0.0.0 -p 8000 Notifications.asgi:application --root-path=/api/notifications || { echo "Daphne failed to start"; exit 1; }
 fi

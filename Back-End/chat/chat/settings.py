@@ -14,9 +14,6 @@ from datetime import datetime
 from pathlib import Path
 import secrets , os
 
-# Aggiungi queste impostazioni
-FORCE_SCRIPT_NAME = '/api/chat'
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
