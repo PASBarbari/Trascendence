@@ -244,10 +244,10 @@ SIMPLE_JWT = {
 
 OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
 	'Personal' : "Self",
 }
 
@@ -280,11 +280,11 @@ ADMIN = {
 }
 
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
+	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
+	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
 	'Personal' : "Self",
 }
 

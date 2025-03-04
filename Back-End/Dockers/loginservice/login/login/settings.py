@@ -29,18 +29,18 @@ API_KEY = os.getenv('API_KEY', '123')
 DEBUG = os.getenv('DEBUG', True)
 
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
 }
 
 ALLOWED_HOSTS = [
     '*', 
-    'chat_service', 
-    'login_service', 
-    'users_service', 
-    'notifications_service', 
+    'CHAT_URL', 
+    'LOGIN_URL', 
+    'USER_URL', 
+    'NOTIFICATIONS_URL', 
     'localhost', 
     '127.0.0.1'
 ]

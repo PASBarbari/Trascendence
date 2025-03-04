@@ -74,27 +74,27 @@ spec:
             configMapKeyRef:
               name: notifications-configmap
               key: redis_db
-        - name: LOGIN_SERVICE
+        - name: LOGIN_URL
           valueFrom:
             configMapKeyRef:
               name: notifications-configmap
               key: login_url
-        - name: CHAT_SERVICE
+        - name: CHAT_URL
           valueFrom:
             configMapKeyRef:
               name: notifications-configmap
               key: chat_url
-        - name: USERS_SERVICE
+        - name: USER_URL
           valueFrom:
             configMapKeyRef:
               name: notifications-configmap
               key: users_url
-        - name: NOTIFICATIONS_SERVICE
+        - name: NOTIFICATIONS_URL
           valueFrom:
             configMapKeyRef:
               name: notifications-configmap
               key: notifications_url
-        - name: PONG_SERVICE
+        - name: PONG_URL
           valueFrom:
             configMapKeyRef:
               name: notifications-configmap

@@ -35,11 +35,11 @@ def ensure_scheme(url):
     return url
 
 Microservices = {
-    'Login': ensure_scheme(os.getenv('LOGIN_SERVICE', 'http://localhost:8000')),
-    'Chat': ensure_scheme(os.getenv('CHAT_SERVICE', 'http://localhost:8001')),
-    'Users': ensure_scheme(os.getenv('USERS_SERVICE', 'http://localhost:8002')),
-    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003')),
-    'Pong': ensure_scheme(os.getenv('PONG_SERVICE', 'http://localhost:8004')),
+    'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
+    'Chat': ensure_scheme(os.getenv('CHAT_URL', 'http://localhost:8001')),
+    'Users': ensure_scheme(os.getenv('USER_URL', 'http://localhost:8002')),
+    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003')),
+    'Pong': ensure_scheme(os.getenv('PONG_URL', 'http://localhost:8004')),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')

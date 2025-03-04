@@ -73,27 +73,27 @@ spec:
               key: user_db
         - name: POSTGRES_PORT
           value: "5432"
-        - name: LOGIN_SERVICE
+        - name: LOGIN_URL
           valueFrom:
             configMapKeyRef:
               name: user-configmap
               key: login_url
-        - name: USERS_SERVICE
+        - name: USER_URL
           valueFrom:
             configMapKeyRef:
               name: user-configmap
               key: users_url
-        - name: NOTIFICATIONS_SERVICE
+        - name: NOTIFICATIONS_URL
           valueFrom:
             configMapKeyRef:
               name: user-configmap
               key: notifications_url
-        - name: CHAT_SERVICE
+        - name: CHAT_URL
           valueFrom:
             configMapKeyRef:
               name: user-configmap
               key: chat_url
-        - name: PONG_SERVICE
+        - name: PONG_URL
           valueFrom:
             configMapKeyRef:
               name: user-configmap

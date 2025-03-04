@@ -4,11 +4,11 @@ metadata:
   name: login-configmap
   namespace: login
 data:
-  login_url: login-service
-  chat_url: chat-service
-  users_url: users-service
-  notifications_url: notifications-service
-  pong_url: pong-service
+  login_url: http://login-service.login.svc.cluster.local:8000
+  chat_url: http://chat-service.chat.svc.cluster.local:8000
+  users_url: http://user-service.user.svc.cluster.local:8000
+  notifications_url: http://notifications-service.notifications.svc.cluster.local:8000
+  pong_url: http://pong-service.pong.svc.cluster.local:8000
   login_db: login-db-service
   redis: redis-service
   redis_port: "6379"
@@ -25,11 +25,11 @@ metadata:
   name: chat-configmap
   namespace: chat
 data:
-  login_url: login-service
-  chat_url: chat-service
-  users_url: users-service
-  notifications_url: notifications-service
-  pong_url: pong-service
+  login_url: http://login-service.login.svc.cluster.local:8000
+  chat_url: http://chat-service.chat.svc.cluster.local:8000
+  users_url: http://user-service.user.svc.cluster.local:8000
+  notifications_url: http://notifications-service.notifications.svc.cluster.local:8000
+  pong_url: http://pong-service.pong.svc.cluster.local:8000
   chat_db: chat-db-service
   redis: redis-service
   redis_port: "6379"
@@ -41,11 +41,11 @@ metadata:
   name: pong-configmap
   namespace: pong
 data:
-  login_url: login-service
-  chat_url: chat-service
-  users_url: users-service
-  notifications_url: notifications-service
-  pong_url: pong-service
+  login_url: http://login-service.login.svc.cluster.local:8000
+  chat_url: http://chat-service.chat.svc.cluster.local:8000
+  users_url: http://user-service.user.svc.cluster.local:8000
+  notifications_url: http://notifications-service.notifications.svc.cluster.local:8000
+  pong_url: http://pong-service.pong.svc.cluster.local:8000
   pong_db: pong-db-service
   redis: redis-service
   redis_port: "6379"
@@ -57,11 +57,11 @@ metadata:
   name: user-configmap
   namespace: user
 data:
-  login_url: login-service
-  chat_url: chat-service
-  users_url: users-service
-  notifications_url: notifications-service
-  pong_url: pong-service
+  login_url: http://login-service.login.svc.cluster.local:8000
+  chat_url: http://chat-service.chat.svc.cluster.local:8000
+  users_url: http://user-service.user.svc.cluster.local:8000
+  notifications_url: http://notifications-service.notifications.svc.cluster.local:8000
+  pong_url: http://pong-service.pong.svc.cluster.local:8000
   user_db: user-db-service
   redis: redis-service
   redis_port: "6379"
@@ -73,11 +73,11 @@ metadata:
   name: notifications-configmap
   namespace: notifications
 data:
-  login_url: login-service
-  chat_url: chat-service
-  users_url: users-service
-  notifications_url: notifications-service
-  pong_url: pong-service
+  login_url: http://login-service.login.svc.cluster.local:8000
+  chat_url: http://chat-service.chat.svc.cluster.local:8000
+  users_url: http://user-service.user.svc.cluster.local:8000
+  notifications_url: http://notifications-service.notifications.svc.cluster.local:8000
+  pong_url: http://pong-service.pong.svc.cluster.local:8000
   notifications_db: notifications-db-service
   redis: redis-service
   redis_port: "6379"
