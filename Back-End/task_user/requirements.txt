@@ -47,4 +47,4 @@ djangorestframework-simplejwt==5.4.0
     # via -r Back-End/requirements.in
 drf-yasg==1.21.8
     # via -r Back-End/requirements.in
-gunicorn==21.2.0
+gunicorn==22.0.0
