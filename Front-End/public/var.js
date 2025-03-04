@@ -12,8 +12,7 @@ let variables = {
 
 	multiplayer_username: null,
 	multiplayer_id: null,
-
-	url: "http://transcendence.42firenze.it"
+	url_api: "https://trascendence.42firenze.it/api"
 };
 
 // Carica le variabili da localStorage se esistono

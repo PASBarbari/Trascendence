@@ -8,10 +8,10 @@ link.href = '/public/taskAvaiable/taskAvaiable.css';
 document.head.appendChild(link);
 
 async function joinTasks(task_id, user_id) {
-	const { token } = getVariables();
+	const { token,url_api } = getVariables();
 	console.log("Joining task:", task_id, user_id);
 	try {
-		const response = await fetch(`http://localhost:8002/task/progress`, {
+		const response = await fetch(`${url_api}/task/progress`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -60,9 +60,9 @@ function renderTask(task) {
 }
 
 async function handleGetTasks(category = 'ALL') {
-	const { userId, token } = getVariables();
+	const { userId, token, url_api } = getVariables();
 	try {
-		const response = await fetch(`http://localhost:8002/task/task?user_id=${userId}`, {
+		const response = await fetch(`${url_api}/task/task?user_id=${userId}`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",

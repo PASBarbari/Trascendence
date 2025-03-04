@@ -6,10 +6,10 @@ link.href = '/public/profile/profile.css';
 document.head.appendChild(link);
 
 async function PatchProfile(name, surname, birthdate, bio) {
-	const { userId } = getVariables();
+	const { userId, url_api } = getVariables();
 
 	try {
-		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, { // user/levelup user_id e exp
+		const response = await fetch(`${url_api}/user/user/${userId}/`, { // user/levelup user_id e exp
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
@@ -37,9 +37,9 @@ async function PatchProfile(name, surname, birthdate, bio) {
 }
 
 async function GetProfile() {
-	const { userId, token } = getVariables();
+	const { userId, token,url_api } = getVariables();
 	try {
-		const response = await fetch(`http://localhost:8002/user/user/${userId}/`, {
+		const response = await fetch(`${url_api}/user/user/${userId}/`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",

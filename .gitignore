@@ -69,4 +69,8 @@ secrets.yaml
 fleet-server.crt
 fleet-server.key
 Manifests/secrets.yaml
-
+skaffold
+Manifests/skaffold
+Manifests/skaffolds
+Manifests/skaffold
+Manifests/skaffolds

@@ -7,10 +7,10 @@ link.href = '/public/taskActive/taskActive.css';
 document.head.appendChild(link);
 
 async function handleCompleteTask(task_id, task_rate) {
-	const { userId, token } = getVariables();
+	const { userId, token, url_api } = getVariables();
 	try {
 		const response = await fetch(
-			`http://localhost:8002/task/progress/${task_id}&${userId}/`,
+			`${url_api}/task/progress/${task_id}&${userId}/`,
 			{
 				method: "PATCH",
 				headers: {
@@ -63,10 +63,10 @@ function renderTask(task) {
 }
 
 async function handleGetActiveTasks() {
-	const { userId, token } = getVariables();
+	const { userId, token, url_api } = getVariables();
 	try {
 		const response = await fetch(
-			`http://localhost:8002/task/progress?user_id=${userId}`,
+			`${url_api}/task/progress?user_id=${userId}`,
 			{
 				method: "GET",
 				headers: {

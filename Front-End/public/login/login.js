@@ -65,10 +65,11 @@ async function onHandleSubmit(e, email, password) {
  */
 async function loginUser(email, password, csrftoken, isBaseLogin) {
 	if (email && password) {
+		const { url_api } = getVariables();
 		console.log('Email:', email);
 		console.log('Password:', password);
 		try {
-			const response = await fetch('http://localhost:8000/login/login', {
+			const response = await fetch(`${url_api}/login/login`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -107,7 +108,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 async function handleGetUser(csrftoken) {
 	try {
 		const { token } = getVariables();
-		const response = await fetch('http://localhost:8000/login/user', {
+		const response = await fetch('trascendence.42firenze.it/api/login/user', {
 			method: 'GET',
 			headers: {
 				'Content-Type': 'application/json',

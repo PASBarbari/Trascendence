@@ -29,7 +29,7 @@ function renderAddChat() {
 		const roomName = document.getElementById('roomName').value;
 		const roomDescription = document.getElementById('roomDescription').value;
 		const userIds = document.getElementById('userIds').value;
-		const { userId, token } = getVariables();
+		const { userId, token, url_api } = getVariables();
 
 		let userIdsArray = userIds.split(',').map(id => id.trim()).filter(id => id);
 		if (!userIdsArray.includes(userId)) {
@@ -39,7 +39,7 @@ function renderAddChat() {
 		console.log('Utenti:', userIdsArray);
 
 		try {
-			const response = await fetch('http://localhost:8001/chat/chat_rooms/create/', {
+			const response = await fetch(`${url_api}/chat/chat_rooms/create/`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

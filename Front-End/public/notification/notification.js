@@ -17,14 +17,14 @@ async function handleFriendRequest(str_method, user_id, friend_id, index) {
 	if (friendInput) {
 		friendInput.value = '';
 	}
-
+	const { url_api } = getVariables();
 	console.log(`/----handleFriendRequest ${str_method}----\\`);
 	console.log("User ID:", user_id);
 	console.log("Friend ID:", friend_id);
 	const card = document.getElementById(`notification-card-${index}`);
 	const deleteCard = document.getElementById(`friend-item-${index}`);
 	try {
-		const response = await fetch("http://localhost:8002/user/addfriend", {
+		const response = await fetch(`${url_api}/user/addfriend`, {
 			method: str_method,
 			headers: {
 				"Content-Type": "application/json",

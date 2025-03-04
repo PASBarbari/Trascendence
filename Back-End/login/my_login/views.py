@@ -27,6 +27,9 @@ from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+import logging
+from django.views.decorators.csrf import csrf_exempt
+
 
 def get_jwt_token_for_user(user):
 	refresh = RefreshToken.for_user(user)
@@ -50,6 +53,7 @@ def CreateOnOtherServices(user):
 	Chat_url = Microservices['Chat'] + "/chat/new_user/"
 	Notification_url = Microservices['Notifications'] + "/notification/add_user"
 	User_url = Microservices['Users'] + "/user/user"
+	pong_url = Microservices['Pong'] + "/pong/player"
 	jwt_token = get_jwt_token_for_user(user)
 	headers = {
 		'Content-Type': 'application/json',
@@ -65,22 +69,26 @@ def CreateOnOtherServices(user):
 	user_response = requests.post(User_url, json=user_data, headers=headers)
 	if user_response.status_code != 201:
 		print(f'user resp{user_response.status_code}')
+		logging.error(user_response.json())
 		print(user_response.json())
 		raise ValueError('User service failed to create user')
 	chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 	if chat_response.status_code != 201:
+		logging.error(chat_response.json())
 		print(chat_response.json())
 		raise ValueError('Chat service failed to create user')
 	notification_response = requests.post(Notification_url, json=user_data, headers=headers)
 	if notification_response.status_code != 201:
+		logging.error(notification_response.json())
 		print(notification_response.json())
 		raise ValueError('Notification service failed to create user')
-	pong_response = requests.post("http://localhost:8004/pong/player", json=user_data, headers=headers)
+	pong_response = requests.post(pong_url, json=user_data, headers=headers)
 	if pong_response.status_code != 201:
+		logging.error(pong_response.json())
 		raise ValueError('Pong service failed to create user')
 	return True
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class UserRegister(APIView):
 	permission_classes = (permissions.AllowAny,)
 	def post(self, request):

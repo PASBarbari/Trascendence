@@ -6,14 +6,16 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
   - host: trascendence.42firenze.it
     http:
       paths:
-      - path: /api/login/
-        pathType: Prefix
+      - path: /api/login(/|$)(.*)
+        pathType: ImplementationSpecific
         backend:
           service:
             name: login-service
