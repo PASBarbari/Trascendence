@@ -32,6 +32,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%p
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
 
+
 def ensure_scheme(url):
     if url and not url.startswith(('http://', 'https://')):
         return f"http://{url}"
@@ -47,6 +48,26 @@ Microservices = {
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
 
+def extract_hostname(url):
+    """Estrae il nome host da un URL completo."""
+    if not url:
+        return url
+    # Rimuovi http:// o https://
+    if url.startswith(('http://', 'https://')):
+        url = url.split('://', 1)[1]
+    # Rimuovi la porta se presente
+    if ':' in url:
+        url = url.split(':', 1)[0]
+    return url
+
+K8S_SERVICE_HOSTS = [
+    extract_hostname(Microservices['Login']),
+    extract_hostname(Microservices['Chat']),
+    extract_hostname(Microservices['Users']),
+    extract_hostname(Microservices['Notifications']),
+    extract_hostname(Microservices['Pong']),
+]
+
 ALLOWED_HOSTS = [
 	'localhost',
 	'localhost:3000',
@@ -58,14 +79,7 @@ ALLOWED_HOSTS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + [
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
-]
-		
+] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
 
 CORS_ALLOWED_ORIGINS = [
 	'http://localhost:3000',
@@ -78,7 +92,7 @@ CORS_ALLOWED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-]
+] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -93,7 +107,7 @@ CSRF_TRUSTED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-]
+] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
 
 CORS_ALLOW_HEADERS = [
 	'accept',

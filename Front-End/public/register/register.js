@@ -62,7 +62,7 @@ async function registerUser(username, email, password, isBaseRegister) {
 		console.log('Email:', email);
 		console.log('Password:', password);
 		try {
-			const response = await fetch(`${url_api}/login/register`, {
+			const response = await fetch(`${url_api}/login/login/register`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

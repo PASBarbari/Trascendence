@@ -62,7 +62,7 @@ spec:
            configMapKeyRef:
             name: login-configmap
             key: chat_url
-        - name: USERS_URL
+        - name: USER_URL
           valueFrom:
            configMapKeyRef:
             name: login-configmap
