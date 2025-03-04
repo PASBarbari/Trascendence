@@ -11,38 +11,38 @@ from django.conf import settings
 logger = logging.getLogger('django')
 
 class ServiceAuthentication(authentication.BaseAuthentication):
-    """
-    Authentication class for inter-service communication.
-    Uses API keys instead of channels-based auth.
-    """
-    def authenticate(self, request):
-        # Only apply this authentication to specific endpoints
-        if not request.path.endswith('/task/api/endpoint/') or request.method != 'POST':
-            return None
-            
-        # Check for API key
-        api_key = request.headers.get('X-API-KEY')
-        if not api_key or api_key != settings.API_KEY:
-            logger.warning(f"Invalid API key attempt: {api_key}")
-            raise exceptions.AuthenticationFailed('Invalid API key')
-        
-        # Return anonymous user for service-to-service authentication
-        return (AnonymousUser(), None)
+	"""
+	Authentication class for inter-service communication.
+	Uses API keys instead of channels-based auth.
+	"""
+	def authenticate(self, request):
+		# Only apply this authentication to specific endpoints
+		if not request.path.endswith('/task/api/endpoint/') or request.method != 'POST':
+			return None
+			
+		# Check for API key
+		api_key = request.headers.get('X-API-KEY')
+		if not api_key or api_key != settings.API_KEY:
+			logger.warning(f"Invalid API key attempt: {api_key}")
+			raise exceptions.AuthenticationFailed('Invalid API key')
+		
+		# Return anonymous user for service-to-service authentication
+		return (AnonymousUser(), None)
 
 
 def get_user_from_token(token):
-    """
-    Synchronous version of token validation (no channels dependency)
-    """
-    try:
-        # Decode the token
-        access_token = AccessToken(token)
-        user_id = access_token['user_id']
-        
-        # Check if the user is already cached
-        user = cache.get(token)
-        if user:
-            return user
+	"""
+	Synchronous version of token validation (no channels dependency)
+	"""
+	try:
+		# Decode the token
+		access_token = AccessToken(token)
+		user_id = access_token['user_id']
+		
+		# Check if the user is already cached
+		user = cache.get(token)
+		if user:
+			return user
 		# Retrieve the user from the database
 		try:
 			user = UserProfile.objects.get(user_id=user_id)
@@ -130,14 +130,14 @@ class JWTAuth(JWTAuthentication):
 			return None
 
 class APIKeyPermission(BasePermission):
-    """
-    Simple API key permission class
-    """
-    def has_permission(self, request, view):
-        api_key = request.headers.get('X-API-KEY')
-        if api_key:
-            return api_key == settings.API_KEY
-        return False
+	"""
+	Simple API key permission class
+	"""
+	def has_permission(self, request, view):
+		api_key = request.headers.get('X-API-KEY')
+		if api_key:
+			return api_key == settings.API_KEY
+		return False
 		
 # 		# Try to get token from query string first
 # 		query_string = parse_qs(scope["query_string"].decode())

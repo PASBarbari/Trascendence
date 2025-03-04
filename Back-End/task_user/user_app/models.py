@@ -11,8 +11,8 @@ class Avatars(models.Model):
 class UserProfile(models.Model):
 	staff = models.BooleanField(default=False)
 	user_id = models.IntegerField(unique=True, primary_key=True)
-	email = models.EmailField(max_length=255, unique=True)
-	username = models.CharField(max_length=255, unique=True)
+	email = models.EmailField(max_length=255, unique=True, null=True)
+	username = models.CharField(max_length=255, unique=True, default="LVL1_noob")
 	first_name = models.CharField(max_length=255, null=True, default="")
 	last_name = models.CharField(max_length=255, null=True, default="")
 	birth_date = models.DateField(null=True, default=None, blank=True)
