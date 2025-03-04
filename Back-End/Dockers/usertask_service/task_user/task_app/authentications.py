@@ -128,7 +128,7 @@ class TokenAuthentication(BaseAuthentication):
                     user_id = data.get('user_id')
                     User = get_user_model()
                     try:
-                        user = User.objects.get(id=user_id)
+                        user = User.objects.get(user_id=user_id)
                         # Cache user for token expiry duration (default to 5 min if not provided)
                         expires_in = data.get('expires_in', 300)
                         cache.set(token, user, timeout=expires_in)

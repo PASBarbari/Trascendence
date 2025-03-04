@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.models import AnonymousUser
 from rest_framework.views import APIView
 from rest_framework import permissions, status, generics
 from rest_framework.response import Response
@@ -11,13 +12,43 @@ import asyncio
 from .middleware import ServiceAuthentication , JWTAuth
 from django_filters.rest_framework import DjangoFilterBackend
 
+class IsAuthenticatedUserProfile(permissions.BasePermission):
+    """
+    Permesso personalizzato per il modello UserProfile.
+    Verifica semplicemente se l'utente è autenticato (non è AnonymousUser).
+    """
+    def has_permission(self, request, view):
+        return request.user is not None and not isinstance(request.user, AnonymousUser)
+
+class IsOwnUserProfile(permissions.BasePermission):
+    """
+    Permesso che verifica se l'utente sta accedendo ai propri dati.
+    Da usare per le richieste che manipolano dati utente.
+    """
+    def has_permission(self, request, view):
+        # Verifica prima se l'utente è autenticato
+        if not IsAuthenticatedUserProfile().has_permission(request, view):
+            return False
+            
+        # Per le viste che usano l'ID utente nell'URL
+        user_id = view.kwargs.get('user_id')
+        if user_id and str(request.user.user_id) == str(user_id):
+            return True
+            
+        # Per le richieste che usano l'ID utente nei parametri query
+        user_id_param = request.query_params.get('user_id')
+        if user_id_param and str(request.user.user_id) == str(user_id_param):
+            return True
+            
+        return False
+
 class MultipleFieldLookupMixin:
 	"""
 	Apply this mixin to any view or viewset to get multiple field filtering
 	based on a `lookup_fields` attribute, instead of the default single field filtering.
 	"""
 	def get_object(self):
-		queryset = self.get_queryset()			 # Get the base queryset
+		queryset = self.get_queryset()
 		queryset = self.filter_queryset(queryset)	# Apply any filter backends
 		filter = {}
 		for field in self.lookup_fields:
@@ -28,12 +59,12 @@ class MultipleFieldLookupMixin:
 		return obj
 
 class AvatarGen(generics.ListCreateAPIView):
-	permission_classes = (permissions.IsAuthenticated,)
+	permission_classes = (IsAuthenticatedUserProfile,)
 	serializer_class = AvatarsSerializer
 	queryset = Avatars.objects.all()
 
 class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (permissions.IsAuthenticated,)
+	permission_classes = (IsAuthenticatedUserProfile,)
 	serializer_class = AvatarsSerializer
 	lookup_url_kwarg = 'id'
 	queryset = Avatars.objects.all()
@@ -50,18 +81,20 @@ class UserGen(generics.ListCreateAPIView):
 			self.permission_classes = []
 			self.authentication_classes = [ServiceAuthentication]
 		else:
-			self.permission_classes = (permissions.IsAuthenticated,)
+			self.permission_classes = (IsAuthenticatedUserProfile,)
 			self.authentication_classes = [JWTAuth]
 		return super().get_permissions()
 
 class UserManage(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (permissions.IsAuthenticated,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	serializer_class = UsersSerializer
 	lookup_url_kwarg = 'user_id'
 	queryset = UserProfile.objects.all()
 
 class FriendList(generics.ListAPIView):
-	permissions_classes = (permissions.IsAuthenticated,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	serializer_class = FriendshipsSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['user_1__user_id', 'user_2__user_id', 'accepted']
@@ -80,7 +113,7 @@ class LevelUp(APIView):
 			user_id (int): The id of the user.
 			exp (int): The amount of experience points to add.
 	"""
-	permission_classes = (permissions.IsAuthenticated,)
+	permission_classes = (IsAuthenticatedUserProfile,)
 
 	def post(self, request):
 		user_id = request.data.get('user_id')
@@ -105,7 +138,7 @@ class AddFriend(APIView):
 			user_1 (int): The id of the user sending the request.
 			user_2 (int): The id of the user receiving the request.
 	"""
-	permission_classes = (permissions.IsAuthenticated,)
+	permission_classes = (IsAuthenticatedUserProfile,)
 
 	def post(self, request):
 		serializer = FriendshipsSerializer(data=request.data)
@@ -199,5 +232,5 @@ class AddFriend(APIView):
 					}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
 			return Response({
-					'error': str(e)
+					'errors': str(e)
 			}, status=status.HTTP_400_BAD_REQUEST)

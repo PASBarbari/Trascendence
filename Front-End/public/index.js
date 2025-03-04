@@ -1,7 +1,7 @@
 import { renderLogin } from './login/login.js';
 import { renderRegister } from './register/register.js';
 import { renderHome } from './home/home.js';
-import { renderPong } from './pong/pong.js';
+// import { renderPong } from './pong/pong.js';
 import { renderExpandableSidebar } from './chat/ExpandableSidebar.js';
 //import { renderProfile } from './profile/profile.js';
 
@@ -32,7 +32,7 @@ const routes = {
         description: "This is the home page",
     },
     pong: {
-        render: renderPong,
+        module: () => import("./pong/pongContainer.js").then(module => module.renderPong),
         title: "Pong",
         description: "This is the pong game",
     }

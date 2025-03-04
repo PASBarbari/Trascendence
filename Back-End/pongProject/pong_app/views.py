@@ -5,8 +5,42 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import *
 from .serializer import *
+from .models import UserProfile
+from .middleware import ServiceAuthentication , JWTAuth
+from django.contrib.auth.models import AnonymousUser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
+
+class IsAuthenticatedUserProfile(permissions.BasePermission):
+    """
+    Permesso personalizzato per il modello UserProfile.
+    Verifica semplicemente se l'utente è autenticato (non è AnonymousUser).
+    """
+    def has_permission(self, request, view):
+        return request.user is not None and not isinstance(request.user, AnonymousUser)
+
+class IsOwnUserProfile(permissions.BasePermission):
+    """
+    Permesso che verifica se l'utente sta accedendo ai propri dati.
+    Da usare per le richieste che manipolano dati utente.
+    """
+    def has_permission(self, request, view):
+        # Verifica prima se l'utente è autenticato
+        if not IsAuthenticatedUserProfile().has_permission(request, view):
+            return False
+            
+        # Per le viste che usano l'ID utente nell'URL
+        user_id = view.kwargs.get('user_id')
+        if user_id and str(request.user.user_id) == str(user_id):
+            return True
+            
+        # Per le richieste che usano l'ID utente nei parametri query
+        user_id_param = request.query_params.get('user_id')
+        if user_id_param and str(request.user.user_id) == str(user_id_param):
+            return True
+            
+        return False
+
 
 class MultipleFieldLookupMixin:
 	"""
@@ -25,18 +59,21 @@ class MultipleFieldLookupMixin:
 		return obj
 
 class PlayerGen(generics.ListCreateAPIView):
-	permission_classes = (permissions.AllowAny,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [ServiceAuthentication]
 	serializer_class = PlayerSerializer
 	lookup_fields = ['user_id', 'tournaments__id']
 
 class PlayerManage(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (permissions.AllowAny,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	serializer_class = PlayerSerializer
 	lookup_url_kwarg = 'user_id'
 	queryset = UserProfile.objects.all()
 
 class GameGen(generics.ListCreateAPIView):
-	permission_classes = (permissions.AllowAny,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	serializer_class = GamesSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['player_1__user_id', 'player_2__user_id', 'tournament_id']
@@ -44,21 +81,24 @@ class GameGen(generics.ListCreateAPIView):
 	queryset = Game.objects.all()
  
 class GameManage(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (permissions.AllowAny,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	serializer_class = GamesSerializer
 	lookup_url_kwarg = 'id'
 	queryset = Game.objects.all()
 
 class TournamentGen(generics.ListCreateAPIView):
-	permission_classes = (permissions.AllowAny,)
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 	serializer_class = TournamentSerializer
 	filter_backends = [DjangoFilterBackend]
 	filterset_fields = ['name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
 	lookup_fields = ['id', 'name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
 
 class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (permissions.AllowAny,)
+	permission_classes = (IsAuthenticatedUserProfile,)
 	serializer_class = TournamentSerializer
+	authentication_classes = [JWTAuth]
 	lookup_url_kwarg = 'id'
 	queryset = Tournament.objects.all()
 
@@ -70,7 +110,6 @@ class JoinTournament(APIView):
 			user_id (int): The id of the player.
 	"""
 	permission_classes = (permissions.AllowAny,)
-
 	def post(self, request, *args, **kwargs):
 		tournament_id = request.data.get('tournament_id')
 		user_id = request.data.get('user_id')
@@ -95,7 +134,6 @@ class EndTournament(APIView):
 			winner_id (int): The id of the player who won the tournament.
 	"""
 	permission_classes = (permissions.AllowAny,)
-
 	def post(self, request, *args, **kwargs):
 		tournament_id = request.data.get('tournament_id')
 		winner_id = request.data.get('winner_id')

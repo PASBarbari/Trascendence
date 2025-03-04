@@ -2,7 +2,7 @@ import { renderTaskAvaiable } from '../task/taskAvaiable.js';
 import { renderTaskActive } from '../task/taskActive.js';
 import { renderNotification, initializeWebSocket } from '../notification/notification.js';
 import { renderPongInfo } from '../pong/pongContainer.js';
-import { renderProfile } from '../profile/profile.js';
+import { initializeProfile, renderProfile } from '../profile/profile.js';
 
 const stylesheets = [
     '/public/home/home.css',
@@ -46,10 +46,10 @@ function renderHome() {
     const toggleProfileButton = document.getElementById('toggleProfileButton');
     const profileDiv = document.getElementById('profile');
 
-    toggleProfileButton.addEventListener('click', () => {
+    toggleProfileButton.addEventListener('click', async () => {
         if (profileDiv.style.display === 'none') {
             profileDiv.style.display = 'block';
-            renderProfile();
+            await initializeProfile();
         } else {
             profileDiv.style.display = 'none';
         }

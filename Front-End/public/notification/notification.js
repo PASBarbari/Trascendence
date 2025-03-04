@@ -1,5 +1,6 @@
 import { setVariables, getVariables } from '../var.js';
 import { updateChatList } from '../chat/ExpandableSidebar.js';
+import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -80,6 +81,7 @@ async function getFriends() {
 				headers: {
 					"Content-Type": "application/json",
 					"Authorization": `Bearer ${token}`,
+					'X-CSRFToken': getCookie('csrftoken'),
 				},
 			}
 		);

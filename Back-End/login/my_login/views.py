@@ -68,6 +68,7 @@ def CreateOnOtherServices(user):
 	}
 	user_response = requests.post(User_url, json=user_data, headers=headers)
 	if user_response.status_code != 201:
+		print(f'user resp{user_response.status_code}')
 		logging.error(user_response.json())
 		print(user_response.json())
 		raise ValueError('User service failed to create user')
@@ -96,6 +97,7 @@ class UserRegister(APIView):
 			serializer = UserRegisterSerializer(data=clean_data)
 			if serializer.is_valid(raise_exception=True):
 				user = serializer.create(clean_data)
+				print(user)
 				if user:
 					serializer.data['password'] = user.password
 					CreateOnOtherServices(user)

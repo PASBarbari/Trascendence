@@ -4,7 +4,7 @@ import { createScore } from "./utils.js";
 import Stats from "three/addons/libs/stats.module.js";
 import * as UTILS from "./utils.js";
 import * as GAME from "./gameLogic.js";
-import { socket } from "./serverSide.js"; // Import the socket
+//import { socket } from "./serverSide.js"; // Import the socket importato 2 volte sotto
 
 export {
 	showMainMenu,
@@ -102,12 +102,14 @@ function startTwoPlayerGame() {
 	state.IAisActive = false;
 }
 
-function startCrazymode() {
+async function startCrazymode() {
 	document.getElementById("modeMenu").style.display = "none";
 	UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
 	state.spawnPowerUpFlag = true;
+
+	const { socket } = await import("./serverSide.js");
 	// Send a message to the backend indicating that both players are ready
 	if (socket && socket.readyState === WebSocket.OPEN) {
 		console.log("Sending player_ready message to the server");
@@ -145,12 +147,14 @@ function startCrazymode() {
 	}
 }
 
-function startClassicmode() {
+async function startClassicmode() {
 	document.getElementById("modeMenu").style.display = "none";
 	UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
 	state.spawnPowerUpFlag = false;
+
+	const { socket } = await import("./serverSide.js");
 	// Send a message to the backend indicating that both players are ready
 	if (socket && socket.readyState === WebSocket.OPEN) {
 		console.log("Sending player_ready message to the server");

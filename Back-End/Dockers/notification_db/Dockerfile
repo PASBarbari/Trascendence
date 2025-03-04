@@ -1,7 +1,7 @@
 FROM postgres:latest
 
 ENV POSTGRES_USER=pasquale
-ENV POSTGRES_DB=Notification_db
+ENV POSTGRES_DB=notification_db
 ENV POSTGRES_PASSWORD=123
 
 EXPOSE 5432

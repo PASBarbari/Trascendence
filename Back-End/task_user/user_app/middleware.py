@@ -43,65 +43,91 @@ def get_user_from_token(token):
         user = cache.get(token)
         if user:
             return user
-
-        # Retrieve the user from the database
-        try:
-            user = UserProfile.objects.get(id=user_id)
-            # Cache the user with a timeout (e.g., 5 minutes)
-            cache.set(token, user, timeout=300)
-            return user
-        except UserProfile.DoesNotExist:
-            return AnonymousUser()
-    except Exception as e:
-        return AnonymousUser()
+		# Retrieve the user from the database
+		try:
+			user = UserProfile.objects.get(user_id=user_id)
+			# Cache the user with a timeout (e.g., 5 minutes)
+			cache.set(token, user, timeout=300)
+			return user
+		except UserProfile.DoesNotExist:
+			return AnonymousUser()
+	except Exception as e:
+		return AnonymousUser()
 
 
 class JWTAuth(JWTAuthentication):
-    """
-    Enhanced JWT authentication class with caching support and improved error handling.
-    """
-    def authenticate(self, request):
-        # Skip authentication for specific paths if needed
-        if request.path.endswith('/task/some_endpoint/') and request.method == 'POST':
-            logger.debug(f"Skipping JWT auth for {request.path}")
-            return (AnonymousUser(), None)
-            
-        # Check for cached authentication result first
-        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-        if auth_header and auth_header.startswith('Bearer '):
-            token = auth_header.replace('Bearer ', '')
-            
-            # Try to get from cache first
-            cache_key = f"jwt_auth_{token}"
-            cached_result = cache.get(cache_key)
-            
-            if cached_result is not None:
-                logger.debug("Using cached JWT authentication result")
-                if cached_result == "anonymous":
-                    return None
-                return cached_result
-                
-            try:
-                # Call parent class to validate token
-                auth_result = super().authenticate(request)
-                
-                # Cache the result (None results don't need caching)
-                if auth_result:
-                    # Cache successful authentications for 5 minutes
-                    cache.set(cache_key, auth_result, timeout=300)
-                    logger.debug(f"JWT auth successful for user {auth_result[0]}")
-                    return auth_result
-                else:
-                    # Cache negative results for a shorter time
-                    cache.set(cache_key, "anonymous", timeout=60)
-                    return None
-                    
-            except Exception as e:
-                logger.warning(f"JWT authentication failed: {str(e)}")
-                return None
-        
-        return super().authenticate(request)
+	"""
+	Enhanced JWT authentication class with caching support and improved error handling.
+	"""
+	user_id_claim = 'user_id'
+	def authenticate(self, request):
+		# Skip authentication for specific paths if needed
+		if request.path.endswith('/chat/new_user/') and request.method == 'POST':
+			logger.debug(f"Skipping JWT auth for {request.path}")
+			return (AnonymousUser(), None)
+			
+		# Check for cached authentication result first
+		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+		if auth_header and auth_header.startswith('Bearer '):
+			token = auth_header.replace('Bearer ', '')
+			
+			# Try to get from cache first
+			cache_key = f"jwt_auth_{token}"
+			cached_result = cache.get(cache_key)
+			
+			if cached_result is not None:
+				logger.debug("Using cached JWT authentication result")
+				if cached_result == "anonymous":
+					return None
+				return cached_result
+				
+			try:
+				# Call parent class to validate token
+				auth_result = super().authenticate(request)
+				
+				# Cache the result (None results don't need caching)
+				if auth_result:
+					# Cache successful authentications for 5 minutes (adjust as needed)
+					cache.set(cache_key, auth_result, timeout=300)
+					logger.debug(f"JWT auth successful for user {auth_result[0]}")
+					return auth_result
+				else:
+					# Cache negative results for a shorter time (1 minute)
+					cache.set(cache_key, "anonymous", timeout=60)
+					return None
+					
+			except Exception as e:
+				# Log the error but don't cache exceptions
+				logger.warning(f"JWT authentication failed: {str(e)}")
+				logger.warning(f"Token details: {token[:10]}...{token[-10:]}")
+				try:
+					decoded = AccessToken(token)
+					user_id = decoded.get('user_id')
+					logger.warning(f"User ID from token: {user_id}, exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
+				except Exception as inner_e:
+							logger.warning(f"Token decode failed: {str(inner_e)}")
+				return None
+		
+		# No auth header or not a Bearer token
+		return super().authenticate(request)
 
+	def get_user(self, validated_token):
+		"""
+		Sovrascrive il metodo get_user per utilizzare UserProfile invece del modello User standard
+		"""
+		try:
+			user_id = validated_token[self.user_id_claim]
+			
+			# Cerca l'utente nel modello UserProfile
+			user = UserProfile.objects.get(user_id=user_id)
+			
+			return user
+		except UserProfile.DoesNotExist:
+			logger.warning(f"User ID {user_id} from token not found in UserProfile")
+			return None
+		except Exception as e:
+			logger.error(f"Error getting user from token: {str(e)}")
+			return None
 
 class APIKeyPermission(BasePermission):
     """
@@ -112,17 +138,6 @@ class APIKeyPermission(BasePermission):
         if api_key:
             return api_key == settings.API_KEY
         return False
-
-# class JWTAuthMiddleware(BaseMiddleware):
-# 	"""
-# 	JWT Authentication middleware for WebSocket connections.
-# 	Extracts the JWT token from query parameters or headers and authenticates the user.
-# 	"""
-# 	async def __call__(self, scope, receive, send):
-# 		# Skip authentication for specific paths if needed
-# 		if scope['path'] == '/chat/new_user/':
-# 			scope['user'] = AnonymousUser()
-# 			return await super().__call__(scope, receive, send)
 		
 # 		# Try to get token from query string first
 # 		query_string = parse_qs(scope["query_string"].decode())
@@ -164,18 +179,6 @@ class APIKeyPermission(BasePermission):
 # 			user = cache.get(f"jwt_ws_user_{token}")
 # 			if user:
 # 				return user
-				
-# 			# Retrieve the user from the database
-# 			try:
-# 				user = UserProfile.objects.get(id=user_id)
-# 				# Cache the user with a timeout (e.g., 5 minutes)
-# 				cache.set(f"jwt_ws_user_{token}", user, timeout=300)
-# 				return user
-# 			except UserProfile.DoesNotExist:
-# 				return AnonymousUser()
-# 		except Exception as e:
-# 			logger.error(f"JWT token validation failed: {str(e)}")
-# 			return AnonymousUser()
 
 # def JWTAuthMiddlewareStack(inner):
 # 	"""
@@ -232,7 +235,7 @@ class APIKeyPermission(BasePermission):
 
 # 			# Retrieve the user from the database
 # 			try:
-# 				user = UserProfile.objects.get(id=user_id)
+# 				user = UserProfile.objects.get(user_id=user_id)
 # 				# Cache the user with a timeout (e.g., 5 minutes)
 # 				cache.set(token, user, timeout=300)
 # 				return user
@@ -256,7 +259,7 @@ class APIKeyPermission(BasePermission):
 
 # 			# Retrieve the user from the database
 # 			try:
-# 				user = UserProfile.objects.get(id=user_id)
+# 				user = UserProfile.objects.get(user_id=user_id)
 # 				# Cache the user with a timeout (e.g., 5 minutes)
 # 				cache.set(token, user, timeout=300)
 # 				return user

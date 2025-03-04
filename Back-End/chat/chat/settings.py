@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 import secrets , os
 
@@ -224,6 +224,22 @@ LOGGING = {
 			'style': '{',
 		},
 	},
+}
+
+SIMPLE_JWT = {
+	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+	'ROTATE_REFRESH_TOKENS': True,
+	'BLACKLIST_AFTER_ROTATION': True,
+	'ALGORITHM': 'HS256',
+	# 'ISSUER': 'login',
+	'SIGNING_KEY': SECRET_KEY,
+	'VERIFYING_KEY': None,
+	'AUTH_HEADER_TYPES': ('Bearer',),
+	'USER_ID_FIELD': 'user_id',
+	'USER_ID_CLAIM': 'user_id',
+	'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+	'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
 OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')

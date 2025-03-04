@@ -150,7 +150,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'Notifications.wsgi.application'
+# WSGI_APPLICATION = 'Notifications.wsgi.application'
 ASGI_APPLICATION = 'Notifications.asgi.application'
 
 
@@ -164,7 +164,7 @@ DATABASES = {
 	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
 	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
 	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5439'),
+	'PORT': os.getenv('POSTGRES_PORT', '5438'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',

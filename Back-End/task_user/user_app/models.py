@@ -11,13 +11,15 @@ class Avatars(models.Model):
 class UserProfile(models.Model):
 	staff = models.BooleanField(default=False)
 	user_id = models.IntegerField(unique=True, primary_key=True)
+	email = models.EmailField(max_length=255, unique=True)
+	username = models.CharField(max_length=255, unique=True)
 	first_name = models.CharField(max_length=255, null=True, default="")
 	last_name = models.CharField(max_length=255, null=True, default="")
 	birth_date = models.DateField(null=True, default=None, blank=True)
 	bio = models.TextField(default="", null=True, blank=True)
 	exp = models.IntegerField(default=0)
 	level = models.IntegerField(default=0)
-	avatar = models.ForeignKey(Avatars, default=1, on_delete=models.SET(1), related_name="picture")
+	avatar = models.ForeignKey(Avatars, null=True, default=None, on_delete=models.SET(1), related_name="picture")
 	last_modified = models.DateTimeField(auto_now=True)
 
 class Friendships(models.Model):
