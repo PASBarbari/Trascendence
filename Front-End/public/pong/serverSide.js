@@ -8,11 +8,11 @@ let socket;
 
 //TODO aggiungere la lunghezza del player alle variabili e altre cose che vengono in mente
 async function createGame(player_1, player_2) {
-	const { token } = getVariables();
+	const { token, url_api } = getVariables();
 
 	try {
 		const response = await fetch(
-			`http://localhost:8004/pong/game?token=${token}`,
+			`${url_api}/pong/game?token=${token}`,
 			{
 				method: "POST",
 				headers: {

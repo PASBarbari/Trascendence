@@ -57,11 +57,12 @@ async function onHandleSubmit(e, username, email, password) {
  */
 async function registerUser(username, email, password, isBaseRegister) {
 	if (email && password) {
+		const { url_api } = getVariables();
 		console.log('Username:', username);
 		console.log('Email:', email);
 		console.log('Password:', password);
 		try {
-			const response = await fetch('https://trascendence.42firenze.it/api/login/login/register', {
+			const response = await fetch(`${url_api}/login/login/register`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

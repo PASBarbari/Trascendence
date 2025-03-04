@@ -21,15 +21,15 @@ function isFirstMessageOfDay(date) {
 }
 
 async function getChatRooms() {
-	const { userId, token } = getVariables();
+	const { userId, token, url_api } = getVariables();
 	console.log("/-----ExpandableSidebar.js-----\\");
 	console.log("user_id in sidechat: ", userId);
 	console.log("Token getChatRooms:", token);
-	console.log(`http://localhost:8001/chat/chat_rooms/getchat/?users=${userId}`);
+	console.log(`${url_api}/chat/chat_rooms/getchat/?users=${userId}`);
 	console.log("\\_____ExpandableSidebar.js_____/");
 	try {
 		const response = await fetch(
-			`http://localhost:8001/chat/chat_rooms/getchat/?user_id=${userId}`,
+			`${url_api}/chat/chat_rooms/getchat/?user_id=${userId}`,
 			{
 				method: "GET",
 				headers: {
