@@ -18,8 +18,6 @@ sudo apt-get install -y kubectl
 sudo apt install kubecolor kubelet -y
 echo "Starting project setup..."
 
-sudo apt autoremove -y
-
 # Step 1: Install Minikube if not already installed
 if ! command -v minikube &> /dev/null; then
   echo "Minikube is not installed. Installing Minikube..."
@@ -28,7 +26,6 @@ if ! command -v minikube &> /dev/null; then
   rm minikube-linux-amd64
 fi
 
-
 # Step 2: Start Minikube
 echo "Starting Minikube..."
 minikube start --cpus=8 --memory=8192 --driver=docker
@@ -36,50 +33,69 @@ minikube start --cpus=8 --memory=8192 --driver=docker
 # Step 3: Set Minikube context for kubectl
 echo "Setting up Minikube context..."
 kubecolor config use-context minikube
-
+cd Manifests
 minikube addons enable ingress
+minikube addons enable metrics-server
 
 # Step 4: Create Kubernetes namespaces from namespace.yaml
-echo "Creating namespaces from namespace.yaml..."
-kubecolor apply -f namespace.yaml
+echo "Creating namespaces"
+kubecolor apply -f configmaps/namespaces.yaml
 
-# Extract namespaces from namespace.yaml
-NAMESPACES=$(grep 'name:' namespace.yaml | awk '{print $2}')
-
-# Step 5: Apply pre-created secrets from USB drive
-echo "Applying secrets from directory..."
-SECRETS_DIR=./secrets
-if [ -d "$SECRETS_DIR" ]; then
-  kubecolor apply -f $SECRETS_DIR/secrets.yaml
-else
-  echo "Secrets directory not found at $SECRETS_DIR. Please check the path."
-  exit 1
-fi
-
+# Step 4.5: Create Kubernetes configmaps from configmaps.yaml
+echo "Creating configmaps"
+kubecolor apply -f configmaps/Configmap.yaml
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
 kubectl create namespace cert-manager
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
-# Step 6: Install Helm if not already installed
-if ! command -v helm &> /dev/null; then
-  echo "Helm is not installed. Installing Helm..."
-  curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# Step 5: Apply pre-created secrets from USB drive
+echo "Applying secrets"
+if [ ! -f secrets.yaml ]; then
+  echo "Secrets not found. Please copy the secrets to the secrets folder and run the script again."
+  exit 1
 fi
+kubecolor apply -f secrets.yaml
 
-# Step 7: Deploy the Helm chart for each namespace
-echo "Deploying Helm chart..."
-for namespace in $NAMESPACES; do
-  helm install project-$namespace ./helm-chart --namespace $namespace --create-namespace
-done
-# helm repo add minio https://helm.min.io/
-# Step 8: Verify deployment
-echo "Verifying deployment..."
-for namespace in $NAMESPACES; do
-  kubectl get all -n $namespace
+# # Step 6: Install Helm if not already installed
+# if ! command -v helm &> /dev/null; then
+#   echo "Helm is not installed. Installing Helm..."
+#   curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+# fi
+
+# # Step 7: Deploy the Helm chart for each namespace
+# echo "Deploying Helm chart..."
+# for namespace in $NAMESPACES; do
+#   helm install project-$namespace ./helm-chart --namespace $namespace --create-namespace
+# done
+# # helm repo add minio https://helm.min.io/
+# # Step 8: Verify deployment
+# echo "Verifying deployment..."
+# for namespace in $NAMESPACES; do
+#   kubectl get all -n $namespace
+# done
+
+# Step 6: Setup volumes
+echo "Setting up volumes..."
+kubecolor apply -f Volumes/
+
+# Step 7: Setup ingresses
+echo "Setting up ingresses..."
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+kubecolor apply -f Ingresses/
+
+# Step 8: Setup microservices
+echo "Setting up microservices..."
+dir=("Certs" "Chat" "Login" "Redis" "Notifications" "Pong" "User")
+for service in $(dir):
+do
+  kubecolor apply -f $service/
 done
 
 echo "Project setup complete! Access Minikube services using:"
 
-PASS=kubectl get secret -nelk trascendence-kibana-user -o=jsonpath='{.data}'
-echo "Elastic pswd: $(echo $PASS | jq -r '.password' | base64 -d)"
+# PASS=kubectl get secret -nelk trascendence-kibana-user -o=jsonpath='{.data}'
+# echo "Elastic pswd: $(echo $PASS | jq -r '.password' | base64 -d)"
 minikube service list
