@@ -14,7 +14,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		print('connected')
 		self.room_id = self.scope['url_route']['kwargs']['room_id']
 		self.channel_name = f'game_{self.room_id}'
-		self.tournament_id = self.scope['url_route']['kwargs']['tournament_id']
+		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
 		# Join room group
 		await self.channel_layer.group_add(
 			self.channel_name
@@ -170,9 +170,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 class TournamentConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
-		self.tournament_id = self.scope['url_route']['kwargs']['tournament_id']
-		if not self.tournament_id:
-			pass #TODO boh
+		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)  # Make optional
 		self.channel_name = f'tournament_{self.tournament_id}'
 		# Join room group
 		await self.channel_layer.group_add(

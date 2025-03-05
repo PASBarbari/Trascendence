@@ -53,7 +53,7 @@ async function onHandleSubmit(e, email, password) {
 		const csrftoken = getCookie("csrftoken");
 		const loginSuccess = await loginUser(email, password, csrftoken, true);
 		if (loginSuccess) {
-			await handleGetUser(csrftoken);
+			//await handleGetUser(csrftoken);
 			window.navigateTo("#home");
 		}
 	} else {
@@ -88,6 +88,15 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 
 				if (isBaseLogin) {
 					setVariables({ token: data.access_token });
+
+					const { user, user_id } = data;
+					const { email, username } = user;
+
+					setVariables({
+						userEmail: email,
+						userUsername: username,
+						userId: user_id,
+					});
 				} else {
 					setVariables({ multiplayer_username: data.username });
 					setVariables({ multiplayer_id: data.user_id });
@@ -108,42 +117,42 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 	}
 }
 
-async function handleGetUser(csrftoken) {
-	try {
-		const { token } = getVariables();
-		const response = await fetch(
-			"trascendence.42firenze.it/api/login/login/user",
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"X-CSRFToken": csrftoken,
-					Authorization: `Bearer ${token}`,
-				},
-			}
-		);
+// async function handleGetUser(csrftoken) {
+// 	try {
+// 		const { token } = getVariables();
+// 		const response = await fetch(
+// 			"trascendence.42firenze.it/api/login/login/user",
+// 			{
+// 				method: "GET",
+// 				headers: {
+// 					"Content-Type": "application/json",
+// 					"X-CSRFToken": csrftoken,
+// 					Authorization: `Bearer ${token}`,
+// 				},
+// 			}
+// 		);
 
-		if (response.ok) {
-			const data = await response.json();
-			const { user, user_id } = data;
-			const { email, username } = user;
+// 		if (response.ok) {
+// 			const data = await response.json();
+// 			const { user, user_id } = data;
+// 			const { email, username } = user;
 
-			setVariables({
-				userEmail: email,
-				userUsername: username,
-				userId: user_id,
-			});
+// 			setVariables({
+// 				userEmail: email,
+// 				userUsername: username,
+// 				userId: user_id,
+// 			});
 
-			console.log("User email:", email);
-			console.log("User username:", username);
-			console.log("User ID:", user_id);
-		} else {
-			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
-		}
-	} catch (error) {
-		console.error("Errore nella richiesta:", error);
-	}
-}
+// 			console.log("User email:", email);
+// 			console.log("User username:", username);
+// 			console.log("User ID:", user_id);
+// 		} else {
+// 			const errorData = await response.json();
+// 			console.error("Errore nella risposta del server:", errorData);
+// 		}
+// 	} catch (error) {
+// 		console.error("Errore nella richiesta:", error);
+// 	}
+// }
 
 export { renderLogin, loginUser };

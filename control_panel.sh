@@ -100,7 +100,7 @@ show_log_pager() {
 export LESS="-RFX"
 
 # Set kubecolor theme - choose light or dark based on your terminal
-KUBECOLOR_THEME="--kubecolor-theme=dark"
+# KUBECOLOR_THEME="--kubecolor-theme=dark"
 
 # Function to show logs with proper colors
 show_colored_logs() {
@@ -111,7 +111,7 @@ show_colored_logs() {
     
     echo -e "$title"
     # Use --force-colors to ensure colors work with pipes
-    kubecolor $KUBECOLOR_THEME logs -n $namespace $pod --tail=$tail --force-colors --pager=less
+    kubecolor $KUBECOLOR_THEME logs -n $namespace $pod --tail=$tail --force-colors
 }
 
 # Function to describe pod with colors
@@ -204,21 +204,21 @@ show_logs() {
                     local pod_choice=$?
                     
                     if [ $pod_choice -eq 0 ]; then
-                        # View all pods
-                        for pod in $pods; do
-                            clear
-                            echo -e "${YELLOW}==== Logs from $pod in namespace $selected_ns ====${NC}"
-                            show_colored_logs $ns $pod 200
-                            
-                            echo -e "\n${CYAN}Options:${NC}"
-                            echo -e "${GREEN}1) View next pod${NC}"
-                            echo -e "${GREEN}2) Return to namespace menu${NC}"
-                            read -n 1 -r choice
-                            
-                            if [[ $choice == "2" ]]; then
-                                break  # Break pod loop
-                            fi
-                        done
+    				# View all pods
+						for pod in $pods; do
+							clear
+							echo -e "${YELLOW}==== Logs from $pod in namespace $selected_ns ====${NC}"
+							show_colored_logs $selected_ns $pod 200  # Use $selected_ns instead of $ns
+							
+							echo -e "\n${CYAN}Options:${NC}"
+							echo -e "${GREEN}1) View next pod${NC}"
+							echo -e "${GREEN}2) Return to namespace menu${NC}"
+							read -n 1 -r choice
+							
+							if [[ $choice == "2" ]]; then
+								break  # Break pod loop
+							fi
+						done
                     elif [ $pod_choice -eq 1 ]; then
                         # Return to logs menu
                         break
@@ -691,7 +691,8 @@ while true; do
             ;;
         3)
             echo -e "${CYAN}Exiting...${NC}"
-            exit 0
+            tput cnorm
+			exit 0
             ;;
     esac
 done

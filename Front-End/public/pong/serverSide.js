@@ -3,6 +3,7 @@ import { getVariables } from "../var.js";
 import { renderPong } from "./pong.js";
 import * as GAME from "./gameLogic.js";
 import * as UTILS from "./utils.js";
+import { getCookie } from "../cookie.js";
 
 let socket;
 
@@ -11,16 +12,15 @@ async function createGame(player_1, player_2) {
 	const { token, url_api } = getVariables();
 
 	try {
-		const response = await fetch(
-			`${url_api}/pong/game?token=${token}`,
-			{
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ player_1, player_2 }),
-			}
-		);
+		const response = await fetch(`${url_api}/pong/pong/game`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken"),
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({ player_1, player_2 }),
+		});
 		if (response.ok) {
 			const data = await response.json();
 			console.log("Game created:", data);
@@ -36,8 +36,9 @@ async function createGame(player_1, player_2) {
 }
 
 function initializeWebSocket(room_id, player1, player2) {
-	const { token } = getVariables();
-	const wsUrl = `ws://127.0.0.1:8004/ws/pong/${room_id}/?token=${token}`;
+	const { token, wss_api } = getVariables();
+	console.log("wss_api value:", wss_api);
+	const wsUrl = `wss://trascendence.42firenze.it/api/pong/ws/pong/${room_id}/?token=${token}&tournament_id=None`;
 	socket = new WebSocket(wsUrl);
 	socket.onmessage = function (event) {
 		const message = JSON.parse(event.data);
@@ -53,7 +54,6 @@ function initializeWebSocket(room_id, player1, player2) {
 		state.p1_id = player1;
 		state.p2_id = player2;
 		renderPong();
-
 	};
 	socket.onerror = function (error) {
 		console.error("WebSocket error:", error);
@@ -79,8 +79,10 @@ function updateGameState(game_state) {
 	state.ball.position.set(game_state.ball_pos[0], game_state.ball_pos[1]);
 
 	// Update scores
-	if (game_state.player_1_score !== state.p1_score ||
-		game_state.player_2_score !== state.p2_score)
+	if (
+		game_state.player_1_score !== state.p1_score ||
+		game_state.player_2_score !== state.p2_score
+	)
 		UTILS.updateScore();
 	state.p1_score = game_state.player_1_score;
 	state.p2_score = game_state.player_2_score;
@@ -89,91 +91,90 @@ function updateGameState(game_state) {
 }
 
 document.addEventListener("keydown", function (event) {
-    if (event.key.toLowerCase() == "w" && !state.keys.w) {
-        socket.send(
-            JSON.stringify({
-                type: "up",
-                player: state.p1_id,
-            })
-        );
-        state.keys.w = true;
-    }
-    if (event.key.toLowerCase() == "s" && !state.keys.s) {
-        socket.send(
-            JSON.stringify({
-                type: "down",
-                player: state.p1_id,
-            })
-        );
-        state.keys.s = true;
-    }
-    if (event.key == "ArrowUp" && !state.keys.ArrowUp) {
-        socket.send(
-            JSON.stringify({
-                type: "up",
-                player: state.p2_id,
-            })
-        );
-        state.keys.ArrowUp = true;
-    }
-    if (event.key == "ArrowDown" && !state.keys.ArrowDown) {
-        socket.send(
-            JSON.stringify({
-                type: "down",
-                player: state.p2_id,
-            })
-        );
-        state.keys.ArrowDown = true;
-    }
+	if (event.key.toLowerCase() == "w" && !state.keys.w) {
+		socket.send(
+			JSON.stringify({
+				type: "up",
+				player: state.p1_id,
+			})
+		);
+		state.keys.w = true;
+	}
+	if (event.key.toLowerCase() == "s" && !state.keys.s) {
+		socket.send(
+			JSON.stringify({
+				type: "down",
+				player: state.p1_id,
+			})
+		);
+		state.keys.s = true;
+	}
+	if (event.key == "ArrowUp" && !state.keys.ArrowUp) {
+		socket.send(
+			JSON.stringify({
+				type: "up",
+				player: state.p2_id,
+			})
+		);
+		state.keys.ArrowUp = true;
+	}
+	if (event.key == "ArrowDown" && !state.keys.ArrowDown) {
+		socket.send(
+			JSON.stringify({
+				type: "down",
+				player: state.p2_id,
+			})
+		);
+		state.keys.ArrowDown = true;
+	}
 });
 
 document.addEventListener("keyup", function (event) {
 	if (event.key.toLowerCase() == "w") {
-        state.keys.w = false;
-        if (!state.keys.s) {
-            socket.send(
-                JSON.stringify({
-                    type: "stop",
-                    player: state.p1_id,
-                })
-            );
-        }
-    }
-    if (event.key.toLowerCase() == "s") {
-        state.keys.s = false;
-        if (!state.keys.w) {
-            socket.send(
-                JSON.stringify({
-                    type: "stop",
-                    player: state.p1_id,
-                })
-            );
-        }
-    }
-    if (event.key == "ArrowUp") {
-        state.keys.ArrowUp = false;
-        if (!state.keys.ArrowDown) {
-            socket.send(
-                JSON.stringify({
-                    type: "stop",
-                    player: state.p2_id,
-                })
-            );
-        }
-    }
-    if (event.key == "ArrowDown") {
-        state.keys.ArrowDown = false;
-        if (!state.keys.ArrowUp) {
-            socket.send(
-                JSON.stringify({
-                    type: "stop",
-                    player: state.p2_id,
-                })
-            );
-        }
-    }
+		state.keys.w = false;
+		if (!state.keys.s) {
+			socket.send(
+				JSON.stringify({
+					type: "stop",
+					player: state.p1_id,
+				})
+			);
+		}
+	}
+	if (event.key.toLowerCase() == "s") {
+		state.keys.s = false;
+		if (!state.keys.w) {
+			socket.send(
+				JSON.stringify({
+					type: "stop",
+					player: state.p1_id,
+				})
+			);
+		}
+	}
+	if (event.key == "ArrowUp") {
+		state.keys.ArrowUp = false;
+		if (!state.keys.ArrowDown) {
+			socket.send(
+				JSON.stringify({
+					type: "stop",
+					player: state.p2_id,
+				})
+			);
+		}
+	}
+	if (event.key == "ArrowDown") {
+		state.keys.ArrowDown = false;
+		if (!state.keys.ArrowUp) {
+			socket.send(
+				JSON.stringify({
+					type: "stop",
+					player: state.p2_id,
+				})
+			);
+		}
+	}
 });
-
 
 // function getVariables() {
 //     // Example implementation to retrieve the token from local storage or environment variables
