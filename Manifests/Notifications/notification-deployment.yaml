@@ -125,7 +125,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: notifications-server-service
+  name: notifications-service
   namespace: notifications
 spec:
   selector:
