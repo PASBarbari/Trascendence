@@ -147,7 +147,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-	'pong_app.middleware.UnhandledExceptionMiddleware',
+	'pong_app.middleware.ExceptionMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
 	'django.middleware.common.CommonMiddleware',

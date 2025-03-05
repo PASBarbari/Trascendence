@@ -13,14 +13,16 @@ from django.core.asgi import get_asgi_application
 #DO NOT REMOVE THIS LINE
 django.setup()
 
-from pong_app.middleware import JWTAuthMiddlewareStack
+from pong_app.middleware import JWTAuthMiddlewareStack, UnhandledExceptionMiddleware
 from pongProject.routing import websocket_urlpatterns
 from channels.routing import ProtocolTypeRouter, URLRouter
 
 
 application = ProtocolTypeRouter ({
 	"http": get_asgi_application(),
-	"websocket": JWTAuthMiddlewareStack(
-		URLRouter(websocket_urlpatterns)
-	),
+	"websocket": UnhandledExceptionMiddleware(
+		JWTAuthMiddlewareStack(
+			URLRouter(websocket_urlpatterns)
+		)
+	)
 })
