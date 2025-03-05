@@ -38,7 +38,7 @@ async function createGame(player_1, player_2) {
 function initializeWebSocket(room_id, player1, player2) {
 	const { token, wss_api } = getVariables();
 	console.log("wss_api value:", wss_api);
-	const wsUrl = `wss://trascendence.42firenze.it/api/pong/ws/pong/${room_id}/?token=${token}&tournament_id=None`;
+	const wsUrl = `wss://trascendence.42firenze.it/api/pong/ws/pong/${room_id}/?token=${token}`;
 	socket = new WebSocket(wsUrl);
 	socket.onmessage = function (event) {
 		const message = JSON.parse(event.data);
@@ -57,6 +57,7 @@ function initializeWebSocket(room_id, player1, player2) {
 	};
 	socket.onerror = function (error) {
 		console.error("WebSocket error:", error);
+		console.error("WebSocket URL was:", wsUrl);
 	};
 	socket.onclose = function () {
 		console.log("token:", token);
