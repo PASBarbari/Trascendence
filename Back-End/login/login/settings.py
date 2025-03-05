@@ -29,10 +29,21 @@ API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
 
-def ensure_scheme(url):
-    if url and not url.startswith(('http://', 'https://')):
-        return f"http://{url}"
-    return url
+def ensure_scheme(urls):
+    """Add 'http://' scheme to URLs that don't have one"""
+    if isinstance(urls, str):
+        if not urls.startswith(('http://', 'https://')):
+            return f"http://{urls}"
+        return urls
+    
+    # Handle lists
+    result = []
+    for url in urls:
+        if url and not url.startswith(('http://', 'https://')):
+            result.append(f"http://{url}")
+        else:
+            result.append(url)
+    return result
 
 Microservices = {
     'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
@@ -75,7 +86,7 @@ ALLOWED_HOSTS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
+]  + K8S_SERVICE_HOSTS
 
 CORS_ALLOWED_ORIGINS = [
 	'http://localhost:3000',
@@ -88,7 +99,7 @@ CORS_ALLOWED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
+]  + ensure_scheme(K8S_SERVICE_HOSTS)
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -103,7 +114,7 @@ CSRF_TRUSTED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
+]  + ensure_scheme(K8S_SERVICE_HOSTS)
 
 CORS_ALLOW_HEADERS = [
 	'accept',
