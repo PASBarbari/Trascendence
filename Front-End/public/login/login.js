@@ -1,14 +1,14 @@
-import { setVariables, getVariables } from '../var.js';
-import { getCookie } from '../cookie.js';
+import { setVariables, getVariables } from "../var.js";
+import { getCookie } from "../cookie.js";
 
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = '/public/login/login.css';
+const link = document.createElement("link");
+link.rel = "stylesheet";
+link.href = "/public/login/login.css";
 document.head.appendChild(link);
 
 function renderLogin() {
-    const contentDiv = document.getElementById('content');
-    contentDiv.innerHTML = `
+	const contentDiv = document.getElementById("content");
+	contentDiv.innerHTML = `
         <div class="login">
             <div class="login_box">
                 <h1>Login</h1>
@@ -29,78 +29,81 @@ function renderLogin() {
         </div>
     `;
 
-    document.getElementById('loginForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        await onHandleSubmit(e, email, password);
-    });
+	document
+		.getElementById("loginForm")
+		.addEventListener("submit", async function (e) {
+			e.preventDefault();
+			const email = document.getElementById("email").value;
+			const password = document.getElementById("password").value;
+			await onHandleSubmit(e, email, password);
+		});
 
-    document.getElementById('registerButton').addEventListener('click', function () {
-        window.navigateTo('#register');
-    });
+	document
+		.getElementById("registerButton")
+		.addEventListener("click", function () {
+			window.navigateTo("#register");
+		});
 }
 
 async function onHandleSubmit(e, email, password) {
-    e.preventDefault();
-    if (email && password) {
-        console.log('Email:', email);
-        console.log('Password:', password);
-        const csrftoken = getCookie('csrftoken');
-        const loginSuccess = await loginUser(email, password, csrftoken, true);
-        if (loginSuccess) {
-            await handleGetUser(csrftoken);
-            window.navigateTo('#home');
-        }
-    } else {
-        console.log('Per favore, inserisci sia email che password.');
-    }
+	e.preventDefault();
+	if (email && password) {
+		console.log("Email:", email);
+		console.log("Password:", password);
+		const csrftoken = getCookie("csrftoken");
+		const loginSuccess = await loginUser(email, password, csrftoken, true);
+		if (loginSuccess) {
+			await handleGetUser(csrftoken);
+			window.navigateTo("#home");
+		}
+	} else {
+		console.log("Per favore, inserisci sia email che password.");
+	}
 }
 
 /**
  * Effettua il login dell'utente.
- * 
+ *
  * @param {boolean} isBaseLogin - true per il login base, false per il login multiplayer per pong.
  * @returns {Promise<boolean>} - Ritorna true se il login ha successo, altrimenti false.
  */
 async function loginUser(email, password, csrftoken, isBaseLogin) {
 	if (email && password) {
 		const { url_api } = getVariables();
-		console.log('Email:', email);
-		console.log('Password:', password);
+		console.log("Email:", email);
+		console.log("Password:", password);
 		try {
-			const response = await fetch(`${url_api}/login/login`, {
-				method: 'POST',
+			const response = await fetch(`${url_api}/login/login/login`, {
+				method: "POST",
 				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': csrftoken,
+					"Content-Type": "application/json",
+					"X-CSRFToken": csrftoken,
 				},
 				body: JSON.stringify({ email, password }),
 			});
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log('Risposta dal server:', data);
+				console.log("Risposta dal server:", data);
 
 				if (isBaseLogin) {
 					setVariables({ token: data.access_token });
-				}
-				else {
+				} else {
 					setVariables({ multiplayer_username: data.username });
 					setVariables({ multiplayer_id: data.user_id });
 				}
 				return true;
 			} else {
 				const errorData = await response.json();
-				console.error('Errore login:', errorData);
+				console.error("Errore login:", errorData);
 				return false;
 			}
 		} catch (error) {
-			console.error('Exception login:', error);
+			console.error("Exception login:", error);
 			return false;
 		}
 	} else {
-		console.log('Per favore, inserisci sia email che password.');
+		console.log("Per favore, inserisci sia email che password.");
 		return false;
 	}
 }
@@ -108,14 +111,17 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 async function handleGetUser(csrftoken) {
 	try {
 		const { token } = getVariables();
-		const response = await fetch('trascendence.42firenze.it/api/login/user', {
-			method: 'GET',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-CSRFToken': csrftoken,
-				'Authorization': `Bearer ${token}`,
-			},
-		});
+		const response = await fetch(
+			"trascendence.42firenze.it/api/login/login/user",
+			{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRFToken": csrftoken,
+					Authorization: `Bearer ${token}`,
+				},
+			}
+		);
 
 		if (response.ok) {
 			const data = await response.json();
@@ -125,18 +131,18 @@ async function handleGetUser(csrftoken) {
 			setVariables({
 				userEmail: email,
 				userUsername: username,
-				userId: user_id
+				userId: user_id,
 			});
 
-			console.log('User email:', email);
-			console.log('User username:', username);
-			console.log('User ID:', user_id);
+			console.log("User email:", email);
+			console.log("User username:", username);
+			console.log("User ID:", user_id);
 		} else {
 			const errorData = await response.json();
-			console.error('Errore nella risposta del server:', errorData);
+			console.error("Errore nella risposta del server:", errorData);
 		}
 	} catch (error) {
-		console.error('Errore nella richiesta:', error);
+		console.error("Errore nella richiesta:", error);
 	}
 }
 
