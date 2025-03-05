@@ -114,12 +114,12 @@ class JWTAuth(JWTAuthentication):
 				if auth_result:
 					# Cache successful authentications for 5 minutes
 					cache.set(cache_key, auth_result, timeout=300)
-					auth_logger.debug(f"JWT auth successful for user {auth_result[0]}")
+					auth_logger.info(f"JWT auth successful for user {auth_result[0]}")
 					return auth_result
 				else:
 					# Cache negative results for a shorter time
 					cache.set(cache_key, "anonymous", timeout=60)
-					auth_logger.debug("JWT auth failed - no valid user")
+					auth_logger.info("JWT auth failed - no valid user")
 					return None
 					
 			except Exception as e:
@@ -129,7 +129,7 @@ class JWTAuth(JWTAuthentication):
 					# Additional debug information
 					decoded = AccessToken(token)
 					user_id = decoded.get('user_id')
-					auth_logger.debug(f"Token user_id={user_id}, exists={UserProfile.objects.filter(user_id=user_id).exists()}")
+					auth_logger.info(f"Token user_id={user_id}, exists={UserProfile.objects.filter(user_id=user_id).exists()}")
 				except Exception as inner_e:
 					auth_logger.warning(f"Token decode failed: {str(inner_e)}")
 				return None
@@ -146,7 +146,7 @@ class JWTAuth(JWTAuthentication):
 			
 			# Look up user in UserProfile model
 			user = UserProfile.objects.get(user_id=user_id)
-			auth_logger.debug(f"User {user_id} found in get_user")
+			auth_logger.info(f"User {user_id} found in get_user")
 			return user
 		except UserProfile.DoesNotExist:
 			auth_logger.warning(f"User ID {user_id} from token not found in UserProfile")
@@ -234,3 +234,75 @@ def JWTAuthMiddlewareStack(inner):
 	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
 	"""
 	return JWTAuthMiddleware(AuthMiddlewareStack(inner))
+
+def UnhandledExceptionMiddleware(inner):
+    """
+    Middleware to catch unhandled exceptions and log them.
+    """
+    async def middleware(scope, receive, send):
+        try:
+            return await inner(scope, receive, send)
+        except Exception as e:
+            # Add connection type to the log
+            conn_type = scope.get('type', 'unknown')
+            path = scope.get('path', 'unknown_path')
+            
+            if conn_type == 'websocket':
+                websocket_logger.error(f"Unhandled WebSocket exception in {path}: {str(e)}", exc_info=True)
+                
+                if scope.get('websocket_state', None) == 'connected':
+                    try:
+                        await send({
+                            'type': 'websocket.close',
+                            'code': 1011,
+                            'reason': 'Server error occurred'
+                        })
+                    except:
+                        websocket_logger.error("Failed to send close frame", exc_info=True)
+            else:
+                logger.error(f"Unhandled {conn_type} exception in {path} from {scope.get('client', 'unknown')}: {str(e)}", exc_info=True)
+                
+            raise
+    return middleware
+
+import sys
+import traceback
+from django.http import JsonResponse
+from django.conf import settings
+import logging
+
+logger = logging.getLogger('django.request')
+
+class ExceptionMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_exception(self, request, exception):
+        # Stampa l'errore dettagliato sulla console
+        print("="*80)
+        print(f"ERRORE NON GESTITO: {str(exception)}")
+        print("Traceback completo:")
+        traceback.print_exc()
+        print("="*80)
+        
+        # Log dettagliato
+        logger.error(
+            f"Errore non gestito nella richiesta {request.path}: {str(exception)}",
+            exc_info=True,
+            extra={'request': request}
+        )
+
+        if settings.DEBUG:
+            # In modalità debug, restituisci i dettagli dell'errore
+            return JsonResponse({
+                'error': str(exception),
+                'traceback': traceback.format_exc(),
+                'request_path': request.path,
+                'request_method': request.method,
+                'request_data': getattr(request, 'data', {})
+            }, status=500)
+        
+        return None  # Lascia che Django gestisca la risposta in produzione
