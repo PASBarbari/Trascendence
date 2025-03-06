@@ -27,7 +27,105 @@ API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
 
-ALLOWED_HOSTS = ['*']
+
+def ensure_scheme(urls):
+    """Add 'http://' scheme to URLs that don't have one"""
+    if isinstance(urls, str):
+        if not urls.startswith(('http://', 'https://')):
+            return f"http://{urls}"
+        return urls
+    
+    # Handle lists
+    result = []
+    for url in urls:
+        if url and not url.startswith(('http://', 'https://')):
+            result.append(f"http://{url}")
+        else:
+            result.append(url)
+    return result
+
+Microservices = {
+    'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
+    'Chat': ensure_scheme(os.getenv('CHAT_URL', 'http://localhost:8001')),
+    'Users': ensure_scheme(os.getenv('USER_URL', 'http://localhost:8002')),
+    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003')),
+    'Pong': ensure_scheme(os.getenv('PONG_URL', 'http://localhost:8004')),
+}
+
+K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
+
+def extract_hostname(url):
+    """Estrae il nome host da un URL completo."""
+    if not url:
+        return url
+    # Rimuovi http:// o https://
+    if url.startswith(('http://', 'https://')):
+        url = url.split('://', 1)[1]
+    # Rimuovi la porta se presente
+    if ':' in url:
+        url = url.split(':', 1)[0]
+    return url
+
+K8S_SERVICE_HOSTS = [
+    extract_hostname(Microservices['Login']),
+    extract_hostname(Microservices['Chat']),
+    extract_hostname(Microservices['Users']),
+    extract_hostname(Microservices['Notifications']),
+    extract_hostname(Microservices['Pong']),
+]
+
+ALLOWED_HOSTS = [
+	'localhost',
+	'localhost:3000',
+	'127.0.0.1',
+	'[::1]',
+	'trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+]  + K8S_SERVICE_HOSTS
+
+CORS_ALLOWED_ORIGINS = [
+	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+]  + ensure_scheme(K8S_SERVICE_HOSTS)
+# CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CSRF_TRUSTED_ORIGINS = [
+	'http://localhost:3000',
+	'http://localhost',
+	'http://127.0.0.1',
+	'http://[::1]',
+	'https://trascendence.42firenze.it',
+	Microservices['Login'],
+	Microservices['Chat'],
+	Microservices['Users'],
+	Microservices['Notifications'],
+	Microservices['Pong'],
+]  + ensure_scheme(K8S_SERVICE_HOSTS)
+
+CORS_ALLOW_HEADERS = [
+	'accept',
+	'accept-encoding',
+	'authorization',
+	'content-type',
+	'dnt',
+	'origin',
+	'user-agent',
+	'x-csrftoken',
+	'x-requested-with',
+]
 
 
 # Application definition
@@ -244,10 +342,10 @@ SIMPLE_JWT = {
 
 OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
 Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
+	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
 	'Personal' : "Self",
 }
 
@@ -277,15 +375,6 @@ ADMIN = {
 	'username': os.getenv('ADMIN_USERNAME', 'admin'),
 	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
 	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
-}
-
-Microservices = {
-	'Login': os.getenv('LOGIN_SERVICE', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_SERVICE', 'http://localhost:8001'),
-	'Users': os.getenv('USERS_SERVICE', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_SERVICE', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_SERVICE', 'http://localhost:8004'),
-	'Personal' : "Self",
 }
 
 CSRF_LOGIN_URL = Microservices['Login'] + '/login/get_csrf_token'
