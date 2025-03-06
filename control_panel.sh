@@ -19,59 +19,59 @@ show_menu() {
     # Hide cursor
     tput civis
     
-    while true; do
-        # Clear screen
-        clear
-        
-        # Print a header showing keys
-        echo -e "${BLUE}[↑/↓: Navigate | Enter: Select | Backspace: Go Back]${NC}\n"
-        
-        # Print menu
-        for i in "${!options[@]}"; do
-            if [ $i -eq $selected ]; then
-                echo -e "${GREEN}> ${options[$i]}${NC}"
-            else
-                echo -e "  ${options[$i]}"
-            fi
-        done
-        # Read key
-        read -s -n 1 key
+	while true; do
+		# Clear screen
+		clear
+		
+		# Print a header showing keys
+		echo -e "${BLUE}[↑/↓/w/s: Navigate | Enter: Select | Backspace: Go Back]${NC}\n"
+		
+		# Print menu
+		for i in "${!options[@]}"; do
+			if [ $i -eq $selected ]; then
+				echo -e "${GREEN}> ${options[$i]}${NC}"
+			else
+				echo -e "  ${options[$i]}"
+			fi
+		done
+		# Read key
+		read -s -n 1 key
 
 		# For arrow keys (they start with escape sequence)
 		if [[ $key == $'\e' ]]; then
-		    read -s -n 1 -t 0.1 key2
-		    if [[ $key2 == '[' ]]; then
-		        read -s -n 1 -t 0.1 key3
-		        key=$key$key2$key3
-		    else
-		        # If just Escape key pressed (not arrow)
-		        tput cnorm  # Show cursor
-		        return 255
-		    fi
+			read -s -n 1 -t 0.1 key2
+			if [[ $key2 == '[' ]]; then
+				read -s -n 1 -t 0.1 key3
+				key=$key$key2$key3
+			else
+				# If just Escape key pressed (not arrow)
+				tput cnorm  # Show cursor
+				return 255
+			fi
 		fi
-        
-        # Handle arrow keys
-        if [[ $key == $'\e[A' ]]; then
-            # Up arrow
-            ((selected--))
-            [ $selected -lt 0 ] && selected=$((${#options[@]}-1))
-        elif [[ $key == $'\e[B' ]]; then
-            # Down arrow
-            ((selected++))
-            [ $selected -ge ${#options[@]} ] && selected=0
-        elif [[ $key == "" ]]; then
-            # Enter key
-            break
+		
+		# Handle arrow keys and w/s keys
+		if [[ $key == $'\e[A' || $key == 'w' ]]; then
+			# Up arrow or 'w'
+			((selected--))
+			[ $selected -lt 0 ] && selected=$((${#options[@]}-1))
+		elif [[ $key == $'\e[B' || $key == 's' ]]; then
+			# Down arrow or 's'
+			((selected++))
+			[ $selected -ge ${#options[@]} ] && selected=0
+		elif [[ $key == "" ]]; then
+			# Enter key
+			break
 		elif [[ $key == $'\177' || $key == $'\b' ]]; then
-            # Backspace key (127 or 8)
-            tput cnorm  # Show cursor
-            return 255
+			# Backspace key (127 or 8)
+			tput cnorm  # Show cursor
+			return 255
 		elif [[ $key == $'\e' ]]; then
 			# Escape key
 			tput cnorm  # Show cursor
 			return 254
-        fi
-    done
+		fi
+	done
     
     # Show cursor
     tput cnorm
@@ -577,6 +577,9 @@ apply_manifests() {
                 
                 echo -e "${YELLOW}Applying Login deployment...${NC}"
                 kubecolor apply -f Manifests/Login/login-server-deployment.yaml
+
+				echo -e "\n${YELLOW}Applying redis deployment...${NC}"
+				kubecolor apply -f Manifests/Redis/redis-deployment.yaml
                 
                 echo -e "\n${GREEN}All manifests have been applied!${NC}"
                 echo -e "\n${CYAN}Options:${NC}"

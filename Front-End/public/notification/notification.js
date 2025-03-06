@@ -68,14 +68,14 @@ async function handleFriendRequest(str_method, user_id, friend_id, index) {
 }
 
 async function getFriends() {
-	const { token, userId } = getVariables();
+	const { token, userId, url_api } = getVariables();
 	console.log("/----getFirends notification.js----\\");
 	console.log("User ID:", userId);
 	console.log("Token:", token);
-	console.log("indirizzo:", `http://127.0.0.1:8002/user/friend?user_id=${userId}&accepted=true`)
+	console.log("indirizzo:", `${url_api}/user/friend?user_id=${userId}&accepted=true`)
 	try {
 		const response = await fetch(
-			`http://127.0.0.1:8002/user/friend?user_id=${userId}&accepted=true`,
+			`${url_api}/user/friend?user_id=${userId}&accepted=true`,
 			{
 				method: "GET",
 				headers: {
@@ -165,8 +165,8 @@ function renderNotification() {
 }
 
 function initializeWebSocket() {
-	const { token } = getVariables();
-	const wsUrl = `ws://127.0.0.1:8003/ws/user_notifications/?token=${token}`;
+	const { token, wss_api } = getVariables();
+	const wsUrl = `${wss_api}/notification/ws/user_notifications/?token=${token}`;
 
 	socket = new WebSocket(wsUrl);
 

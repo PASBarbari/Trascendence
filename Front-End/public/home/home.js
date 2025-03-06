@@ -21,6 +21,20 @@ stylesheets.forEach(href => {
     document.head.appendChild(link);
 });
 
+async function toggleProfile() {
+    const profileDiv = document.getElementById('profile');
+    if (profileDiv) {
+        if (profileDiv.style.display === 'none') {
+            profileDiv.style.display = 'block';
+            await initializeProfile();
+        } else {
+            profileDiv.style.display = 'none';
+        }
+    } else {
+        console.error("Elemento #profile non trovato nel DOM");
+    }
+}
+
 function renderHome() {
     const contentDiv = document.getElementById('content');
     contentDiv.innerHTML = `
@@ -42,18 +56,6 @@ function renderHome() {
     renderNotification();
     initializeWebSocket();
     renderPongInfo();
-
-    const toggleProfileButton = document.getElementById('toggleProfileButton');
-    const profileDiv = document.getElementById('profile');
-
-    toggleProfileButton.addEventListener('click', async () => {
-        if (profileDiv.style.display === 'none') {
-            profileDiv.style.display = 'block';
-            await initializeProfile();
-        } else {
-            profileDiv.style.display = 'none';
-        }
-    });
 }
 
-export { renderHome };
+export { renderHome, toggleProfile };

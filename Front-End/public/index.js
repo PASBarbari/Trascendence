@@ -4,6 +4,7 @@ import { renderHome } from './home/home.js';
 // import { renderPong } from './pong/pong.js';
 import { renderExpandableSidebar } from './chat/ExpandableSidebar.js';
 //import { renderProfile } from './profile/profile.js';
+import { settingsPopup } from './settings/settings.js';
 
 const routes = {
     404: {
@@ -61,6 +62,15 @@ const locationHandler = async () => {
 const initializeApp = () => {
     renderExpandableSidebar();
     //renderProfile();
+
+	const toggleSettingsButton = document.getElementById('toggleSettingsButton');
+	if (toggleSettingsButton) {
+		toggleSettingsButton.addEventListener('click', (event) => {
+			event.preventDefault();
+			settingsPopup(event);
+		});
+	}
+
     locationHandler();
 };
 
