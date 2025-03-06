@@ -66,7 +66,7 @@ async function handleGetActiveTasks() {
 	const { userId, token, url_api } = getVariables();
 	try {
 		const response = await fetch(
-			`${url_api}/task/progress?user_id=${userId}`,
+			`${url_api}/user/task/progress?user_id=${userId}`,
 			{
 				method: "GET",
 				headers: {

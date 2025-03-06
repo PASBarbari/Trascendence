@@ -62,7 +62,7 @@ function renderTask(task) {
 async function handleGetTasks(category = 'ALL') {
 	const { userId, token, url_api } = getVariables();
 	try {
-		const response = await fetch(`${url_api}/task/task?user_id=${userId}`, {
+		const response = await fetch(`${url_api}/user/task/task?user_id=${userId}`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",

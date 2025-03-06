@@ -29,13 +29,13 @@ async function getChatRooms() {
 	console.log("\\_____ExpandableSidebar.js_____/");
 	try {
 		const response = await fetch(
-			`${url_api}/chat/chat_rooms/getchat/?user_id=${userId}`,
+			`${url_api}/chat/chat/chat_rooms/getchat/?user_id=${userId}`,
 			{
 				method: "GET",
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${token}`,
 					'X-CSRFToken': getCookie('csrftoken'),
+					'Authorization': `Bearer ${token}`,
 				},
 			}
 		);
@@ -154,6 +154,7 @@ function scrollToBottom(element) {
 }
 
 function renderChatItem(chat) {
+	const { wss_api, url_api } = getVariables();
 	const chatContainer = document.querySelector('.chat-container');
 	const chatItem = document.createElement('div');
 	chatItem.className = 'chat-item';
@@ -201,7 +202,7 @@ function renderChatItem(chat) {
 		if (!isOpen) {
 			// Apri il WebSocket per la chat room
 			const { token } = getVariables();
-			socket = new WebSocket(`ws://127.0.0.1:8001/ws/chat/${chat.id}/?token=${token}`);
+			socket = new WebSocket(`${wss_api}/chat/ws/chat/${chat.id}/?token=${token}`);
 
 			socket.onopen = () => {
 				console.log(`WebSocket connection opened for chat room ${chat.id}`);
@@ -246,7 +247,7 @@ function renderChatItem(chat) {
 			// Fetch old messages
 			try {
 				const response = await fetch(
-					`http://127.0.0.1:8001/chat/chat_rooms/${chat.id}/get_message/`,
+					`${url_api}/chat/chat/chat_rooms/${chat.id}/get_message/`,
 					{
 						method: "GET",
 						headers: {

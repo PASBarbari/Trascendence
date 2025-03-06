@@ -29,7 +29,7 @@ async function handleLocalePong() {
 	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
 	const { createGame } = await import("./serverSide.js");
 	const { userId } = getVariables();
-	createGame(userId, 14);
+	createGame(userId, 13);
 	window.navigateTo("#pong");
 }
 

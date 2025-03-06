@@ -1,4 +1,5 @@
 import { setVariables, getVariables } from '../var.js';
+import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -39,10 +40,11 @@ async function PatchProfile(name, surname, birthdate, bio) {
 async function GetProfile() {
 	const { userId, token,url_api } = getVariables();
 	try {
-		const response = await fetch(`${url_api}/user/user/${userId}/`, {
+		const response = await fetch(`${url_api}/user/user/user/${userId}/`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken"),
 				"Authorization": `Bearer ${token}`,
 			},
 		});
