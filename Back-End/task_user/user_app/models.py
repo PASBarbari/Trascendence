@@ -6,8 +6,8 @@ class Avatars(models.Model):
 	id = models.AutoField(primary_key=True)
 	name = models.CharField(max_length=255)
 	image = models.URLField(max_length=200, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link')
-	# image = models.ImageField(upload_to="avatar/", null=True)
-
+	user = models.ForeignKey('UserProfile', on_delete=models.CASCADE, related_name='avatar')
+	last_modified = models.DateTimeField(auto_now=True)
 class UserProfile(models.Model):
 	staff = models.BooleanField(default=False)
 	user_id = models.IntegerField(unique=True, primary_key=True)
@@ -29,6 +29,16 @@ class UserProfile(models.Model):
 		symmetrical=False,  # Allow user_1 to be friends with user_2 without user_2 being friends with user_1
 		related_name='related_to'
 	)
+	blocked_users = models.ManyToManyField('self', related_name='blocked_by', symmetrical=False)
+
+	def block_user(self, user):
+		self.blocked_users.add(user)
+	
+	def unblock_user(self, user):
+		self.blocked_users.remove(user)
+
+	def is_blocked(self, user):
+		return self.blocked_users.filter(pk=user.pk).exists()
 
 class Friendships(models.Model):
 	id = models.AutoField(primary_key=True)

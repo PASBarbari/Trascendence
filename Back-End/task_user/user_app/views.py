@@ -11,6 +11,8 @@ from django.db.models import Q
 import asyncio
 from .middleware import ServiceAuthentication , JWTAuth
 from django_filters.rest_framework import DjangoFilterBackend
+from .minio_client import MinioService
+from rest_framework.parsers import MultiPartParser, FormParser
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
 	"""
@@ -58,16 +60,16 @@ class MultipleFieldLookupMixin:
 		self.check_object_permissions(self.request, obj)
 		return obj
 
-class AvatarGen(generics.ListCreateAPIView):
-	permission_classes = (IsAuthenticatedUserProfile,)
-	serializer_class = AvatarsSerializer
-	queryset = Avatars.objects.all()
+# class AvatarGen(generics.ListCreateAPIView):
+# 	permission_classes = (IsAuthenticatedUserProfile,)
+# 	serializer_class = AvatarsSerializer
+# 	queryset = Avatars.objects.all()
 
-class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
-	permission_classes = (IsAuthenticatedUserProfile,)
-	serializer_class = AvatarsSerializer
-	lookup_url_kwarg = 'id'
-	queryset = Avatars.objects.all()
+# class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
+# 	permission_classes = (IsAuthenticatedUserProfile,)
+# 	serializer_class = AvatarsSerializer
+# 	lookup_url_kwarg = 'id'
+# 	queryset = Avatars.objects.all()
 
 class UserGen(generics.ListCreateAPIView):
 	serializer_class = UsersSerializer
@@ -253,3 +255,94 @@ class AddFriend(APIView):
 			return Response({
 					'errors': str(e)
 			}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class BlockUser(APIView):
+	""" Use this endpoint to block a user.
+
+	post:
+		Blocks a user.
+
+	Parameters:
+		user_id (int): The id of the user to block.
+	
+	Response:
+	- 200 OK: User blocked successfully.
+	- 400 Bad Request: Invalid request data.
+	- 403 Forbidden: User is trying to block themselves.
+	- 404 Not Found: User not found.
+
+
+	delete:
+		Unblocks a user.
+	
+	Parameters:
+		user_id (int): The id of the user to unblock.
+
+	Response:
+	- 200 OK: User unblocked successfully.
+	- 400 Bad Request: Invalid request data.
+	- 403 Forbidden: User is trying to unblock themselves.
+	- 404 Not Found: User not found.
+	"""
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
+	def post(self, request):
+		user_id = request.data.get('user_id')
+		if not user_id:
+			return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+		if user_id == request.user.user_id:
+			return Response({'error': 'You cannot block yourself'}, status=status.HTTP_403_FORBIDDEN)
+		user_to_block = get_object_or_404(UserProfile, user_id=user_id)
+		request.user.block_user(user_to_block)
+		return Response({'message': 'User blocked'}, status=status.HTTP_200_OK)
+
+	def delete(self, request):
+		user_id = request.data.get('user_id')
+		if not user_id:
+			return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+		if user_id == request.user.user_id:
+			return Response({'error': 'You cannot unblock yourself'}, status=status.HTTP_403_FORBIDDEN)
+		user_to_unblock = get_object_or_404(UserProfile, user_id=user_id)
+		request.user.unblock_user(user_to_unblock)
+		return Response({'message': 'User unblocked'}, status=status.HTTP_200_OK)
+	
+	def get(self, request):
+		blocked_users = request.user.blocked_users.all()
+		serializer = BlockUserSerializer(blocked_users, many=True)
+		return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AvatarManager(APIView):
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
+	parser_classes = (MultiPartParser, FormParser)
+	def post(self, request):
+		try:
+			if 'image' not in request.FILES:
+				return Response({'error': 'image is required'}, status=status.HTTP_400_BAD_REQUEST)
+			
+			image = request.FILES['image']
+			avatar_name = request.data.get('name', f'Avatar for {request.user.username}')
+			user = request.user
+
+			valid_types = ['image/jpeg', 'image/png', 'image/gif']
+			if image.content_type not in valid_types:
+				return Response({'error': 'Invalid image type'}, status=status.HTTP_400_BAD_REQUEST)
+			if image.size > 10 * 1024 * 1024:
+				return Response({'error': 'Image size too large (max 10MB)'}, status=status.HTTP_400_BAD_REQUEST)
+
+			minio_serv = MinioService.get_instance()
+			success, url = minio_serv.upload_avatar(user.user_id, image, filename=avatar_name)
+			if success:
+				# Update user's avatar
+				real_av = Avatars.objects.create(user=user, name=avatar_name, image=url)
+				real_av.save()
+				user.avatar = real_av
+				user.save()
+				return Response({'message': 'Avatar uploaded successfully', 'avatar': url}, status=status.HTTP_200_OK)
+			else:
+				return Response({'error': 'Error uploading avatar'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		

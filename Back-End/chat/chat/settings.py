@@ -292,7 +292,7 @@ REST_FRAMEWORK = {
 		'my_chat.middleware.JWTAuth',
 		],
 		'DEFAULT_PERMISSION_CLASSES': [
-				'my_chat.Permissions.IsAuthenticated',
+				'my_chat.Permissions.IsAuthenticatedUserProfile',
 		],
 		'DEFAULT_FILTER_BACKENDS': [
 			'django_filters.rest_framework.DjangoFilterBackend',

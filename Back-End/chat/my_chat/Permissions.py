@@ -6,13 +6,6 @@ from django.contrib.auth.models import AnonymousUser
 
 logger = logging.getLogger('django')
 
-class IsAuthenticated(BasePermission):
-    """
-    Basic permission that requires the user to be authenticated.
-    """
-    def has_permission(self, request, view):
-        return request.user and request.user.is_authenticated
-
 class IsChatMember(BasePermission):
     """
     Permission that checks if the user is a member of the requested chat.
