@@ -46,33 +46,33 @@ def ensure_scheme(urls):
     return result
 
 Microservices = {
-    'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
-    'Chat': ensure_scheme(os.getenv('CHAT_URL', 'http://localhost:8001')),
-    'Users': ensure_scheme(os.getenv('USER_URL', 'http://localhost:8002')),
-    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003')),
-    'Pong': ensure_scheme(os.getenv('PONG_URL', 'http://localhost:8004')),
+	'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
+	'Chat': ensure_scheme(os.getenv('CHAT_URL', 'http://localhost:8001')),
+	'Users': ensure_scheme(os.getenv('USER_URL', 'http://localhost:8002')),
+	'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003')),
+	'Pong': ensure_scheme(os.getenv('PONG_URL', 'http://localhost:8004')),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
 
 def extract_hostname(url):
-    """Estrae il nome host da un URL completo."""
-    if not url:
-        return url
-    # Rimuovi http:// o https://
-    if url.startswith(('http://', 'https://')):
-        url = url.split('://', 1)[1]
-    # Rimuovi la porta se presente
-    if ':' in url:
-        url = url.split(':', 1)[0]
-    return url
+	"""Estrae il nome host da un URL completo."""
+	if not url:
+		return url
+	# Rimuovi http:// o https://
+	if url.startswith(('http://', 'https://')):
+		url = url.split('://', 1)[1]
+	# Rimuovi la porta se presente
+	if ':' in url:
+		url = url.split(':', 1)[0]
+	return url
 
 K8S_SERVICE_HOSTS = [
-    extract_hostname(Microservices['Login']),
-    extract_hostname(Microservices['Chat']),
-    extract_hostname(Microservices['Users']),
-    extract_hostname(Microservices['Notifications']),
-    extract_hostname(Microservices['Pong']),
+	extract_hostname(Microservices['Login']),
+	extract_hostname(Microservices['Chat']),
+	extract_hostname(Microservices['Users']),
+	extract_hostname(Microservices['Notifications']),
+	extract_hostname(Microservices['Pong']),
 ]
 
 ALLOWED_HOSTS = [
@@ -303,6 +303,27 @@ ADMIN = {
 	'username': os.getenv('ADMIN_USERNAME', 'admin'),
 	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
 	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+}
+
+OAUTH2_PROVIDERS = {
+	'GOOGLE' : {
+		'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/google/',
+		'authorization_url': "https://accounts.google.com/o/oauth2/v2/auth",
+		'token_url': "https://oauth2.googleapis.com/token",
+		'scope': "https://www.googleapis.com/auth/userinfo.profile email&",
+		'user_info_url': "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+		'client_id': os.getenv('GOOGLE_CLIENT_ID', 'pippo'),
+		'client_secret': os.getenv('GOOGLE_CLIENT_SECRET', 'moltosegreto'),
+	},
+	'42' : {
+		'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/42/',
+		'authorization_url': "https://api.intra.42.fr/oauth/authorize",
+		'token_url': "https://api.intra.42.fr/oauth/token",
+		'scope': "public",
+		'user_info_url': "https://api.intra.42.fr/v2/me",
+		'client_id': os.getenv('42_CLIENT_ID', 'pippo'),
+		'client_secret': os.getenv('42_CLIENT_SECRET', 'moltosegreto'),
+	},
 }
 
 # LOGGING = {
