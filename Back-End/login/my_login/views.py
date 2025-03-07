@@ -395,9 +395,9 @@ class UserLogin(APIView):
 				'email': user.email
 			}, status=status.HTTP_200_OK)
 
-      except Exception as e:
-          return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+		except Exception as e:
+			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+		return Response(status=status.HTTP_400_BAD_REQUEST)
 			# headers = {
 			# 	'Content-Type': 'application/x-www-form-urlencoded',
 			# 	'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',
