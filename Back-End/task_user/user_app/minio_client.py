@@ -28,7 +28,7 @@ class MinioService:
 				settings.MINIO_STORAGE_ENDPOINT,
 				access_key=settings.MINIO_STORAGE_ACCESS_KEY,
 				secret_key=settings.MINIO_STORAGE_SECRET_KEY,
-				secure=settings.MINIO_STORAGE_USE_HTTPS == 'True'
+				secure=settings.MINIO_STORAGE_USE_HTTPS
 			)
 			
 			# Ensure buckets exist
@@ -54,12 +54,8 @@ class MinioService:
 								"Effect": "Allow",
 								"Principal": {"AWS": "*"},
 								"Action": ["s3:GetObject"],
-								"Resource": [f"arn:aws:s3:::{bucket_name}/*"],
-								"Condition": {
-									"StringEquals": {
-										"jwt:sub": "${aws:username}"  # Validate JWT subject matches user
-									}
-								}
+								"Resource": [f"arn:aws:s3:::{bucket_name}/*"]
+	
 							}
 						]
 					}
