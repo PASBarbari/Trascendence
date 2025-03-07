@@ -336,17 +336,20 @@ class AvatarManager(APIView):
 			success, url = minio_serv.upload_avatar(user.user_id, image, filename=avatar_name)
 			if success:
 				# Update user's avatar
-				real_av = Avatars.objects.create(user=user, name=avatar_name, image=url)
-				real_av.save()
-				user.avatar = real_av
-				user.save()
-				return Response({'message': 'Avatar uploaded successfully', 'avatar': url}, status=status.HTTP_200_OK)
+				avatar = Avatars.objects.create(
+                	user=user, 
+                	name=avatar_name, 
+                	image=url,
+                	is_current=True
+            	)
+				return Response({'message': 'Avatar uploaded successfully', 'avatar': avatar.image}, status=status.HTTP_200_OK)
 			else:
 				return Response({'error': 'Error uploading avatar'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		except Exception as e:
 			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		
 	def get(self, request):
-		avatar = avatar.objects.get_object_or_404(id=request.get('avatar_id'))
+		avatar_id = request.query_params.get('avatar_id')
+		avatar = get_object_or_404(Avatars, id=avatar_id)
 		serializer = AvatarsSerializer(avatar)
 		return Response(serializer.data, status=status.HTTP_200_OK)
