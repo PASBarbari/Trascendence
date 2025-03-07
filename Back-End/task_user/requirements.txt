@@ -48,3 +48,9 @@ djangorestframework-simplejwt==5.4.0
 drf-yasg==1.21.8
     # via -r Back-End/requirements.in
 gunicorn==22.0.0
+minio==7.2.15
+    # via
+    #   -r requirements.in
+    #   django-minio-storage
+django-minio-storage==0.5.7
+    # via -r requirements.in

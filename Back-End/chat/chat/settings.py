@@ -292,7 +292,7 @@ REST_FRAMEWORK = {
 		'my_chat.middleware.JWTAuth',
 		],
 		'DEFAULT_PERMISSION_CLASSES': [
-				'my_chat.Permissions.IsAuthenticated',
+				'my_chat.Permissions.IsAuthenticatedUserProfile',
 		],
 		'DEFAULT_FILTER_BACKENDS': [
 			'django_filters.rest_framework.DjangoFilterBackend',
@@ -348,8 +348,6 @@ Microservices = {
 	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
 	'Personal' : "Self",
 }
-
-# filepath: /home/lollo/Documents/Fides/Back-End/chat/chat/settings.py
 
 SWAGGER_SETTINGS = {
 	'USE_SESSION_AUTH': False,

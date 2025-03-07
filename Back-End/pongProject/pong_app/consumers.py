@@ -18,18 +18,19 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 	async def connect(self):
 		websocket_logger.info('New WebSocket connection attempt')
 		self.room_id = self.scope['url_route']['kwargs']['room_id']
-		self.channel_name = f'game_{self.room_id}'
+		self.room_name = f'game_{self.room_id}'
 		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
 		
 		# Join room group
 		await self.channel_layer.group_add(
+			self.room_name,
 			self.channel_name
 		)
 		
 		# Store player identification
 		user = self.scope.get('user', None)
-		if user and not user.is_anonymous:
-			self.player_id = user.id
+		if user:
+			self.player_id = user.user_id
 			websocket_logger.info(f"Authenticated user {self.player_id} connected to game {self.room_id}")
 		else:
 			# Get from query parameters or other source
