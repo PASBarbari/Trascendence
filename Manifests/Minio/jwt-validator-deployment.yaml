@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jwt-validator
+  namespace: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jwt-validator
+  template:
+    metadata:
+      labels:
+        app: jwt-validator
+    spec:
+      containers:
+      - name: jwt-validator
+        image: bombatomica/jwt-validator:latest
+        ports:
+        - containerPort: 8000
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret-key
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jwt-validator-service
+  namespace: minio
+spec:
+  selector:
+    app: jwt-validator
+  ports:
+  - port: 8000
+    targetPort: 8000
+  type: ClusterIP

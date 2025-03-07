@@ -349,8 +349,6 @@ Microservices = {
 	'Personal' : "Self",
 }
 
-# filepath: /home/lollo/Documents/Fides/Back-End/chat/chat/settings.py
-
 SWAGGER_SETTINGS = {
 	'USE_SESSION_AUTH': False,
 	'SECURITY_DEFINITIONS': {
