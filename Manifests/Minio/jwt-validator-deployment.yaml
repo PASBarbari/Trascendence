@@ -16,6 +16,7 @@ spec:
       containers:
       - name: jwt-validator
         image: bombatomica/jwt-validator:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         resources:
