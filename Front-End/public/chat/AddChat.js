@@ -39,7 +39,7 @@ function renderAddChat() {
 		console.log('Utenti:', userIdsArray);
 
 		try {
-			const response = await fetch(`${url_api}/chat/chat_rooms/create/`, {
+			const response = await fetch(`${url_api}/chat/chat/chat_rooms/create/`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

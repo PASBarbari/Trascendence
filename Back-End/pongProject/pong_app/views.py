@@ -59,7 +59,7 @@ class MultipleFieldLookupMixin:
 		return obj
 
 class PlayerGen(generics.ListCreateAPIView):
-	permission_classes = (IsAuthenticatedUserProfile,)
+	permission_classes = [permissions.AllowAny]
 	authentication_classes = [ServiceAuthentication]
 	serializer_class = PlayerSerializer
 	lookup_fields = ['user_id', 'tournaments__id']

@@ -82,16 +82,37 @@
   border-radius: 50%;
 }
 
+/* Image selector modal */
 .profile-image-selector {
 	height: 600px;
-    width: 400px;
-    background-color: #00020527;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+	width: 400px;
+	background-color: #00020527;
+	border-radius: 20px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 	z-index: 100;
+  }
+  
+  /* Image selector preview */
+  .profile-image-preview {
+	margin-bottom: 20px;
+	text-align: center;
+  }
+  
+  .profile-image-preview img {
+	max-width: 200px;
+	max-height: 200px;
+	border-radius: 50%;
+	object-fit: cover;
+  }
+  
+  .profile-image-controls {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	align-items: center;
 }
 
 .buttons {
@@ -116,6 +137,37 @@
 .edit-icon, .save-icon {
   width: 20px;
   height: 20px;
+}
+
+.btn-primary {
+	background-color: #007bff;
+	color: white;
+	border: none;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+  
+.btn-secondary {
+	background-color: #6c757d;
+	color: white;
+	border: none;
+	padding: 8px 16px;
+	border-radius: 4px;
+	cursor: pointer;
+}
+  
+.upload-btn {
+	display: inline-block;
+	padding: 8px 16px;
+	background-color: #f0f0f0;
+	border-radius: 4px;
+	cursor: pointer;
+	border: 1px solid #ccc;
+}
+  
+.upload-btn:hover {
+	background-color: #e0e0e0;
 }
 
 .profile-card-details {
@@ -200,3 +252,4 @@
     background: linear-gradient(to right, #4CAF50 0%, #4CAF50 var(--value), #ddd var(--value), #ddd 100%);
     border-radius: 5px;
 }
+

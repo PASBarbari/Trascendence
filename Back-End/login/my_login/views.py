@@ -395,6 +395,69 @@ class UserLogin(APIView):
 				'email': user.email
 			}, status=status.HTTP_200_OK)
 
+      except Exception as e:
+          return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+    return Response(status=status.HTTP_400_BAD_REQUEST)
+			# headers = {
+			# 	'Content-Type': 'application/x-www-form-urlencoded',
+			# 	'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',
+			# 	'Accept': 'application/json',
+			# 	'X-CSRFToken': get_token(request),
+			# }
+
+			# token_data = {
+			# 	'grant_type': 'password',
+			# 	'username': data.get('email'),
+			# 	'password': data.get('password'),
+			# 	'client_id': client['CLIENT_ID'],
+			# 	'client_secret': client['CLIENT_SECRET'],
+			# 	'scope': 'read write',
+			# }
+
+			# # Make token request
+
+			# token_view = TokenView.as_view()
+			# token_request = HttpRequest()
+			# token_request.method = 'POST'
+			# token_request.POST = token_data
+			# token_request.META['CONTENT_TYPE'] = 'application/x-www-form-urlencoded'
+			# token_request.META['HTTP_AUTHORIZATION'] = f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}'
+			# token_request.META['HTTP_X_CSRFTOKEN'] = get_token(request)
+
+			# token_response = token_view(token_request)
+
+
+			# return token_response
+
+
+class ServiceRegister(APIView):
+	permission_classes = (permissions.AllowAny,)
+	authentication_classes = (OAuth2Authentication,)
+	##
+	def post(self, request):
+		try:
+			data = request.data
+			service_name = data.get('name')
+			service_password = data.get('service_password')
+			if service_password == SERVICE_PASSWORD:
+				# Create an app
+				if not Application.objects.filter(name=service_name).exists():
+					app = Application.objects.create(
+						name=service_name,
+						client_type=Application.CLIENT_CONFIDENTIAL,
+						client_id=data.get('client_id'),
+						client_secret=data.get('client_secret'),
+						authorization_grant_type=Application.GRANT_PASSWORD,
+						redirect_uris='http://localhost:8000',
+					)
+					app.scope = '__all__'
+					app.save()
+					return Response({'message': 'Service created successfully', 'client_id': app.client_id, 'client_secret': app.client_secret},
+						status=status.HTTP_201_CREATED)
+				else:
+					return Response({'error': 'Service already exists'}, status=status.HTTP_400_BAD_REQUEST)
+			else:
+				return Response({'error': 'Invalid service password'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
 			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
 

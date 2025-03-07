@@ -36,3 +36,9 @@ class FriendshipsSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = Friendships
 		fields = '__all__'
+
+class BlockUserSerializer(serializers.Serializer):
+	user_id = serializers.IntegerField()
+
+	class Meta:
+		fields = ['user_id']

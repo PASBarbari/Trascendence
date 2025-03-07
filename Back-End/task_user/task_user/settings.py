@@ -33,10 +33,21 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%p
 DEBUG = os.getenv('DEBUG', True)
 
 
-def ensure_scheme(url):
-    if url and not url.startswith(('http://', 'https://')):
-        return f"http://{url}"
-    return url
+def ensure_scheme(urls):
+    """Add 'http://' scheme to URLs that don't have one"""
+    if isinstance(urls, str):
+        if not urls.startswith(('http://', 'https://')):
+            return f"http://{urls}"
+        return urls
+    
+    # Handle lists
+    result = []
+    for url in urls:
+        if url and not url.startswith(('http://', 'https://')):
+            result.append(f"http://{url}")
+        else:
+            result.append(url)
+    return result
 
 Microservices = {
     'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
@@ -79,7 +90,7 @@ ALLOWED_HOSTS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
+]  + K8S_SERVICE_HOSTS
 
 CORS_ALLOWED_ORIGINS = [
 	'http://localhost:3000',
@@ -92,7 +103,7 @@ CORS_ALLOWED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
+]  + ensure_scheme(K8S_SERVICE_HOSTS)
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -107,7 +118,7 @@ CSRF_TRUSTED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
-] + K8S_ALLOWED_HOSTS + K8S_SERVICE_HOSTS
+]  + ensure_scheme(K8S_SERVICE_HOSTS)
 
 CORS_ALLOW_HEADERS = [
 	'accept',
@@ -137,6 +148,7 @@ INSTALLED_APPS = [
 	'task_app',
 	'user_app',
 	'corsheaders',
+	'minio_storage',
 ]
 
 MIDDLEWARE = [
@@ -266,9 +278,6 @@ ADMIN = {
 	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
-MEDIA_ROOT = BASE_DIR / 'media/'
-# MEDIA_URL = 'http://localhost:8000/'
-
 SIMPLE_JWT = {
 	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
 	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
@@ -284,3 +293,26 @@ SIMPLE_JWT = {
 	'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
 	'TOKEN_TYPE_CLAIM': 'token_type',
 }
+
+# MinIO Storage Configuration
+DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
+STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
+MINIO_STORAGE_ENDPOINT = os.getenv('MINIO_STORAGE_ENDPOINT', 'minio:9000')
+MINIO_STORAGE_ACCESS_KEY = os.getenv('MINIO_STORAGE_ACCESS_KEY', 'KBP6WXGPS387090EZMG8')
+MINIO_STORAGE_SECRET_KEY = os.getenv('MINIO_STORAGE_SECRET_KEY', 'DRjFXylyfMqn2zilAr33xORhaYz5r9e8r37XPz3A')
+
+MINIO_STORAGE_USE_HTTPS = True
+MINIO_STORAGE_MEDIA_OBJECT_METADATA = {"Cache-Control": "max-age=1111"}
+MINIO_STORAGE_MEDIA_BUCKET_NAME = 'user-media'
+MINIO_STORAGE_MEDIA_BACKUP_BUCKET = "user-backup"
+MINIO_STORAGE_MEDIA_BACKUP_FORMAT = '%c/'
+MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
+MINIO_STORAGE_STATIC_BUCKET_NAME = "user-static"
+MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = True
+MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'minio.trascendence.42firenze.it')
+
+# Additional protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'
+protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'
+MINIO_STORAGE_MEDIA_URL = os.getenv('MINIO_MEDIA_URL', f'{protocol}://{MINIO_STORAGE_ENDPOINT}/{MINIO_STORAGE_MEDIA_BUCKET_NAME}/')
+MINIO_STORAGE_STATIC_URL = os.getenv('MINIO_STATIC_URL', f'{protocol}://{MINIO_STORAGE_ENDPOINT}/{MINIO_STORAGE_STATIC_BUCKET_NAME}/')
+MINIO_STORAGE_POLICY = os.getenv('MINIO_STORAGE_POLICY', 'public-read')
