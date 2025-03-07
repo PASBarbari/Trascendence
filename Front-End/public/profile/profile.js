@@ -41,7 +41,7 @@ async function PatchProfile(name, surname, birthdate, bio) {
 async function GetProfile() {
 	const { userId, token, url_api } = getVariables();
 	try {
-		const response = await fetch(`${url_api}/user/user/user/${userId}/`, {
+		const response = await fetch(`${url_api}/user/user/user/me/`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
@@ -50,10 +50,43 @@ async function GetProfile() {
 			},
 		});
 
-		if (response.ok) {
-			const data = await response.json();
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Profile:", data);
 
-			console.log("Profile:", data);
+		let localImageUrl = null;
+            
+		// Se l'avatar URL esiste, scarica l'immagine con il token
+		if (data.current_avatar_url) {
+			try {
+				const avatarUrl = data.current_avatar_url
+					.replace("http://", "https://")
+					.replace(/ /g, "%20");
+					
+				console.log("Downloading profile image from:", avatarUrl);
+				
+				// Fetch dell'immagine con token di autenticazione
+				const imageResponse = await fetch(avatarUrl, {
+					headers: {
+						Authorization: `Bearer ${token}`
+						//TODO sostituire con <img src="/api/images/yourimage.jpg?token=here-your-token"> dal backend
+					
+					},
+					mode: 'no-cors'
+				});
+				
+				if (imageResponse.ok) {
+					const imageBlob = await imageResponse.blob();
+					localImageUrl = URL.createObjectURL(imageBlob);
+					console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
+				} else {
+					console.error("Errore nel recupero dell'immagine:", imageResponse.status);
+				}
+			} catch (error) {
+				console.error("Errore durante il download dell'immagine:", error);
+			}
+		}
+
 
 			setVariables({
 				name: data.first_name || "",
@@ -62,6 +95,7 @@ async function GetProfile() {
 				bio: data.bio || "",
 				level: data.level ?? "",
 				exp: data.exp ?? "",
+				profileImageUrl: localImageUrl || "",
 			});
 			console.log("level e exp:", data.level, data.exp);
 			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
@@ -102,6 +136,7 @@ function renderProfile() {
 		bio,
 		level,
 		exp,
+		profileImageUrl,
 	} = getVariables();
 	console.log("level e exp:", level, exp);
 	let edit = false;
@@ -151,7 +186,7 @@ function renderProfile() {
 				</div>
 				<div class="profile-card-image-container">
 					<button class="profile-image-circle">
-						<img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" />
+						<img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" />
 						<div class="edit-icon-overlay">
 							<i class="bi bi-pencil"></i>
 						</div>
@@ -299,12 +334,12 @@ function renderProfile() {
 
 			try {
 				const formData = new FormData();
-				formData.append("profile_picture", file);
+				formData.append("image", file);
 
 				const { userId, token, url_api } = getVariables();
 
 				const response = await fetch(
-					`${url_api}/user/user/${userId}/upload_profile_picture/`,
+					`${url_api}/user/user/avatar`,
 					{
 						method: "POST",
 						headers: {
@@ -319,9 +354,13 @@ function renderProfile() {
 					const data = await response.json();
 					console.log("Immagine caricata con successo:", data);
 
+					setVariables({
+						profileImageUrl: data.avatar // Usa il nome del campo corretto restituito dall'API
+					});				
+
 					// Update the profile image in the UI
 					document.querySelector(".profile-card-image").src =
-						data.profile_picture_url || imagePreview.src;
+						data.avatar || imagePreview.src;
 
 					// Close the modal
 					closeProfileImageSelector();

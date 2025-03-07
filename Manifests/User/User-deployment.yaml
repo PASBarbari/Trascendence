@@ -133,6 +133,7 @@ spec:
             secretKeyRef:
               name: user-minio-credentials
               key: secretkey
+        - name: 
 ---
 apiVersion: v1
 kind: Service

@@ -323,7 +323,7 @@ class AvatarManager(APIView):
 				return Response({'error': 'image is required'}, status=status.HTTP_400_BAD_REQUEST)
 			
 			image = request.FILES['image']
-			avatar_name = request.data.get('name', f'Avatar for {request.user.username}')
+			avatar_name = request.data.get('name', f'Avatar_for_{request.user.username}')
 			user = request.user
 
 			valid_types = ['image/jpeg', 'image/png', 'image/gif']
