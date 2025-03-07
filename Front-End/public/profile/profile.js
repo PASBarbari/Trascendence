@@ -1,20 +1,21 @@
-import { setVariables, getVariables } from '../var.js';
-import { getCookie } from '../cookie.js';
+import { setVariables, getVariables } from "../var.js";
+import { getCookie } from "../cookie.js";
 
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = '/public/profile/profile.css';
+const link = document.createElement("link");
+link.rel = "stylesheet";
+link.href = "/public/profile/profile.css";
 document.head.appendChild(link);
 
 async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId, url_api } = getVariables();
 
 	try {
-		const response = await fetch(`${url_api}/user/user/${userId}/`, { // user/levelup user_id e exp
+		const response = await fetch(`${url_api}/user/user/${userId}/`, {
+			// user/levelup user_id e exp
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
-				"Authorization": `Bearer ${getVariables().token}`,
+				Authorization: `Bearer ${getVariables().token}`,
 			},
 			body: JSON.stringify({
 				account_id: userId,
@@ -38,20 +39,20 @@ async function PatchProfile(name, surname, birthdate, bio) {
 }
 
 async function GetProfile() {
-	const { userId, token,url_api } = getVariables();
+	const { userId, token, url_api } = getVariables();
 	try {
 		const response = await fetch(`${url_api}/user/user/user/${userId}/`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
 				"X-CSRFToken": getCookie("csrftoken"),
-				"Authorization": `Bearer ${token}`,
+				Authorization: `Bearer ${token}`,
 			},
 		});
 
 		if (response.ok) {
 			const data = await response.json();
-			
+
 			console.log("Profile:", data);
 
 			setVariables({
@@ -62,8 +63,8 @@ async function GetProfile() {
 				level: data.level ?? "",
 				exp: data.exp ?? "",
 			});
-			console.log('level e exp:', data.level, data.exp);
-			console.log('Variables after GetProfile:', getVariables()); // Aggiungi questo per il debug
+			console.log("level e exp:", data.level, data.exp);
+			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
 		} else {
 			const errorData = await response.json();
 			console.error("Errore nella risposta del server:", errorData);
@@ -74,28 +75,38 @@ async function GetProfile() {
 }
 
 async function initializeProfile() {
-    if (document.readyState === 'loading') {
-        await new Promise(resolve => {
-            document.addEventListener('DOMContentLoaded', resolve);
-        });
-    }
-    
-    // Verifica che l'elemento esista
-    if (!document.getElementById('profile')) {
-        console.error("TODO remove Elemento #profile non trovato nel DOM");
-        return;
-    }
+	if (document.readyState === "loading") {
+		await new Promise((resolve) => {
+			document.addEventListener("DOMContentLoaded", resolve);
+		});
+	}
+
+	// Verifica che l'elemento esista
+	if (!document.getElementById("profile")) {
+		console.error("TODO remove Elemento #profile non trovato nel DOM");
+		return;
+	}
 
 	await GetProfile();
 	renderProfile();
 }
 
 function renderProfile() {
-	const { userUsername, userEmail, userId, name, surname, birthdate, bio, level, exp } = getVariables();
-	console.log('level e exp:', level, exp);
+	const {
+		userUsername,
+		userEmail,
+		userId,
+		name,
+		surname,
+		birthdate,
+		bio,
+		level,
+		exp,
+	} = getVariables();
+	console.log("level e exp:", level, exp);
 	let edit = false;
 
-	const profileDiv = document.getElementById('profile');
+	const profileDiv = document.getElementById("profile");
 	profileDiv.innerHTML = `
 		<div class="profile-card">
 			<div class="profile-card-content">
@@ -158,86 +169,184 @@ function renderProfile() {
 		</div>
 	`;
 
-	const form = document.getElementById('profileForm');
-	const editButton = document.getElementById('editButton');
-	const saveButton = document.getElementById('saveButton');
-	const profileImageContainer = document.querySelector('.profile-card-image-container');
-	const profileImage = document.querySelector('.profile-image-circle');
+	const form = document.getElementById("profileForm");
+	const editButton = document.getElementById("editButton");
+	const saveButton = document.getElementById("saveButton");
+	const profileImageContainer = document.querySelector(
+		".profile-card-image-container"
+	);
+	const profileImage = document.querySelector(".profile-image-circle");
 
-	editButton.addEventListener('click', function (e) {
+	editButton.addEventListener("click", function (e) {
 		e.preventDefault();
 		edit = !edit;
 		if (edit) {
-			form.querySelectorAll('input:not([id="username"]):not([id="user_id"]):not([id="email"]):not([id="level"]):not([id="exp"]), textarea').forEach(input => {
-				input.removeAttribute('readonly');
-				input.classList.remove('readonly-input');
+			form.querySelectorAll(
+				'input:not([id="username"]):not([id="user_id"]):not([id="email"]):not([id="level"]):not([id="exp"]), textarea'
+			).forEach((input) => {
+				input.removeAttribute("readonly");
+				input.classList.remove("readonly-input");
 			});
-			profileImageContainer.classList.add('edit-mode');
+			profileImageContainer.classList.add("edit-mode");
 		} else {
-			form.querySelectorAll('input, textarea').forEach(input => {
-				input.setAttribute('readonly', true);
-				input.classList.add('readonly-input');
+			form.querySelectorAll("input, textarea").forEach((input) => {
+				input.setAttribute("readonly", true);
+				input.classList.add("readonly-input");
 			});
-			profileImageContainer.classList.remove('edit-mode');
+			profileImageContainer.classList.remove("edit-mode");
 		}
 	});
 
-	saveButton.addEventListener('click', function (e) {
+	saveButton.addEventListener("click", function (e) {
 		e.preventDefault();
-		const updatedName = document.getElementById('name').value;
-		const updatedSurname = document.getElementById('surname').value;
-		const updatedBirthdate = document.getElementById('birthdate').value;
-		const updatedBio = document.getElementById('bio').value;
+		const updatedName = document.getElementById("name").value;
+		const updatedSurname = document.getElementById("surname").value;
+		const updatedBirthdate = document.getElementById("birthdate").value;
+		const updatedBio = document.getElementById("bio").value;
 
 		setVariables({
 			name: updatedName,
 			surname: updatedSurname,
 			birthdate: updatedBirthdate,
-			bio: updatedBio
+			bio: updatedBio,
 		});
 
 		PatchProfile(updatedName, updatedSurname, updatedBirthdate, updatedBio);
 
 		edit = false;
-		form.querySelectorAll('input, textarea').forEach(input => {
-			input.setAttribute('readonly', true);
-			input.classList.add('readonly-input');
+		form.querySelectorAll("input, textarea").forEach((input) => {
+			input.setAttribute("readonly", true);
+			input.classList.add("readonly-input");
 		});
-		profileImageContainer.classList.remove('edit-mode');
+		profileImageContainer.classList.remove("edit-mode");
 	});
 
 	// Aggiungi l'event listener per aggiornare lo stile della barra di scorrimento
-	const expInput = document.getElementById('exp');
+	const expInput = document.getElementById("exp");
 	// const expValueSpan = document.getElementById('expValue');
 
-	expInput.addEventListener('input', function() {
+	expInput.addEventListener("input", function () {
 		// expValueSpan.textContent = `exp: ${expInput.value}`;
-		expInput.style.setProperty('--value', `${expInput.value}%`);
+		expInput.style.setProperty("--value", `${expInput.value}%`);
 	});
 
 	// Imposta il valore iniziale
-	expInput.style.setProperty('--value', `${expInput.value}%`);
+	expInput.style.setProperty("--value", `${expInput.value}%`);
 
 	// Event listener per l'immagine del profilo
-	profileImage.addEventListener('click', function (e) {
+	profileImage.addEventListener("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
 
-		const profileImageSelector = document.createElement('div');
-		profileImageSelector.className = 'login-box-modal';
+		const profileImageSelector = document.createElement("div");
+		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
-			<div class="login_box">
-				<h1>Seleziona un'immagine</h1>
-				<img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" /> <!--div>TODO da finire ovviamente<div-->
-			</div>
-		`;
+        <div class="login_box">
+            <h1>Seleziona un'immagine</h1>
+            <div class="profile-image-preview">
+                <img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" id="imagePreview" />
+            </div>
+            <div class="profile-image-controls">
+                <label for="imageUpload" class="upload-btn">Scegli un file</label>
+                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                <button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
+                <button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
+            </div>
+        </div>
+    `;
 		document.body.appendChild(profileImageSelector);
+
+		// Add event listeners for the file input and buttons
+		const imageUpload = profileImageSelector.querySelector("#imageUpload");
+		const imagePreview =
+			profileImageSelector.querySelector("#imagePreview");
+		const uploadImageBtn =
+			profileImageSelector.querySelector("#uploadImageBtn");
+		const cancelImageBtn =
+			profileImageSelector.querySelector("#cancelImageBtn");
+
+		// Preview the selected image
+		imageUpload.addEventListener("change", function (event) {
+			const file = event.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					imagePreview.src = e.target.result;
+				};
+				reader.readAsDataURL(file);
+			}
+		});
+
+		// Upload the selected image
+		uploadImageBtn.addEventListener("click", async function () {
+			const file = imageUpload.files[0];
+			if (!file) {
+				console.error("Nessun file selezionato");
+				return;
+			}
+
+			// Check if file is an image png or jpeg
+			if (!file.type.startsWith("image/")) {
+				console.error("Il file selezionato non è un'immagine");
+				return;
+			}
+			// Check if file size is greater than 10MB (10 * 1024 * 1024 bytes)
+			const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+			if (file.size > MAX_FILE_SIZE) {
+				console.error("File troppo grande, massimo 10MB");
+				return;
+			}
+
+			try {
+				const formData = new FormData();
+				formData.append("profile_picture", file);
+
+				const { userId, token, url_api } = getVariables();
+
+				const response = await fetch(
+					`${url_api}/user/user/${userId}/upload_profile_picture/`,
+					{
+						method: "POST",
+						headers: {
+							Authorization: `Bearer ${token}`,
+							// Don't set Content-Type here, it will be set automatically for FormData
+						},
+						body: formData,
+					}
+				);
+
+				if (response.ok) {
+					const data = await response.json();
+					console.log("Immagine caricata con successo:", data);
+
+					// Update the profile image in the UI
+					document.querySelector(".profile-card-image").src =
+						data.profile_picture_url || imagePreview.src;
+
+					// Close the modal
+					closeProfileImageSelector();
+				} else {
+					const errorData = await response.json();
+					console.error(
+						"Errore nel caricamento dell'immagine:",
+						errorData
+					);
+				}
+			} catch (error) {
+				console.error("Errore durante il caricamento:", error);
+			}
+		});
+
+		// Cancel button
+		cancelImageBtn.addEventListener("click", function () {
+			closeProfileImageSelector();
+		});
 
 		function closeProfileImageSelector() {
 			document.body.removeChild(profileImageSelector);
 		}
 
-		window.addEventListener('click', function(event) {
+		window.addEventListener("click", function (event) {
 			if (event.target === profileImageSelector) {
 				closeProfileImageSelector();
 			}
