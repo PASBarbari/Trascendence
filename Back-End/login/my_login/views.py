@@ -144,6 +144,8 @@ class OAuthLoginView(APIView):
 				f"client_id={provider_config.get('client_id')}&"
 				f"redirect_uri={provider_config.get('redirect_uri')}&"
 				"response_type=code&"
+				f"scope={provider_config.get('scope')}&"
+				f"state={code_verifier}"
 			)
 
 		return redirect(authorization_url)
@@ -181,10 +183,10 @@ class OAuthCallbackView(APIView):
 
 	def get(self, request, provider):
 		code = request.GET.get("code")
-		code_verifier = request.session.get('code_verifier') #
-		stored_provider = request.session.get('oauth_provider') #
+		state = request.GET.get("state")
+		code_verifier = request.session.get('code_verifier')
+		stored_provider = request.session.get('oauth_provider')
 		
-		# Use stored provider if available, otherwise use the one from the URL
 		provider = stored_provider if stored_provider else provider.upper()
 		provider_config = OAUTH2_PROVIDERS.get(provider)
 		
@@ -193,25 +195,47 @@ class OAuthCallbackView(APIView):
 				{"error": f"Provider '{provider}' not configured"}, 
 				status=status.HTTP_400_BAD_REQUEST
 			)
-			
+		
+		if provider == '42':
+			if not state or state != code_verifier:
+				return Response(
+					{"error": "Invalid state parameter"}, 
+					status=status.HTTP_400_BAD_REQUEST
+				)
+		
 		if not code or not code_verifier:
 			return Response(
 				{"error": "Missing authorization code or code_verifier"}, 
 				status=status.HTTP_400_BAD_REQUEST
 			)
 
-		token_url = provider_config.get('token_url')
-		data = {
-			"client_id": provider_config.get('client_id'),
-			"client_secret": provider_config.get('client_secret'),
-			"grant_type": "authorization_code",
-			"code": code,
-			"redirect_uri": provider_config.get('redirect_uri'),
-			"code_verifier": code_verifier
-		}
 
-		# Get access token
-		response = requests.post(token_url, data=data)
+		token_url = provider_config.get('token_url')
+
+		if provider == '42':
+			# Usare il metodo files per simulare curl -F
+			response = requests.post(
+				token_url,
+				files={
+					'grant_type': (None, 'authorization_code'),
+					'client_id': (None, provider_config.get('client_id')),
+					'client_secret': (None, provider_config.get('client_secret')),
+					'code': (None, code),
+					'redirect_uri': (None, provider_config.get('redirect_uri'))
+				}
+			)
+		else:
+			# Metodo standard per provider che supportano PKCE
+			data = {
+				"client_id": provider_config.get('client_id'),
+				"client_secret": provider_config.get('client_secret'),
+				"grant_type": "authorization_code",
+				"code": code,
+				"redirect_uri": provider_config.get('redirect_uri'),
+				"code_verifier": code_verifier
+			}
+			response = requests.post(token_url, data=data)
+
 		token_data = response.json()
 
 		if "access_token" not in token_data:
@@ -219,7 +243,7 @@ class OAuthCallbackView(APIView):
 				{"error": "Failed to obtain access token", "details": token_data}, 
 				status=status.HTTP_400_BAD_REQUEST
 			)
-			
+		
 		# Get user info from provider
 		access_token = token_data['access_token']
 		user_info_url = provider_config.get('user_info_url')
@@ -394,10 +418,9 @@ class UserLogin(APIView):
 				'username': user.username,
 				'email': user.email
 			}, status=status.HTTP_200_OK)
-
-      except Exception as e:
-          return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
-    return Response(status=status.HTTP_400_BAD_REQUEST)
+		except Exception as e:
+			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+		
 			# headers = {
 			# 	'Content-Type': 'application/x-www-form-urlencoded',
 			# 	'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',
