@@ -6,7 +6,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/limit-whitelist: "GET"
     # JWT validation
-    nginx.ingress.kubernetes.io/auth-url: "http://jwt-validator-service.minio.svc.cluster.local:8000/validate-jwt/"
+    nginx.ingress.kubernetes.io/auth-url: "http://jwt-validator-service.minio.svc.cluster.local:8000/validate/"
     nginx.ingress.kubernetes.io/auth-response-headers: "X-User-ID"
     # CORS
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://trascendence.42firenze.it"
