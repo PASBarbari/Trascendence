@@ -106,6 +106,26 @@ spec:
             key: secret-key
         - name: DEBUG
           value: "False"
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+           secretKeyRef:
+            name: login-api
+            key: google-client-id
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+           secretKeyRef:
+            name: login-api
+            key: google-client-secret
+        - name: 42_CLIENT_ID
+          valueFrom:
+           secretKeyRef:
+            name: login-api
+            key: 42-client-id
+        - name: 42_CLIENT_SECRET
+          valueFrom:
+           secretKeyRef:
+            name: login-api
+            key: 42-client-secret
 ---
 apiVersion: v1
 kind: Service
