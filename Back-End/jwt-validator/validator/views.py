@@ -8,14 +8,18 @@ logger = logging.getLogger(__name__)
 def validate_jwt(request):
     """Simple endpoint to validate JWT tokens for MinIO access"""
     auth_header = request.headers.get('Authorization', '')
-    
-    # No auth header means no access
+    url_token = request.GET.get('token', '')
+    # Check if JWT token is provided in URL if Authorization header is not present
     if not auth_header or not auth_header.startswith('Bearer '):
-        logger.warning("Missing or invalid Authorization header")
-        return HttpResponse(status=401)
+        if url_token:
+            logger.info("Using JWT token from URL")
+            token = url_token
+        else:
+            logger.warning("Missing or invalid Authorization header")
+            return HttpResponse(status=401)
     
     try:
-        token = auth_header.split(' ')[1]
+        token = auth_header.split(' ')[1] if auth_header.startswith('Bearer ') else url_token
         # Use the same secret key as your main Django app
         payload = jwt.decode(
             token, 
