@@ -17,5 +17,5 @@ Including another URLconf
 from django.urls import path
 from validator.views import validate_jwt
 urlpatterns = [
-	path('validate/', validate_jwt),
+    path('minio-proxy/<path:object_path>/', validate_jwt, name='validate_jwt'),
 ]

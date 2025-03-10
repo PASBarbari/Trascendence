@@ -55,30 +55,31 @@ async function GetProfile() {
             console.log("Profile:", data);
 
 		let localImageUrl = null;
+		let avatarUrl = "";
             
 		// Se l'avatar URL esiste, scarica l'immagine con il token
 		if (data.current_avatar_url) {
-			try {
-				let avatarUrl = data.current_avatar_url
-					.replace("http://", "https://")
-					.replace(/ /g, "%20");
-				
+			avatarUrl = data.current_avatar_url
+				.replace("http://", "https://")
+				.replace(/ /g, "%20")
+				.replace(".42firenze.it", ".42firenze.it/jwt-validator/");
 				avatarUrl = `${avatarUrl}?token=${token}`;
 					
 				console.log("Downloading profile image from:", avatarUrl);
 				
-				// Fetch dell'immagine con token di autenticazione
+
+			
+			// richiesta get a avatarUrl
+			try {
 				const imageResponse = await fetch(avatarUrl, {
 					headers: {
-						//TODO sostituire con <img src="/api/images/yourimage.jpg?token=here-your-token"> dal backend
-					
+						Authorization: `Bearer ${token}`,
 					},
-				mode: 'no-cors'
 				});
-				
+
 				if (imageResponse.ok) {
 					const imageBlob = await imageResponse.blob();
-					localImageUrl = URL.createObjectURL(imageBlob);
+					const localImageUrl = URL.createObjectURL(imageBlob);
 					console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
 				} else {
 					console.error("Errore nel recupero dell'immagine:", imageResponse.status);
@@ -89,6 +90,28 @@ async function GetProfile() {
 		}
 
 
+			// 	// Fetch dell'immagine con token di autenticazione																																																									
+			// 	const imageResponse = await fetch(avatarUrl, {
+			// 		headers: {
+			// 			//TODO sostituire con <img src="/api/images/yourimage.jpg?token=here-your-token"> dal backend
+					
+			// 		},
+			// 	mode: 'no-cors'
+			// 	});
+				
+			// 	if (imageResponse.ok) {
+			// 		const imageBlob = await imageResponse.blob();
+			// 		localImageUrl = URL.createObjectURL(imageBlob);
+			// 		console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
+			// 	} else {
+			// 		console.error("Errore nel recupero dell'immagine:", imageResponse.status);
+			// 	}
+			// } catch (error) {
+			// 	console.error("Errore durante il download dell'immagine:", error);
+			// }
+		// }
+
+
 			setVariables({
 				name: data.first_name || "",
 				surname: data.last_name || "",
@@ -96,7 +119,7 @@ async function GetProfile() {
 				bio: data.bio || "",
 				level: data.level ?? "",
 				exp: data.exp ?? "",
-				profileImageUrl: localImageUrl || "",
+				profileImageUrl: avatarUrl || "",
 			});
 			console.log("level e exp:", data.level, data.exp);
 			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug

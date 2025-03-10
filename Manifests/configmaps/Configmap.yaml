@@ -90,3 +90,11 @@ metadata:
     namespace: user
 data:
     minio-storage-endpoint: minio-service.minio.svc.cluster.local:9000
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: minio-jwt
+    namespace: minio
+data:
+    minio-storage-endpoint: minio-service.minio.svc.cluster.local:9000
