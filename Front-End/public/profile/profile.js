@@ -59,20 +59,21 @@ async function GetProfile() {
 		// Se l'avatar URL esiste, scarica l'immagine con il token
 		if (data.current_avatar_url) {
 			try {
-				const avatarUrl = data.current_avatar_url
+				let avatarUrl = data.current_avatar_url
 					.replace("http://", "https://")
 					.replace(/ /g, "%20");
+				
+				avatarUrl = `${avatarUrl}?token=${token}`;
 					
 				console.log("Downloading profile image from:", avatarUrl);
 				
 				// Fetch dell'immagine con token di autenticazione
 				const imageResponse = await fetch(avatarUrl, {
 					headers: {
-						Authorization: `Bearer ${token}`
 						//TODO sostituire con <img src="/api/images/yourimage.jpg?token=here-your-token"> dal backend
 					
 					},
-					mode: 'no-cors'
+				mode: 'no-cors'
 				});
 				
 				if (imageResponse.ok) {
