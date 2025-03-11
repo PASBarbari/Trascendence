@@ -309,7 +309,7 @@ MINIO_STORAGE_MEDIA_BACKUP_FORMAT = '%c/'
 MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
 MINIO_STORAGE_STATIC_BUCKET_NAME = "user-static"
 MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = True
-MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'minio.trascendence.42firenze.it')
+MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'https://minio.trascendence.42firenze.it')
 
 # Additional protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'
 protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'

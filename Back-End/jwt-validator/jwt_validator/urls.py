@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from validator.views import validate_jwt
+from validator.views import ProxyMinio
 urlpatterns = [
-    path('minio-proxy/<path:object_path>/', validate_jwt, name='validate_jwt'),
+    path('minio-proxy/<path:obj_path>', ProxyMinio.as_view(), name='ProxyMinio'),
 ]

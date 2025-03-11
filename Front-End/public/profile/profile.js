@@ -56,20 +56,19 @@ async function GetProfile() {
 
 		let localImageUrl = null;
 		let avatarUrl = "";
-            
-		// Se l'avatar URL esiste, scarica l'immagine con il token
 		if (data.current_avatar_url) {
-			avatarUrl = data.current_avatar_url
-				.replace("http://", "https://")
-				.replace(/ /g, "%20")
-				.replace(".42firenze.it", ".42firenze.it/jwt-validator/");
-				avatarUrl = `${avatarUrl}?token=${token}`;
-					
-				console.log("Downloading profile image from:", avatarUrl);
-				
-
+			// Estrai solo il nome del file
+			const filename = data.current_avatar_url.split('/').pop();
 			
-			// richiesta get a avatarUrl
+			// URL corretto per il proxy
+			// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
+			avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
+			// avatarUrl = avatarUrl.replace(" ", "%20");
+
+			console.log("Downloading profile image from:", avatarUrl);
+		}
+
+		if (avatarUrl !== "") {
 			try {
 				const imageResponse = await fetch(avatarUrl, {
 					headers: {
@@ -79,7 +78,7 @@ async function GetProfile() {
 
 				if (imageResponse.ok) {
 					const imageBlob = await imageResponse.blob();
-					const localImageUrl = URL.createObjectURL(imageBlob);
+					localImageUrl = URL.createObjectURL(imageBlob);
 					console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
 				} else {
 					console.error("Errore nel recupero dell'immagine:", imageResponse.status);
@@ -89,29 +88,6 @@ async function GetProfile() {
 			}
 		}
 
-
-			// 	// Fetch dell'immagine con token di autenticazione																																																									
-			// 	const imageResponse = await fetch(avatarUrl, {
-			// 		headers: {
-			// 			//TODO sostituire con <img src="/api/images/yourimage.jpg?token=here-your-token"> dal backend
-					
-			// 		},
-			// 	mode: 'no-cors'
-			// 	});
-				
-			// 	if (imageResponse.ok) {
-			// 		const imageBlob = await imageResponse.blob();
-			// 		localImageUrl = URL.createObjectURL(imageBlob);
-			// 		console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
-			// 	} else {
-			// 		console.error("Errore nel recupero dell'immagine:", imageResponse.status);
-			// 	}
-			// } catch (error) {
-			// 	console.error("Errore durante il download dell'immagine:", error);
-			// }
-		// }
-
-
 			setVariables({
 				name: data.first_name || "",
 				surname: data.last_name || "",
@@ -119,7 +95,7 @@ async function GetProfile() {
 				bio: data.bio || "",
 				level: data.level ?? "",
 				exp: data.exp ?? "",
-				profileImageUrl: avatarUrl || "",
+				profileImageUrl: localImageUrl || "",
 			});
 			console.log("level e exp:", data.level, data.exp);
 			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
@@ -303,7 +279,7 @@ function renderProfile() {
         <div class="login_box">
             <h1>Seleziona un'immagine</h1>
             <div class="profile-image-preview">
-                <img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" id="imagePreview" />
+                <img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
             </div>
             <div class="profile-image-controls">
                 <label for="imageUpload" class="upload-btn">Scegli un file</label>
@@ -380,7 +356,9 @@ function renderProfile() {
 
 					setVariables({
 						profileImageUrl: data.avatar // Usa il nome del campo corretto restituito dall'API
-					});				
+					});
+
+					//TODO se carichi l'immagine poi fa get a https://https//minio.trascendence.42firenze.it/user-media/avatars/Avatar_for_marco24 perche' data.avatar e' sbagliato
 
 					// Update the profile image in the UI
 					document.querySelector(".profile-card-image").src =
