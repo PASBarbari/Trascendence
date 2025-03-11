@@ -22,7 +22,7 @@ class UserProfile(models.Model):
 		symmetrical=False,  # Allow user_1 to be friends with user_2 without user_2 being friends with user_1
 		related_name='related_to'
 	)
-	blocked_users = models.ManyToManyField('self', related_name='blocked_by', symmetrical=False, blank=True, null=True)
+	blocked_users = models.ManyToManyField('self', related_name='blocked_by', symmetrical=False, blank=True)
 
 	def block_user(self, user):
 		self.blocked_users.add(user)

@@ -22,23 +22,54 @@ JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key')
 
 # Ultra-minimal middleware
 MIDDLEWARE = [
+	'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.common.CommonMiddleware',
 ]
 
-# Only the validator app is needed
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Consenti tutti i metodi o specifica solo quelli necessari
+CORS_ALLOW_METHODS = [
+    'GET',
+    'OPTIONS',
+    'POST',
+]
+
 INSTALLED_APPS = [
+	'django.contrib.contenttypes',
+	'django.contrib.auth',
+	'rest_framework',
+	'corsheaders',
     'validator',
 ]
 
 ROOT_URLCONF = 'jwt_validator.urls'
 
-# No need for templates in a JWT validator
 TEMPLATES = []
 
 WSGI_APPLICATION = 'jwt_validator.wsgi.application'
 
-# No database needed for JWT validation
+# Aggiungi queste impostazioni per DRF
+REST_FRAMEWORK = {
+    'UNAUTHENTICATED_USER': None,
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [],
+}
+
+
 DATABASES = {}
 
 # Minimal logging configuration
@@ -66,7 +97,7 @@ MINIO_STORAGE_ENDPOINT = os.getenv('MINIO_STORAGE_ENDPOINT', 'minio:9000')
 MINIO_STORAGE_ACCESS_KEY = os.getenv('MINIO_STORAGE_ACCESS_KEY', 'pippo')
 MINIO_STORAGE_SECRET_KEY = os.getenv('MINIO_STORAGE_SECRET_KEY', 'minni')
 
-MINIO_STORAGE_USE_HTTPS = False
+MINIO_STORAGE_USE_HTTPS = True
 MINIO_STORAGE_MEDIA_OBJECT_METADATA = {"Cache-Control": "max-age=1111"}
 MINIO_STORAGE_MEDIA_BUCKET_NAME = 'user-media'
 MINIO_STORAGE_MEDIA_BACKUP_BUCKET = "user-backup"
@@ -74,7 +105,7 @@ MINIO_STORAGE_MEDIA_BACKUP_FORMAT = '%c/'
 MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
 MINIO_STORAGE_STATIC_BUCKET_NAME = "user-static"
 MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = True
-MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'minio.trascendence.42firenze.it')
+MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'https://minio.trascendence.42firenze.it')
 
 # Additional protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'
 protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'

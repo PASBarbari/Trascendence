@@ -94,6 +94,8 @@ do
   kubecolor apply -f $service/
 done
 
+
+
 echo "Project setup complete! Access Minikube services using:"
 
 # PASS=kubectl get secret -nelk trascendence-kibana-user -o=jsonpath='{.data}'
