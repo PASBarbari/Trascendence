@@ -4,7 +4,7 @@ metadata:
   name: minio-ingress
   namespace: minio
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: selfsigned-issuer
     # nginx.ingress.kubernetes.io/limit-whitelist: "GET"
     # CORS
     nginx.ingress.kubernetes.io/enable-cors: "true"
@@ -38,4 +38,4 @@ spec:
   tls:
   - hosts:
     - minio.trascendence.42firenze.it
-    secretName: minio-tls
+    secretName: minio-selfsigned

@@ -9,12 +9,9 @@ spec:
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
-    - dns01:
-        cloudflare:
-          email: qualcosa2001@gmail.com
-          apiTokenSecretRef:
-            name: cloudflare-api-token-secret
-            key: api-key
+    - http01:
+        ingress:
+          class: nginx
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -71,17 +68,42 @@ spec:
   commonName: fleet-server.42firenze.it
   dnsNames:
   - fleet-server.42firenze.it
+# ---
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: minio-tls
+#   namespace: minio
+# spec:
+#   secretName: minio-tls
+#   issuerRef:
+#     name: letsencrypt-prod
+#     kind: ClusterIssuer
+#   commonName: minio.trascendence.42firenze.it
+#   dnsNames:
+#   - minio.trascendence.42firenze.it
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: minio-tls
+  name: minio-selfsigned
   namespace: minio
 spec:
   secretName: minio-tls
   issuerRef:
-    name: letsencrypt-prod
+    name: selfsigned-issuer
     kind: ClusterIssuer
   commonName: minio.trascendence.42firenze.it
   dnsNames:
-  - minio.trascendence.42firenze.it
+  - minio.trascendence
+  - minio.trascendence.svc
+  - minio.trascendence.svc.cluster.local
+  - localhost
+  - 127.0.0.1
