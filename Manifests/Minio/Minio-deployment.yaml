@@ -1,93 +1,83 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: minio-deployment
-  namespace: minio
-  labels:
-    app: minio
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: minio
-  template:
-    metadata:
-      labels:
+    name: minio-deployment
+    namespace: minio
+    labels:
         app: minio
-    spec:
-      containers:
-        - name: minio
-          resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-          image: minio/minio:latest
-          args:
-            - server
-            - /data
-            - --console-address
-            - ":9001"
-          env:
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: accesskey
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: minio-credentials
-                  key: secretkey
-            - name: MINIO_IDENTITY_OPENID_CONFIG_URL
-              value: ""
-            - name: MINIO_IDENTITY_OPENID_CLIENT_ID
-              value: "minio-server"
-            - name: MINIO_IDENTITY_OPENID_JWKS_URL
-              value: "http://auth-service.user.svc.cluster.local:8080/jwks.json" 
-            - name: MINIO_IDENTITY_OPENID_CLAIM_NAME
-              value: "user_id"
-            - name: MINIO_IDENTITY_OPENID_SCOPES
-              value: "openid"
-          ports:
-            - containerPort: 9000
-              name: api
-            - containerPort: 9001
-              name: console
-          volumeMounts:
-            - name: minio-persistent-storage
-              mountPath: /data
-      volumes:
-        - name: minio-persistent-storage
-          persistentVolumeClaim:
-            claimName: minio-pv-claim
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: minio
+    template:
+        metadata:
+            labels:
+                app: minio
+        spec:
+            containers:
+                - name: minio
+                  resources:
+                      limits:
+                          memory: "512Mi"
+                          cpu: "500m"
+                      requests:
+                          memory: "256Mi"
+                          cpu: "250m"
+                  image: minio/minio:latest
+                  args:
+                      - server
+                      - /data
+                      - --console-address
+                      - ":9001"
+                  env:
+                      - name: MINIO_ROOT_USER
+                        valueFrom:
+                            secretKeyRef:
+                                name: minio-credentials
+                                key: accesskey
+                      - name: MINIO_ROOT_PASSWORD
+                        valueFrom:
+                            secretKeyRef:
+                                name: minio-credentials
+                                key: secretkey
+                  ports:
+                      - containerPort: 9000
+                        name: api
+                      - containerPort: 9001
+                        name: console
+                  volumeMounts:
+                      - name: minio-persistent-storage
+                        mountPath: /data
+            volumes:
+                - name: minio-persistent-storage
+                  persistentVolumeClaim:
+                      claimName: minio-pv-claim
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: minio-service
-  namespace: minio
+    name: minio-service
+    namespace: minio
 spec:
-  selector:
-    app: minio
-  ports:
-    - protocol: TCP
-      port: 9000
-      targetPort: 9000
-  type: NodePort
+    selector:
+        app: minio
+    ports:
+        - protocol: TCP
+          port: 9000
+          targetPort: 9000
+    type: NodePort
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: minio-pv-claim
-  namespace: minio
+    name: minio-pv-claim
+    namespace: minio
 spec:
-  resources:
-    requests:
-      storage: 1Gi
-  storageClassName: minio-storage
-  volumeMode: Filesystem
-  accessModes:
-    - ReadWriteOnce
+    resources:
+        requests:
+            storage: 1Gi
+    storageClassName: minio-pv
+    volumeMode: Filesystem
+    accessModes:
+        - ReadWriteOnce

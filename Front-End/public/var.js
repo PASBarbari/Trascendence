@@ -9,6 +9,7 @@ let variables = {
 	bio: null,
 	level: 0,
 	exp: 0,
+	profileImageUrl: null,
 
 	multiplayer_username: null,
 	multiplayer_id: null,

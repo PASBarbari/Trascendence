@@ -107,3 +107,12 @@ class MinioService:
 		except Exception as e:
 			logger.error(f"Error uploading avatar for user {user_id}: {str(e)}", exc_info=True)
 			return False, str(e)
+		
+	def get_object(self, bucket_name, object_path):
+		"""Retrieve an object from MinIO"""
+		try:
+			response = self.client.get_object(bucket_name, object_path)
+			return response
+		except Exception as e:
+			logger.error(f"Error retrieving object from MinIO: {str(e)}", exc_info=True)
+			raise Exception("Error retrieving object from MinIO")
