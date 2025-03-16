@@ -33,3 +33,26 @@ export function getVariables() {
 	//console.log('Variables retrieved:', variables);
 	return variables;
 }
+
+export function processOAuthRedirect() {
+  const urlParams = new URLSearchParams(window.location.hash.replace('#home', ''));
+  
+  const accessToken = urlParams.get('access_token');
+  if (accessToken) {
+    // Store the tokens
+    setVariables({
+      token: accessToken,
+      refreshToken: urlParams.get('refresh_token'),
+      userId: urlParams.get('user_id'),
+      userUsername: urlParams.get('username'),
+      userEmail: urlParams.get('email')
+    });
+    
+    // Clean the URL
+    const cleanUrl = window.location.origin + window.location.pathname + '#home';
+    window.history.replaceState({}, document.title, cleanUrl);
+    console.log('OAuth tokens stored:', variables);
+    return true;
+  }
+  return false;
+}

@@ -5,13 +5,13 @@ import { renderPongInfo } from '../pong/pongContainer.js';
 import { initializeProfile, renderProfile } from '../profile/profile.js';
 
 const stylesheets = [
-    '/public/home/home.css',
-    '/public/task/taskAvaiable.css',
-    '/public/task/taskActive.css',
-    '/public/notification/notification.css',
-    '/public/profile/profile.css',
-    '/public/chat/ExpandableSidebar.css',
-    '/public/pong/pongContainer.css'
+    'https://trascendence.42firenze.it/public/home/home.css',
+    'https://trascendence.42firenze.it/public/task/taskAvaiable.css',
+    'https://trascendence.42firenze.it/public/task/taskActive.css',
+    'https://trascendence.42firenze.it/public/notification/notification.css',
+    'https://trascendence.42firenze.it/public/profile/profile.css',
+    'https://trascendence.42firenze.it/public/chat/ExpandableSidebar.css',
+    'https://trascendence.42firenze.it/public/pong/pongContainer.css'
 ];
 
 stylesheets.forEach(href => {

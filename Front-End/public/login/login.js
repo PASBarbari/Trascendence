@@ -20,9 +20,10 @@ function renderLogin() {
                         <div class="mb-3">
                             <input type="password" id="password" placeholder="Password" class="form-control" required />
                         </div>
-                        <div class="empty"></div>
                         <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
                         <button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
+                        <button type="button" id="loginGoogle" class="btn btn-danger w-100 mt-2" style="height: 40px;">Login with Google</button>
+                        <button type="button" id="login42" class="btn btn-primary w-100 mt-2" style="height: 40px;">Login with 42</button>
                     </form>
                 </div>
             </div>
@@ -43,6 +44,14 @@ function renderLogin() {
 		.addEventListener("click", function () {
 			window.navigateTo("#register");
 		});
+
+	document.getElementById("loginGoogle").addEventListener("click", async function () {
+		const csrftoken = getCookie("csrftoken");
+		const { url_api } = getVariables();
+		// Open a new window to trigger the OAuth flow
+		window.open(`${url_api}/login/login/oauth/google`, "_blank", "width=500,height=600");
+		console.log("Google login");
+	});
 }
 
 async function onHandleSubmit(e, email, password) {
@@ -113,6 +122,48 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 		}
 	} else {
 		console.log("Per favore, inserisci sia email che password.");
+		return false;
+	}
+}
+
+async function loginProvider(csrftoken, isBaseLogin, provider) {
+	const { url_api } = getVariables();
+	try {
+		const response = await fetch(`${url_api}/login/login/oauth/${provider}`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": csrftoken,
+			},
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			console.log("Risposta dal server:", data);
+
+			if (isBaseLogin) {
+				setVariables({ token: data.access_token });
+
+				const { user, user_id } = data;
+				const { email, username } = user;
+
+				setVariables({
+					userEmail: email,
+					userUsername: username,
+					userId: user_id,
+				});
+			} else {
+				setVariables({ multiplayer_username: data.username });
+				setVariables({ multiplayer_id: data.user_id });
+			}
+			return true;
+		} else {
+			const errorData = await response.json();
+			console.error("Errore login:", errorData);
+			return false;
+		}
+	} catch (error) {
+		console.error("Exception login:", error);
 		return false;
 	}
 }

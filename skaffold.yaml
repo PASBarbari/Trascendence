@@ -4,7 +4,7 @@ metadata:
   name: trascendence-frontend
 build:
   artifacts:
-    - image: marcor42/frontend
+    - image: samybravy/frontend
       context: Front-End
       docker:
         dockerfile: Dockerfile

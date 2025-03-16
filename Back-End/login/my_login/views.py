@@ -316,15 +316,10 @@ class OAuthCallbackView(APIView):
 				
 				# Generate JWT tokens
 				refresh = RefreshToken.for_user(user)
-				
-				return Response({
-					'access_token': str(refresh.access_token),
-					'refresh_token': str(refresh),
-					'user_id': user.user_id,
-					'username': user.username,
-					'email': user.email,
-					'is_new_user': created
-				}, status=status.HTTP_200_OK)
+				frontend_url = "https://trascendence.42firenze.it"
+				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh}&user_id={user.user_id}&username={user.username}&email={user.email}"
+
+				return redirect(redirect_url)
 				
 		except Exception as e:
 			return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

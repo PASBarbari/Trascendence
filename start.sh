@@ -28,7 +28,7 @@ fi
 
 # Step 2: Start Minikube
 echo "Starting Minikube..."
-minikube start --cpus=8 --memory=8192 --driver=docker
+minikube start --cpus=8 --memory=4096 --driver=docker
 
 # Step 3: Set Minikube context for kubectl
 echo "Setting up Minikube context..."
