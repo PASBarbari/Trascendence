@@ -45,13 +45,19 @@ function renderLogin() {
 			window.navigateTo("#register");
 		});
 
-	document.getElementById("loginGoogle").addEventListener("click", async function () {
-		const csrftoken = getCookie("csrftoken");
-		const { url_api } = getVariables();
-		// Open a new window to trigger the OAuth flow
-		window.open(`${url_api}/login/login/oauth/google`, "_blank", "width=500,height=600");
-		console.log("Google login");
-	});
+	document
+		.getElementById("loginGoogle")
+		.addEventListener("click", async function () {
+			const csrftoken = getCookie("csrftoken");
+			const { url_api } = getVariables();
+			// Open a new window to trigger the OAuth flow
+			window.open(
+				`${url_api}/login/login/oauth/google`,
+				"_blank",
+				"width=500,height=600"
+			);
+			console.log("Google login");
+		});
 }
 
 async function onHandleSubmit(e, email, password) {
@@ -97,9 +103,9 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 
 				if (isBaseLogin) {
 					setVariables({ token: data.access_token });
+					setVariables({ refreshToken: data.refresh_token });
 
-					const { user, user_id } = data;
-					const { email, username } = user;
+					const { user_id, email, username } = data;
 
 					setVariables({
 						userEmail: email,
@@ -129,13 +135,16 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 async function loginProvider(csrftoken, isBaseLogin, provider) {
 	const { url_api } = getVariables();
 	try {
-		const response = await fetch(`${url_api}/login/login/oauth/${provider}`, {
-			method: "GET",
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": csrftoken,
-			},
-		});
+		const response = await fetch(
+			`${url_api}/login/login/oauth/${provider}`,
+			{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRFToken": csrftoken,
+				},
+			}
+		);
 
 		if (response.ok) {
 			const data = await response.json();

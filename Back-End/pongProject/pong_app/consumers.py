@@ -188,6 +188,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			game_state.ball_speed = data.get('ball_speed', 0)
 			game_state.p_speed = data.get('p_speed', 0)
 			await game_state.update()
+			logger.info(f'Game state updated: {game_state.game_state}')
 			logger.info(f"Game {self.room_id} initialized with configuration")
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found during initialization")
