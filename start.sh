@@ -45,7 +45,7 @@ kubecolor apply -f configmaps/namespaces.yaml
 echo "Creating configmaps"
 kubecolor apply -f configmaps/Configmap.yaml
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
-kubectl create namespace cert-manager
+#kubectl create namespace cert-manager
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
 # Step 5: Apply pre-created secrets from USB drive
