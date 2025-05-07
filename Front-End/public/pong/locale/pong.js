@@ -10,75 +10,125 @@ import * as SETTINGS from "./settings.js";
 import * as GAME from "./gameLogic.js";
 import Stats from "three/addons/libs/stats.module.js";
 
-const link = document.createElement("link");
-link.rel = "stylesheet";
-link.href = "/public/pong/locale/pong.css";
-document.head.appendChild(link);
-
 export function renderPong() {
+	//add bootstrap css
+	const bootstrapCSS = document.createElement("link");
+	bootstrapCSS.rel = "stylesheet";
+	bootstrapCSS.href =
+		"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css";
+	document.head.appendChild(bootstrapCSS);
+
+	//add bootstrap js
+	const bootstrapJS = document.createElement("script");
+	bootstrapJS.src =
+		"https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js";
+	document.head.appendChild(bootstrapJS);
+
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = "/public/pong/locale/pong.css";
+	document.head.appendChild(link);
+
+	// Inside renderPong function
+
 	const contentDiv = document.getElementById("content");
 	contentDiv.innerHTML = `
-	<div class="gamecontainer">
-		<div id="menu">
-			<button id="newGameButton">New Game</button>
-			<button id="settingsButton">Settings</button>
-			<button id="exitButton">Exit</button>
-		</div>
-		<div id="nbrOfPlayerMenu" style="display: none;">
-			<button id="onePlayerButton">1 Player</button>
-			<button id="twoPlayerButton">2 Player</button>
-			<button id="backButton">Back</button>
-		</div>
-		<div id="modeMenu" style="display: none;">
-			<button id="classicModeButton">Classic</button>
-			<button id="crazyModeButton">Crazy</button>
-			<button id="backFromModeButton">Back</button>
-      </div>
-		<div id="settingsMenu" style="display: none;">
-		<div class="color-setting">
-			<label for="player1Color">Player 1 Color:</label>
-			<div class="color-pickers">
-			<input type="color" id="player1Color" name="player1Color" value="#4deeea">
-			<input type="color" id="player1Emissive" name="player1Emissive" value="#4deeea">
+	<div class="pong-app">
+		<div class="gamecontainer position-relative">
+			<div id="threejs-container" class="w-100 h-100"></div>
+			
+			<!-- Main Menu -->
+			<div id="menu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow">
+			<h1 class="text-light mb-4">PONG</h1>
+			<div class="d-grid gap-3">
+				<button id="newGameButton" class="btn btn-primary btn-lg">New Game</button>
+				<button id="settingsButton" class="btn btn-secondary btn-lg">Settings</button>
+				<button id="exitButton" class="btn btn-danger btn-lg">Exit</button>
 			</div>
-		</div>
-		<div class="color-setting">
-			<label for="player2Color">Player 2 Color:</label>
-			<div class="color-pickers">
-			<input type="color" id="player2Color" name="player2Color" value="#ffe700">
-			<input type="color" id="player2Emissive" name="player2Emissive" value="#ffe700">
 			</div>
-		</div>
-		<div class="color-setting">
-			<label for="ballColor">Ball Color:</label>
-			<div class="color-pickers">
-			<input type="color" id="ballColor" name="ballColor" value="#0bff01">
-			<input type="color" id="ballEmissive" name="ballEmissive" value="#00ff00">
+			
+			<!-- Player Selection Menu -->
+			<div id="nbrOfPlayerMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+			<h2 class="text-light mb-4">Select Players</h2>
+			<div class="d-grid gap-3">
+				<button id="onePlayerButton" class="btn btn-success btn-lg">1 Player</button>
+				<button id="twoPlayerButton" class="btn btn-info btn-lg">2 Players</button>
+				<button id="backButton" class="btn btn-secondary btn-lg">Back</button>
 			</div>
-		</div>
-		<div class="color-setting">
-			<label for="ringColor">Ring Color:</label>
-			<div class="color-pickers">
-			<input type="color" id="ringColor" name="ringColor" value="#ff0000">
-			<input type="color" id="ringEmissive" name="ringEmissive" value="#0000ff">
 			</div>
-		</div>
-		<div class="color-setting">
-			<label for="showStats">Show Stats:</label>
-			<input type="checkbox" id="showStats" name="showStats">
-		</div>
-		<button id="saveSettingsButton">Save</button>
-		<button id="resetSettingsButton">Reset</button>
-		<button id="backFromSettingsButton">Back</button>
-		</div>
-		<div id="pauseMenu" style="display: none;">
-			<button id="resumeButton">Resume Game</button>
-			<button id="exitButtonPause">Exit</button>
-		</div>
-		<img id="gameOverImage" src="public/gungeon.png" alt="Game Over" style="display: none;">
-		<div id="threejs-container"></div>
+			
+			<!-- Game Mode Menu -->
+			<div id="modeMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+			<h2 class="text-light mb-4">Select Mode</h2>
+			<div class="d-grid gap-3">
+				<button id="classicModeButton" class="btn btn-primary btn-lg">Classic</button>
+				<button id="crazyModeButton" class="btn btn-warning btn-lg">Crazy</button>
+				<button id="backFromModeButton" class="btn btn-secondary btn-lg">Back</button>
+			</div>
+			</div>
+			
+			<!-- Settings Menu -->
+			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
+			<h2 class="text-light mb-4 text-center">Settings</h2>
+			<div class="mb-3">
+				<label for="player1Color" class="form-label text-light">Player 1 Color:</label>
+				<div class="d-flex gap-2">
+				<input type="color" class="form-control form-control-color" id="player1Color" value="#4deeea" title="Choose player 1 color">
+				<input type="color" class="form-control form-control-color" id="player1Emissive" value="#4deeea" title="Choose player 1 glow">
+				</div>
+			</div>
+			
+			<div class="mb-3">
+				<label for="player2Color" class="form-label text-light">Player 2 Color:</label>
+				<div class="d-flex gap-2">
+				<input type="color" class="form-control form-control-color" id="player2Color" value="#ffe700" title="Choose player 2 color">
+				<input type="color" class="form-control form-control-color" id="player2Emissive" value="#ffe700" title="Choose player 2 glow">
+				</div>
+			</div>
+			
+			<div class="mb-3">
+				<label for="ballColor" class="form-label text-light">Ball Color:</label>
+				<div class="d-flex gap-2">
+				<input type="color" class="form-control form-control-color" id="ballColor" value="#0bff01" title="Choose ball color">
+				<input type="color" class="form-control form-control-color" id="ballEmissive" value="#00ff00" title="Choose ball glow">
+				</div>
+			</div>
+			
+			<div class="mb-3">
+				<label for="ringColor" class="form-label text-light">Ring Color:</label>
+				<div class="d-flex gap-2">
+				<input type="color" class="form-control form-control-color" id="ringColor" value="#ff0000" title="Choose ring color">
+				<input type="color" class="form-control form-control-color" id="ringEmissive" value="#0000ff" title="Choose ring glow">
+				</div>
+			</div>
+			
+			<div class="form-check mb-4">
+				<input class="form-check-input" type="checkbox" id="showStats">
+				<label class="form-check-label text-light" for="showStats">Show Stats</label>
+			</div>
+			
+			<div class="d-flex gap-2 justify-content-center">
+				<button id="saveSettingsButton" class="btn btn-success">Save</button>
+				<button id="resetSettingsButton" class="btn btn-warning">Reset</button>
+				<button id="backFromSettingsButton" class="btn btn-secondary">Back</button>
+			</div>
+			</div>
+			
+			<!-- Pause Menu -->
+			<div id="pauseMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+			<h2 class="text-light mb-4">Game Paused</h2>
+			<div class="d-grid gap-3">
+				<button id="resumeButton" class="btn btn-success btn-lg">Resume Game</button>
+				<button id="exitButtonPause" class="btn btn-danger btn-lg">Exit Game</button>
+			</div>
+			</div>
+			
+			<img id="gameOverImage" src="public/gungeon.png" alt="Game Over" class="position-absolute top-50 start-50 translate-middle" style="display: none;">
+</div>
 	</div>
 	`;
+
+	// Your existing event listeners remain the same
 
 	document
 		.getElementById("newGameButton")
@@ -217,7 +267,7 @@ window.addEventListener("resize", () => {
 	if (state.camera && state.renderer) {
 		state.camera.aspect = window.innerWidth / window.innerHeight;
 		state.camera.updateProjectionMatrix();
-		state.renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+		state.renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 });
 
