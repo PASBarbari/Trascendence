@@ -103,26 +103,26 @@ function startTwoPlayerGame() {
 
 function startCrazymode() {
 	document.getElementById("modeMenu").style.display = "none";
-	UTILS.restart_game();
+	// UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
 	state.spawnPowerUpFlag = true;
-	GAME.animate();
+	// GAME.animate();
 }
 
 function startClassicmode() {
 	document.getElementById("modeMenu").style.display = "none";
-	UTILS.restart_game();
+	// UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
 	state.spawnPowerUpFlag = true;
-	GAME.animate();
+	// GAME.animate();
 }
 
 function resumeGame() {
 	hidePauseMenu();
 	state.isPaused = false;
-	GAME.animate();
+	// GAME.animate();
 }
 
 function exitGame() {
@@ -130,6 +130,6 @@ function exitGame() {
 	state.isPaused = true;
 	state.IAisActive = false;
 	showMainMenu();
-	UTILS.restart_game();
+	// UTILS.restart_game();
 	window.navigateTo("#home");
 }

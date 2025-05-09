@@ -226,48 +226,56 @@ export function renderPong() {
 
 	document.getElementById("menu").style.display = "block";
 
+	setTimeout(() => {
+		SETUP.setupGame();
+		GAME.animate();
+	}, 0);
+
 	// Inizializza il renderer di Three.js
-	if (!state.renderer) {
-		state.renderer = new THREE.WebGLRenderer({ antialias: true });
-		state.renderer.setSize(window.innerWidth, window.innerHeight);
-	}
+	// if (!state.renderer) {
+	// 	state.renderer = new THREE.WebGLRenderer({ antialias: true });
+	// 	state.renderer.setSize(window.innerWidth, window.innerHeight);
+	// }
 
-	// Inizializza la scena e la camera
-	if (!state.scene) {
-		state.scene = new THREE.Scene();
-	}
+	// // Inizializza la scena e la camera
+	// if (!state.scene) {
+	// 	state.scene = new THREE.Scene();
+	// }
 
-	if (!state.camera) {
-		state.camera = new THREE.PerspectiveCamera(
-			75,
-			window.innerWidth / window.innerHeight,
-			0.1,
-			1000
-		);
-		state.camera.position.z = 5;
-	}
+	// if (!state.camera) {
+	// 	state.camera = new THREE.PerspectiveCamera(
+	// 		75,
+	// 		window.innerWidth / window.innerHeight,
+	// 		0.1,
+	// 		1000
+	// 	);
+	// 	state.camera.position.z = 5;
+	// }
 
-	// Aggiungi il canvas di Three.js al DOM
-	const threejsContainer = document.getElementById("threejs-container");
-	if (threejsContainer && state.renderer.domElement) {
-		threejsContainer.appendChild(state.renderer.domElement);
-	} else {
-		console.error(
-			"threejsContainer o state.renderer.domElement non trovato"
-		);
-	}
+	// // Aggiungi il canvas di Three.js al DOM
+	// const threejsContainer = document.getElementById("threejs-container");
+	// if (threejsContainer && state.renderer.domElement) {
+	// 	threejsContainer.appendChild(state.renderer.domElement);
+	// } else {
+	// 	console.error(
+	// 		"threejsContainer o state.renderer.domElement non trovato"
+	// 	);
+	// }
 }
 
 // Inizializza il gioco
-SETUP.setupGame();
-GAME.animate();
 
 //Resize handler
 window.addEventListener("resize", () => {
-	if (state.camera && state.renderer) {
-		state.camera.aspect = window.innerWidth / window.innerHeight;
+	const container = document.getElementById("threejs-container");
+	if (container && state.camera && state.renderer) {
+		const rect = container.getBoundingClientRect();
+		const width = rect.width;
+		const height = rect.height;
+
+		state.camera.aspect = width / height;
 		state.camera.updateProjectionMatrix();
-		state.renderer.setSize(window.innerWidth, window.innerHeight);
+		state.renderer.setSize(width, height);
 	}
 });
 
