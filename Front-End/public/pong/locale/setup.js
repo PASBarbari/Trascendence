@@ -3,6 +3,8 @@ import { state } from "./state.js";
 import { createScore } from "./utils.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import Ball from "./src/Ball.js";
+import Player from "./src/Player.js";
 
 //Scene setup
 
@@ -43,85 +45,93 @@ export function setupGame() {
 		state.renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
+	const boundaries = new THREE.Vector2(state.ring.y / 2, state.ring.x / 2);
+	const planeGeometry = new THREE.PlaneGeometry(
+		boundaries.x * 2,
+		boundaries.y * 2,
+		boundaries.x * 2,
+		boundaries.y * 2
+	);
+	planeGeometry.rotateX(-Math.PI / 2);
+	const planeMaterial = new THREE.MeshNormalMaterial({
+		wireframe: true,
+	});
+	const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+	state.scene.add(plane);
+
 	//Ring setup
 
-	state.r_bottom = new THREE.Mesh(
-		new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
-		state.mat.ring
-	);
-	state.r_top = new THREE.Mesh(
-		new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
-		state.mat.ring
-	);
-	state.r_left = new THREE.Mesh(
-		new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
-		state.mat.ring
-	);
-	state.r_right = new THREE.Mesh(
-		new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
-		state.mat.ring
+	// state.r_bottom = new THREE.Mesh(
+	// 	new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
+	// 	state.mat.ring
+	// );
+	// state.r_top = new THREE.Mesh(
+	// 	new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
+	// 	state.mat.ring
+	// );
+	// state.r_left = new THREE.Mesh(
+	// 	new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
+	// 	state.mat.ring
+	// );
+	// state.r_right = new THREE.Mesh(
+	// 	new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
+	// 	state.mat.ring
+	// );
+
+	// state.ground = new THREE.Mesh(
+	// 	new THREE.BoxGeometry(state.ring.y - state.ring.h * 2, state.ring.x, 0),
+	// 	state.mat.ground
+	// );
+
+	// state.r_bottom.position.set(0, -((state.ring.x + state.ring.h) / 2), 0);
+	// state.r_top.position.set(0, (state.ring.x + state.ring.h) / 2, 0);
+	// state.r_left.position.set(-((state.ring.y - state.ring.h) / 2), 0, 0);
+	// state.r_right.position.set((state.ring.y - state.ring.h) / 2, 0, 0);
+	// state.ground.position.set(0, 0, -state.ring.z / 4);
+	// state.ring3D = new THREE.Group();
+	// state.ring3D.add(
+	// 	state.r_bottom,
+	// 	state.r_top,
+	// 	state.r_left,
+	// 	state.r_right,
+	// 	state.ground
+	// );
+
+	// //Players setup
+
+	const p1 = new Player(
+		state.scene,
+		new THREE.Vector3(-((state.ring.y * ) / 6), 0, 0)
 	);
 
-	state.ground = new THREE.Mesh(
-		new THREE.BoxGeometry(state.ring.y - state.ring.h * 2, state.ring.x, 0),
-		state.mat.ground
+	const p2 = new Player(
+		state.scene,
+		new THREE.Vector3((state.ring.y * 5) / 6, 0, 0)
 	);
+	// //Ball setup
 
-	state.r_bottom.position.set(0, -((state.ring.x + state.ring.h) / 2), 0);
-	state.r_top.position.set(0, (state.ring.x + state.ring.h) / 2, 0);
-	state.r_left.position.set(-((state.ring.y - state.ring.h) / 2), 0, 0);
-	state.r_right.position.set((state.ring.y - state.ring.h) / 2, 0, 0);
-	state.ground.position.set(0, 0, -state.ring.z / 4);
-	state.ring3D = new THREE.Group();
-	state.ring3D.add(
-		state.r_bottom,
-		state.r_top,
-		state.r_left,
-		state.r_right,
-		state.ground
-	);
+	const ball = new Ball(state.scene, state.ball_radius);
 
-	//Players setup
+	// //Light setup
 
-	state.p1 = new THREE.Mesh(
-		new THREE.BoxGeometry(state.player.h, state.player.y, state.player.z),
-		state.mat.p1
-	);
-	state.p2 = new THREE.Mesh(
-		new THREE.BoxGeometry(state.player.h, state.player.y, state.player.z),
-		state.mat.p2
-	);
-	state.p1.position.set(-((state.ring.y * 2) / 5), 0, 0);
-	state.p2.position.set((state.ring.y * 2) / 5, 0, 0);
-
-	//Ball setup
-
-	state.ball = new THREE.Mesh(
-		new THREE.SphereGeometry(state.ball_radius),
-		state.mat.ball
-	);
-	state.ball.position.set(0, 0, 0);
-
-	//Light setup
-
-	let dirLight = new THREE.DirectionalLight(0xffffff, 10);
-	dirLight.position.set(0, 0, 400);
-	dirLight.target = state.ball;
-	state.scene.add(dirLight);
+	// let dirLight = new THREE.DirectionalLight(0xffffff, 10);
+	// dirLight.position.set(0, 0, 400);
+	// dirLight.target = state.ball;
+	// state.scene.add(dirLight);
 
 	//orbit controls setup
 	state.controls = new OrbitControls(state.camera, state.renderer.domElement);
 
-	//texture setup
+	// //texture setup
 
-	state.scene.background = 0xffffff;
-	state.renderer.render(state.scene, state.camera);
+	// state.scene.background = 0xffffff;
+	// state.renderer.render(state.scene, state.camera);
 
-	//Game setup
+	// //Game setup
 
-	const game = new THREE.Group();
-	game.add(state.ring3D, state.p1, state.p2, state.ball);
-	state.scene.add(game);
+	// const game = new THREE.Group();
+	// game.add(state.ring3D, state.p1, state.p2, state.ball);
+	// state.scene.add(game);
 	// createScore();
 	state.renderer.render(state.scene, state.camera);
 	console.log("Game setup complete");
