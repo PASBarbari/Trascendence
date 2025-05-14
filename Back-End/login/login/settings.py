@@ -275,9 +275,13 @@ client = {
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Changed from '/static/'
 
-STATIC_URL = 'static/'
-STATIC_ROOT = '/home/lollo/Documents/challenge_fides/Back-End/login/staticfiles'
+# Add this to define where Django should look for static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 

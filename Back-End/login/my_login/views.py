@@ -86,7 +86,7 @@ def CreateOnOtherServices(user):
 		if pong_response.status_code != 201:
 			logging.error(f"Pong service error: {pong_response.status_code} - {pong_response.text}")
 			raise ValueError('Pong service failed to create user')
-			
+
 		return True
 		
 	except Exception as e:

@@ -4,10 +4,16 @@ set -e
 
 export DJANGO_SETTINGS_MODULE=pongProject.settings
 
+# mkdir -p /app/static
+# ln -sf /app/staticfiles/* /app/static/
+# # collect static files
+# python manage.py collectstatic --noinput
+
+
 # migrations at startup
-python manage.py makemigrations
-python manage.py makemigrations pong_app
-python manage.py migrate
+python manage.py makemigrations --noinput
+python manage.py makemigrations pong_app --noinput
+python manage.py migrate --noinput
 
 # REMOVE THIS LINE:
 # python3 -m pip install daphne

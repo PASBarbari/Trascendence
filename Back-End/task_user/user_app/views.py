@@ -79,7 +79,6 @@ class UserGen(generics.ListCreateAPIView):
 
 	def get_permissions(self):
 		if self.request.method == 'POST':
-			print("POST here")
 			self.permission_classes = []
 			self.authentication_classes = [ServiceAuthentication]
 		else:
