@@ -18,6 +18,8 @@ export let state = {
 			side: THREE.DoubleSide,
 		}),
 	},
+	P1cursor: null,
+	P2cursor: null,
 	isPaused: true,
 	isStarted: false,
 	IAisActive: false,

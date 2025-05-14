@@ -184,6 +184,12 @@ export function setupGame() {
 	// game.add(state.ring3D, state.p1, state.p2, state.ball);
 	// state.scene.add(game);
 	// createScore();
+
+	//Movement setup
+
+	state.P1cursor = new THREE.Vector2();
+	state.P2cursor = new THREE.Vector2();
+
 	state.renderer.render(state.scene, state.camera);
 	console.log("Game setup complete");
 	console.log("Scene contains:", state.scene.children.length, "objects");
