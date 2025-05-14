@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-chat-db
+  namespace: {{ .Values.namespace }}
+spec:
+  serviceName: {{ .Release.Name }}-chat-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: chat-db
+  template:
+    metadata:
+      labels:
+        app: chat-db
+    spec:
+      serviceAccountName: {{ .Release.Name }}-chat-db
+      containers:
+      - name: postgres
+        image: postgres:13
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-chat-db-secret
+              key: chat-db
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-chat-db-secret
+              key: chat-db-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-chat-db-secret
+              key: chat-db-password
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.persistence.storageClass | default "standard" }}
+	  selector:
+      matchLabels:
+        type: chat-db
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | default "512Mi" }}

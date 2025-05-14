@@ -1,0 +1,30 @@
+# Default values for frontend chart
+replicaCount: 1
+
+image:
+  repository: marcor42/frontend
+  pullPolicy: Always
+  tag: latest
+
+nameOverride: ""
+fullnameOverride: ""
+
+namespace: front-end
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+hostAliases:
+  - ip: "192.168.49.2"
+    hostnames:
+      - "trascendence.42firenze.it"

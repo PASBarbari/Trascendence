@@ -1,6 +1,7 @@
 apiVersion: v2
-name: Trascendence_0.1.0
-description: A Helm chart for Kubernetes, k3s
+name: front-end-chart
+description: Frontend chart for Trascendence
+# This is a Helm chart for Kubernetes, k3s
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,18 +23,3 @@ version: 0.1.0
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "1.16.0"
-
-
-dependencies:
-  - name: front-end-chart
-    repository: file://charts/front-end-chart
-    version: 0.1.0
-    condition: front-end.enabled
-    tags:
-      - front-end
-  - name: chat-service-chart
-    repository: file://charts/chat-service-chart
-    version: 0.1.0
-    condition: chat-service.enabled
-    tags:
-      - chat

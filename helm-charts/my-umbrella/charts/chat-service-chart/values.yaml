@@ -1,0 +1,93 @@
+# Default values for chat service chart
+replicaCount: 1
+
+image:
+  repository: marcor42/chatservice
+  pullPolicy: Always
+  tag: latest
+
+nameOverride: ""
+fullnameOverride: ""
+
+namespace: chat
+
+service:
+  type: ClusterIP
+  port: 8001
+  targetPort: 8000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+configMap:
+  data:
+    DEBUG: "True"
+    DJANGO_SETTINGS_MODULE: "chat.settings"
+    CHAT_PORT: "8000"
+    CHAT_HOST: "0.0.0.0"
+    DB_HOST: "postgres"
+    DB_PORT: "5432"
+    DB_NAME: "chat_db"
+    DB_USER: "postgres"
+    DB_PASSWORD: "postgres"
+    REDIS_HOST: "redis"
+    REDIS_PORT: "6379"
+    REDIS_CHANNEL_DB: "1"
+    LOGIN_URL: "http://login-service:8000"
+    USER_URL: "http://user-service:8002"
+    NOTIFICATIONS_URL: "http://notifications-service:8003"
+    PONG_URL: "http://pong-service:8004"
+    OAUTH2_INTROSPECTION_URL: "http://login-service:8000/o/introspect/"
+    SERVICE_PASSWORD: "123"
+    ALLOWED_HOSTS: "*"
+
+secrets:
+  database:
+    name: "chat_db"
+    user: "postgres"
+    password: "postgres"
+  admin:
+    username: "admin"
+    password: "adminpassword"
+    email: "admin@example.com"
+    secretKey: "your-secret-key"
+
+ingress:
+  enabled: true
+  className: traefik
+  host: trascendence.42firenze.it
+  path: /api/chat(/|$)(.*)
+  pathType: ImplementationSpecific
+  annotations: {}
+  certManager:
+    clusterIssuer: letsencrypt-prod
+  ssl:
+    forceRedirect: "true"
+  tls:
+    enabled: true
+    secretName: traefik-tls
+
+serviceAccount:
+  create: true
+  annotations: {}
+  automount: true
+  dbAnnotations: {}
+  dbAutomount: true
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 1
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+persistence:
+  enabled: true
+  storageClass: standard
+  size: 512Mi
+  annotations: {}
