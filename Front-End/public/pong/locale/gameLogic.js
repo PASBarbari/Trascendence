@@ -15,6 +15,8 @@ const clock = new THREE.Clock();
 export function animate() {
 	const deltaTime = clock.getDelta();
 	state.ball.update(deltaTime);
+	state.p2.mesh.position.z += state.p2_move_y;
+	state.p1.mesh.position.z += state.p1_move_y;
 	state.controls.update();
 	if (state.renderer && state.scene && state.camera) {
 		state.renderer.render(state.scene, state.camera);
