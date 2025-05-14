@@ -84,35 +84,3 @@ state.angle = Math.floor(Math.random() * 70);
 if (state.angle % 2) state.angle *= -1;
 if (state.angle % 3) state.angle += 180;
 state.stats = new Stats();
-state.r_bottom = new THREE.Mesh(
-	new THREE.BoxGeometry(
-		state.ring.length,
-		state.ring.thickness,
-		state.ring.depth
-	),
-	state.mat.ring
-);
-state.r_top = new THREE.Mesh(
-	new THREE.BoxGeometry(
-		state.ring.length,
-		state.ring.thickness,
-		state.ring.depth
-	),
-	state.mat.ring
-);
-state.r_left = new THREE.Mesh(
-	new THREE.BoxGeometry(
-		state.ring.thickness,
-		state.ring.height,
-		state.ring.depth
-	),
-	state.mat.ring
-);
-state.r_right = new THREE.Mesh(
-	new THREE.BoxGeometry(
-		state.ring.thickness,
-		state.ring.height,
-		state.ring.depth
-	),
-	state.mat.ring
-);

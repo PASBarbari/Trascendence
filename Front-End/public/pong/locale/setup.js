@@ -66,7 +66,7 @@ export function setupGame() {
 
 	state.r_bottom = new THREE.Mesh(
 		new THREE.BoxGeometry(
-			state.ring.length,
+			state.ring.length + state.ring.thickness * 2,
 			state.ring.thickness,
 			state.ring.depth
 		),
@@ -74,7 +74,7 @@ export function setupGame() {
 	);
 	state.r_top = new THREE.Mesh(
 		new THREE.BoxGeometry(
-			state.ring.length,
+			state.ring.length + state.ring.thickness * 2,
 			state.ring.thickness,
 			state.ring.depth
 		),
@@ -113,12 +113,12 @@ export function setupGame() {
 		0
 	);
 	state.r_left.position.set(
-		-((state.ring.length - state.ring.thickness) / 2),
+		-((state.ring.length + state.ring.thickness) / 2),
 		0,
 		0
 	);
 	state.r_right.position.set(
-		(state.ring.length - state.ring.thickness) / 2,
+		(state.ring.length + state.ring.thickness) / 2,
 		0,
 		0
 	);
@@ -131,6 +131,8 @@ export function setupGame() {
 		state.r_right
 		// state.ground
 	);
+
+	state.ring3D.rotateX(-Math.PI / 2);
 
 	state.scene.add(state.ring3D);
 	// //Players setup
