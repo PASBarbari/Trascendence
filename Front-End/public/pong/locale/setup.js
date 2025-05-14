@@ -20,7 +20,20 @@ export function setupGame() {
 	state.camera.lookAt(state.look.x, state.look.y, state.look.z);
 
 	// Create renderer but don't attach yet
-	state.renderer = new THREE.WebGLRenderer({ antialias: true });
+	state.renderer = new THREE.WebGLRenderer({ 
+		antialias: true,
+		powerPreference: 'high-performance',
+    	failIfMajorPerformanceCaveat: false
+	});
+
+	// state.renderer.getContext().canvas.addEventListener('webglcontextlost', function(event) {
+	// 	console.log('WebGL context lost:', event);
+	// 	event.preventDefault();
+	// });
+
+	// state.renderer.getContext().canvas.addEventListener('webglcontextrestored', function(event) {
+	// 	console.log('WebGL context restored');
+	// });
 
 	// Get the container
 	const container = document.getElementById("threejs-container");

@@ -2,5 +2,6 @@
     height: 100%;
     width: 100%;
 	border-top-left-radius: 12px;
+    position: relative;
 
 }

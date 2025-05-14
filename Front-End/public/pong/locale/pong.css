@@ -3,14 +3,15 @@
 /* Game container styles */
 .pong-app {
 	position: absolute;
-	top: 60px; /* Top navbar height */
-	left: 60px; /* Left navbar width */
+	top: 0px; /* Top navbar height */
+	left: 0px; /* Left navbar width */
 	right: 0;
 	bottom: 0;
 	overflow: hidden;
 	font-family: "Press Start 2P", cursive, sans-serif;
 	/* background-color: #000; */
 	margin: 0;
+	border-top-left-radius: 12px;
 }
 
 /* Game container */
@@ -28,6 +29,7 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
+	min-height: 400px;
 }
 
 /* Common menu styles */

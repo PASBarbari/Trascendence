@@ -10,6 +10,12 @@ import * as SETTINGS from "./settings.js";
 import * as UP from "./powerups.js";
 import Ball from "./src/Ball.js";
 
+let animationFrameId = null;
+
+export function getAnimationFrameId() {
+    return animationFrameId;
+}
+
 const clock = new THREE.Clock();
 
 export function animate() {
@@ -19,5 +25,5 @@ export function animate() {
 	if (state.renderer && state.scene && state.camera) {
 		state.renderer.render(state.scene, state.camera);
 	}
-	requestAnimationFrame(animate);
+	animationFrameId = requestAnimationFrame(animate);
 }

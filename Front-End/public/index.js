@@ -5,6 +5,15 @@ import { renderPong } from "./pong/locale/pong.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 //import { renderProfile } from './profile/profile.js';
 import { settingsPopup } from "./settings/settings.js";
+import { cleanupPong } from "./pong/locale/settings.js";
+
+function preloadPongCSS() {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "/public/pong/locale/pong.css";
+    document.head.appendChild(link);
+    console.log("Pong CSS precaricato");
+}
 
 const routes = {
 	404: {
@@ -45,6 +54,7 @@ const navigateTo = (path) => {
 };
 
 import { processOAuthRedirect } from "./var.js";
+let currentRoute = "";
 
 const locationHandler = async () => {
 	const wasOAuthRedirect = processOAuthRedirect();
@@ -53,6 +63,13 @@ const locationHandler = async () => {
 	if (location.length == 0) {
 		location = "login";
 	}
+
+	if (currentRoute === "pong" && location !== "pong") {
+        console.log("Navigando via da Pong, eseguo cleanup...");
+        cleanupPong();
+    }
+    
+    currentRoute = location;
 
 	if (wasOAuthRedirect && location === "home") {
 		console.log("OAuth login successful!");
@@ -74,6 +91,7 @@ const locationHandler = async () => {
 };
 
 const initializeApp = () => {
+	preloadPongCSS();
 	renderExpandableSidebar();
 	//renderProfile();
 
