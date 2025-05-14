@@ -4,22 +4,17 @@ metadata:
   name: minio-ingress
   namespace: minio
   annotations:
-    nginx.ingress.kubernetes.io/limit-whitelist: "GET"
-    # JWT validation
-    nginx.ingress.kubernetes.io/auth-url: "http://jwt-validator-service.minio.svc.cluster.local:8000/validate/"
-    nginx.ingress.kubernetes.io/auth-response-headers: "X-User-ID"
-    nginx.ingress.kubernetes.io/auth-method: "GET"
-    # nginx.ingress.kubernetes.io/auth-snippet: |
-    #   if ($request_method = 'OPTIONS') {
-    #     return 200;
-    #   }
+    cert-manager.io/cluster-issuer: selfsigned-issuer
+    # nginx.ingress.kubernetes.io/limit-whitelist: "GET"
     # CORS
+    nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-origin: "https://trascendence.42firenze.it"
     # methods and headers
     nginx.ingress.kubernetes.io/cors-allow-methods: "GET, OPTIONS"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,Access-Control-Allow-Origin"
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "15k" # 15k so you can't upload photos
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -33,7 +28,14 @@ spec:
             name: minio-service
             port:
               number: 9000
+      - path: /jwt-validator(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: jwt-validator-service
+            port:
+              number: 8000
   tls:
   - hosts:
     - minio.trascendence.42firenze.it
-    secretName: minio-tls
+    secretName: minio-selfsigned

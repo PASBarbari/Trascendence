@@ -29,7 +29,7 @@ fi
 
 # Step 2: Start Minikube
 echo "Starting Minikube..."
-minikube start --cpus=8 --memory=8192 --driver=docker
+minikube start --cpus=8 --memory=4096 --driver=docker
 
 # Step 3: Set Minikube context for kubectl
 echo "Setting up Minikube context..."
@@ -46,7 +46,7 @@ kubecolor apply -f configmaps/namespaces.yaml
 echo "Creating configmaps"
 kubecolor apply -f configmaps/Configmap.yaml
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
-kubectl create namespace cert-manager
+#kubectl create namespace cert-manager
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
 # Step 5: Apply pre-created secrets from USB drive
@@ -94,6 +94,8 @@ for service in $(dir):
 do
   kubecolor apply -f $service/
 done
+
+
 
 echo "Project setup complete! Access Minikube services using:"
 

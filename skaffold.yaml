@@ -1,16 +1,16 @@
 apiVersion: skaffold/v4beta12
 kind: Config
 metadata:
-  name: trascendence-frontend
+    name: trascendence-frontend
 build:
-  artifacts:
-    - image: marcor42/frontend
-      context: Front-End
-      docker:
-        dockerfile: Dockerfile
-  local:
-    push: true
-    useDockerCLI: true
+    artifacts:
+        - image: marcor42/frontend
+          context: Front-End
+          docker:
+              dockerfile: Dockerfile
+    local:
+        push: true
+        useDockerCLI: true
 manifests:
-  rawYaml:
-    - Manifests/front-end-deployment.yaml
+    rawYaml:
+        - Manifests/front-end-deployment.yaml

@@ -38,6 +38,30 @@ async function PatchProfile(name, surname, birthdate, bio) {
 	}
 }
 
+// Aggiungi questa funzione al tuo file
+async function downloadImageAsBlob(imageUrl, token) {
+    try {
+        const imageResponse = await fetch(imageUrl, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (imageResponse.ok) {
+            const imageBlob = await imageResponse.blob();
+            const localImageUrl = URL.createObjectURL(imageBlob);
+            console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
+            return localImageUrl;
+        } else {
+            console.error("Errore nel recupero dell'immagine:", imageResponse.status);
+            return null;
+        }
+    } catch (error) {
+        console.error("Errore durante il download dell'immagine:", error);
+        return null;
+    }
+}
+
 async function GetProfile() {
 	const { userId, token, url_api } = getVariables();
 	try {
@@ -55,51 +79,35 @@ async function GetProfile() {
             console.log("Profile:", data);
 
 		let localImageUrl = null;
-            
-		// Se l'avatar URL esiste, scarica l'immagine con il token
+		let avatarUrl = "";
 		if (data.current_avatar_url) {
-			try {
-				let avatarUrl = data.current_avatar_url
-					.replace("http://", "https://")
-					.replace(/ /g, "%20");
-				
-				avatarUrl = `${avatarUrl}?token=${token}`;
-					
-				console.log("Downloading profile image from:", avatarUrl);
-				
-				// Fetch dell'immagine con token di autenticazione
-				const imageResponse = await fetch(avatarUrl, {
-					headers: {
-						//TODO sostituire con <img src="/api/images/yourimage.jpg?token=here-your-token"> dal backend
-					
-					},
-				mode: 'no-cors'
-				});
-				
-				if (imageResponse.ok) {
-					const imageBlob = await imageResponse.blob();
-					localImageUrl = URL.createObjectURL(imageBlob);
-					console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
-				} else {
-					console.error("Errore nel recupero dell'immagine:", imageResponse.status);
-				}
-			} catch (error) {
-				console.error("Errore durante il download dell'immagine:", error);
-			}
+			// Estrai solo il nome del file
+			const filename = data.current_avatar_url.split('/').pop();
+			
+			// URL corretto per il proxy
+			// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
+			avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
+			// avatarUrl = avatarUrl.replace(" ", "%20");
+
+			console.log("Downloading profile image from:", avatarUrl);
 		}
 
+		if (avatarUrl !== "") {
+			localImageUrl = await downloadImageAsBlob(avatarUrl, token);
+		}
 
-			setVariables({
-				name: data.first_name || "",
-				surname: data.last_name || "",
-				birthdate: data.birth_date || "",
-				bio: data.bio || "",
-				level: data.level ?? "",
-				exp: data.exp ?? "",
-				profileImageUrl: localImageUrl || "",
-			});
-			console.log("level e exp:", data.level, data.exp);
-			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
+		setVariables({
+			name: data.first_name || "",
+			surname: data.last_name || "",
+			birthdate: data.birth_date || "",
+			bio: data.bio || "",
+			level: data.level ?? "",
+			exp: data.exp ?? "",
+			profileImageUrl: localImageUrl || "",
+		});
+		console.log("level e exp:", data.level, data.exp);
+		console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
+
 		} else {
 			const errorData = await response.json();
 			console.error("Errore nella risposta del server:", errorData);
@@ -280,7 +288,7 @@ function renderProfile() {
         <div class="login_box">
             <h1>Seleziona un'immagine</h1>
             <div class="profile-image-preview">
-                <img src="/public/profile/placeholder.jpeg" alt="Profile" class="profile-card-image" id="imagePreview" />
+                <img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
             </div>
             <div class="profile-image-controls">
                 <label for="imageUpload" class="upload-btn">Scegli un file</label>
@@ -312,6 +320,7 @@ function renderProfile() {
 				reader.readAsDataURL(file);
 			}
 		});
+					//TODO se carichi l'immagine poi fa get a https://https//minio.trascendence.42firenze.it/user-media/avatars/Avatar_for_marco24 perche' data.avatar e' sbagliato
 
 		// Upload the selected image
 		uploadImageBtn.addEventListener("click", async function () {
@@ -336,6 +345,7 @@ function renderProfile() {
 			try {
 				const formData = new FormData();
 				formData.append("image", file);
+				//add https to url al posto di http
 
 				const { userId, token, url_api } = getVariables();
 
@@ -355,13 +365,40 @@ function renderProfile() {
 					const data = await response.json();
 					console.log("Immagine caricata con successo:", data);
 
-					setVariables({
-						profileImageUrl: data.avatar // Usa il nome del campo corretto restituito dall'API
-					});				
+					let avatarPost = data.avatar;
 
-					// Update the profile image in the UI
-					document.querySelector(".profile-card-image").src =
-						data.avatar || imagePreview.src;
+					// Rimuovi doppi protocolli (se presenti)
+					if (avatarPost && avatarPost.match(/^https?:\/\/https?:\/\//)) {
+						avatarPost = avatarPost.replace(/^(https?:\/\/)https?:\/\//, "$1");
+					}
+					
+					// Forza HTTPS se necessario
+					if (avatarPost && avatarPost.startsWith("http://")) {
+						avatarPost = avatarPost.replace("http://", "https://");
+					}
+					
+					// Estrai il nome del file per consistenza con il resto del codice
+					if (avatarPost) {
+						const filename = avatarPost.split('/').pop();
+						// Usa lo stesso formato usato nella funzione GetProfile
+						avatarPost = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
+					}
+					
+					console.log("URL normalizzato:", avatarPost);
+
+					// Scarica l'immagine come blob
+					const localImageUrl = await downloadImageAsBlob(avatarPost, token);
+					if (localImageUrl) {
+						setVariables({
+							profileImageUrl: localImageUrl
+						});
+						
+						// Aggiorna l'immagine nell'UI
+						document.querySelector(".profile-card-image").src = localImageUrl;
+					} else {
+						// Fallback all'anteprima locale
+						document.querySelector(".profile-card-image").src = imagePreview.src;
+					}
 
 					// Close the modal
 					closeProfileImageSelector();

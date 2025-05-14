@@ -43,11 +43,20 @@ const navigateTo = (path) => {
     window.location.hash = path;
 };
 
+import { processOAuthRedirect } from './var.js';
+
 const locationHandler = async () => {
+    const wasOAuthRedirect = processOAuthRedirect();
+    
     var location = window.location.hash.replace("#", "");
     if (location.length == 0) {
         location = "login";
     }
+
+    if (wasOAuthRedirect && location === "home") {
+        console.log("OAuth login successful!");
+    }
+
     const route = routes[location] || routes["404"];
     if (route.template) {
         const html = await fetch(route.template).then((response) => response.text());

@@ -32,6 +32,21 @@ spec:
             secretKeyRef:
               name: jwt-secret
               key: secret-key
+        - name: MINIO_STORAGE_ENDPOINT
+          valueFrom:
+            configMapKeyRef:
+              name: minio-jwt
+              key: minio-storage-endpoint
+        - name: MINIO_STORAGE_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: accesskey
+        - name: MINIO_STORAGE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: secretkey
 ---
 apiVersion: v1
 kind: Service
