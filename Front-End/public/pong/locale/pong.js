@@ -123,7 +123,6 @@ export function renderPong() {
 			</div>
 			</div>
 			
-			<img id="gameOverImage" src="public/gungeon.png" alt="Game Over" class="position-absolute top-50 start-50 translate-middle" style="display: none;">
 </div>
 	</div>
 	`;
@@ -266,6 +265,7 @@ export function renderPong() {
 // Inizializza il gioco
 
 //Resize handler
+
 window.addEventListener("resize", () => {
 	const container = document.getElementById("threejs-container");
 	if (container && state.camera && state.renderer) {

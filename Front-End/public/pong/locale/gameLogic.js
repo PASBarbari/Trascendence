@@ -8,12 +8,16 @@ import * as UTILS from "./utils.js";
 import * as SETUP from "./setup.js";
 import * as SETTINGS from "./settings.js";
 import * as UP from "./powerups.js";
+import Ball from "./src/Ball.js";
+
+const clock = new THREE.Clock();
 
 export function animate() {
-	requestAnimationFrame(animate);
-	// state.p1.rotation.x += 0.01;
-	// state.p1.rotation.y += 0.01;
-	// state.p1.rotation.z += 0.01;
+	const deltaTime = clock.getDelta();
+	state.ball.update(deltaTime);
 	state.controls.update();
-	state.renderer.render(state.scene, state.camera);
+	if (state.renderer && state.scene && state.camera) {
+		state.renderer.render(state.scene, state.camera);
+	}
+	requestAnimationFrame(animate);
 }

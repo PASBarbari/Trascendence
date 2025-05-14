@@ -4,8 +4,20 @@ import Stats from "three/addons/libs/stats.module.js";
 export let state = {
 	look: { x: 0, y: 0, z: 0 },
 	cam: { x: 0, y: 50, z: 100 },
-	ring: { x: 0, y: (window.innerHeight * 15) / 100, z: 10, h: 3 },
-	p: { height: 0, width: 2.5, depth: 5 },
+	ring: {
+		height: 0,
+		length: (window.innerHeight * 15) / 100,
+		depth: 10,
+		thickness: 3,
+	},
+	p: { height: 0, width: 2.5, depth: 2.5 },
+	mat: {
+		ring: new THREE.MeshStandardMaterial({
+			color: 0xff0000,
+			emissive: 0x0000ff,
+			side: THREE.DoubleSide,
+		}),
+	},
 	isPaused: true,
 	isStarted: false,
 	IAisActive: false,
@@ -27,6 +39,7 @@ export let state = {
 	scene: null,
 	camera: null,
 	renderer: null,
+	boundaries: null,
 	p1: null,
 	p2: null,
 	ball: null,
@@ -62,28 +75,44 @@ export let state = {
 	controls: null,
 };
 
-state.ring.x = (9 / 16) * state.ring.y;
-state.p.height = state.ring.x / 6;
-state.player_speed = state.ring.y / 115;
-state.ball_radius = state.ring.y / 80;
-state.ball_speed = state.ring.y / 150;
+state.ring.height = (9 / 16) * state.ring.length;
+state.p.height = state.ring.height / 6;
+state.player_speed = state.ring.length / 115;
+state.ball_radius = state.ring.length / 80;
+state.ball_speed = state.ring.length / 150;
 state.angle = Math.floor(Math.random() * 70);
 if (state.angle % 2) state.angle *= -1;
 if (state.angle % 3) state.angle += 180;
 state.stats = new Stats();
-// state.r_bottom = new THREE.Mesh(
-// 	new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
-// 	state.mat.ring
-// );
-// state.r_top = new THREE.Mesh(
-// 	new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
-// 	state.mat.ring
-// );
-// state.r_left = new THREE.Mesh(
-// 	new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
-// 	state.mat.ring
-// );
-// state.r_right = new THREE.Mesh(
-// 	new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
-// 	state.mat.ring
-// );
+state.r_bottom = new THREE.Mesh(
+	new THREE.BoxGeometry(
+		state.ring.length,
+		state.ring.thickness,
+		state.ring.depth
+	),
+	state.mat.ring
+);
+state.r_top = new THREE.Mesh(
+	new THREE.BoxGeometry(
+		state.ring.length,
+		state.ring.thickness,
+		state.ring.depth
+	),
+	state.mat.ring
+);
+state.r_left = new THREE.Mesh(
+	new THREE.BoxGeometry(
+		state.ring.thickness,
+		state.ring.height,
+		state.ring.depth
+	),
+	state.mat.ring
+);
+state.r_right = new THREE.Mesh(
+	new THREE.BoxGeometry(
+		state.ring.thickness,
+		state.ring.height,
+		state.ring.depth
+	),
+	state.mat.ring
+);

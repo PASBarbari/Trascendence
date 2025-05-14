@@ -45,12 +45,15 @@ export function setupGame() {
 		state.renderer.setSize(window.innerWidth, window.innerHeight);
 	}
 
-	const boundaries = new THREE.Vector2(state.ring.y / 2, state.ring.x / 2);
+	state.boundaries = new THREE.Vector2(
+		state.ring.length / 2,
+		state.ring.height / 2
+	);
 	const planeGeometry = new THREE.PlaneGeometry(
-		boundaries.x * 2,
-		boundaries.y * 2,
-		boundaries.x * 2,
-		boundaries.y * 2
+		state.boundaries.x * 2,
+		state.boundaries.y * 2,
+		state.boundaries.x * 2,
+		state.boundaries.y * 2
 	);
 	planeGeometry.rotateX(-Math.PI / 2);
 	const planeMaterial = new THREE.MeshNormalMaterial({
@@ -61,56 +64,89 @@ export function setupGame() {
 
 	//Ring setup
 
-	// state.r_bottom = new THREE.Mesh(
-	// 	new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
-	// 	state.mat.ring
-	// );
-	// state.r_top = new THREE.Mesh(
-	// 	new THREE.BoxGeometry(state.ring.y, state.ring.h, state.ring.z),
-	// 	state.mat.ring
-	// );
-	// state.r_left = new THREE.Mesh(
-	// 	new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
-	// 	state.mat.ring
-	// );
-	// state.r_right = new THREE.Mesh(
-	// 	new THREE.BoxGeometry(state.ring.h, state.ring.x, state.ring.z),
-	// 	state.mat.ring
-	// );
+	state.r_bottom = new THREE.Mesh(
+		new THREE.BoxGeometry(
+			state.ring.length,
+			state.ring.thickness,
+			state.ring.depth
+		),
+		state.mat.ring
+	);
+	state.r_top = new THREE.Mesh(
+		new THREE.BoxGeometry(
+			state.ring.length,
+			state.ring.thickness,
+			state.ring.depth
+		),
+		state.mat.ring
+	);
+	state.r_left = new THREE.Mesh(
+		new THREE.BoxGeometry(
+			state.ring.thickness,
+			state.ring.height,
+			state.ring.depth
+		),
+		state.mat.ring
+	);
+	state.r_right = new THREE.Mesh(
+		new THREE.BoxGeometry(
+			state.ring.thickness,
+			state.ring.height,
+			state.ring.depth
+		),
+		state.mat.ring
+	);
 
 	// state.ground = new THREE.Mesh(
-	// 	new THREE.BoxGeometry(state.ring.y - state.ring.h * 2, state.ring.x, 0),
+	// 	new THREE.BoxGeometry(state.ring.length - state.ring.thickness * 2, state.ring.height, 0),
 	// 	state.mat.ground
 	// );
 
-	// state.r_bottom.position.set(0, -((state.ring.x + state.ring.h) / 2), 0);
-	// state.r_top.position.set(0, (state.ring.x + state.ring.h) / 2, 0);
-	// state.r_left.position.set(-((state.ring.y - state.ring.h) / 2), 0, 0);
-	// state.r_right.position.set((state.ring.y - state.ring.h) / 2, 0, 0);
-	// state.ground.position.set(0, 0, -state.ring.z / 4);
-	// state.ring3D = new THREE.Group();
-	// state.ring3D.add(
-	// 	state.r_bottom,
-	// 	state.r_top,
-	// 	state.r_left,
-	// 	state.r_right,
-	// 	state.ground
-	// );
-
-	// //Players setup
-
-	const p1 = new Player(
-		state.scene,
-		new THREE.Vector3(-((state.ring.y * ) / 6), 0, 0)
+	state.r_bottom.position.set(
+		0,
+		-((state.ring.height + state.ring.thickness) / 2),
+		0
+	);
+	state.r_top.position.set(
+		0,
+		(state.ring.height + state.ring.thickness) / 2,
+		0
+	);
+	state.r_left.position.set(
+		-((state.ring.length - state.ring.thickness) / 2),
+		0,
+		0
+	);
+	state.r_right.position.set(
+		(state.ring.length - state.ring.thickness) / 2,
+		0,
+		0
+	);
+	// state.ground.position.set(0, 0, -state.ring.depth / 4);
+	state.ring3D = new THREE.Group();
+	state.ring3D.add(
+		state.r_bottom,
+		state.r_top,
+		state.r_left,
+		state.r_right
+		// state.ground
 	);
 
-	const p2 = new Player(
+	state.scene.add(state.ring3D);
+	// //Players setup
+
+	state.p1 = new Player(
 		state.scene,
-		new THREE.Vector3((state.ring.y * 5) / 6, 0, 0)
+		new THREE.Vector3(-((state.ring.length * 2) / 5), 0, 0)
+	);
+
+	state.p2 = new Player(
+		state.scene,
+		new THREE.Vector3((state.ring.length * 2) / 5, 0, 0)
 	);
 	// //Ball setup
 
-	const ball = new Ball(state.scene, state.ball_radius);
+	state.ball = new Ball(state.scene, state.ball_radius, state.boundaries);
 
 	// //Light setup
 
