@@ -46,8 +46,9 @@ kubecolor apply -f configmaps/namespaces.yaml
 echo "Creating configmaps"
 kubecolor apply -f configmaps/Configmap.yaml
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
-#kubectl create namespace cert-manager
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
+# kubectl create namespace cert-manager
+# kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
 # Step 5: Apply pre-created secrets from USB drive
 echo "Applying secrets"
@@ -89,7 +90,7 @@ kubecolor apply -f Ingresses/
 
 # Step 8: Setup microservices
 echo "Setting up microservices..."
-dir=("Certs" "Chat" "Login" "Redis" "Notifications" "Pong" "User")
+dir=("Chat" "Login" "Redis" "Notifications" "Pong" "User")
 for service in $(dir):
 do
   kubecolor apply -f $service/

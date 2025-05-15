@@ -41,7 +41,7 @@
 }
 
 .content-home {
-  background-color: rgba(1, 25, 78, 0.05);
+  background-color: rgb(239 241 255);
   display: flex;
   flex-wrap: wrap;
   justify-content: space-evenly;

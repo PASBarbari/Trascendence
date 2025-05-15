@@ -1,9 +1,9 @@
 import { state } from "./state.js";
-import { getVariables } from "../var.js";
+import { getVariables } from "../../var.js";
 import { renderPong } from "./pong.js";
 import * as GAME from "./gameLogic.js";
 import * as UTILS from "./utils.js";
-import { getCookie } from "../cookie.js";
+import { getCookie } from "../../cookie.js";
 
 let socket;
 
