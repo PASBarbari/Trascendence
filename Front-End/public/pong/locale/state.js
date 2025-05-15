@@ -40,6 +40,7 @@ export let state = {
 	boundaries: null,
 	p1: null,
 	p2: null,
+	players: [],
 	ball: null,
 	ring3D: null,
 	ground: null,
