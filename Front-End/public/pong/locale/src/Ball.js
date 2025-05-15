@@ -1,10 +1,12 @@
 import * as THREE from "three";
-
+import { state } from "../state.js";
 export default class Ball {
 	speed = 10;
 	velocity = new THREE.Vector3(0.5, 0, 1);
 
 	constructor(scene, radius, boundaries) {
+		this.p1 = state.p1;
+		this.p2 = state.p2;
 		this.scene = scene;
 		this.radius = radius;
 		this.boundaries = boundaries;
@@ -14,7 +16,7 @@ export default class Ball {
 
 		this.velocity.multiplyScalar(this.speed);
 
-		this.scene.add(this.mesh);
+		state.game.add(this.mesh);
 	}
 
 	update(dt) {
@@ -36,6 +38,13 @@ export default class Ball {
 				(this.boundaries.y - this.radius + dz) *
 				Math.sign(this.mesh.position.z);
 		}
+
+		const target =
+			this.velocity.x > 0
+				? this.p2
+				: this.velocity.x < 0
+				? this.p1
+				: null;
 
 		this.mesh.position.copy(tPos);
 	}

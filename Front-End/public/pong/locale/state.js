@@ -3,7 +3,7 @@ import Stats from "three/addons/libs/stats.module.js";
 
 export let state = {
 	look: { x: 0, y: 0, z: 0 },
-	cam: { x: 0, y: 50, z: 100 },
+	cam: { x: 0, y: 20, z: 100 },
 	ring: {
 		height: 0,
 		length: (window.innerHeight * 15) / 100,
@@ -12,11 +12,7 @@ export let state = {
 	},
 	p: { height: 0, width: 2.5, depth: 2.5 },
 	mat: {
-		ring: new THREE.MeshStandardMaterial({
-			color: 0xff0000,
-			emissive: 0x0000ff,
-			side: THREE.DoubleSide,
-		}),
+		ring: new THREE.MeshNormalMaterial({}),
 	},
 	P1cursor: null,
 	P2cursor: null,
@@ -48,7 +44,7 @@ export let state = {
 	ring3D: null,
 	ground: null,
 	stats: null,
-	game: null,
+	game: new THREE.Group(),
 	scoreText: null,
 	winnerText: null,
 	stats: null,
@@ -56,18 +52,6 @@ export let state = {
 	r_top: null,
 	r_left: null,
 	r_right: null,
-	game: {
-		ballColor: null,
-		player1Color: null,
-		player1Emissive: null,
-		player2Color: null,
-		player2Emissive: null,
-		ringColor: null,
-		ringEmissive: null,
-		ballSpeed: null,
-		playerSpeed: null,
-		ballRadius: null,
-	},
 	keys: {
 		w: false,
 		s: false,
@@ -75,6 +59,7 @@ export let state = {
 		ArrowDown: false,
 	},
 	controls: null,
+	animationFrameId: null,
 };
 
 state.ring.height = (9 / 16) * state.ring.length;

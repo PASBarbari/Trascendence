@@ -20,10 +20,10 @@ export function setupGame() {
 	state.camera.lookAt(state.look.x, state.look.y, state.look.z);
 
 	// Create renderer but don't attach yet
-	state.renderer = new THREE.WebGLRenderer({ 
+	state.renderer = new THREE.WebGLRenderer({
 		antialias: true,
-		powerPreference: 'high-performance',
-    	failIfMajorPerformanceCaveat: false
+		powerPreference: "high-performance",
+		failIfMajorPerformanceCaveat: false,
 	});
 
 	// state.renderer.getContext().canvas.addEventListener('webglcontextlost', function(event) {
@@ -146,8 +146,7 @@ export function setupGame() {
 	);
 
 	state.ring3D.rotateX(-Math.PI / 2);
-
-	state.scene.add(state.ring3D);
+	state.game.add(state.ring3D);
 	// //Players setup
 
 	state.p1 = new Player(
@@ -179,10 +178,8 @@ export function setupGame() {
 	// state.renderer.render(state.scene, state.camera);
 
 	// //Game setup
-
-	// const game = new THREE.Group();
-	// game.add(state.ring3D, state.p1, state.p2, state.ball);
-	// state.scene.add(game);
+	state.game.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 3);
+	state.scene.add(state.game);
 	// createScore();
 
 	//Movement setup

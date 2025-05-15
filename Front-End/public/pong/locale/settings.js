@@ -126,42 +126,46 @@ function resumeGame() {
 }
 
 export function cleanupPong() {
-    console.log("Cleaning up Pong game resources...");
-    
-    if (GAME.getAnimationFrameId()) {
-        cancelAnimationFrame(GAME.getAnimationFrameId());
-    }
-    
-    window.removeEventListener("resize", window.onresize);
-    
-    if (state.scene) {
-        while(state.scene.children.length > 0) { 
-            const object = state.scene.children[0];
-            if (object.geometry) object.geometry.dispose();
-            if (object.material) {
-                if (Array.isArray(object.material)) {
-                    object.material.forEach(m => m.dispose());
-                } else {
-                    object.material.dispose();
-                }
-            }
-            state.scene.remove(object);
-        }
-    }
-    
-    if (state.renderer) {
-        state.renderer.dispose();
-        state.renderer.forceContextLoss();
-        const threejsContainer = document.getElementById("threejs-container");
-        if (threejsContainer && state.renderer.domElement && threejsContainer.contains(state.renderer.domElement)) {
-            threejsContainer.removeChild(state.renderer.domElement);
-        }
-        state.renderer = null;
-    }
-    
-    state.scene = null;
-    state.camera = null;
-    console.log("Pong cleanup complete!");
+	console.log("Cleaning up Pong game resources...");
+
+	if (state.animationFrameId) {
+		cancelAnimationFrame(state.animationFrameId);
+	}
+
+	window.removeEventListener("resize", window.onresize);
+
+	if (state.scene) {
+		while (state.scene.children.length > 0) {
+			const object = state.scene.children[0];
+			if (object.geometry) object.geometry.dispose();
+			if (object.material) {
+				if (Array.isArray(object.material)) {
+					object.material.forEach((m) => m.dispose());
+				} else {
+					object.material.dispose();
+				}
+			}
+			state.scene.remove(object);
+		}
+	}
+
+	if (state.renderer) {
+		state.renderer.dispose();
+		state.renderer.forceContextLoss();
+		const threejsContainer = document.getElementById("threejs-container");
+		if (
+			threejsContainer &&
+			state.renderer.domElement &&
+			threejsContainer.contains(state.renderer.domElement)
+		) {
+			threejsContainer.removeChild(state.renderer.domElement);
+		}
+		state.renderer = null;
+	}
+
+	state.scene = null;
+	state.camera = null;
+	console.log("Pong cleanup complete!");
 }
 
 function exitGame() {

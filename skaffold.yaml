@@ -9,7 +9,7 @@ build:
           docker:
               dockerfile: Dockerfile
     local:
-        push: false
+        push: true
         useDockerCLI: true
 manifests:
     rawYaml:
