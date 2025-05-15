@@ -128,44 +128,40 @@ function resumeGame() {
 export function cleanupPong() {
 	console.log("Cleaning up Pong game resources...");
 
+	// Cancel animation frame
 	if (state.animationFrameId) {
 		cancelAnimationFrame(state.animationFrameId);
 	}
 
-	window.removeEventListener("resize", window.onresize);
+	// Recursive function to dispose meshes
+	function disposeMesh(mesh) {
+		if (mesh.children.length > 0) {
+			// Clone the children array since it will be modified during iteration
+			[...mesh.children].forEach((child) => disposeMesh(child));
+		}
 
-	if (state.scene) {
-		while (state.scene.children.length > 0) {
-			const object = state.scene.children[0];
-			if (object.geometry) object.geometry.dispose();
-			if (object.material) {
-				if (Array.isArray(object.material)) {
-					object.material.forEach((m) => m.dispose());
-				} else {
-					object.material.dispose();
-				}
+		if (mesh.geometry) {
+			mesh.geometry.dispose();
+		}
+
+		if (mesh.material) {
+			// Handle both single materials and material arrays
+			if (Array.isArray(mesh.material)) {
+				mesh.material.forEach((material) => material.dispose());
+			} else {
+				mesh.material.dispose();
 			}
-			state.scene.remove(object);
 		}
 	}
 
-	if (state.renderer) {
-		state.renderer.dispose();
-		state.renderer.forceContextLoss();
-		const threejsContainer = document.getElementById("threejs-container");
-		if (
-			threejsContainer &&
-			state.renderer.domElement &&
-			threejsContainer.contains(state.renderer.domElement)
-		) {
-			threejsContainer.removeChild(state.renderer.domElement);
-		}
-		state.renderer = null;
+	// Clean up game group
+	if (state.game) {
+		// Dispose all meshes in the game group
+		[...state.game.children].forEach((mesh) => {
+			disposeMesh(mesh);
+			state.game.remove(mesh);
+		});
 	}
-
-	state.scene = null;
-	state.camera = null;
-	console.log("Pong cleanup complete!");
 }
 
 function exitGame() {
