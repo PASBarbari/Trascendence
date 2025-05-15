@@ -2,6 +2,9 @@
 
 export DJANGO_SETTINGS_MODULE=chat.settings
 
+# collect static files
+python manage.py collectstatic --noinput
+
 # Run migrations at startup
 python manage.py makemigrations
 python manage.py makemigrations my_chat

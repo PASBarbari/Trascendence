@@ -2,6 +2,9 @@
 
 set -e
 
+# collect static files
+python manage.py collectstatic --noinput
+
 # migrations at startup
 python manage.py makemigrations user_app task_app
 python manage.py migrate

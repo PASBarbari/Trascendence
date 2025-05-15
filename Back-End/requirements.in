@@ -2,6 +2,7 @@ aiohappyeyeballs==2.5.0
 aiohttp==3.11.13
 aiosignal==1.3.2
 amqp==5.3.1
+anyio==4.8.0
 argon2-cffi==23.1.0
 argon2-cffi-bindings==21.2.0
 asgiref==3.8.1
@@ -10,6 +11,7 @@ attrs==25.1.0
 autobahn==24.4.2
 Automat==24.8.1
 billiard==4.2.1
+blacknoise==1.2.0
 build==1.2.2.post1
 celery==5.4.0
 certifi==2025.1.31
@@ -70,7 +72,7 @@ pyasn1==0.6.1
 pyasn1_modules==0.4.1
 pycparser==2.22
 pycryptodome==3.21.0
-PyJWT<2.10.0,>=1.7.1
+PyJWT==2.10.1
 pyOpenSSL==25.0.0
 pyproject_hooks==1.2.0
 python-dateutil==2.9.0.post0
@@ -83,8 +85,10 @@ scipy==1.15.2
 service-identity==24.2.0
 simplejson==3.20.1
 six==1.17.0
+sniffio==1.3.1
 sqlparse==0.5.3
-style==1.1.0
+starlette==0.46.1
+style==1.1.6
 threadpoolctl==3.5.0
 Twisted==24.11.0
 txaio==23.1.1
@@ -95,5 +99,6 @@ uritemplate==4.1.1
 urllib3==2.3.0
 vine==5.1.0
 wcwidth==0.2.13
+whitenoise==6.9.0
 yarl==1.18.3
 zope.interface==7.2

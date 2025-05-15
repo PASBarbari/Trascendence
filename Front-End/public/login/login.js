@@ -50,14 +50,20 @@ function renderLogin() {
 		.addEventListener("click", async function () {
 			const csrftoken = getCookie("csrftoken");
 			const { url_api } = getVariables();
-			// Open a new window to trigger the OAuth flow
-			window.open(
-				`${url_api}/login/login/oauth/google`,
-				"_blank",
-				"width=500,height=600"
-			);
-			console.log("Google login");
-		});
+			// Navigate to the OAuth flow in the current window
+            window.location.href = `${url_api}/login/login/oauth/google/`;
+            console.log("Google login");
+        });
+
+    document
+        .getElementById("login42")
+        .addEventListener("click", async function () {
+            const csrftoken = getCookie("csrftoken");
+            const { url_api } = getVariables();
+            // Navigate to the OAuth flow in the current window
+            window.location.href = `${url_api}/login/login/oauth/42/`;
+            console.log("42 login");
+        });
 }
 
 async function onHandleSubmit(e, email, password) {

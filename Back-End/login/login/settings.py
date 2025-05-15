@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 import os
+from datetime import datetime
 import secrets
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -275,29 +276,19 @@ client = {
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Changed from '/static/'
 
-STATIC_URL = 'static/'
-STATIC_ROOT = '/home/lollo/Documents/challenge_fides/Back-End/login/staticfiles'
+# Add this to define where Django should look for static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 SERVICE_PASSWORD = os.getenv('SERVICE_PASSWORD','123') # this is the password that the service will use to authenticate itself to the OAuth2 server
-
-LOGGING = {
-	'version': 1,
-	'disable_existing_loggers': False,
-	'handlers': {
-		'console': {
-			'class': 'logging.StreamHandler',
-		},
-	},
-	'root': {
-		'handlers': ['console'],
-		'level': 'DEBUG',
-	},
-}
 
 ADMIN = {
 	'username': os.getenv('ADMIN_USERNAME', 'admin'),
@@ -327,26 +318,174 @@ OAUTH2_PROVIDERS = {
 }
 
 # LOGGING = {
-#	 'version': 1,
-#	 'disable_existing_loggers': False,
-#	 'handlers': {
-#		 'loki': {
-#			 'class': 'logging.StreamHandler',
-#			 'formatter': 'detailed',
-#			 'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
-#		 },
-#	 },
-#	 'loggers': {
-#		 'django': {
-#			 'handlers': ['loki'],
-#			 'level': 'INFO',
-#			 'propagate': True,
-#		 },
-#	 },
-#	 'formatters': {
-#		 'detailed': {
-#			 'format': '{levelname} {asctime} {module} {message}',
-#			 'style': '{',
-#	 		},
+# 	 'version': 1,
+# 	 'disable_existing_loggers': False,
+# 	 'handlers': {
+# 		 'loki': {
+# 			 'class': 'logging.StreamHandler',
+# 			 'formatter': 'detailed',
+# 			 'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+# 		 },
+# 	 },
+# 	 'loggers': {
+# 		 'django': {
+# 			 'handlers': ['loki'],
+# 			 'level': 'INFO',
+# 			 'propagate': True,
+# 		 },
+# 	 },
+# 	 'formatters': {
+# 		 'detailed': {
+# 			 'format': '{levelname} {asctime} {module} {message}',
+# 			 'style': '{',
+# 	 		},
 # 		},
 # }
+
+# Set the log level based on the environment variable
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+
+# Set base log directory
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Log file paths
+ERROR_LOG = os.path.join(LOG_DIR, f'error_{datetime.now().strftime("%Y-%m-%d")}.log')
+INFO_LOG = os.path.join(LOG_DIR, f'info_{datetime.now().strftime("%Y-%m-%d")}.log')
+DEBUG_LOG = os.path.join(LOG_DIR, f'debug_{datetime.now().strftime("%Y-%m-%d")}.log')
+DAPHNE_LOG = os.path.join(LOG_DIR, f'daphne_{datetime.now().strftime("%Y-%m-%d")}.log')
+CHANNEL_LOG = os.path.join(LOG_DIR, f'channels_{datetime.now().strftime("%Y-%m-%d")}.log')
+
+# Logging configuration
+LOGGING = {
+	'version': 1,
+	'disable_existing_loggers': False,
+	'formatters': {
+		'verbose': {
+			'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+			'style': '{',
+        },
+		'json': {
+			'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "module": "%(module)s", "message": "%(message)s", "path": "%(pathname)s", "lineno": %(lineno)d}',
+			'style': '%',
+		},
+		'simple': {
+			'format': '{levelname} {message}',
+			'style': '{',
+		},
+	},
+	'filters': {
+		'require_debug_true': {
+			'()': 'django.utils.log.RequireDebugTrue',
+		},
+		'require_debug_false': {
+			'()': 'django.utils.log.RequireDebugFalse',
+		},
+	},
+	'handlers': {
+		'console': {
+			'level': 'DEBUG',
+			'class': 'logging.StreamHandler',
+			'formatter': 'verbose',
+		},
+        'light_console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+		'file_error': {
+			'level': 'ERROR',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': ERROR_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'file_info': {
+			'level': 'INFO',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': INFO_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'file_debug': {
+			'level': 'DEBUG',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': DEBUG_LOG,
+			'when': 'midnight',
+			'backupCount': 10,
+			'formatter': 'json',
+			'filters': ['require_debug_true'],
+		},
+		'daphne': {
+			'level': 'INFO',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': DAPHNE_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'channels': {
+			'level': 'INFO',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': CHANNEL_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'mail_admins': {
+			'level': 'ERROR',
+			'class': 'django.utils.log.AdminEmailHandler',
+			'filters': ['require_debug_false'],
+			'formatter': 'verbose',
+		},
+	},
+	'loggers': {
+		'django': {
+			'handlers': ['console', 'file_info', 'file_error'],
+			'level': LOG_LEVEL,
+			'propagate': True,
+		},
+		'django.request': {
+			'handlers': ['file_error', 'mail_admins'],
+			'level': 'ERROR',
+			'propagate': False,
+		},
+		'django.server': {
+			'handlers': ['file_info', 'file_error'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		'django.db.backends': {
+			'handlers': ['file_debug'],
+			'level': 'DEBUG' if DEBUG else 'INFO',
+			'propagate': False,
+		},
+		'daphne': {
+			'handlers': ['daphne', 'console'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		'channels': {
+			'handlers': ['channels', 'console'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		'login': {
+			'handlers': ['console'],
+            'level': 'DEBUG',
+			'propagate': False,
+		},
+        'light_login': {
+            'handlers': ['light_console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+		'websockets': {
+			'handlers': ['console', 'channels'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+	},
+}
