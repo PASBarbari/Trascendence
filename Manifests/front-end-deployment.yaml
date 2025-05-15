@@ -22,7 +22,7 @@ spec:
             containers:
                 - name: front-end
                   image: marcor42/frontend
-                  imagePullPolicy: Always
+                  imagePullPolicy: IfNotPresent
                   resources:
                       limits:
                           memory: "512Mi"

@@ -60,7 +60,7 @@ export function setupGame() {
 		wireframe: true,
 	});
 	const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-	state.scene.add(plane);
+	// state.scene.add(plane);
 
 	//Ring setup
 
