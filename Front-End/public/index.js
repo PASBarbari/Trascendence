@@ -106,6 +106,13 @@ const initializeApp = () => {
 	}
 
 	locationHandler();
+	
+	const currentHash = window.location.hash;
+	if (currentHash === "#pong") {
+	    console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
+		cleanupPong();
+		renderPong();
+    }
 };
 
 window.addEventListener("hashchange", locationHandler);
