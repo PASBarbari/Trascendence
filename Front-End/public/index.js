@@ -61,8 +61,15 @@ const locationHandler = async () => {
 
 	var location = window.location.hash.replace("#", "");
 	if (location.length == 0) {
-		location = "login";
+		window.location.hash = "login";
+		return;
 	}
+
+	if (!routes[location]) {
+        console.log(`Route "${location}" non trovata, reindirizzamento a login`);
+        window.location.hash = "login";
+        return;
+    }
 
 	if (currentRoute === "pong" && location !== "pong") {
         console.log("Navigando via da Pong, eseguo cleanup...");
@@ -91,6 +98,12 @@ const locationHandler = async () => {
 };
 
 const initializeApp = () => {
+	if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+        const currentHash = window.location.hash;
+        window.location.href = '/' + currentHash;
+        return;
+    }
+
 	preloadPongCSS();
 	renderExpandableSidebar();
 	//renderProfile();
