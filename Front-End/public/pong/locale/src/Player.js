@@ -18,4 +18,10 @@ export default class Player {
 		this.mesh.position.copy(position);
 		this.scene.add(this.mesh);
 	}
+
+	// movement(x) {
+	// 	if (x > state.boundaries.x - state.p.width / 2) {
+	// 		this.mesh.position.x += this.;
+	// 	}
+	// }
 }

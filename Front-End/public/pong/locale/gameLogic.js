@@ -21,7 +21,24 @@ const clock = new THREE.Clock();
 export function animate() {
 	const deltaTime = clock.getDelta();
 	state.ball.update(deltaTime);
-	state.p2.mesh.position.z += state.p2_move_y;
+	if (
+		state.p2.mesh.position.z + state.ring.thickness + state.p2_move_y <
+			-state.boundaries.x / 2 ||
+		state.p2.mesh.position.z - state.ring.thickness + state.p2_move_y >
+			state.boundaries.x / 2
+	) {
+		console.log(
+			"p2 move y",
+			state.p2.mesh.position.z,
+			state.p.height / 2,
+			state.p2_move_y,
+			state.boundaries.x / 2
+		);
+		state.p2.mesh.position.z =
+			(state.boundaries.x / 2 + state.ring.thickness) *
+			Math.sign(state.p2.mesh.position.z);
+	} else state.p2.mesh.position.z += state.p2_move_y;
+
 	state.p1.mesh.position.z += state.p1_move_y;
 	state.controls.update();
 	if (state.renderer && state.scene && state.camera) {
