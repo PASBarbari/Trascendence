@@ -20,6 +20,11 @@ export default class Ball {
 		this.raycaster.near = 0;
 		this.raycaster.far = this.boundaries.y * 2.5;
 
+		this.pointCollision = new THREE.Mesh(
+			new THREE.SphereGeometry(1),
+			new THREE.MeshBasicMaterial({ color: 0xff0000 })
+		);
+		state.game.add(this.pointCollision);
 		state.game.add(this.mesh);
 		state.ball = this;
 	}
@@ -56,22 +61,24 @@ export default class Ball {
 				"Checking collision with player helper mesh",
 				helperMesh
 			);
-			if (helperMesh) {
-				const intersections =
-					this.raycaster.intersectObject(helperMesh);
-				if (intersections) {
-					console.log("Collision detected with player!");
-					this.velocity.x *= -1;
+			// if (helperMesh) {
+			// 	const intersections =
+			// 		this.raycaster.intersectObject(helperMesh);
+			// 	if (intersections) {
+			// 		console.log("Collision detected with player!");
+			// 		this.pointCollision.position.copy(intersections.point);
 
-					// Add spin based on hit position
-					const offset =
-						intersections[0].point.z - target.mesh.position.z;
-					this.velocity.z += offset * 0.1;
+			// 		// Add spin based on hit position
+			// 		// const offset =
+			// 		// 	intersections[0].point.z - target.mesh.position.z;
+			// 		// this.velocity.z += offset * 0.1;
 
-					// Normalize and maintain speed
-					this.velocity.normalize().multiplyScalar(this.speed);
-				}
-			}
+			// 		// // Normalize and maintain speed
+			// 		// this.velocity.normalize().multiplyScalar(this.speed);
+			// 	} else {
+			// 		this.pointCollision.position.set(0, 0, 0);
+			// 	}
+			// }
 		}
 		this.mesh.position.copy(tPos);
 	}
