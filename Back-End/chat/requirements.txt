@@ -54,3 +54,30 @@ djangorestframework-simplejwt==5.4.0
     # via -r Back-End/requirements.in
 drf-yasg==1.21.8
     # via -r Back-End/requirements.in
+inflection==0.5.1
+    # via
+    #   -r requirements.in
+    #   drf-yasg
+packaging==24.2
+    # via
+    #   -r requirements.in
+    #   build
+    #   drf-yasg
+    #   gunicorn
+    #   pip-review
+pytz==2025.1
+    # via
+    #   -r requirements.in
+    #   django-loki
+    #   drf-yasg
+pyyaml==6.0.2
+    # via
+    #   -r requirements.in
+    #   drf-yasg
+uritemplate==4.1.1
+    # via
+    #   -r requirements.in
+    #   coreapi
+    #   drf-yasg
+whitenoise==6.9.0
+blacknoise==1.2.0

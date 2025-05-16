@@ -1,3 +1,4 @@
+import stat
 from urllib.parse import urlencode
 from django.contrib.auth import get_user_model, login, logout
 from django.utils.decorators import method_decorator
@@ -33,13 +34,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
+logger = logging.getLogger('light_login')
+
 def get_jwt_token_for_user(user):
 	refresh = RefreshToken.for_user(user)
 	return str(refresh.access_token)
 
 # Update the CreateOnOtherServices function to handle errors properly
 @transaction.atomic
-def CreateOnOtherServices(user):
+def CreateOnOtherServices(user, **kwargs):
 	"""Create user in all microservices with proper transaction handling"""
 	Chat_url = Microservices['Chat'] + "/chat/new_user/"
 	Notification_url = Microservices['Notifications'] + "/notification/add_user"
@@ -58,17 +61,13 @@ def CreateOnOtherServices(user):
 		'username': user.username,
 		'email': user.email,
 	}
+
 		
 	# Create a savepoint for potential rollback
 	sid = transaction.savepoint()
 		
 	try:
-		# Create user in User service
-		user_response = requests.post(User_url, json=user_data, headers=headers)
-		if user_response.status_code != 201:
-			logging.error(f"User service error: {user_response.status_code} - {user_response.text}")
-			raise ValueError('User service failed to create user')
-			
+		
 		# Create user in Chat service
 		chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 		if chat_response.status_code != 201:
@@ -86,6 +85,19 @@ def CreateOnOtherServices(user):
 		if pong_response.status_code != 201:
 			logging.error(f"Pong service error: {pong_response.status_code} - {pong_response.text}")
 			raise ValueError('Pong service failed to create user')
+		
+		# Create user in User service
+		if 'user_id' in kwargs:
+			user_data.append({
+				'first_name': kwargs.get('given_name'),
+				'last_name': kwargs.get('family_name'),
+				#'birth_date': kwargs.get('birth_date'),
+				'current_avatar_url': kwargs.get('picture'),
+			})
+		user_response = requests.post(User_url, json=user_data, headers=headers)
+		if user_response.status_code != 201:
+			logging.error(f"User service error: {user_response.status_code} - {user_response.text}")
+			raise ValueError('User service failed to create user')
 			
 		return True
 		
@@ -112,6 +124,7 @@ class OAuthLoginView(APIView):
 	permission_classes = (permissions.AllowAny,)
 
 	def get(self, request, provider):
+		logger.info(f"OAuth2 login initiated for provider: {provider}")
 		provider = provider.upper()
 		provider_config = OAUTH2_PROVIDERS.get(provider)
 		
@@ -120,7 +133,7 @@ class OAuthLoginView(APIView):
 				{"error": f"Provider '{provider}' not configured"}, 
 				status=status.HTTP_400_BAD_REQUEST
 			)
-			
+
 		code_verifier = self.generate_code_verifier()
 		code_challenge = self.generate_code_challenge(code_verifier)
 		
@@ -213,19 +226,18 @@ class OAuthCallbackView(APIView):
 		token_url = provider_config.get('token_url')
 
 		if provider == '42':
-			# Usare il metodo files per simulare curl -F
-			response = requests.post(
-				token_url,
-				files={
-					'grant_type': (None, 'authorization_code'),
-					'client_id': (None, provider_config.get('client_id')),
-					'client_secret': (None, provider_config.get('client_secret')),
-					'code': (None, code),
-					'redirect_uri': (None, provider_config.get('redirect_uri'))
-				}
-			)
+			data = {
+				'grant_type': 'authorization_code',
+				'client_id': provider_config.get('client_id'),
+				'client_secret': provider_config.get('client_secret'),
+				'code': code,
+				'redirect_uri': provider_config.get('redirect_uri'),
+			}
+			headers = {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			}
+			response = requests.post(token_url, data=data, headers=headers)
 		else:
-			# Metodo standard per provider che supportano PKCE
 			data = {
 				"client_id": provider_config.get('client_id'),
 				"client_secret": provider_config.get('client_secret'),
@@ -240,7 +252,7 @@ class OAuthCallbackView(APIView):
 
 		if "access_token" not in token_data:
 			return Response(
-				{"error": "Failed to obtain access token", "details": token_data}, 
+				{"error": "Failed to obtain access token", "details": token_data},
 				status=status.HTTP_400_BAD_REQUEST
 			)
 		
@@ -250,6 +262,7 @@ class OAuthCallbackView(APIView):
 		
 		headers = {"Authorization": f"Bearer {access_token}"}
 		user_info_response = requests.get(user_info_url, headers=headers)
+		#  {'id': '103782231708470005867', 'email': 'samybravy@gmail.com', 'verified_email': True, 'name': 'Samy Bravy', 'given_name': 'Samy', 'family_name': 'Bravy', 'picture': 'https://lh3.googleusercontent.com/a/ACg8ocJdtisqsQ_rcRsSOrRvpO6v1iIIM8veaI51sVW7DQK_5CwprO0=s96-c'}
 		user_info = user_info_response.json()
 
 		# Different providers have different response formats
@@ -280,10 +293,10 @@ class OAuthCallbackView(APIView):
 						email.split('@')[0])
 			
 			User = get_user_model()
-			
 			with transaction.atomic():
 				# First, check if the user already exists by email
 				try:
+					logger.debug(f"||||||||||||User info: {user_info}||||||||||")
 					user = User.objects.get(email=email)
 					# User exists - just log them in (don't update username to avoid conflicts)
 					created = False
@@ -294,31 +307,28 @@ class OAuthCallbackView(APIView):
 							{"error": "Username already exists", "email": email, "suggested_username": suggested_username}, 
 							status=status.HTTP_409_CONFLICT
 						)
-					
 					# Create a new user
 					random_password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
-					user = User.objects.create_user(email=email)
+					user = User.objects.create_user(email=email, password=random_password)
 					user.username = suggested_username
 					user.set_password(random_password)
 					user.save()
 					created = True
-					
 				# Create user in other services if new
 				if created:
 					try:
-						CreateOnOtherServices(user)
+						CreateOnOtherServices(user, user_info=user_info)
 					except Exception as e:
 						# This will rollback the transaction including the user creation
 						raise ValueError(f"Failed to create user in all services: {str(e)}")
-				
 				# Log the user in
 				login(request, user)
-				
 				# Generate JWT tokens
 				refresh = RefreshToken.for_user(user)
+				access_token = str(refresh.access_token)
+				refresh_token = str(refresh)
 				frontend_url = "https://trascendence.42firenze.it"
-				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh}&user_id={user.user_id}&username={user.username}&email={user.email}"
-
+				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh_token}&user_id={user.user_id}&username={user.username}&email={user.email}"
 				return redirect(redirect_url)
 				
 		except Exception as e:

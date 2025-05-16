@@ -29,49 +29,49 @@ DEBUG = os.getenv('DEBUG', True)
 
 
 def ensure_scheme(urls):
-    """Add 'http://' scheme to URLs that don't have one"""
-    if isinstance(urls, str):
-        if not urls.startswith(('http://', 'https://')):
-            return f"http://{urls}"
-        return urls
-    
-    # Handle lists
-    result = []
-    for url in urls:
-        if url and not url.startswith(('http://', 'https://')):
-            result.append(f"http://{url}")
-        else:
-            result.append(url)
-    return result
+	"""Add 'http://' scheme to URLs that don't have one"""
+	if isinstance(urls, str):
+		if not urls.startswith(('http://', 'https://')):
+			return f"http://{urls}"
+		return urls
+		
+	# Handle lists
+	result = []
+	for url in urls:
+		if url and not url.startswith(('http://', 'https://')):
+			result.append(f"http://{url}")
+		else:
+			result.append(url)
+	return result
 
 Microservices = {
-    'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
-    'Chat': ensure_scheme(os.getenv('CHAT_URL', 'http://localhost:8001')),
-    'Users': ensure_scheme(os.getenv('USER_URL', 'http://localhost:8002')),
-    'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003')),
-    'Pong': ensure_scheme(os.getenv('PONG_URL', 'http://localhost:8004')),
+	'Login': ensure_scheme(os.getenv('LOGIN_URL', 'http://localhost:8000')),
+	'Chat': ensure_scheme(os.getenv('CHAT_URL', 'http://localhost:8001')),
+	'Users': ensure_scheme(os.getenv('USER_URL', 'http://localhost:8002')),
+	'Notifications': ensure_scheme(os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003')),
+	'Pong': ensure_scheme(os.getenv('PONG_URL', 'http://localhost:8004')),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
 
 def extract_hostname(url):
-    """Estrae il nome host da un URL completo."""
-    if not url:
-        return url
-    # Rimuovi http:// o https://
-    if url.startswith(('http://', 'https://')):
-        url = url.split('://', 1)[1]
-    # Rimuovi la porta se presente
-    if ':' in url:
-        url = url.split(':', 1)[0]
-    return url
+	"""Estrae il nome host da un URL completo."""
+	if not url:
+		return url
+	# Rimuovi http:// o https://
+	if url.startswith(('http://', 'https://')):
+		url = url.split('://', 1)[1]
+	# Rimuovi la porta se presente
+	if ':' in url:
+		url = url.split(':', 1)[0]
+	return url
 
 K8S_SERVICE_HOSTS = [
-    extract_hostname(Microservices['Login']),
-    extract_hostname(Microservices['Chat']),
-    extract_hostname(Microservices['Users']),
-    extract_hostname(Microservices['Notifications']),
-    extract_hostname(Microservices['Pong']),
+	extract_hostname(Microservices['Login']),
+	extract_hostname(Microservices['Chat']),
+	extract_hostname(Microservices['Users']),
+	extract_hostname(Microservices['Notifications']),
+	extract_hostname(Microservices['Pong']),
 ]
 
 ALLOWED_HOSTS = [
@@ -181,7 +181,7 @@ TEMPLATES = [
 	},
 ]
 
-WSGI_APPLICATION = 'chat.wsgi.application'
+# WSGI_APPLICATION = 'chat.wsgi.application'
 ASGI_APPLICATION = 'chat.asgi.application'
 
 oauth2_settings = {
@@ -213,6 +213,7 @@ DATABASES = {
 	'NAME': str(BASE_DIR / 'db.sqlite3'),
 	}
 }
+
 
 
 # Password validation
@@ -250,8 +251,13 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
+# Update your static files configuration
 STATIC_URL = '/static/'
-STATIC_ROOT = '/home/lollo/Documents/challenge_fides/Back-End/login/staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -299,27 +305,139 @@ REST_FRAMEWORK = {
 		],
 }
 
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Get environment specifics
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+
+ERROR_LOG = os.path.join(LOG_DIR, f'error_{datetime.now().strftime("%Y-%m-%d")}.log')
+INFO_LOG = os.path.join(LOG_DIR, f'info_{datetime.now().strftime("%Y-%m-%d")}.log')
+DEBUG_LOG = os.path.join(LOG_DIR, f'debug_{datetime.now().strftime("%Y-%m-%d")}.log')
+DAPHNE_LOG = os.path.join(LOG_DIR, f'daphne_{datetime.now().strftime("%Y-%m-%d")}.log')
+CHANNEL_LOG = os.path.join(LOG_DIR, f'channels_{datetime.now().strftime("%Y-%m-%d")}.log')
+
+# Logging configuration
 LOGGING = {
 	'version': 1,
 	'disable_existing_loggers': False,
+	'formatters': {
+		'verbose': {
+			'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+			'style': '{',
+		},
+		'json': {
+			'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "module": "%(module)s", "message": "%(message)s", "path": "%(pathname)s", "lineno": %(lineno)d}',
+			'style': '%',
+		},
+		'simple': {
+			'format': '{levelname} {message}',
+			'style': '{',
+		},
+	},
+	'filters': {
+		'require_debug_true': {
+			'()': 'django.utils.log.RequireDebugTrue',
+		},
+		'require_debug_false': {
+			'()': 'django.utils.log.RequireDebugFalse',
+		},
+	},
 	'handlers': {
-		'loki': {
+		'console': {
+			'level': 'DEBUG',
 			'class': 'logging.StreamHandler',
-			'formatter': 'detailed',
-			'stream': 'ext://sys.stdout',  # Sends logs to stdout for Loki
+			'formatter': 'verbose',
+		},
+		'file_error': {
+			'level': 'ERROR',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': ERROR_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'file_info': {
+			'level': 'INFO',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': INFO_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'file_debug': {
+			'level': 'DEBUG',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': DEBUG_LOG,
+			'when': 'midnight',
+			'backupCount': 10,
+			'formatter': 'json',
+			'filters': ['require_debug_true'],
+		},
+		'daphne': {
+			'level': 'INFO',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': DAPHNE_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'channels': {
+			'level': 'INFO',
+			'class': 'logging.handlers.TimedRotatingFileHandler',
+			'filename': CHANNEL_LOG,
+			'when': 'midnight',
+			'backupCount': 30,
+			'formatter': 'json',
+		},
+		'mail_admins': {
+			'level': 'ERROR',
+			'class': 'django.utils.log.AdminEmailHandler',
+			'filters': ['require_debug_false'],
+			'formatter': 'verbose',
 		},
 	},
 	'loggers': {
 		'django': {
-			'handlers': ['loki'],
-			'level': 'INFO',
+			'handlers': ['console', 'file_info', 'file_error'],
+			'level': LOG_LEVEL,
 			'propagate': True,
 		},
-	},
-	'formatters': {
-		'detailed': {
-			'format': '{levelname} {asctime} {module} {message}',
-			'style': '{',
+		'django.request': {
+			'handlers': ['file_error', 'mail_admins'],
+			'level': 'ERROR',
+			'propagate': False,
+		},
+		'django.server': {
+			'handlers': ['file_info', 'file_error'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		'django.db.backends': {
+			'handlers': ['file_debug'],
+			'level': 'DEBUG' if DEBUG else 'INFO',
+			'propagate': False,
+		},
+		'daphne': {
+			'handlers': ['daphne', 'console'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		'channels': {
+			'handlers': ['channels', 'console'],
+			'level': 'INFO',
+			'propagate': False,
+		},
+		'my_chat': {
+			'handlers': ['console', 'file_info', 'file_error', 'file_debug'],
+			'level': 'DEBUG' if DEBUG else 'INFO',
+			'propagate': False,
+		},
+		'websockets': {
+			'handlers': ['console', 'channels'],
+			'level': 'INFO',
+			'propagate': False,
 		},
 	},
 }
@@ -352,21 +470,16 @@ Microservices = {
 SWAGGER_SETTINGS = {
 	'USE_SESSION_AUTH': False,
 	'SECURITY_DEFINITIONS': {
-		'Your App API - Swagger': {
-			'type': 'oauth2',
-			'authorizationUrl': f"{Microservices['Login']}/o/authorize",
-			'tokenUrl': f"{Microservices['Login']}/o/token/",
-			'flow': 'accessCode',
-			'scopes': {
-				'read:groups': 'read groups',
-			}
+		'Bearer': {
+			'type': 'apiKey',
+			'name': 'Authorization',
+			'in': 'header',
+			'description': "JWT Token. Example: 'Bearer {token}'",
 		}
 	},
-	'OAUTH2_CONFIG': {
-		'clientId': f'{oauth2_settings["CLIENT_ID"]}',
-		'clientSecret': f'{oauth2_settings["CLIENT_SECRET"]}',
-		'appName': f'{OAUTH2_APP_NAME}',
-	},
+	'SECURITY_REQUIREMENTS': [
+		{'Bearer': []}
+	],
 }
 
 ADMIN = {
