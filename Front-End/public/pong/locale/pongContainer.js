@@ -1,15 +1,15 @@
-import { setVariables, getVariables } from '../var.js';
-import { getCookie } from '../cookie.js';
-import { loginUser } from '../login/login.js';
-import { registerUser } from '../register/register.js';
+import { setVariables, getVariables } from "../var.js";
+import { getCookie } from "../cookie.js";
+import { loginUser } from "../login/login.js";
+import { registerUser } from "../register/register.js";
 
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = '/public/pongContainer/pongContainer.css';
+const link = document.createElement("link");
+link.rel = "stylesheet";
+link.href = "/pongContainer/pongContainer.css";
 document.head.appendChild(link);
 
 function renderPongInfo() {
-	const pongInfoContainer = document.getElementById('pongContainer');
+	const pongInfoContainer = document.getElementById("pongContainer");
 	pongInfoContainer.innerHTML = `
 		<div class="pong-card">
 			<div class="d-flex justify-content-between align-items-center mb-3">
@@ -26,7 +26,7 @@ function renderPongInfo() {
 
 function handleLocalePong() {
 	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
-	window.navigateTo('#pong');
+	window.navigateTo("#pong");
 }
 
 function handleMultiPong() {
@@ -34,8 +34,8 @@ function handleMultiPong() {
 }
 
 function showLoginBox() {
-	const loginBox = document.createElement('div');
-	loginBox.className = 'login-box-modal';
+	const loginBox = document.createElement("div");
+	loginBox.className = "login-box-modal";
 	loginBox.innerHTML = `
 		<div class="login_box">
 			<h1>Login</h1>
@@ -57,35 +57,39 @@ function showLoginBox() {
 	document.body.appendChild(loginBox);
 
 	// Aggiungi un event listener per chiudere il modale quando si clicca fuori
-	window.addEventListener('click', function(event) {
+	window.addEventListener("click", function (event) {
 		if (event.target === loginBox) {
 			closeLoginBox();
 		}
 	});
 
-	document.getElementById('loginForm').addEventListener('submit', async function (e) {
-		e.preventDefault();
-		const email = document.getElementById('loginemail').value;
-		const password = document.getElementById('loginpassword').value;
-		await onHandleSubmit(e, email, password);
-	});
+	document
+		.getElementById("loginForm")
+		.addEventListener("submit", async function (e) {
+			e.preventDefault();
+			const email = document.getElementById("loginemail").value;
+			const password = document.getElementById("loginpassword").value;
+			await onHandleSubmit(e, email, password);
+		});
 
-	document.getElementById('registerButton').addEventListener('click', function () {
-		closeLoginBox();
-		showRegisterBox();
-	});
+	document
+		.getElementById("registerButton")
+		.addEventListener("click", function () {
+			closeLoginBox();
+			showRegisterBox();
+		});
 }
 
 function closeLoginBox() {
-	const loginBox = document.querySelector('.login-box-modal');
+	const loginBox = document.querySelector(".login-box-modal");
 	if (loginBox) {
 		loginBox.remove();
 	}
 }
 
 function showRegisterBox() {
-	const registerBox = document.createElement('div');
-	registerBox.className = 'register-box-modal';
+	const registerBox = document.createElement("div");
+	registerBox.className = "register-box-modal";
 	registerBox.innerHTML = `
 		<div class="login_box">
 			<h1>Register</h1>
@@ -109,28 +113,32 @@ function showRegisterBox() {
 	document.body.appendChild(registerBox);
 
 	// Aggiungi un event listener per chiudere il modale quando si clicca fuori
-	window.addEventListener('click', function(event) {
+	window.addEventListener("click", function (event) {
 		if (event.target === registerBox) {
 			closeRegisterBox();
 		}
 	});
 
-	document.getElementById('registerForm').addEventListener('submit', async function (e) {
-		e.preventDefault();
-		const username = document.getElementById('registerusername').value;
-		const email = document.getElementById('registeremail').value;
-		const password = document.getElementById('registerpassword').value;
-		await onHandleRegisterSubmit(e, username, email, password);
-	});
+	document
+		.getElementById("registerForm")
+		.addEventListener("submit", async function (e) {
+			e.preventDefault();
+			const username = document.getElementById("registerusername").value;
+			const email = document.getElementById("registeremail").value;
+			const password = document.getElementById("registerpassword").value;
+			await onHandleRegisterSubmit(e, username, email, password);
+		});
 
-	document.getElementById('loginButton').addEventListener('click', function () {
-		closeRegisterBox();
-		showLoginBox();
-	});
+	document
+		.getElementById("loginButton")
+		.addEventListener("click", function () {
+			closeRegisterBox();
+			showLoginBox();
+		});
 }
 
 function closeRegisterBox() {
-	const registerBox = document.querySelector('.register-box-modal');
+	const registerBox = document.querySelector(".register-box-modal");
 	if (registerBox) {
 		registerBox.remove();
 	}
@@ -138,19 +146,24 @@ function closeRegisterBox() {
 
 async function onHandleSubmit(e, email, password) {
 	e.preventDefault();
-	const csrftoken = getCookie('csrftoken');
+	const csrftoken = getCookie("csrftoken");
 	const loginSuccess = await loginUser(email, password, csrftoken, false);
 	if (loginSuccess) {
 		//TODO chiamata a Gu per poi aprire pong
-		window.navigateTo('#pong');
+		window.navigateTo("#pong");
 	}
 }
 
 async function onHandleRegisterSubmit(e, username, email, password) {
 	e.preventDefault();
-	const registerSuccess = await registerUser(username, email, password, false);
+	const registerSuccess = await registerUser(
+		username,
+		email,
+		password,
+		false
+	);
 	if (registerSuccess) {
-		showLoginBox(); 
+		showLoginBox();
 	}
 }
 

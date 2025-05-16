@@ -12,7 +12,7 @@ import Stats from "three/addons/libs/stats.module.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
-link.href = "/public/pong/multiplayer/pong.css";
+link.href = "/pong/multiplayer/pong.css";
 document.head.appendChild(link);
 
 export function renderPong() {
