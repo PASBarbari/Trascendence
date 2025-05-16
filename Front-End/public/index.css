@@ -1,10 +1,22 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+.App{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
 .logo-image {
     cursor: pointer;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
-    padding-left: 12px;
 }
 .propic-image {
     width: 100%;
@@ -13,25 +25,14 @@
     object-fit: cover;
     min-width: 30px;
 }
-.propic-button
-{
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    padding: 2px;
-}
 .navbar {
     width: 100%;
-    height: 50px;
+    height: 60px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
+    padding: 8px !important;
 }
 .expandable-sidebar-container {
     display: flex;

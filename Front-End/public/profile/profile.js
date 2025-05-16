@@ -195,7 +195,7 @@ function renderProfile() {
 				</div>
 				<div class="profile-card-image-container">
 					<button class="profile-image-circle">
-						<img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" />
+						<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" />
 						<div class="edit-icon-overlay">
 							<i class="bi bi-pencil"></i>
 						</div>
@@ -288,7 +288,7 @@ function renderProfile() {
         <div class="login_box">
             <h1>Seleziona un'immagine</h1>
             <div class="profile-image-preview">
-                <img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
+                <img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
             </div>
             <div class="profile-image-controls">
                 <label for="imageUpload" class="upload-btn">Scegli un file</label>
