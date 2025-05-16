@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cert-manager-wait
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    spec:
+      serviceAccountName: cert-manager
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:latest
+        command:
+        - kubectl
+        - wait
+        - --for=condition=ready
+        - pod
+        - -l
+        - app.kubernetes.io/name=cert-manager
+        - -n
+        - cert-manager
+        - --timeout=120s
+      restartPolicy: Never
+  backoffLimit: 4

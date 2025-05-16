@@ -1,0 +1,15 @@
+dependencies:
+- name: front-end-chart
+  repository: file://charts/front-end-chart
+  version: 0.1.0
+- name: chat-service-chart
+  repository: file://charts/chat-service-chart
+  version: 0.1.0
+- name: cert-manager
+  repository: https://charts.jetstack.io
+  version: v1.13.2
+- name: cert-manager-chart
+  repository: file://charts/cert-manager-chart
+  version: 0.1.0
+digest: sha256:70caa9273c87baee067b9664d45f6524b952b01dd951a29f4b81274bf1698abb
+generated: "2025-05-15T14:44:04.829564398+02:00"

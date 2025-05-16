@@ -45,7 +45,7 @@ spec:
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: {{ .Values.persistence.storageClass | default "standard" }}
-	  selector:
+    selector:
       matchLabels:
         type: chat-db
       resources:

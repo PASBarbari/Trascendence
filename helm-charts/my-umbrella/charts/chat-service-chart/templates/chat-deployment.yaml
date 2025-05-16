@@ -18,7 +18,7 @@ spec:
         app: chat
         {{- include "chat-service.selectorLabels" . | nindent 8 }}
     spec:
-	  serviceAccountName: {{ .Release.Name }}-chat-server
+      serviceAccountName: {{ .Release.Name }}-chat-server
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

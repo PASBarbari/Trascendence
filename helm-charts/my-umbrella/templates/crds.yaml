@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: crd-manager-{{ randAlphaNum 5 | lower }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  template:
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Function to check if CRDs exist
+          check_crds() {
+            echo "Checking for cert-manager CRDs..."
+            if kubectl get crd | grep -q "cert-manager.io"; then
+              echo "✅ cert-manager CRDs already exist"
+              return 0
+            else
+              echo "❌ cert-manager CRDs not found"
+              return 1
+            fi
+          }
+
+          # Install CRDs if they don't exist
+          if ! check_crds; then
+            echo "Installing cert-manager CRDs..."
+            kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
+            echo "Installing Traefik CRDs..."
+            kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v2.10/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+            echo "Installing ECK CRDs..."
+            kubectl apply -f https://download.elastic.co/downloads/eck/2.9.0/crds.yaml
+          fi
+
+          # Create cert-manager namespace if needed
+          kubectl get namespace cert-manager > /dev/null 2>&1 || kubectl create namespace cert-manager
+      restartPolicy: Never

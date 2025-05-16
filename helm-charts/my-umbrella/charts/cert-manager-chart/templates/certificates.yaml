@@ -1,0 +1,20 @@
+{{- range $certName, $certValues := .Values.certificates }}
+{{- if $certValues.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $certValues.name }}
+  namespace: {{ $certValues.namespace }}
+spec:
+  secretName: {{ $certValues.secretName }}
+  issuerRef:
+    name: {{ $certValues.issuerRef.name }}
+    kind: {{ $certValues.issuerRef.kind }}
+  commonName: {{ $certValues.commonName }}
+  dnsNames:
+  {{- range $certValues.dnsNames }}
+  - {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}

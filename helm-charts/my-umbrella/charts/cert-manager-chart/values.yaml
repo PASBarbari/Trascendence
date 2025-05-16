@@ -1,0 +1,98 @@
+
+clusterIssuers:
+  letsencrypt:
+    enabled: true
+    name: letsencrypt-prod
+    email: qualcosa2001@gmail.com
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretName: letsencrypt-prod
+    solvers:
+      - http01:
+          ingressClass: traefik  # Changed from nginx to traefik as per your setup
+
+  selfsigned:
+    enabled: true
+    name: selfsigned-issuer
+
+# Certificates configuration
+certificates:
+  frontend:
+    enabled: true
+    name: frontend-cert
+    namespace: front-end
+    secretName: nginx-tls
+    issuerRef:
+      name: selfsigned-issuer  # selfsigned for development
+      kind: ClusterIssuer
+    commonName: trascendence.42firenze.it
+    dnsNames:
+      - trascendence.42firenze.it
+      - localhost
+      - 127.0.0.1
+      
+  chat:
+    enabled: true
+    name: chat-cert
+    namespace: chat
+    secretName: chat-tls
+    issuerRef:
+      name: selfsigned-issuer
+      kind: ClusterIssuer
+    commonName: trascendence.42firenze.it
+    dnsNames:
+      - trascendence.42firenze.it
+      - localhost
+      - 127.0.0.1
+
+  # Add your other certificates
+  elasticsearch:
+    enabled: true
+    name: elasticsearch-cert
+    namespace: elk
+    secretName: elasticsearch-es-http-certs-public
+    issuerRef:
+      name: selfsigned-issuer
+      kind: ClusterIssuer
+    commonName: trascendence.42firenze.it
+    dnsNames:
+      - trascendence.42firenze.it
+      
+  kibana:
+    enabled: true
+    name: kibana-cert
+    namespace: elk
+    secretName: kibana-tls
+    issuerRef:
+      name: selfsigned-issuer
+      kind: ClusterIssuer
+    commonName: trascendence.42firenze.it
+    dnsNames:
+      - trascendence.42firenze.it
+
+  fleet:
+    enabled: true
+    name: fleet-server-cert
+    namespace: elk
+    secretName: fleet-server-cert
+    issuerRef:
+      name: selfsigned-issuer
+      kind: ClusterIssuer
+    commonName: fleet-server.42firenze.it
+    dnsNames:
+      - fleet-server.42firenze.it
+
+  minio:
+    enabled: true
+    name: minio-selfsigned
+    namespace: minio
+    secretName: minio-tls
+    issuerRef:
+      name: selfsigned-issuer
+      kind: ClusterIssuer
+    commonName: minio.trascendence.42firenze.it
+    dnsNames:
+      - minio.trascendence
+      - minio.trascendence.svc
+      - minio.trascendence.svc.cluster.local
+      - localhost
+      - 127.0.0.1

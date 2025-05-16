@@ -37,3 +37,13 @@ dependencies:
     condition: chat-service.enabled
     tags:
       - chat
+  - name: cert-manager
+    repository: https://charts.jetstack.io
+    version: v1.13.2
+    condition: cert-manager.enabled
+  - name: cert-manager-chart
+    repository: file://charts/cert-manager-chart
+    version: 0.1.0
+    condition: cert-manager.enabled
+    tags:
+      - cert-manager

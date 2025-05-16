@@ -2,6 +2,10 @@
 global:
   environment: production
 
+installCrds:
+  enabled: true
+
+
 # Frontend-specific overrides
 frontend:
   hostAliases:
@@ -51,3 +55,68 @@ secrets:
     email: "admin@example.com"
     secretKey: "your-secret-key"
 
+cert-manager:
+  enabled: true
+  installCRDs: false
+  
+  # Default webhook config
+  webhook:
+    enabled: true
+  
+  # Ensure cert-manager cainjector is installed
+  cainjector:
+    enabled: true
+
+persistence:
+  enabled: true
+  chat:
+    enabled: true
+    size: 512Mi
+
+# Add these ingress settings to your umbrella chart values.yaml
+
+front-end:
+  enabled: true
+
+chat-service:
+  enabled: true
+
+# Chart-specific overrides
+front-end-chart:
+  ingress:
+    enabled: true
+    host: trascendence.42firenze.it
+
+chat-service-chart:
+  ingress:
+    enabled: true
+    host: trascendence.42firenze.it
+    path: /api/chat
+
+# Umbrella-level settings
+ingress:
+  enabled: true
+  className: traefik
+  host: trascendence.42firenze.it
+  annotations:
+    cert-manager.io/cluster-issuer: selfsigned-issuer
+  tls:
+    enabled: true
+    secretName: trascendence-tls
+
+
+cert-manager-config:
+  clusterIssuers:
+    selfsigned:
+      enabled: true
+      name: selfsigned-issuer
+    letsencrypt:
+      enabled: false
+      name: letsencrypt-prod
+      email: qualcosa2001@gmail.com
+      server: https://acme-v02.api.letsencrypt.org/directory
+      privateKeySecretName: letsencrypt-prod
+      solvers:
+        - http01:
+            ingressClass: traefik
+    
