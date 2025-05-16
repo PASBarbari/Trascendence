@@ -26,7 +26,7 @@ export function renderPong() {
 
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = "/public/pong/locale/pong.css";
+	link.href = "/pong/locale/pong.css";
 	document.head.appendChild(link);
 
 	// Inside renderPong function
@@ -225,12 +225,10 @@ export function renderPong() {
 
 	document.getElementById("menu").style.display = "block";
 
-
 	// setTimeout(() => {
 	SETUP.setupGame();
 	GAME.animate();
 	// }, 1000);
-
 
 	// Inizializza il renderer di Three.js
 	// if (!state.renderer) {

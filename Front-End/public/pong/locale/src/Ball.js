@@ -57,13 +57,16 @@ export default class Ball {
 		// Check collision with helper mesh
 		if (target && target.mesh) {
 			const helperMesh = target.mesh.children[0]; // This gets the helperMesh
-			console.log(
-				"Checking collision with player helper mesh",
-				helperMesh
-			);
-			// if (helperMesh) {
-			// 	const intersections =
-			// 		this.raycaster.intersectObject(helperMesh);
+			const intersections = this.raycaster.intersectObject(helperMesh);
+			if (intersections) {
+				console.log(
+					"Intersections with player helper mesh:",
+					intersections
+				);
+				// this.pointCollision.position.copy(intersections.point);
+			} else {
+				this.pointCollision.position.set(0, 0, 0);
+			}
 			// 	if (intersections) {
 			// 		console.log("Collision detected with player!");
 			// 		this.pointCollision.position.copy(intersections.point);

@@ -1,43 +1,46 @@
-import { renderTaskAvaiable } from '../task/taskAvaiable.js';
-import { renderTaskActive } from '../task/taskActive.js';
-import { renderNotification, initializeWebSocket } from '../notification/notification.js';
-import { renderPongInfo } from '../pong/pongContainer.js';
-import { initializeProfile, renderProfile } from '../profile/profile.js';
+import { renderTaskAvaiable } from "../task/taskAvaiable.js";
+import { renderTaskActive } from "../task/taskActive.js";
+import {
+	renderNotification,
+	initializeWebSocket,
+} from "../notification/notification.js";
+import { renderPongInfo } from "../pong/pongContainer.js";
+import { initializeProfile, renderProfile } from "../profile/profile.js";
 
 const stylesheets = [
-    'https://trascendence.42firenze.it/public/home/home.css',
-    'https://trascendence.42firenze.it/public/task/taskAvaiable.css',
-    'https://trascendence.42firenze.it/public/task/taskActive.css',
-    'https://trascendence.42firenze.it/public/notification/notification.css',
-    'https://trascendence.42firenze.it/public/profile/profile.css',
-    'https://trascendence.42firenze.it/public/chat/ExpandableSidebar.css',
-    'https://trascendence.42firenze.it/public/pong/pongContainer.css'
+	"https://trascendence.42firenze.it/home/home.css",
+	"https://trascendence.42firenze.it/task/taskAvaiable.css",
+	"https://trascendence.42firenze.it/task/taskActive.css",
+	"https://trascendence.42firenze.it/notification/notification.css",
+	"https://trascendence.42firenze.it/profile/profile.css",
+	"https://trascendence.42firenze.it/chat/ExpandableSidebar.css",
+	"https://trascendence.42firenze.it/pong/pongContainer.css",
 ];
 
-stylesheets.forEach(href => {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = href;
-    document.head.appendChild(link);
+stylesheets.forEach((href) => {
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = href;
+	document.head.appendChild(link);
 });
 
 async function toggleProfile() {
-    const profileDiv = document.getElementById('profile');
-    if (profileDiv) {
-        if (profileDiv.style.display === 'none') {
-            profileDiv.style.display = 'block';
-            await initializeProfile();
-        } else {
-            profileDiv.style.display = 'none';
-        }
-    } else {
-        console.error("Elemento #profile non trovato nel DOM");
-    }
+	const profileDiv = document.getElementById("profile");
+	if (profileDiv) {
+		if (profileDiv.style.display === "none") {
+			profileDiv.style.display = "block";
+			await initializeProfile();
+		} else {
+			profileDiv.style.display = "none";
+		}
+	} else {
+		console.error("Elemento #profile non trovato nel DOM");
+	}
 }
 
 function renderHome() {
-    const contentDiv = document.getElementById('content');
-    contentDiv.innerHTML = `
+	const contentDiv = document.getElementById("content");
+	contentDiv.innerHTML = `
         <!--div class="home"-->
             <!--div class="undernavbar"-->
                 <div class="content-home">
@@ -51,11 +54,11 @@ function renderHome() {
         <!--/div-->
     `;
 
-    renderTaskAvaiable();
-    renderTaskActive();
-    renderNotification();
-    initializeWebSocket();
-    renderPongInfo();
+	renderTaskAvaiable();
+	renderTaskActive();
+	renderNotification();
+	initializeWebSocket();
+	renderPongInfo();
 }
 
 export { renderHome, toggleProfile };

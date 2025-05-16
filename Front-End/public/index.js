@@ -8,11 +8,11 @@ import { settingsPopup } from "./settings/settings.js";
 import { cleanupPong } from "./pong/locale/settings.js";
 
 function preloadPongCSS() {
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "/public/pong/locale/pong.css";
-    document.head.appendChild(link);
-    console.log("Pong CSS precaricato");
+	const link = document.createElement("link");
+	link.rel = "stylesheet";
+	link.href = "/pong/locale/pong.css";
+	document.head.appendChild(link);
+	console.log("Pong CSS precaricato");
 }
 
 const routes = {
@@ -65,11 +65,11 @@ const locationHandler = async () => {
 	}
 
 	if (currentRoute === "pong" && location !== "pong") {
-        console.log("Navigando via da Pong, eseguo cleanup...");
-        cleanupPong();
-    }
-    
-    currentRoute = location;
+		console.log("Navigando via da Pong, eseguo cleanup...");
+		cleanupPong();
+	}
+
+	currentRoute = location;
 
 	if (wasOAuthRedirect && location === "home") {
 		console.log("OAuth login successful!");

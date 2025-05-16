@@ -3,7 +3,7 @@ import { getCookie } from "../cookie.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
-link.href = "/public/profile/profile.css";
+link.href = "/profile/profile.css";
 document.head.appendChild(link);
 
 async function PatchProfile(name, surname, birthdate, bio) {

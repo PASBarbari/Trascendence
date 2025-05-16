@@ -1,14 +1,14 @@
-import { setVariables, getVariables } from '../var.js';
-import { getCookie } from '../cookie.js';
+import { setVariables, getVariables } from "../var.js";
+import { getCookie } from "../cookie.js";
 
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = '/public/register/register.css';
+const link = document.createElement("link");
+link.rel = "stylesheet";
+link.href = "/register/register.css";
 document.head.appendChild(link);
 
 function renderRegister() {
-    const contentDiv = document.getElementById('content');
-    contentDiv.innerHTML = `
+	const contentDiv = document.getElementById("content");
+	contentDiv.innerHTML = `
         <div class="register">
             <div class="login_box">
                 <h1>Register</h1>
@@ -31,74 +31,86 @@ function renderRegister() {
         </div>
     `;
 
-    document.getElementById('registerForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        await onHandleSubmit(e, username, email, password);
-    });
+	document
+		.getElementById("registerForm")
+		.addEventListener("submit", async function (e) {
+			e.preventDefault();
+			const username = document.getElementById("username").value;
+			const email = document.getElementById("email").value;
+			const password = document.getElementById("password").value;
+			await onHandleSubmit(e, username, email, password);
+		});
 
-    document.getElementById('loginButton').addEventListener('click', function () {
-        window.navigateTo('#login');
-    });
+	document
+		.getElementById("loginButton")
+		.addEventListener("click", function () {
+			window.navigateTo("#login");
+		});
 }
 
 async function onHandleSubmit(e, username, email, password) {
-    e.preventDefault();
-    await registerUser(username, email, password, true);
+	e.preventDefault();
+	await registerUser(username, email, password, true);
 }
 
 /**
  * Gestisce la registrazione dell'utente.
- * 
+ *
  * @param {boolean} isBaseRegister - true per la registrazione base, false per la registrazione multiplayer per pong.
  * @returns {Promise<boolean>} - Ritorna true se la registrazione ha successo, altrimenti false.
  */
 async function registerUser(username, email, password, isBaseRegister) {
 	if (email && password) {
 		const { url_api } = getVariables();
-		console.log('Username:', username);
-		console.log('Email:', email);
-		console.log('Password:', password);
+		console.log("Username:", username);
+		console.log("Email:", email);
+		console.log("Password:", password);
 		try {
 			const response = await fetch(`${url_api}/login/login/register`, {
-				method: 'POST',
+				method: "POST",
 				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': getCookie('csrftoken'),
+					"Content-Type": "application/json",
+					"X-CSRFToken": getCookie("csrftoken"),
 				},
 				body: JSON.stringify({ username, email, password }),
 			});
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log('Risposta dal server:', data);
+				console.log("Risposta dal server:", data);
 				if (isBaseRegister) {
-					window.navigateTo('#login');
+					window.navigateTo("#login");
 				}
 				return true;
 			} else {
 				const errorData = await response.json();
-				console.error('Errore nella risposta del server:', errorData.error);
+				console.error(
+					"Errore nella risposta del server:",
+					errorData.error
+				);
 				if (errorData.error === "['email already in use']") {
-					alert('L\'email inserita è già in uso. Scegli un\'altra email.');
+					alert(
+						"L'email inserita è già in uso. Scegli un'altra email."
+					);
 				} else if (errorData.error === "['weak password']") {
-					alert('La password deve contenere almeno 8 caratteri.');
+					alert("La password deve contenere almeno 8 caratteri.");
 				} else if (errorData.error === "['username already in use']") {
-					alert('Per favore, inserisci un nome utente valido.');
+					alert("Per favore, inserisci un nome utente valido.");
 				} else {
-					alert('Si è verificato un errore. Per favore, riprova.');
+					alert("Si è verificato un errore. Per favore, riprova.");
 				}
-				console.error('Errore nella risposta del server:', response.statusText);
+				console.error(
+					"Errore nella risposta del server:",
+					response.statusText
+				);
 				return false;
 			}
 		} catch (error) {
-			console.error('Errore nella richiesta:', error);
+			console.error("Errore nella richiesta:", error);
 			return false;
 		}
 	} else {
-		console.log('Per favore, inserisci sia username che password.');
+		console.log("Per favore, inserisci sia username che password.");
 		return false;
 	}
 }

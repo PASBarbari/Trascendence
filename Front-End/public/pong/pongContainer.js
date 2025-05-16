@@ -7,7 +7,7 @@ import { renderPong } from "./locale/pong.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
-link.href = "/public/pongContainer/pongContainer.css";
+link.href = "/pongContainer/pongContainer.css";
 document.head.appendChild(link);
 
 function renderPongInfo() {
