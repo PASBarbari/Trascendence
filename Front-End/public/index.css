@@ -11,6 +11,7 @@
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
+    min-width: 30px;
 }
 .propic-button
 {
@@ -30,12 +31,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: nowrap;
 }
 .expandable-sidebar-container {
     display: flex;
     height: 100%;
-    transition: width 0.3s;
-    width: 66px;
+    min-width: 60px;
 }
 .content {
     height: 100%;

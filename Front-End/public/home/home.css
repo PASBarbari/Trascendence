@@ -17,6 +17,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .undernavbar {
@@ -30,6 +31,7 @@
   display: flex;
   height: 100%;
   transition: width 0.3s;
+  position: relative;
 }
 
 .sidebar {
@@ -70,15 +72,14 @@ p {
 
 .task-container {
   flex: 1 1 45%;
-  min-width: 300px;
   max-width: 100%;
+  min-width: 168px;
   border-radius: 8px;
   background-color: #80acc929;
 }
 
 .profile {
   flex: 1 1 100%;
-  min-width: 300px;
   max-width: 100%;
   border-radius: 8px;
 }
@@ -97,6 +98,7 @@ p {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+  min-width: 30px;
 }
 
 .propic-button {
