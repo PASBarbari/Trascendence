@@ -3,7 +3,7 @@ import { getCookie } from "../cookie.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
-link.href = "/public/login/login.css";
+link.href = "/login/login.css";
 document.head.appendChild(link);
 
 function renderLogin() {

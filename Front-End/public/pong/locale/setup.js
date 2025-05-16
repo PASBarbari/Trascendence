@@ -66,15 +66,15 @@ export function setupGame() {
 	const planeGeometry = new THREE.PlaneGeometry(
 		state.boundaries.x * 2,
 		state.boundaries.y * 2,
-		state.boundaries.x * 2,
-		state.boundaries.y * 2
+		state.boundaries.x / 2,
+		state.boundaries.y / 2
 	);
 	planeGeometry.rotateX(-Math.PI / 2);
 	const planeMaterial = new THREE.MeshNormalMaterial({
 		wireframe: true,
 	});
 	const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-	// state.scene.add(plane);
+	state.game.add(plane);
 
 	//Ring setup
 
@@ -150,18 +150,21 @@ export function setupGame() {
 	state.game.add(state.ring3D);
 	// //Players setup
 
-	state.p1 = new Player(
+	new Player(
 		state.scene,
 		new THREE.Vector3(-((state.ring.length * 2) / 5), 0, 0)
 	);
 
-	state.p2 = new Player(
+	new Player(
 		state.scene,
 		new THREE.Vector3((state.ring.length * 2) / 5, 0, 0)
 	);
 	// //Ball setup
 
-	state.ball = new Ball(state.scene, state.ball_radius, state.boundaries);
+	new Ball(state.scene, state.ball_radius, state.boundaries, [
+		state.players[0],
+		state.players[1],
+	]);
 
 	// //Light setup
 

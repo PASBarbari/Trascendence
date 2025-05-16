@@ -5,7 +5,7 @@ import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = '/public/chat/chat.css';
+link.href = '/chat/chat.css';
 document.head.appendChild(link);
 
 const displayedDates = new Set();

@@ -29,7 +29,9 @@ export default class Player {
 
 		this.mesh.add(this.helperMesh);
 		this.mesh.position.copy(position);
+
 		state.game.add(this.mesh);
+		state.players.push(this);
 	}
 
 	checkBoundaries(moveY) {
