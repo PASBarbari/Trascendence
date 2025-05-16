@@ -65,15 +65,15 @@ export function setupGame() {
 	const planeGeometry = new THREE.PlaneGeometry(
 		state.boundaries.x * 2,
 		state.boundaries.y * 2,
-		state.boundaries.x * 2,
-		state.boundaries.y * 2
+		state.boundaries.x / 2,
+		state.boundaries.y / 2
 	);
 	planeGeometry.rotateX(-Math.PI / 2);
 	const planeMaterial = new THREE.MeshNormalMaterial({
 		wireframe: true,
 	});
 	const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-	// state.scene.add(plane);
+	state.game.add(plane);
 
 	//Ring setup
 

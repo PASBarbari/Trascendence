@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { state } from "../state.js";
 export default class Ball {
-	speed = 10;
+	speed = 25;
 	velocity = new THREE.Vector3(0.5, 0, 1);
 
 	constructor(scene, radius, boundaries, players) {
@@ -36,7 +36,12 @@ export default class Ball {
 		this.dir = this.velocity.clone().normalize();
 		this.raycaster.set(this.mesh.position, this.dir);
 
-		//gestione collisioni
+		// Debug ball parameters
+		console.log("Ball position:", this.mesh.position);
+		console.log("Direction:", this.dir);
+		console.log("Velocity:", this.velocity);
+
+		// Regular boundary collision code...
 		const dx =
 			this.boundaries.x - this.radius - Math.abs(this.mesh.position.x);
 		const dz =
@@ -52,37 +57,61 @@ export default class Ball {
 				Math.sign(this.mesh.position.z);
 		}
 
-		// Get target player based on ball direction
-		const target = state.players[this.velocity.x > 0 ? 1 : 0];
+		// Debug target selection
+		const playerIndex = this.velocity.x > 0 ? 1 : 0;
+		// console.log("Selected player index:", playerIndex);
+		// console.log("Players array:", state.players);
+
+		const target = state.players[playerIndex];
+		// console.log("Target player:", target);
+
 		// Check collision with helper mesh
 		if (target && target.mesh) {
-			const helperMesh = target.mesh.children[0]; // This gets the helperMesh
+			const helperMesh = target.mesh.children[0];
+
+			// Try raycasting first
 			const intersections = this.raycaster.intersectObject(helperMesh);
-			if (intersections) {
-				console.log(
-					"Intersections with player helper mesh:",
-					intersections
-				);
-				// this.pointCollision.position.copy(intersections.point);
-			} else {
-				this.pointCollision.position.set(0, 0, 0);
+
+			// Get distance between ball and paddle
+			const distanceToTarget = this.mesh.position.distanceTo(
+				target.mesh.position
+			);
+
+			// Debug info
+			console.log("Distance to target:", distanceToTarget);
+			console.log("Target position:", target.mesh.position);
+			console.log("Ball position:", this.mesh.position);
+
+			// Calculate collision box for the paddle
+
+			// Check for collision based on distance and position
+			if (
+				(intersections && intersections.length > 0) ||
+				(Math.abs(this.mesh.position.x - target.mesh.position.x) <
+					this.radius + state.p.width / 2 &&
+					Math.abs(this.mesh.position.z - target.mesh.position.z) <
+						state.p.height / 2)
+			) {
+				console.log("COLLISION DETECTED!");
+
+				// Visual feedback
+				this.pointCollision.position.copy(this.mesh.position.clone());
+
+				// Bounce physics
+				this.velocity.x *= -1.2;
+				console.log("New velocity after bounce:", this.velocity);
+
+				// Add spin based on hit position
+				const offset = this.mesh.position.z - target.mesh.position.z;
+				this.velocity.z += offset * 0.2;
+
+				// Normalize and maintain speed
+				this.velocity.normalize().multiplyScalar(this.speed);
 			}
-			// 	if (intersections) {
-			// 		console.log("Collision detected with player!");
-			// 		this.pointCollision.position.copy(intersections.point);
-
-			// 		// Add spin based on hit position
-			// 		// const offset =
-			// 		// 	intersections[0].point.z - target.mesh.position.z;
-			// 		// this.velocity.z += offset * 0.1;
-
-			// 		// // Normalize and maintain speed
-			// 		// this.velocity.normalize().multiplyScalar(this.speed);
-			// 	} else {
-			// 		this.pointCollision.position.set(0, 0, 0);
-			// 	}
-			// }
+		} else {
+			console.warn("Target or target.mesh not found");
 		}
+
 		this.mesh.position.copy(tPos);
 	}
 }
