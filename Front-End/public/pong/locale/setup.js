@@ -21,8 +21,9 @@ export function setupGame() {
 
 	// Create renderer but don't attach yet
 	state.renderer = new THREE.WebGLRenderer({
-		antialias: true,
+		antialias: false,
 		powerPreference: "high-performance",
+		//quality: "high",
 		failIfMajorPerformanceCaveat: false,
 	});
 

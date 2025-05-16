@@ -126,42 +126,44 @@ function resumeGame() {
 }
 
 export function cleanupPong() {
-	console.log("Cleaning up Pong game resources...");
+	return new Promise((resolve) => {
+		console.log("Cleaning up Pong game resources...");
 
-	// Cancel animation frame
-	if (state.animationFrameId) {
-		cancelAnimationFrame(state.animationFrameId);
-	}
-
-	// Recursive function to dispose meshes
-	function disposeMesh(mesh) {
-		if (mesh.children.length > 0) {
-			// Clone the children array since it will be modified during iteration
-			[...mesh.children].forEach((child) => disposeMesh(child));
+		// Cancel animation frame
+		if (state.animationFrameId) {
+			cancelAnimationFrame(state.animationFrameId);
 		}
 
-		if (mesh.geometry) {
-			mesh.geometry.dispose();
-		}
+		// Recursive function to dispose meshes
+		function disposeMesh(mesh) {
+			if (mesh.children.length > 0) {
+				// Clone the children array since it will be modified during iteration
+				[...mesh.children].forEach((child) => disposeMesh(child));
+			}
 
-		if (mesh.material) {
-			// Handle both single materials and material arrays
-			if (Array.isArray(mesh.material)) {
-				mesh.material.forEach((material) => material.dispose());
-			} else {
-				mesh.material.dispose();
+			if (mesh.geometry) {
+				mesh.geometry.dispose();
+			}
+
+			if (mesh.material) {
+				// Handle both single materials and material arrays
+				if (Array.isArray(mesh.material)) {
+					mesh.material.forEach((material) => material.dispose());
+				} else {
+					mesh.material.dispose();
+				}
 			}
 		}
-	}
 
-	// Clean up game group
-	if (state.game) {
-		// Dispose all meshes in the game group
-		[...state.game.children].forEach((mesh) => {
-			disposeMesh(mesh);
-			state.game.remove(mesh);
-		});
-	}
+		// Clean up game group
+		if (state.game) {
+			// Dispose all meshes in the game group
+			[...state.game.children].forEach((mesh) => {
+				disposeMesh(mesh);
+				state.game.remove(mesh);
+			});
+		}
+	});
 }
 
 function exitGame() {

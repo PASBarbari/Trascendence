@@ -225,10 +225,12 @@ export function renderPong() {
 
 	document.getElementById("menu").style.display = "block";
 
-	// setTimeout(() => {
-	SETUP.setupGame();
-	GAME.animate();
-	// }, 1000);
+
+	setTimeout(() => {
+		GAME.animate();
+		SETUP.setupGame();
+	}, 100);
+
 
 	// Inizializza il renderer di Three.js
 	// if (!state.renderer) {
