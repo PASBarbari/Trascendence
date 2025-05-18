@@ -150,6 +150,7 @@ django-prometheus==2.3.1
     # via -r requirements.in
 django-redis==5.4.0
     # via -r requirements.in
+django-fernet-fields
 django-rest-swagger==2.2.0
     # via -r requirements.in
 djangorestframework==3.15.2
@@ -296,6 +297,7 @@ pyopenssl==25.0.0
     # via
     #   -r requirements.in
     #   twisted
+pyotp
 pyproject-hooks==1.2.0
     # via
     #   -r requirements.in
@@ -314,6 +316,7 @@ pyyaml==6.0.2
     # via
     #   -r requirements.in
     #   drf-yasg
+qrcode
 redis==5.2.1
     # via
     #   -r requirements.in

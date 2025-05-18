@@ -32,6 +32,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import logging, random, string, hashlib, base64
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+import pyotp
+import qrcode
+from django_ratelimit.decorators import ratelimit
+
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
 logger = logging.getLogger('light_login')
@@ -334,6 +338,112 @@ class OAuthCallbackView(APIView):
 		except Exception as e:
 			return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@method_decorator(ratelimit(key='user', rate='3/m', method='GET'), name='get')
+class Setup2FAView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def get(self, request):
+		user = request.user
+		user.two_factor_secret = pyotp.random_base32()
+		user.save()
+
+		otp_uri = pyotp.totp.TOTP(user.two_factor_secret).provisioning_uri(
+			name=user.email,
+			issuer_name="Transcendence"
+		)
+
+		qr = qrcode.make(otp_uri)
+		buffer = io.BytesIO()
+		qr.save(buffer, format="PNG")
+		buffer.seek(0)
+
+		response = HttpResponse(buffer.getvalue(), content_type="image/png")
+		response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+		response['Pragma'] = 'no-cache'
+		response['Expires'] = '0'
+		return response
+
+	def post(self, request):
+		user = request.user
+		otp = request.data.get('otp_code')
+		if not otp:
+			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if verify_otp(user, otp):
+			user.is_2fa_enabled = True
+			user.save()
+			return Response({"message": "2FA enabled successfully"}, status=status.HTTP_200_OK)
+		else:
+			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
+			
+def verify_otp(user, otp):
+	if not user.two_factor_secret:
+		return False
+	totp = pyotp.TOTP(user.two_factor_secret)
+	if totp.verify(otp):
+		user.is_2fa_enabled = True
+		user.save()
+		return True
+	return False
+
+class Verify2FALoginView(APIView):
+	permission_classes = [permissions.AllowAny] # O una permission più specifica se hai un token temporaneo
+
+	def post(self, request):
+    user_id = request.data.get('user_id')
+    otp_code = request.data.get('otp_code')
+    
+    if not user_id or not otp_code:
+        return Response({"error": "User ID and OTP code are required"}, 
+                       status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        User = get_user_model()
+        user = User.objects.get(user_id=user_id)
+        
+        # Verify OTP code
+        if not verify_otp(user, otp_code):
+			return Response({"error": "Invalid OTP code"}, 
+						   status=status.HTTP_400_BAD_REQUEST)
+        
+        # OTP verified, log the user in
+        login(request, user)
+        
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+        
+        return Response({
+            'access_token': access_token,
+            'refresh_token': refresh_token,
+            'user_id': user.user_id,
+            'username': user.username,
+            'email': user.email
+        }, status=status.HTTP_200_OK)
+        
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, 
+                      status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({"error": str(e)}, 
+                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		
+
+class Disable2FAView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def post(self, request):
+		user = request.user
+		if user.is_2fa_enabled:
+			user.is_2fa_enabled = False
+			user.two_factor_secret = None
+			user.save()
+			return Response({"message": "2FA disabled successfully"}, status=status.HTTP_200_OK)
+		else:
+			return Response({"error": "2FA is not enabled"}, status=status.HTTP_400_BAD_REQUEST)
+		
+
 # Update the UserRegister class to handle potential oauth users
 @method_decorator(csrf_exempt, name='dispatch')
 class UserRegister(APIView):
@@ -409,6 +519,17 @@ class UserLogin(APIView):
 			serializer = UserLoginSerializer(data=data)
 			serializer.is_valid(raise_exception=True)
 			user = serializer.check_user(data)
+
+			# Check if 2FA is enabled for this user
+			if user.is_2fa_enabled:
+				# Return a response indicating 2FA is required
+				# Include user_id that will be needed for the 2FA verification step
+				return Response({
+					'requires_2fa': True,
+					'user_id': user.user_id
+				}, status=status.HTTP_200_OK)
+
+			# If 2FA is not enabled, proceed with normal login
 			login(request, user)
 			
 			# Generate tokens for the user
@@ -425,7 +546,7 @@ class UserLogin(APIView):
 			}, status=status.HTTP_200_OK)
 		except Exception as e:
 			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
-		
+
 			# headers = {
 			# 	'Content-Type': 'application/x-www-form-urlencoded',
 			# 	'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',

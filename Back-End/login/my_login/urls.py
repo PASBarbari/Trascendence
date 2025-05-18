@@ -10,4 +10,7 @@ urlpatterns = [
 	path('Serviceregister', views.ServiceRegister.as_view(), name='Serviceregister'),
     path('oauth/<str:provider>/', views.OAuthLoginView.as_view(), name='oauth_login'),
     path('oauth/callback/<str:provider>/', views.OAuthCallbackView.as_view(), name='oauth_callback'),
+    path('2fa/setup/', views.Setup2FAView.as_view(), name='setup_2fa'),
+    path('2fa/verify/', views.Verify2FALoginView.as_view(), name='verify_2fa'),
+    path('2fa/disable/', views.Disable2FAView.as_view(), name='disable_2fa'),
 ]
