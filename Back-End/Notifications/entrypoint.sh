@@ -4,6 +4,8 @@ set -e
 
 export DJANGO_SETTINGS_MODULE=Notifications.settings
 
+# collect static files
+python manage.py collectstatic --noinput
 
 # migrations at startup
 python manage.py makemigrations

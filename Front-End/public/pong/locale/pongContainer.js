@@ -2,8 +2,6 @@ import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
-//import { createGame } from './serverSide.js';
-import { renderPong } from "./locale/pong.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -26,13 +24,9 @@ function renderPongInfo() {
 	`;
 }
 
-async function handleLocalePong() {
+function handleLocalePong() {
 	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
-	// const { createGame } = await import("./multiplayer/serverSide.js");
-	// const { userId } = getVariables();
-	// createGame(userId, 13);
 	window.navigateTo("#pong");
-	// renderPong();
 }
 
 function handleMultiPong() {

@@ -19,7 +19,7 @@ export function setupGame() {
 
 	state.renderer = new THREE.WebGLRenderer();
 	state.renderer.setSize(window.innerWidth, window.innerHeight);
-	state.renderer.domElement.classList.add('threejs-canvas');
+	state.renderer.domElement.classList.add("threejs-canvas");
 	document.body.appendChild(state.renderer.domElement);
 
 	//Ring setup
@@ -116,7 +116,6 @@ export function setupGame() {
 	dirLight.target = state.ball;
 	state.scene.add(dirLight);
 	state.scene.background = new THREE.Color(0x00000);
-
 
 	//stats setup
 

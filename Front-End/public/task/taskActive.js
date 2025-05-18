@@ -3,7 +3,7 @@ import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = '/public/taskActive/taskActive.css';
+link.href = '/taskActive/taskActive.css';
 document.head.appendChild(link);
 
 async function handleCompleteTask(task_id, task_rate) {

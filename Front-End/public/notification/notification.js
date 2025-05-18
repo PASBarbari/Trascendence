@@ -4,7 +4,7 @@ import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = '/public/notification/notification.css';
+link.href = '/notification/notification.css';
 document.head.appendChild(link);
 
 let messageHistory = [];

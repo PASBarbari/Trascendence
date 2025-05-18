@@ -4,7 +4,7 @@ import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = '/public/taskAvaiable/taskAvaiable.css';
+link.href = '/taskAvaiable/taskAvaiable.css';
 document.head.appendChild(link);
 
 async function joinTasks(task_id, user_id) {

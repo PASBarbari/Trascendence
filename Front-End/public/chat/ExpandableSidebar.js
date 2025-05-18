@@ -5,7 +5,7 @@ import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = '/public/chat/chat.css';
+link.href = '/chat/chat.css';
 document.head.appendChild(link);
 
 const displayedDates = new Set();
@@ -56,41 +56,42 @@ async function getChatRooms() {
 }
 
 function renderExpandableSidebar() {
-	const sidebarContainer = document.querySelector('.expandable-sidebar-container');
-	sidebarContainer.innerHTML = `
-		<div class="sidebar">
-			<button id="toggleChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-chevron-right"></i>
-			</button>
-			<button id="createChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-plus"></i>
-			</button>
-			<button id="singleChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-chat-dots"></i>
-			</button>
-			<button id="groupChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-people"></i>
-			</button>
-			<button id="randomChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-shuffle"></i>
-			</button>
-		</div>
-		<div id="chatContainer" class="chat-container"></div>
-	`;
+    const sidebarContainer = document.querySelector('.expandable-sidebar-container');
+    sidebarContainer.innerHTML = `
+        <div class="sidebar">
+            <button id="toggleChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <button id="createChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-plus"></i>
+            </button>
+            <button id="singleChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-chat-dots"></i>
+            </button>
+            <button id="groupChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-people"></i>
+            </button>
+            <button id="randomChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-shuffle"></i>
+            </button>
+        </div>
+        <div id="chatContainer" class="chat-container"></div>
+    `;
 
-	const toggleChatButton = document.getElementById('toggleChatButton');
-	const chatContainer = document.getElementById('chatContainer');
-	let chatContainerOpen = false; // Variabile per gestire lo stato di apertura
+    const toggleChatButton = document.getElementById('toggleChatButton');
+    const chatContainer = document.getElementById('chatContainer');
+    let chatContainerOpen = false;
 
-	toggleChatButton.addEventListener('click', function () {
-		chatContainerOpen = !chatContainerOpen;
-		chatContainer.classList.toggle('open', chatContainerOpen);
-		toggleChatButton.innerHTML = chatContainerOpen ? `
-			<i class="bi bi-chevron-left"></i>
-		` : `
-			<i class="bi bi-chevron-right"></i>
-		`;
-	});
+    toggleChatButton.addEventListener('click', function () {
+        chatContainerOpen = !chatContainerOpen;
+        chatContainer.classList.toggle('open', chatContainerOpen);
+        
+        toggleChatButton.innerHTML = chatContainerOpen ? `
+            <i class="bi bi-chevron-left"></i>
+        ` : `
+            <i class="bi bi-chevron-right"></i>
+        `;
+    });
 
 	document.getElementById('createChatButton').addEventListener('click', function () {
 		if (addChatContainer) {
