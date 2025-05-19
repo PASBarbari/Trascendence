@@ -35,6 +35,11 @@ from django.db import transaction
 import pyotp
 from django_ratelimit.decorators import ratelimit
 import io
+import urllib.parse
+import hmac
+import time
+import struct
+import os
 
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
@@ -345,55 +350,122 @@ class Setup2FAView(APIView):
 	def get(self, request):
 		logger.info("Setting up 2FA for user")
 		user = request.user
-		user.two_factor_secret = pyotp.random_base32()
+		
+		user.two_factor_secret = generate_random_base32()
 		user.save()
 
-		otp_uri = pyotp.totp.TOTP(user.two_factor_secret).provisioning_uri(
-			name=user.email,
-			issuer_name="Transcendence"
-		)
+		otp_uri = create_manual_totp_uri(user.two_factor_secret, user.email)
 
 		# Return the OTP URI as a URL for the frontend to generate the QR code
 		return Response({"otp_uri": otp_uri}, status=status.HTTP_200_OK)
 
-		def post(self, request):
-			user = request.user
-			otp = request.data.get('otp_code')
-			if not otp:
-				return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+	def post(self, request):
+		user = request.user
+		otp = request.data.get('otp_code')
+		if not otp:
+			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if verify_otp(user, otp):
+			user.is_2fa_enabled = True
+			user.save()
+			# Update the two_factor_enabled flag in user microservice
+			user_service_url = f"{Microservices['Users']}/user/update-2fa/"
+		
+			response = requests.post(
+				user_service_url,
+				json={
+					'user_id': user.user_id,
+					'enabled': True
+				},
+				headers={
+					'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+					'Content-Type': 'application/json'
+				}
+			)
 			
-			if verify_otp(user, otp):
-				user.is_2fa_enabled = True
-				user.save()
-				# Update the two_factor_enabled flag in user microservice
-				user_service_url = f"{Microservices['Users']}/user/update-2fa/"
-			
-				response = requests.post(
-					user_service_url,
-					json={
-						'user_id': user.user_id,
-						'enabled': True
-					},
-					headers={
-						'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
-						'Content-Type': 'application/json'
-					}
-				)
-			
-				if response.status_code == 200:
-					return redirect('https://trascendence.42firenze.it/#home')
-				else:
-					return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			if response.status_code == 200:
+				return redirect('https://trascendence.42firenze.it/#home')
 			else:
-				return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
-			
+				logger.error(f"Update 2FA failed: {response.status_code} - {response.text}")
+				return Response({"error": f"Failed to update 2FA status: {response.text}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		else:
+			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
+
 def verify_otp(user, otp):
-	if not user.two_factor_secret:
-		return False
-	totp = pyotp.TOTP(user.two_factor_secret)
-	if totp.verify(otp):
-		return True
-	return False
+    if not user.two_factor_secret:
+        return False
+    
+    # 1. Ottieni il timestamp corrente
+    timestamp = int(time.time())
+    
+    # 2. Calcola time counter (intervalli di 30 secondi dal 1970)
+    time_counter = timestamp // 30
+    
+    # 3. Verifica il codice corrente e un intervallo prima/dopo (per compensare desincronizzazioni di orario)
+    for i in range(-1, 2):
+        current_counter = time_counter + i
+        
+        # 4. Converti il counter in bytes (formato big-endian 8-byte)
+        time_bytes = struct.pack(">Q", current_counter)
+        
+        # 5. Decodifica il secret dalla base32
+        key = base64.b32decode(user.two_factor_secret.upper() + '=' * ((8 - len(user.two_factor_secret) % 8) % 8))
+        
+        # 6. Calcola l'HMAC-SHA1
+        h = hmac.new(key, time_bytes, hashlib.sha1).digest()
+        
+        # 7. Applica "dynamic truncation" per ottenere 4 bytes
+        offset = h[-1] & 0x0F
+        truncated_hash = h[offset:offset+4]
+        
+        # 8. Converti in un numero intero, elimina il bit più significativo
+        code = struct.unpack('>I', truncated_hash)[0] & 0x7FFFFFFF
+        
+        # 9. Prendi solo le ultime 6 cifre
+        code = code % 1000000
+        
+        # 10. Formatta come stringa con zeri iniziali
+        code_str = '{:06d}'.format(code)
+        
+        # 11. Confronta con il codice inserito dall'utente
+        if code_str == otp:
+            return True
+    
+    return False
+
+def create_manual_totp_uri(secret, email, issuer="Transcendence"):
+    # Codifica il label (issuer:account) per URL
+    label = f"{issuer}:{email}"
+    encoded_label = urllib.parse.quote(label)
+    
+    # Crea l'URI con i parametri necessari
+    uri = f"otpauth://totp/{encoded_label}?secret={secret}&issuer={urllib.parse.quote(issuer)}"
+    
+    # Parametri opzionali (questi sono i valori predefiniti)
+    uri += "&algorithm=SHA1&digits=6&period=30"
+    
+    return uri
+
+def generate_random_base32(length=16):
+    """
+    Genera una stringa casuale in formato base32.
+    
+    Args:
+        length: Lunghezza in byte dei dati casuali prima della codifica
+        
+    Returns:
+        Una stringa base32 (caratteri A-Z, 2-7)
+    """
+    # Ottieni byte casuali sicuri usando os.urandom
+    random_bytes = os.urandom(length)
+    
+    # Codifica in base32
+    base32_str = base64.b32encode(random_bytes).decode('utf-8')
+    
+    # Rimuovi eventuali padding '='
+    base32_str = base32_str.rstrip('=')
+    
+    return base32_str
 
 class Verify2FALoginView(APIView):
 	permission_classes = [permissions.AllowAny]
@@ -447,7 +519,7 @@ class Disable2FAView(APIView):
 			
 			# Then update the user microservice
 			user_service_url = f"{Microservices['Users']}/user/update-2fa/"
-			
+
 			response = requests.post(
 				user_service_url,
 				json={

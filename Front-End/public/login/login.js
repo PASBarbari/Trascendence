@@ -51,9 +51,9 @@ function renderLogin() {
 			const csrftoken = getCookie("csrftoken");
 			const { url_api } = getVariables();
 			// Navigate to the OAuth flow in the current window
-            window.location.href = `${url_api}/login/login/oauth/google/`;
-            console.log("Google login");
-        });
+			window.location.href = `${url_api}/login/login/oauth/google/`;
+			console.log("Google login");
+		});
 
     document
         .getElementById("login42")
@@ -106,6 +106,13 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 			if (response.ok) {
 				const data = await response.json();
 				console.log("Risposta dal server:", data);
+				
+				// Check if 2FA verification is needed
+				if (data.temp_token && data.message && data.message.includes('2FA')) {
+					// Show OTP verification form
+					showOTPVerificationForm(data.temp_token, email);
+					return false; // Login not completed yet, waiting for OTP
+				}
 
 				if (isBaseLogin) {
 					setVariables({ token: data.access_token });
@@ -136,6 +143,119 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 		console.log("Per favore, inserisci sia email che password.");
 		return false;
 	}
+}
+
+function showOTPVerificationForm(tempToken, email) {
+    const contentDiv = document.getElementById("content");
+    // Save the original content to restore if needed
+    const originalContent = contentDiv.innerHTML;
+    
+    // Show OTP verification form
+    contentDiv.innerHTML = `
+        <div class="login">
+            <div class="login_box">
+                <h1>2FA Verification</h1>
+                <p>Please enter the OTP code from your authenticator app</p>
+                <div class="login_form">
+                    <form class="login_form" id="otpForm">
+                        <div class="mb-3">
+                            <input type="text" id="otpCode" placeholder="OTP Code" class="form-control" required />
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Verify</button>
+                        <button type="button" id="cancelButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Cancel</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Handle OTP verification
+    document.getElementById("otpForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const otpCode = document.getElementById("otpCode").value;
+        if (otpCode) {
+            const verified = await verifyOTP(tempToken, otpCode, email);
+            if (verified) {
+                window.navigateTo("#home");
+            } else {
+                // Show error message
+                alert("Invalid OTP code. Please try again.");
+            }
+        }
+    });
+
+    // Handle cancel button
+    document.getElementById("cancelButton").addEventListener("click", function() {
+        // Restore original login form
+        contentDiv.innerHTML = originalContent;
+        
+        // Re-attach event listeners to the restored content
+        document.getElementById("loginForm").addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            await onHandleSubmit(e, email, password);
+        });
+
+        document.getElementById("registerButton").addEventListener("click", function() {
+            window.navigateTo("#register");
+        });
+
+        document.getElementById("loginGoogle").addEventListener("click", async function() {
+            const csrftoken = getCookie("csrftoken");
+            const { url_api } = getVariables();
+            window.location.href = `${url_api}/login/login/oauth/google/`;
+        });
+
+        document.getElementById("login42").addEventListener("click", async function() {
+            const csrftoken = getCookie("csrftoken");
+            const { url_api } = getVariables();
+            window.location.href = `${url_api}/login/login/oauth/42/`;
+        });
+    });
+}
+
+async function verifyOTP(tempToken, otpCode, email) {
+    const { url_api } = getVariables();
+    const csrftoken = getCookie("csrftoken");
+    
+    try {
+        const response = await fetch(`${url_api}/login/login/2fa/verify/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken,
+                "Authorization": `Bearer ${tempToken}`
+            },
+            body: JSON.stringify({ otp_code: otpCode }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("OTP verification successful:", data);
+            
+            // Set tokens and user info after successful verification
+            setVariables({ token: data.access_token });
+            setVariables({ refreshToken: data.refresh_token });
+
+            const { user_id, username, email } = data;
+            
+            setVariables({
+                userEmail: email,
+                userUsername: username,
+                userId: user_id,
+            });
+            
+            return true;
+        } else {
+            const errorData = await response.json();
+            console.error("OTP verification failed:", errorData);
+            return false;
+        }
+    } catch (error) {
+        console.error("Exception during OTP verification:", error);
+        return false;
+    }
 }
 
 async function loginProvider(csrftoken, isBaseLogin, provider) {
