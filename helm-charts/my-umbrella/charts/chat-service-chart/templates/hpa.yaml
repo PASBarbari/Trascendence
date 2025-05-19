@@ -2,16 +2,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ .Release.Name }}-chat-server-hpa
-  namespace: {{ .Values.namespace }}
+  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat") }}
+  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "chat") }}
   labels:
-    app: chat-server
-    {{- include "chat-service.labels" . | nindent 4 }}
+    {{- include "common.labels" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat") | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ .Release.Name }}-chat
+    name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat") }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

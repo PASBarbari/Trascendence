@@ -91,3 +91,4 @@ persistence:
   storageClass: standard
   size: 512Mi
   annotations: {}
+

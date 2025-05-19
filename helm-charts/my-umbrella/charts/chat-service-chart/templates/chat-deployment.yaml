@@ -1,24 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-chat
-  namespace: {{ .Values.namespace }}
+  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat") }}
+  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "chat") }}
   labels:
-    app: chat
-    {{- include "chat-service.labels" . | nindent 4 }}
+    {{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Component" "chat") | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: chat
-      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+      {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat") | nindent 6 }}
   template:
     metadata:
       labels:
-        app: chat
-        {{- include "chat-service.selectorLabels" . | nindent 8 }}
+        {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat") | nindent 8 }}
     spec:
-      serviceAccountName: {{ .Release.Name }}-chat-server
+      serviceAccountName: {{ include "common.serviceAccountName" (dict "Values" .Values "Release" .Release "Component" "chat") }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -27,7 +24,7 @@ spec:
             - containerPort: {{ .Values.service.targetPort }}
           envFrom:
             - configMapRef:
-                name: {{ .Release.Name }}-chat-configmap
+                name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-configmap") }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

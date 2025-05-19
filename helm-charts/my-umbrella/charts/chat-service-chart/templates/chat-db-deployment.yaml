@@ -1,20 +1,22 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Release.Name }}-chat-db
-  namespace: {{ .Values.namespace }}
+  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-db") }}
+  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "chat") }}
+  labels:
+    {{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Component" "chat-db") | nindent 4 }}
 spec:
-  serviceName: {{ .Release.Name }}-chat-db
+  serviceName: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-db") }}
   replicas: 1
   selector:
     matchLabels:
-      app: chat-db
+      {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat-db") | nindent 6 }}
   template:
     metadata:
       labels:
-        app: chat-db
+        {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat-db") | nindent 8 }}
     spec:
-      serviceAccountName: {{ .Release.Name }}-chat-db
+      serviceAccountName: {{ include "common.serviceAccountName" (dict "Values" .Values "Release" .Release "Component" "chat-db") }}
       containers:
       - name: postgres
         image: postgres:13
@@ -24,17 +26,17 @@ spec:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-chat-db-secret
+              name: {{ include "common.dbSecretName" (dict "Release" .Release "Component" "chat") }}
               key: chat-db
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-chat-db-secret
+              name: {{ include "common.dbSecretName" (dict "Release" .Release "Component" "chat") }}
               key: chat-db-user
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-chat-db-secret
+              name: {{ include "common.dbSecretName" (dict "Release" .Release "Component" "chat") }}
               key: chat-db-password
         volumeMounts:
         - name: data
@@ -45,9 +47,6 @@ spec:
     spec:
       accessModes: [ "ReadWriteOnce" ]
       storageClassName: {{ .Values.persistence.storageClass | default "standard" }}
-    selector:
-      matchLabels:
-        type: chat-db
       resources:
         requests:
           storage: {{ .Values.persistence.size | default "512Mi" }}

@@ -2,15 +2,15 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "front-end-chart.fullname" . }}
-  namespace: {{ .Values.namespace }}
+  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") }}
+  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
   labels:
-    {{- include "front-end-chart.labels" . | nindent 4 }}
+    {{- include "common.labels" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "front-end-chart.fullname" . }}
+    name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

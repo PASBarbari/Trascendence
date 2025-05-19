@@ -1,3 +1,5 @@
+{{- include "trascendence.namespace" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
+
 {{/*
 Expand the name of the chart.
 */}}

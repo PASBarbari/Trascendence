@@ -1,23 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-frontend
-  namespace: {{ .Values.namespace }}
+  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") }}
+  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
   labels:
-    app: frontend
-    {{- include "front-end-chart.labels" . | nindent 4 }}
+    {{- include "common.labels" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: frontend
-      {{- include "front-end-chart.selectorLabels" . | nindent 6 }}
+      {{- include "common.selectorLabels" (dict "Release" .Release "Component" "frontend") | nindent 6 }}
   template:
     metadata:
       labels:
-        app: frontend
-        {{- include "front-end-chart.labels" . | nindent 8 }}
+        {{- include "common.selectorLabels" (dict "Release" .Release "Component" "frontend") | nindent 8 }}
     spec:
+      serviceAccountName: {{ include "common.serviceAccountName" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
       {{- with .Values.hostAliases }}
       hostAliases:
         {{- toYaml . | nindent 8 }}

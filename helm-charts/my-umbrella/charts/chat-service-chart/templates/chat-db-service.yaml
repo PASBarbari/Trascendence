@@ -1,11 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-chat-db
-  namespace: {{ .Values.namespace }}
+  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-db") | default "chat-db-default" }}
+  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "chat") }}
+  labels:
+    {{- include "common.labels" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-db") | nindent 4 }}
 spec:
-  selector:
-    app: chat-db
   ports:
-  - port: 5432
-    targetPort: 5432
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+  selector:
+    {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat-db") | nindent 4 }}

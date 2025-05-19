@@ -1,11 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Release.Name }}-frontend-service
-  namespace: {{ .Values.namespace }}
+  name: "{{ .Release.Name }}-chat-service"
+  namespace: chat
   labels:
-    app: frontend
-    {{- include "front-end-chart.labels" . | nindent 4 }}
+    app: {{ .Release.Name }}-chat
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -13,5 +15,5 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
   selector:
-    app: frontend
-    {{- include "front-end-chart.selectorLabels" . | nindent 4 }}
+    app: {{ .Release.Name }}-chat
+    release: {{ .Release.Name }}

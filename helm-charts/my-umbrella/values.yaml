@@ -1,6 +1,8 @@
 # Global values shared across all charts
 global:
   environment: production
+  helpers:
+    enabled: true
 
 installCrds:
   enabled: true

@@ -1,4 +1,7 @@
 dependencies:
+- name: trascendence-common
+  repository: file://../trascendence-common
+  version: 0.1.0
 - name: front-end-chart
   repository: file://charts/front-end-chart
   version: 0.1.0
@@ -11,5 +14,5 @@ dependencies:
 - name: cert-manager-chart
   repository: file://charts/cert-manager-chart
   version: 0.1.0
-digest: sha256:70caa9273c87baee067b9664d45f6524b952b01dd951a29f4b81274bf1698abb
-generated: "2025-05-15T14:44:04.829564398+02:00"
+digest: sha256:968857363eb8a9e11b7fc70799a4cfb1f9e008ed758e672e7df908ed54ff4355
+generated: "2025-05-19T11:31:59.283815055+02:00"

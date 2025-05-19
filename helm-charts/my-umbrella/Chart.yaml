@@ -25,6 +25,9 @@ appVersion: "1.16.0"
 
 
 dependencies:
+  - name: trascendence-common
+    version: "0.1.0"
+    repository: "file://../trascendence-common"
   - name: front-end-chart
     repository: file://charts/front-end-chart
     version: 0.1.0
