@@ -442,11 +442,11 @@ class Disable2FAView(APIView):
 			return Response({"error": "2FA is not enabled"}, status=status.HTTP_400_BAD_REQUEST)
 		
 class Is2FAEnabledView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request):
-        user = request.user
-        return Response({"is_enabled": user.is_2fa_enabled}, status=status.HTTP_200_OK)
+def get(self, request):
+user = request.user
+return Response({"is_enabled": user.is_2fa_enabled}, status=status.HTTP_200_OK)
 
 
 # Update the UserRegister class to handle potential oauth users
