@@ -40,26 +40,26 @@ async function PatchProfile(name, surname, birthdate, bio) {
 
 // Aggiungi questa funzione al tuo file
 async function downloadImageAsBlob(imageUrl, token) {
-    try {
-        const imageResponse = await fetch(imageUrl, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+	try {
+		const imageResponse = await fetch(imageUrl, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
 
-        if (imageResponse.ok) {
-            const imageBlob = await imageResponse.blob();
-            const localImageUrl = URL.createObjectURL(imageBlob);
-            console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
-            return localImageUrl;
-        } else {
-            console.error("Errore nel recupero dell'immagine:", imageResponse.status);
-            return null;
-        }
-    } catch (error) {
-        console.error("Errore durante il download dell'immagine:", error);
-        return null;
-    }
+		if (imageResponse.ok) {
+			const imageBlob = await imageResponse.blob();
+			const localImageUrl = URL.createObjectURL(imageBlob);
+			console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
+			return localImageUrl;
+		} else {
+			console.error("Errore nel recupero dell'immagine:", imageResponse.status);
+			return null;
+		}
+	} catch (error) {
+		console.error("Errore durante il download dell'immagine:", error);
+		return null;
+	}
 }
 
 async function GetProfile() {
@@ -74,39 +74,40 @@ async function GetProfile() {
 			},
 		});
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Profile:", data);
+		if (response.ok) {
+			const data = await response.json();
+			console.log("Profile:", data);
 
-		let localImageUrl = null;
-		let avatarUrl = "";
-		if (data.current_avatar_url) {
-			// Estrai solo il nome del file
-			const filename = data.current_avatar_url.split('/').pop();
-			
-			// URL corretto per il proxy
-			// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
-			avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
-			// avatarUrl = avatarUrl.replace(" ", "%20");
+			let localImageUrl = null;
+			let avatarUrl = "";
+			if (data.current_avatar_url) {
+				// Estrai solo il nome del file
+				const filename = data.current_avatar_url.split('/').pop();
+				
+				// URL corretto per il proxy
+				// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
+				avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
+				// avatarUrl = avatarUrl.replace(" ", "%20");
 
-			console.log("Downloading profile image from:", avatarUrl);
-		}
+				console.log("Downloading profile image from:", avatarUrl);
+			}
 
-		if (avatarUrl !== "") {
-			localImageUrl = await downloadImageAsBlob(avatarUrl, token);
-		}
+			if (avatarUrl !== "") {
+				localImageUrl = await downloadImageAsBlob(avatarUrl, token);
+			}
 
-		setVariables({
-			name: data.first_name || "",
-			surname: data.last_name || "",
-			birthdate: data.birth_date || "",
-			bio: data.bio || "",
-			level: data.level ?? "",
-			exp: data.exp ?? "",
-			profileImageUrl: localImageUrl || "",
-		});
-		console.log("level e exp:", data.level, data.exp);
-		console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
+			setVariables({
+				name: data.first_name || "",
+				surname: data.last_name || "",
+				birthdate: data.birth_date || "",
+				bio: data.bio || "",
+				level: data.level ?? "",
+				exp: data.exp ?? "",
+				profileImageUrl: localImageUrl || "",
+				is_2fa_enabled: data.is_2fa_enabled || false,
+			});
+			console.log("level e exp:", data.level, data.exp);
+			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
 
 		} else {
 			const errorData = await response.json();
@@ -146,6 +147,7 @@ function renderProfile() {
 		level,
 		exp,
 		profileImageUrl,
+		is_2fa_enabled,
 	} = getVariables();
 	console.log("level e exp:", level, exp);
 	let edit = false;
@@ -189,6 +191,12 @@ function renderProfile() {
 							<label for="level" id="level">Level: ${level}, Exp: ${exp}</label>
 							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-range readonly-input custom-range">
 							<!--span id="expValue">exp: ${exp}</span-->
+						</div>
+
+						<div class="profile-form-group">
+							<button id="toggle2FAButton" type="button" class="btn btn-secondary">
+								${is_2fa_enabled ? "Disable" : "Enable"} 2FA
+							</button>
 						</div>
 
 					</form>
@@ -277,6 +285,99 @@ function renderProfile() {
 	// Imposta il valore iniziale
 	expInput.style.setProperty("--value", `${expInput.value}%`);
 
+	const toggle2FAButton = document.getElementById("toggle2FAButton");
+	toggle2FAButton.addEventListener("click", async function(e) {
+		e.preventDefault();
+		console.log("2FA button clicked");
+		if (is_2fa_enabled) {
+			window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
+		}
+		else {
+			try {
+				// Fetch the OTP URI from the server
+				const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
+					method: "GET",
+					headers: {
+						"Authorization": `Bearer ${getVariables().token}`
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error("Failed to fetch 2FA setup");
+				}
+
+				const data = await response.json();
+				const otpUri = data.otp_uri;
+
+				const qrModal = document.createElement("div");
+				qrModal.className = "login-box-modal";
+				qrModal.innerHTML = `
+					<div class="login_box">
+						<h1>Set up Two-Factor Authentication</h1>
+						<p>Scan this QR Code with your authenticator app (such as Google Authenticator)</p>
+						<div id="qrCodeContainer" style="text-align:center; margin: 20px 0;"></div>
+						<form id="setup2FAForm" class="d-flex flex-column align-items-center">
+							<div class="form-group" style="width: 100%; margin-bottom: 15px;">
+								<label for="otpCode">Enter the code shown in the app:</label>
+								<input type="text" id="otpCode" class="form-control" required>
+							</div>
+							<div style="display: flex; gap: 10px; width: 100%;">
+								<button type="submit" class="btn btn-primary" style="flex: 1;">Verify</button>
+								<button type="button" id="closeQrModal" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+							</div>
+						</form>
+					</div>
+				`;
+				document.body.appendChild(qrModal);
+
+				// Genera il QR code usando la libreria
+				const qrCodeContainer = qrModal.querySelector("#qrCodeContainer");
+				new QRCode(qrCodeContainer, {
+					text: otpUri,
+					width: 200,
+					height: 200,
+					correctLevel: QRCode.CorrectLevel.H
+				});
+
+				const closeQrModalBtn = qrModal.querySelector("#closeQrModal");
+				closeQrModalBtn.addEventListener("click", function () {
+					document.body.removeChild(qrModal);
+				});
+
+				const setup2FAForm = qrModal.querySelector("#setup2FAForm");
+				setup2FAForm.addEventListener("submit", async function (event) {
+				event.preventDefault();
+				const otpCode = qrModal.querySelector("#otpCode").value;
+
+				try {
+					const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${getVariables().token}`
+						},
+						body: JSON.stringify({ otp_code: otpCode })
+					});
+
+					if (response.ok) {
+						// Successo: chiudi la modale e aggiorna lo stato 2FA
+						document.body.removeChild(qrModal);
+						renderProfile();
+					} else {
+						const data = await response.json();
+						alert(data.error || "Errore nella verifica del codice OTP");
+					}
+				} catch (error) {
+					alert("Errore di rete durante la verifica del codice OTP");
+				}
+			});
+
+			} catch (error) {
+				console.error("Errore durante la configurazione del 2FA:", error);
+			}
+		}
+	});
+
 	// Event listener per l'immagine del profilo
 	profileImage.addEventListener("click", function (e) {
 		e.preventDefault();
@@ -285,19 +386,19 @@ function renderProfile() {
 		const profileImageSelector = document.createElement("div");
 		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
-        <div class="login_box">
-            <h1>Seleziona un'immagine</h1>
-            <div class="profile-image-preview">
-                <img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
-            </div>
-            <div class="profile-image-controls">
-                <label for="imageUpload" class="upload-btn">Scegli un file</label>
-                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                <button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
-                <button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
-            </div>
-        </div>
-    `;
+		<div class="login_box">
+			<h1>Seleziona un'immagine</h1>
+			<div class="profile-image-preview">
+				<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
+			</div>
+			<div class="profile-image-controls">
+				<label for="imageUpload" class="upload-btn">Scegli un file</label>
+				<input type="file" id="imageUpload" accept="image/*" style="display: none;">
+				<button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
+				<button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
+			</div>
+		</div>
+	`;
 		document.body.appendChild(profileImageSelector);
 
 		// Add event listeners for the file input and buttons

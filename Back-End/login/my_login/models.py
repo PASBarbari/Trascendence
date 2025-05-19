@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from encrypted_model_fields.fields import EncryptedCharField
 
 class AppUserManager(BaseUserManager):
 	def create_user(self, email, password=None):
@@ -32,6 +33,8 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = ['username']
 	is_staff = models.BooleanField(default=False)
+	is_2fa_enabled = models.BooleanField(default=False)
+	two_factor_secret = EncryptedCharField(max_length=255, blank=True, null=True)
 	objects = AppUserManager()
 	def __str__(self):
 		return self.username

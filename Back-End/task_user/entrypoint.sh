@@ -6,8 +6,8 @@ set -e
 python manage.py collectstatic --noinput
 
 # migrations at startup
-python manage.py makemigrations user_app task_app
-python manage.py migrate
+python manage.py makemigrations user_app task_app --noinput
+python manage.py migrate --noinput
 
 # For development
 if [ "$DEBUG" = "True" ]; then

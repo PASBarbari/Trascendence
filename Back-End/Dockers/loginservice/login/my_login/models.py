@@ -31,8 +31,6 @@ class AppUser(AbstractBaseUser, PermissionsMixin):
 	username = models.CharField(max_length=100)
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = ['username']
-    is_2fa_enabled = models.BooleanField(default=False)
-    two_factor_secret = EncryptedCharField(max_length=255, blank=True, null=True)
 	is_staff = models.BooleanField(default=False)
 	objects = AppUserManager()
 	def __str__(self):
