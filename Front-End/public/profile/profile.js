@@ -40,26 +40,26 @@ async function PatchProfile(name, surname, birthdate, bio) {
 
 // Aggiungi questa funzione al tuo file
 async function downloadImageAsBlob(imageUrl, token) {
-    try {
-        const imageResponse = await fetch(imageUrl, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+	try {
+		const imageResponse = await fetch(imageUrl, {
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
 
-        if (imageResponse.ok) {
-            const imageBlob = await imageResponse.blob();
-            const localImageUrl = URL.createObjectURL(imageBlob);
-            console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
-            return localImageUrl;
-        } else {
-            console.error("Errore nel recupero dell'immagine:", imageResponse.status);
-            return null;
-        }
-    } catch (error) {
-        console.error("Errore durante il download dell'immagine:", error);
-        return null;
-    }
+		if (imageResponse.ok) {
+			const imageBlob = await imageResponse.blob();
+			const localImageUrl = URL.createObjectURL(imageBlob);
+			console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
+			return localImageUrl;
+		} else {
+			console.error("Errore nel recupero dell'immagine:", imageResponse.status);
+			return null;
+		}
+	} catch (error) {
+		console.error("Errore durante il download dell'immagine:", error);
+		return null;
+	}
 }
 
 async function GetProfile() {
@@ -74,9 +74,34 @@ async function GetProfile() {
 			},
 		});
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Profile:", data);
+		if (response.ok) {
+			const data = await response.json();
+			console.log("Profile:", data);
+
+		try {
+				const twoFAResponse = await fetch(`${url_api}/login/login/is-2fa-enabled`, {
+					method: "GET",
+					headers: {
+						"Content-Type": "application/json",
+						Authorization: `Bearer ${token}`,
+					},
+				});
+				
+				if (twoFAResponse.ok) {
+					const twoFAData = await twoFAResponse.json();
+					// Aggiorniamo le variabili con lo stato 2FA
+					setVariables({
+						is_2fa_enabled: twoFAData.is_enabled
+					});
+					console.log("2FA status:", twoFAData.is_enabled);
+				}
+			} catch (twoFAError) {
+				console.error("Errore nel recupero dello stato 2FA:", twoFAError);
+				// In caso di errore, assumiamo che 2FA sia disabilitato
+				setVariables({
+					is_2fa_enabled: false
+				});
+			}
 
 		let localImageUrl = null;
 		let avatarUrl = "";
@@ -191,6 +216,12 @@ function renderProfile() {
 							<!--span id="expValue">exp: ${exp}</span-->
 						</div>
 
+						<div class="profile-form-group">
+							<button id="toggle2FAButton" type="button" class="btn btn-secondary">
+								${getVariables().is_2fa_enabled ? "Disable 2FA" : "Enable 2FA"}
+							</button>
+						</div>
+
 					</form>
 				</div>
 				<div class="profile-card-image-container">
@@ -277,6 +308,62 @@ function renderProfile() {
 	// Imposta il valore iniziale
 	expInput.style.setProperty("--value", `${expInput.value}%`);
 
+	const toggle2FAButton = document.getElementById("toggle2FAButton");
+	toggle2FAButton.addEventListener("click", async function(e) {
+		e.preventDefault();
+		console.log("2FA button clicked");
+		if (getVariables().is_2fa_enabled) {
+			window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
+		}
+		else {
+			try {
+				// Fetch the QR code from the server
+				const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
+					method: "GET",
+					headers: {
+						"Authorization": `Bearer ${getVariables().token}`
+					}
+				});
+				
+				if (!response.ok) {
+					throw new Error("Failed to fetch QR code");
+				}
+				
+				// Convert the response to a blob and create a URL for it
+				const qrBlob = await response.blob();
+				const qrCodeSrc = URL.createObjectURL(qrBlob);
+				
+				// Create the modal with QR code
+				const qrModal = document.createElement("div");
+				qrModal.className = "login-box-modal";
+				qrModal.innerHTML = `
+					<div class="login_box">
+						<h1>Imposta l'autenticazione a due fattori</h1>
+						<p>Scansiona questo QR Code con la tua app di autenticazione (come Google Authenticator)</p>
+						<div style="text-align:center; margin: 20px 0;">
+							<img src="${qrCodeSrc}" alt="QR Code" style="max-width: 100%;" />
+						</div>
+						<form id="setup2FAForm" class="d-flex flex-column align-items-center">
+							<div class="form-group" style="width: 100%; margin-bottom: 15px;">
+								<label for="otpCode">Inserisci il codice mostrato nell'app:</label>
+								<input type="text" id="otpCode" class="form-control" required>
+							</div>
+							<div style="display: flex; gap: 10px; width: 100%;">
+								<button type="submit" class="btn btn-primary" style="flex: 1;">Verifica</button>
+								<button type="button" id="closeQrModal" class="btn btn-secondary" style="flex: 1;">Annulla</button>
+							</div>
+						</form>
+					</div>
+				`;
+				document.body.appendChild(qrModal);
+				
+				// Rest of your code for handling form submission and close button...
+			} catch (error) {
+				console.error("Errore durante la configurazione del 2FA:", error);
+			}
+		}
+	});
+
 	// Event listener per l'immagine del profilo
 	profileImage.addEventListener("click", function (e) {
 		e.preventDefault();
@@ -285,19 +372,19 @@ function renderProfile() {
 		const profileImageSelector = document.createElement("div");
 		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
-        <div class="login_box">
-            <h1>Seleziona un'immagine</h1>
-            <div class="profile-image-preview">
-                <img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
-            </div>
-            <div class="profile-image-controls">
-                <label for="imageUpload" class="upload-btn">Scegli un file</label>
-                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                <button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
-                <button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
-            </div>
-        </div>
-    `;
+		<div class="login_box">
+			<h1>Seleziona un'immagine</h1>
+			<div class="profile-image-preview">
+				<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
+			</div>
+			<div class="profile-image-controls">
+				<label for="imageUpload" class="upload-btn">Scegli un file</label>
+				<input type="file" id="imageUpload" accept="image/*" style="display: none;">
+				<button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
+				<button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
+			</div>
+		</div>
+	`;
 		document.body.appendChild(profileImageSelector);
 
 		// Add event listeners for the file input and buttons

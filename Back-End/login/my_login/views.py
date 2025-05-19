@@ -35,6 +35,7 @@ from django.db import transaction
 import pyotp
 import qrcode
 from django_ratelimit.decorators import ratelimit
+import io
 
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
@@ -343,6 +344,7 @@ class Setup2FAView(APIView):
 	permission_classes = [permissions.IsAuthenticated]
 
 	def get(self, request):
+		logger.info("Setting up 2FA for user")
 		user = request.user
 		user.two_factor_secret = pyotp.random_base32()
 		user.save()
@@ -372,7 +374,7 @@ class Setup2FAView(APIView):
 		if verify_otp(user, otp):
 			user.is_2fa_enabled = True
 			user.save()
-			return Response({"message": "2FA enabled successfully"}, status=status.HTTP_200_OK)
+			return redirect('https://trascendence.42firenze.it/#home')
 		else:
 			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
 			
@@ -387,47 +389,43 @@ def verify_otp(user, otp):
 	return False
 
 class Verify2FALoginView(APIView):
-	permission_classes = [permissions.AllowAny] # O una permission più specifica se hai un token temporaneo
+	permission_classes = [permissions.AllowAny]
 
 	def post(self, request):
-    user_id = request.data.get('user_id')
-    otp_code = request.data.get('otp_code')
-    
-    if not user_id or not otp_code:
-        return Response({"error": "User ID and OTP code are required"}, 
-                       status=status.HTTP_400_BAD_REQUEST)
-    
-    try:
-        User = get_user_model()
-        user = User.objects.get(user_id=user_id)
-        
-        # Verify OTP code
-        if not verify_otp(user, otp_code):
+	user = request.user
+	otp_code = request.data.get('otp_code')
+		
+	if not user or not otp_code:
+		return Response({"error": "User and OTP code are required"}, status=status.HTTP_400_BAD_REQUEST)
+		
+	try:		
+		# Verify OTP code
+		if not verify_otp(user, otp_code):
 			return Response({"error": "Invalid OTP code"}, 
 						   status=status.HTTP_400_BAD_REQUEST)
-        
-        # OTP verified, log the user in
-        login(request, user)
-        
-        # Generate JWT tokens
-        refresh = RefreshToken.for_user(user)
-        access_token = str(refresh.access_token)
-        refresh_token = str(refresh)
-        
-        return Response({
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'user_id': user.user_id,
-            'username': user.username,
-            'email': user.email
-        }, status=status.HTTP_200_OK)
-        
-    except User.DoesNotExist:
-        return Response({"error": "User not found"}, 
-                      status=status.HTTP_404_NOT_FOUND)
-    except Exception as e:
-        return Response({"error": str(e)}, 
-                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		
+		# OTP verified, log the user in
+		login(request, user)
+		
+		# Generate JWT tokens
+		refresh = RefreshToken.for_user(user)
+		access_token = str(refresh.access_token)
+		refresh_token = str(refresh)
+		
+		return Response({
+			'access_token': access_token,
+			'refresh_token': refresh_token,
+			'user_id': user.user_id,
+			'username': user.username,
+			'email': user.email
+		}, status=status.HTTP_200_OK)
+		
+	except User.DoesNotExist:
+		return Response({"error": "User not found"}, 
+					  status=status.HTTP_404_NOT_FOUND)
+	except Exception as e:
+		return Response({"error": str(e)}, 
+					  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		
 
 class Disable2FAView(APIView):
@@ -439,10 +437,17 @@ class Disable2FAView(APIView):
 			user.is_2fa_enabled = False
 			user.two_factor_secret = None
 			user.save()
-			return Response({"message": "2FA disabled successfully"}, status=status.HTTP_200_OK)
+			return redirect('https://trascendence.42firenze.it/#home')
 		else:
 			return Response({"error": "2FA is not enabled"}, status=status.HTTP_400_BAD_REQUEST)
 		
+class Is2FAEnabledView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({"is_enabled": user.is_2fa_enabled}, status=status.HTTP_200_OK)
+
 
 # Update the UserRegister class to handle potential oauth users
 @method_decorator(csrf_exempt, name='dispatch')
@@ -522,12 +527,15 @@ class UserLogin(APIView):
 
 			# Check if 2FA is enabled for this user
 			if user.is_2fa_enabled:
-				# Return a response indicating 2FA is required
-				# Include user_id that will be needed for the 2FA verification step
-				return Response({
-					'requires_2fa': True,
-					'user_id': user.user_id
-				}, status=status.HTTP_200_OK)
+				# Generate a temporary token valid only for 2FA verification
+				temp_token = RefreshToken.for_user(user)
+				temp_token['2fa_pending'] = True	# Add a custom claim to indicate this token is for 2FA verification only
+				temp_token.set_exp(lifetime=timedelta(minutes=5))  # Set a short expiration time for the temp token
+				response = {
+					'temp_token': str(temp_token),
+					'message': '2FA is enabled. Please verify your OTP code.',
+				}
+				return Response(response, status=status.HTTP_200_OK)
 
 			# If 2FA is not enabled, proceed with normal login
 			login(request, user)

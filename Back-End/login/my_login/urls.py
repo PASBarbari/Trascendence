@@ -13,4 +13,5 @@ urlpatterns = [
     path('2fa/setup/', views.Setup2FAView.as_view(), name='setup_2fa'),
     path('2fa/verify/', views.Verify2FALoginView.as_view(), name='verify_2fa'),
     path('2fa/disable/', views.Disable2FAView.as_view(), name='disable_2fa'),
+    path('is-2fa-enabled/', views.Is2FAEnabledView.as_view(), name='is_2fa_enabled'),
 ]
