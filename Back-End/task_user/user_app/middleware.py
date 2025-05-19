@@ -60,6 +60,7 @@ class JWTAuth(JWTAuthentication):
 	Enhanced JWT authentication class with caching support and improved error handling.
 	"""
 	user_id_claim = 'user_id'
+
 	def authenticate(self, request):
 		# Skip authentication for specific paths if needed
 		if request.path.endswith('/chat/new_user/') and request.method == 'POST':
@@ -70,7 +71,7 @@ class JWTAuth(JWTAuthentication):
 		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
 		if auth_header and auth_header.startswith('Bearer '):
 			token = auth_header.replace('Bearer ', '')
-			
+
 			# Try to get from cache first
 			cache_key = f"jwt_auth_{token}"
 			cached_result = cache.get(cache_key)

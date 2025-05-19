@@ -78,60 +78,36 @@ async function GetProfile() {
 			const data = await response.json();
 			console.log("Profile:", data);
 
-		try {
-				const twoFAResponse = await fetch(`${url_api}/login/login/is-2fa-enabled`, {
-					method: "GET",
-					headers: {
-						"Content-Type": "application/json",
-						Authorization: `Bearer ${token}`,
-					},
-				});
+			let localImageUrl = null;
+			let avatarUrl = "";
+			if (data.current_avatar_url) {
+				// Estrai solo il nome del file
+				const filename = data.current_avatar_url.split('/').pop();
 				
-				if (twoFAResponse.ok) {
-					const twoFAData = await twoFAResponse.json();
-					// Aggiorniamo le variabili con lo stato 2FA
-					setVariables({
-						is_2fa_enabled: twoFAData.is_enabled
-					});
-					console.log("2FA status:", twoFAData.is_enabled);
-				}
-			} catch (twoFAError) {
-				console.error("Errore nel recupero dello stato 2FA:", twoFAError);
-				// In caso di errore, assumiamo che 2FA sia disabilitato
-				setVariables({
-					is_2fa_enabled: false
-				});
+				// URL corretto per il proxy
+				// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
+				avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
+				// avatarUrl = avatarUrl.replace(" ", "%20");
+
+				console.log("Downloading profile image from:", avatarUrl);
 			}
 
-		let localImageUrl = null;
-		let avatarUrl = "";
-		if (data.current_avatar_url) {
-			// Estrai solo il nome del file
-			const filename = data.current_avatar_url.split('/').pop();
-			
-			// URL corretto per il proxy
-			// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
-			avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
-			// avatarUrl = avatarUrl.replace(" ", "%20");
+			if (avatarUrl !== "") {
+				localImageUrl = await downloadImageAsBlob(avatarUrl, token);
+			}
 
-			console.log("Downloading profile image from:", avatarUrl);
-		}
-
-		if (avatarUrl !== "") {
-			localImageUrl = await downloadImageAsBlob(avatarUrl, token);
-		}
-
-		setVariables({
-			name: data.first_name || "",
-			surname: data.last_name || "",
-			birthdate: data.birth_date || "",
-			bio: data.bio || "",
-			level: data.level ?? "",
-			exp: data.exp ?? "",
-			profileImageUrl: localImageUrl || "",
-		});
-		console.log("level e exp:", data.level, data.exp);
-		console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
+			setVariables({
+				name: data.first_name || "",
+				surname: data.last_name || "",
+				birthdate: data.birth_date || "",
+				bio: data.bio || "",
+				level: data.level ?? "",
+				exp: data.exp ?? "",
+				profileImageUrl: localImageUrl || "",
+				is_2fa_enabled: data.is_2fa_enabled || false,
+			});
+			console.log("level e exp:", data.level, data.exp);
+			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
 
 		} else {
 			const errorData = await response.json();
@@ -171,6 +147,7 @@ function renderProfile() {
 		level,
 		exp,
 		profileImageUrl,
+		is_2fa_enabled,
 	} = getVariables();
 	console.log("level e exp:", level, exp);
 	let edit = false;
@@ -218,7 +195,7 @@ function renderProfile() {
 
 						<div class="profile-form-group">
 							<button id="toggle2FAButton" type="button" class="btn btn-secondary">
-								${getVariables().is_2fa_enabled ? "Disable 2FA" : "Enable 2FA"}
+								${is_2fa_enabled ? "Disable" : "Enable"} 2FA
 							</button>
 						</div>
 
@@ -312,52 +289,89 @@ function renderProfile() {
 	toggle2FAButton.addEventListener("click", async function(e) {
 		e.preventDefault();
 		console.log("2FA button clicked");
-		if (getVariables().is_2fa_enabled) {
+		if (is_2fa_enabled) {
 			window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
 		}
 		else {
 			try {
-				// Fetch the QR code from the server
+				// Fetch the OTP URI from the server
 				const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
 					method: "GET",
 					headers: {
 						"Authorization": `Bearer ${getVariables().token}`
 					}
 				});
-				
+
 				if (!response.ok) {
-					throw new Error("Failed to fetch QR code");
+					throw new Error("Failed to fetch 2FA setup");
 				}
-				
-				// Convert the response to a blob and create a URL for it
-				const qrBlob = await response.blob();
-				const qrCodeSrc = URL.createObjectURL(qrBlob);
-				
-				// Create the modal with QR code
+
+				const data = await response.json();
+				const otpUri = data.otp_uri;
+
 				const qrModal = document.createElement("div");
 				qrModal.className = "login-box-modal";
 				qrModal.innerHTML = `
 					<div class="login_box">
-						<h1>Imposta l'autenticazione a due fattori</h1>
-						<p>Scansiona questo QR Code con la tua app di autenticazione (come Google Authenticator)</p>
-						<div style="text-align:center; margin: 20px 0;">
-							<img src="${qrCodeSrc}" alt="QR Code" style="max-width: 100%;" />
-						</div>
+						<h1>Set up Two-Factor Authentication</h1>
+						<p>Scan this QR Code with your authenticator app (such as Google Authenticator)</p>
+						<div id="qrCodeContainer" style="text-align:center; margin: 20px 0;"></div>
 						<form id="setup2FAForm" class="d-flex flex-column align-items-center">
 							<div class="form-group" style="width: 100%; margin-bottom: 15px;">
-								<label for="otpCode">Inserisci il codice mostrato nell'app:</label>
+								<label for="otpCode">Enter the code shown in the app:</label>
 								<input type="text" id="otpCode" class="form-control" required>
 							</div>
 							<div style="display: flex; gap: 10px; width: 100%;">
-								<button type="submit" class="btn btn-primary" style="flex: 1;">Verifica</button>
-								<button type="button" id="closeQrModal" class="btn btn-secondary" style="flex: 1;">Annulla</button>
+								<button type="submit" class="btn btn-primary" style="flex: 1;">Verify</button>
+								<button type="button" id="closeQrModal" class="btn btn-secondary" style="flex: 1;">Cancel</button>
 							</div>
 						</form>
 					</div>
 				`;
 				document.body.appendChild(qrModal);
-				
-				// Rest of your code for handling form submission and close button...
+
+				// Genera il QR code usando la libreria
+				const qrCodeContainer = qrModal.querySelector("#qrCodeContainer");
+				new QRCode(qrCodeContainer, {
+					text: otpUri,
+					width: 200,
+					height: 200,
+					correctLevel: QRCode.CorrectLevel.H
+				});
+
+				const closeQrModalBtn = qrModal.querySelector("#closeQrModal");
+				closeQrModalBtn.addEventListener("click", function () {
+					document.body.removeChild(qrModal);
+				});
+
+				const setup2FAForm = qrModal.querySelector("#setup2FAForm");
+				setup2FAForm.addEventListener("submit", async function (event) {
+				event.preventDefault();
+				const otpCode = qrModal.querySelector("#otpCode").value;
+
+				try {
+					const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${getVariables().token}`
+						},
+						body: JSON.stringify({ otp_code: otpCode })
+					});
+
+					if (response.ok) {
+						// Successo: chiudi la modale e aggiorna lo stato 2FA
+						document.body.removeChild(qrModal);
+						renderProfile();
+					} else {
+						const data = await response.json();
+						alert(data.error || "Errore nella verifica del codice OTP");
+					}
+				} catch (error) {
+					alert("Errore di rete durante la verifica del codice OTP");
+				}
+			});
+
 			} catch (error) {
 				console.error("Errore durante la configurazione del 2FA:", error);
 			}

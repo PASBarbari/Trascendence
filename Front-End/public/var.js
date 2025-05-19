@@ -11,6 +11,7 @@ let variables = {
 	level: 0,
 	exp: 0,
 	profileImageUrl: null,
+	is_2fa_enabled: false,
 
 	multiplayer_username: null,
 	multiplayer_id: null,

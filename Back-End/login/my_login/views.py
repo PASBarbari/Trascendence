@@ -33,7 +33,6 @@ import logging, random, string, hashlib, base64
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 import pyotp
-import qrcode
 from django_ratelimit.decorators import ratelimit
 import io
 
@@ -354,37 +353,45 @@ class Setup2FAView(APIView):
 			issuer_name="Transcendence"
 		)
 
-		qr = qrcode.make(otp_uri)
-		buffer = io.BytesIO()
-		qr.save(buffer, format="PNG")
-		buffer.seek(0)
+		# Return the OTP URI as a URL for the frontend to generate the QR code
+		return Response({"otp_uri": otp_uri}, status=status.HTTP_200_OK)
 
-		response = HttpResponse(buffer.getvalue(), content_type="image/png")
-		response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-		response['Pragma'] = 'no-cache'
-		response['Expires'] = '0'
-		return response
-
-	def post(self, request):
-		user = request.user
-		otp = request.data.get('otp_code')
-		if not otp:
-			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
-		
-		if verify_otp(user, otp):
-			user.is_2fa_enabled = True
-			user.save()
-			return redirect('https://trascendence.42firenze.it/#home')
-		else:
-			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
+		def post(self, request):
+			user = request.user
+			otp = request.data.get('otp_code')
+			if not otp:
+				return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+			
+			if verify_otp(user, otp):
+				user.is_2fa_enabled = True
+				user.save()
+				# Update the two_factor_enabled flag in user microservice
+				user_service_url = f"{Microservices['Users']}/user/update-2fa/"
+			
+				response = requests.post(
+					user_service_url,
+					json={
+						'user_id': user.user_id,
+						'enabled': True
+					},
+					headers={
+						'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+						'Content-Type': 'application/json'
+					}
+				)
+			
+				if response.status_code == 200:
+					return redirect('https://trascendence.42firenze.it/#home')
+				else:
+					return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			else:
+				return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
 			
 def verify_otp(user, otp):
 	if not user.two_factor_secret:
 		return False
 	totp = pyotp.TOTP(user.two_factor_secret)
 	if totp.verify(otp):
-		user.is_2fa_enabled = True
-		user.save()
 		return True
 	return False
 
@@ -392,41 +399,40 @@ class Verify2FALoginView(APIView):
 	permission_classes = [permissions.AllowAny]
 
 	def post(self, request):
-	user = request.user
-	otp_code = request.data.get('otp_code')
-		
-	if not user or not otp_code:
-		return Response({"error": "User and OTP code are required"}, status=status.HTTP_400_BAD_REQUEST)
-		
-	try:		
-		# Verify OTP code
-		if not verify_otp(user, otp_code):
-			return Response({"error": "Invalid OTP code"}, 
-						   status=status.HTTP_400_BAD_REQUEST)
-		
-		# OTP verified, log the user in
-		login(request, user)
-		
-		# Generate JWT tokens
-		refresh = RefreshToken.for_user(user)
-		access_token = str(refresh.access_token)
-		refresh_token = str(refresh)
-		
-		return Response({
-			'access_token': access_token,
-			'refresh_token': refresh_token,
-			'user_id': user.user_id,
-			'username': user.username,
-			'email': user.email
-		}, status=status.HTTP_200_OK)
-		
-	except User.DoesNotExist:
-		return Response({"error": "User not found"}, 
-					  status=status.HTTP_404_NOT_FOUND)
-	except Exception as e:
-		return Response({"error": str(e)}, 
-					  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-		
+		user = request.user
+		otp_code = request.data.get('otp_code')
+
+		if not user or not otp_code:
+			return Response({"error": "User and OTP code are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+		try:		
+			# Verify OTP code
+			if not verify_otp(user, otp_code):
+				return Response({"error": "Invalid OTP code"}, 
+							   status=status.HTTP_400_BAD_REQUEST)
+
+			# OTP verified, log the user in
+			login(request, user)
+
+			# Generate JWT tokens
+			refresh = RefreshToken.for_user(user)
+			access_token = str(refresh.access_token)
+			refresh_token = str(refresh)
+
+			return Response({
+				'access_token': access_token,
+				'refresh_token': refresh_token,
+				'user_id': user.user_id,
+				'username': user.username,
+				'email': user.email
+			}, status=status.HTTP_200_OK)
+
+		except User.DoesNotExist:
+			return Response({"error": "User not found"}, 
+						  status=status.HTTP_404_NOT_FOUND)
+		except Exception as e:
+			return Response({"error": str(e)}, 
+						  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Disable2FAView(APIView):
 	permission_classes = [permissions.IsAuthenticated]
@@ -434,19 +440,43 @@ class Disable2FAView(APIView):
 	def post(self, request):
 		user = request.user
 		if user.is_2fa_enabled:
+			# First update the local model
 			user.is_2fa_enabled = False
 			user.two_factor_secret = None
 			user.save()
-			return redirect('https://trascendence.42firenze.it/#home')
+			
+			# Then update the user microservice
+			user_service_url = f"{Microservices['Users']}/user/update-2fa/"
+			
+			response = requests.post(
+				user_service_url,
+				json={
+					'user_id': user.user_id,
+					'enabled': False
+				},
+				headers={
+					'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+					'Content-Type': 'application/json'
+				}
+			)
+			
+			if response.status_code == 200:
+				return redirect('https://trascendence.42firenze.it/#home')
+			else:
+				# If the user service update fails, we should revert our local change
+				user.is_2fa_enabled = True
+				user.save()
+				return Response({"error": "Failed to disable 2FA in user service"}, 
+							   status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		else:
 			return Response({"error": "2FA is not enabled"}, status=status.HTTP_400_BAD_REQUEST)
 		
 class Is2FAEnabledView(APIView):
-permission_classes = [permissions.IsAuthenticated]
+	permission_classes = [permissions.IsAuthenticated]
 
-def get(self, request):
-user = request.user
-return Response({"is_enabled": user.is_2fa_enabled}, status=status.HTTP_200_OK)
+	def get(self, request):
+		user = request.user
+		return Response({"is_enabled": user.is_2fa_enabled}, status=status.HTTP_200_OK)
 
 
 # Update the UserRegister class to handle potential oauth users

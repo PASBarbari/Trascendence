@@ -32,12 +32,12 @@ class TwoFAMiddleware:
 
 	def __call__(self, request):
 		# Check if the user is authenticated and 2FA is enabled
-		query_string = parse_qs(scope["query_string"].decode())
-		if 'token' in query_string:
+		token = request.META.get('Authorization')
+		if token and token.startswith('Bearer '):
+			token = token.split('Bearer ')[1]
 			try:
-				token = query_string['token'][0]
 				decoded_token = AccessToken(token)
-				if decoded_token.get('2fa_pending') and decoded_token.is_valid():
+				if decoded_token.get('2fa_pending'):
 					if request.path != '/2fa/verify':
 						return JsonResponse({'error': '2FA verification required'}, status=403)
 					else:
@@ -46,5 +46,5 @@ class TwoFAMiddleware:
 			except Exception as e:
 				logger.error(f"Error decoding token: {e}")
 				return JsonResponse({'error': 'Invalid token'}, status=403)
-		return self.get_response(request)			
+		return self.get_response(request)
 			
