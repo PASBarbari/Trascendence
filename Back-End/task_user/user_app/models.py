@@ -14,7 +14,7 @@ class UserProfile(models.Model):
 	level = models.IntegerField(default=0)
 	current_avatar_url = models.URLField(max_length=500, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link')
 	last_modified = models.DateTimeField(auto_now=True)
-		
+
 	friends = models.ManyToManyField(
 		'self', 
 		through='Friendships',
