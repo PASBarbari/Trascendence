@@ -69,45 +69,112 @@ export default class Ball {
 		if (target && target.mesh) {
 			const helperMesh = target.mesh.children[0];
 
-			// Try raycasting first
-			const intersections = this.raycaster.intersectObject(helperMesh);
+			// Get paddle dimensions
+			const paddleWidth = state.p.width;
+			const paddleHeight = state.p.height;
+			const paddleHalfWidth = paddleWidth / 2;
+			const paddleHalfHeight = paddleHeight / 2;
 
-			// Get distance between ball and paddle
-			const distanceToTarget = this.mesh.position.distanceTo(
-				target.mesh.position
-			);
+			// Calculate relative position of ball to paddle
+			const relativePos = this.mesh.position
+				.clone()
+				.sub(target.mesh.position);
 
-			// Debug info
-			console.log("Distance to target:", distanceToTarget);
-			console.log("Target position:", target.mesh.position);
-			console.log("Ball position:", this.mesh.position);
+			// Inner face X position (facing the playing field)
+			const innerFaceX =
+				playerIndex === 0 ? paddleHalfWidth : -paddleHalfWidth;
+			// Bottom edge Z position
+			const bottomEdgeZ = -paddleHalfHeight;
 
-			// Calculate collision box for the paddle
+			// Distance from inner face and bottom edge
+			const distFromInnerFace = Math.abs(relativePos.x - innerFaceX);
+			const distFromBottom = Math.abs(relativePos.z - bottomEdgeZ);
 
-			// Check for collision based on distance and position
+			// Check if ball is in front of the inner face or above/below the bottom edge
+			const isInFrontOfInnerFace =
+				(playerIndex === 0 && relativePos.x > innerFaceX) ||
+				(playerIndex === 1 && relativePos.x < innerFaceX);
+			const isNearBottom =
+				Math.abs(relativePos.z - bottomEdgeZ) < this.radius;
+
+			// Check if the ball is within the paddle's height range (for inner face collision)
+			const isWithinPaddleHeight =
+				Math.abs(relativePos.z) <= paddleHalfHeight;
+
+			// Check if the ball is within the paddle's width range (for bottom edge collision)
+			const isWithinPaddleWidth =
+				Math.abs(relativePos.x) <= paddleHalfWidth;
+
+			// ...existing code...
+
+			// ...existing code...
+
+			// Collision with inner face
 			if (
-				(intersections && intersections.length > 0) ||
-				(Math.abs(this.mesh.position.x - target.mesh.position.x) <
-					this.radius + state.p.width / 2 &&
-					Math.abs(this.mesh.position.z - target.mesh.position.z) <
-						state.p.height / 2)
+				isInFrontOfInnerFace &&
+				isWithinPaddleHeight &&
+				distFromInnerFace <= this.radius
 			) {
-				console.log("COLLISION DETECTED!");
+				console.log("COLLISION DETECTED on inner face!");
 
 				// Visual feedback
-				this.pointCollision.position.copy(this.mesh.position.clone());
+				const collisionPoint = target.mesh.position.clone();
+				collisionPoint.x += innerFaceX;
+				collisionPoint.z += relativePos.z;
+				this.pointCollision.position.copy(collisionPoint);
 
-				// Bounce physics
-				this.velocity.x *= -1.2;
-				console.log("New velocity after bounce:", this.velocity);
+				// Calculate hit position relative to paddle center (range: -1 to 1)
+				const hitPosition = relativePos.z / paddleHalfHeight;
 
-				// Add spin based on hit position
-				const offset = this.mesh.position.z - target.mesh.position.z;
-				this.velocity.z += offset * 0.2;
+				// Bounce angle varies based on hit position (center = straight, edges = angled)
+				// Max angle is about 75 degrees (1.3 radians)
+				const bounceAngle = hitPosition * 1.3;
+
+				// Calculate new velocity components
+				const speed = this.speed;
+
+				// FIX: Reverse X direction based on which player was hit
+				// If player 0 (left), ball should go right (positive X)
+				// If player 1 (right), ball should go left (negative X)
+				const xDir = playerIndex === 0 ? 1 : -1;
+
+				// Set new velocity based on bounce angle
+				this.velocity.x = xDir * Math.cos(bounceAngle) * speed;
+				this.velocity.z = Math.sin(bounceAngle) * speed;
+
+				// Slightly increase speed with each hit to prevent endless rallies
+				this.speed *= 1.05;
+				this.speed = Math.min(this.speed, 40); // Cap max speed
+			}
+			// ...existing code...
+			// Collision with bottom edge
+			else if (isWithinPaddleWidth && isNearBottom) {
+				console.log("COLLISION DETECTED on bottom edge!");
+
+				// Visual feedback
+				const collisionPoint = target.mesh.position.clone();
+				collisionPoint.x += relativePos.x;
+				collisionPoint.z = target.mesh.position.z + bottomEdgeZ;
+				this.pointCollision.position.copy(collisionPoint);
+
+				// Calculate hit position relative to paddle center (range: -1 to 1)
+				const hitPosition = relativePos.x / paddleHalfWidth;
+
+				// Calculate bounce direction based on where it hit the bottom edge
+				const bounceAngle = hitPosition * 0.7; // More moderate angle for bottom hits
+
+				// Maintain horizontal component but angled based on hit position
+				this.velocity.z *= -1; // Reverse vertical direction
+
+				// Add sideways force based on hit position (positive on right side, negative on left)
+				this.velocity.x += hitPosition * 5;
 
 				// Normalize and maintain speed
 				this.velocity.normalize().multiplyScalar(this.speed);
 			}
+			// Remove the duplicate bottom edge collision handling code
+
+			// ...existing code...
 		} else {
 			console.warn("Target or target.mesh not found");
 		}

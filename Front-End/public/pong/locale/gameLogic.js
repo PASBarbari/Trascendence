@@ -13,27 +13,28 @@ import Ball from "./src/Ball.js";
 const clock = new THREE.Clock();
 
 export function animate() {
-    const deltaTime = clock.getDelta();
-    
-    if (state.ball) {
-        state.ball.update(deltaTime);
-    }
-    
-    if (state.p1) {
-        state.p1.move(state.p1_move_y);
-    }
-    
-    if (state.p2) {
-        state.p2.move(state.p2_move_y);
-    }
-    
-    if (state.controls) {
-        state.controls.update();
-    }
-    
-    if (state.renderer && state.scene && state.camera) {
-        state.renderer.render(state.scene, state.camera);
-    }
-    
-    state.animationFrameId = requestAnimationFrame(animate);
+	const deltaTime = clock.getDelta();
+
+	if (state.isPaused === false) {
+		if (state.ball) {
+			state.ball.update(deltaTime);
+		}
+
+		if (state.players[0]) {
+			state.players[0].move(state.p1_move_y);
+		}
+
+		if (state.players[1]) {
+			state.players[1].move(state.p2_move_y);
+		}
+
+		if (state.controls) {
+			state.controls.update();
+		}
+
+		if (state.renderer && state.scene && state.camera) {
+			state.renderer.render(state.scene, state.camera);
+		}
+	}
+	state.animationFrameId = requestAnimationFrame(animate);
 }

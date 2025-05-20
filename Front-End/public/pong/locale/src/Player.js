@@ -16,7 +16,7 @@ HELPER_GEOMETRY.rotateX(Math.PI / 2);
 const MATERIAL = new THREE.MeshNormalMaterial();
 const HELPER_MATERIAL = new THREE.MeshNormalMaterial({
 	transparent: true,
-	opacity: 0.5,
+	opacity: 0,
 });
 
 export default class Player {
