@@ -12,7 +12,7 @@ export default class Ball extends THREE.EventDispatcher {
 		this.boundaries = boundaries;
 
 		this.geometry = new THREE.SphereGeometry(this.radius);
-		this.material = new THREE.MeshNormalMaterial();
+		this.material = state.mat.ball;
 		this.mesh = new THREE.Mesh(this.geometry, this.material);
 
 		this.velocity.multiplyScalar(this.speed);
@@ -20,6 +20,9 @@ export default class Ball extends THREE.EventDispatcher {
 		this.raycaster = new THREE.Raycaster();
 		this.raycaster.near = 0;
 		this.raycaster.far = this.boundaries.y * 2.5;
+
+		this.mesh.castShadow = true;
+		this.mesh.receiveShadow = true;
 
 		// this.pointCollision = new THREE.Mesh(
 		// 	new THREE.SphereGeometry(1),

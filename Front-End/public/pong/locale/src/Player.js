@@ -13,7 +13,7 @@ const HELPER_GEOMETRY = new THREE.BoxGeometry(
 );
 GEOMETRY.rotateX(Math.PI / 2);
 HELPER_GEOMETRY.rotateX(Math.PI / 2);
-const MATERIAL = new THREE.MeshNormalMaterial();
+const MATERIAL = state.mat.player;
 const HELPER_MATERIAL = new THREE.MeshNormalMaterial({
 	transparent: true,
 	opacity: 0.5,
@@ -30,6 +30,9 @@ export default class Player {
 
 		this.mesh.add(this.helperMesh);
 		this.mesh.position.copy(position);
+
+		this.mesh.castShadow = true;
+		this.mesh.receiveShadow = true;
 
 		state.game.add(this.mesh);
 		state.players.push(this);

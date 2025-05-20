@@ -12,7 +12,10 @@ export let state = {
 	},
 	p: { height: 0, width: 2.5, depth: 2.5 },
 	mat: {
-		ring: new THREE.MeshNormalMaterial({}),
+		ring: new THREE.MeshStandardMaterial({ color: 0xffffff }),
+		player: new THREE.MeshStandardMaterial({ color: 0xff00ff }),
+		ball: new THREE.MeshStandardMaterial({ color: 0x00ff00 }),
+		score: new THREE.MeshStandardMaterial({ color: 0x00ff00 }),
 	},
 	P1cursor: null,
 	P2cursor: null,
@@ -69,6 +72,8 @@ export let state = {
 		p1: null,
 		p2: null,
 	},
+	lights: [],
+	plane: null,
 };
 
 state.ring.height = (9 / 16) * state.ring.length;

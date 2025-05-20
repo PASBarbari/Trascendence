@@ -7,11 +7,14 @@ import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import Ball from "./src/Ball.js";
 import Player from "./src/Player.js";
+import { initLights } from "./src/Light.js";
 
 //Scene setup
 
 export function setupGame() {
 	state.scene = new THREE.Scene();
+	state.scene.background = new THREE.Color(0xaaffff);
+	state.scene.fog = new THREE.Fog(0x000000, 95, 150);
 	state.camera = new THREE.PerspectiveCamera(
 		75,
 		window.innerWidth / window.innerHeight,
@@ -19,15 +22,23 @@ export function setupGame() {
 		1000
 	);
 	state.camera.position.set(state.cam.x, state.cam.y, state.cam.z);
-	state.camera.lookAt(state.look.x, state.look.y, state.look.z);
 
 	// Create renderer but don't attach yet
 	state.renderer = new THREE.WebGLRenderer({
-		antialias: false,
+		antialias: window.devicePixelRatio < 2,
+		logarithmicDepthBuffer: true,
 		powerPreference: "high-performance",
 		//quality: "high",
 		failIfMajorPerformanceCaveat: false,
 	});
+
+	// const AxesHelper = new THREE.AxesHelper(3);
+	// state.scene.add(AxesHelper);
+
+	// state.renderer.shadowMap.enabled = true;
+	// state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+	// state.renderer.toneMappingExposure = 1.2;
+	// state.renderer.shadowMap.type = THREE.VSMShadowMap;
 
 	// state.renderer.getContext().canvas.addEventListener('webglcontextlost', function(event) {
 	// 	console.log('WebGL context lost:', event);
@@ -67,16 +78,18 @@ export function setupGame() {
 	);
 	const planeGeometry = new THREE.PlaneGeometry(
 		state.boundaries.x * 2,
-		state.boundaries.y * 2,
-		state.boundaries.x / 2,
-		state.boundaries.y / 2
+		state.boundaries.y * 2
 	);
 	planeGeometry.rotateX(-Math.PI / 2);
-	const planeMaterial = new THREE.MeshNormalMaterial({
-		wireframe: true,
+	const planeMaterial = new THREE.MeshStandardMaterial({
+		// wireframe: true,
+		color: 0xffffff,
 	});
-	const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-	state.game.add(plane);
+	state.plane = new THREE.Mesh(planeGeometry, planeMaterial);
+	state.plane.position.y = -state.ring.thickness / 2;
+	state.plane.receiveShadow = true;
+	state.plane.castShadow = true;
+	state.game.add(state.plane);
 
 	//Ring setup
 
@@ -142,9 +155,14 @@ export function setupGame() {
 		// state.ground
 	);
 
+	state.ring3D.castShadow = true;
+	state.ring3D.receiveShadow = true;
+
 	state.ring3D.rotateX(-Math.PI / 2);
 	state.game.add(state.ring3D);
 	// //Players setup
+	initLights();
+	// state.scene.add(...state.lights);
 
 	new Player(
 		state.scene,
@@ -161,6 +179,8 @@ export function setupGame() {
 		state.players[0],
 		state.players[1],
 	]);
+
+	state.lights[0].target = state.ball.mesh;
 
 	state.ball.addEventListener("score", (event) => {
 		console.log("Score event:", event);
@@ -211,21 +231,16 @@ export function setupGame() {
 		});
 		textGeometry.center();
 
-		state.scoreMesh.p1 = new THREE.Mesh(
-			textGeometry,
-			new THREE.MeshNormalMaterial()
-		);
-		state.scoreMesh.p2 = new THREE.Mesh(
-			textGeometry,
-			new THREE.MeshNormalMaterial()
-		);
-		state.scoreMesh.p1.position.x = -state.boundaries.x * 0.8;
-		state.scoreMesh.p2.position.x = state.boundaries.x * 0.8;
-		state.scoreMesh.p1.position.z = -state.boundaries.y * 2;
-		state.scoreMesh.p2.position.z = -state.boundaries.y * 2;
-		state.scoreMesh.p1.rotateX(-Math.PI / 2);
-		state.scoreMesh.p2.rotateX(-Math.PI / 2);
-		state.game.add(state.scoreMesh.p1, state.scoreMesh.p2);
+		state.scoreMesh.p1 = new THREE.Mesh(textGeometry, state.mat.score);
+		state.scoreMesh.p2 = new THREE.Mesh(textGeometry, state.mat.score);
+		state.scoreMesh.p1.position.x = -state.boundaries.x * 0.6;
+		state.scoreMesh.p2.position.x = state.boundaries.x * 0.6;
+		state.scoreMesh.p1.position.y = state.boundaries.y * 1.3;
+		state.scoreMesh.p2.position.y = state.boundaries.y * 1.3;
+		// state.scoreMesh.p1.rotateX(-Math.PI / 2);
+		// state.scoreMesh.p2.rotateX(-Math.PI / 2);
+		// state.game.add(state.scoreMesh.p1, state.scoreMesh.p2);
+		state.scene.add(state.scoreMesh.p1, state.scoreMesh.p2);
 	});
 
 	//Movement setup
