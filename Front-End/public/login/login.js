@@ -155,7 +155,7 @@ function showOTPVerificationForm(tempToken, email) {
         <div class="login">
             <div class="login_box">
                 <h1>2FA Verification</h1>
-                <p>Please enter the OTP code from your authenticator app</p>
+                <p style="text-align: center;">Please enter the OTP code from your authenticator app</p>
                 <div class="login_form">
                     <form class="login_form" id="otpForm">
                         <div class="mb-3">

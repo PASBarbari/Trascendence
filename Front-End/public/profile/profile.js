@@ -195,7 +195,7 @@ function renderProfile() {
 
 						<div class="profile-form-group">
 							<label for="2fAuth" style="height:21px"></label>
-							<button id="toggle2FAButton" type="button" class="btn btn-secondary">
+							<button id="toggle2FAButton" type="button" class="btn btn-outline-secondary">
 								${has_two_factor_auth ? "Disable" : "Enable"} 2FA
 							</button>
 						</div>
@@ -291,7 +291,36 @@ function renderProfile() {
 		e.preventDefault();
 		console.log("2FA button clicked");
 		if (has_two_factor_auth) {
-			window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
+			//window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
+			try {
+				// Instead of redirecting, make an API call to disable 2FA
+				const response = await fetch(`${getVariables().url_api}/login/login/2fa/disable`, {
+					method: "POST",
+					headers: {
+						"Authorization": `Bearer ${getVariables().token}`,
+						"Content-Type": "application/json"
+					}
+				});
+				
+				if (response.ok) {
+					// Update local state
+					setVariables({
+						has_two_factor_auth: false
+					});
+					
+					// Update button text immediately
+					toggle2FAButton.textContent = "Enable 2FA";
+					
+					// Show success message
+					alert("Two-factor authentication has been disabled");
+				} else {
+					const errorData = await response.json();
+					alert(errorData.error || "Failed to disable 2FA");
+				}
+			} catch (error) {
+				console.error("Error disabling 2FA:", error);
+				alert("Network error while disabling 2FA");
+			}
 		}
 		else {
 			try {
@@ -362,8 +391,12 @@ function renderProfile() {
 
 					if (response.ok) {
 						// Successo: chiudi la modale e aggiorna lo stato 2FA
+						setVariables({
+                            has_two_factor_auth: true
+                        });
+						toggle2FAButton.textContent = "Disable 2FA";
 						document.body.removeChild(qrModal);
-						renderProfile();
+						//renderProfile();
 					} else {
 						const data = await response.json();
 						alert(data.error || "Errore nella verifica del codice OTP");

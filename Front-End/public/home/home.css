@@ -47,10 +47,6 @@
 
 }
 
-p {
-  all: unset;
-}
-
 .btn-square {
     width: 40px; /* Imposta una larghezza fissa */
     height: 40px; /* Imposta un'altezza fissa */
