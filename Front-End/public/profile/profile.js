@@ -104,7 +104,7 @@ async function GetProfile() {
 				level: data.level ?? "",
 				exp: data.exp ?? "",
 				profileImageUrl: localImageUrl || "",
-				is_2fa_enabled: data.is_2fa_enabled || false,
+				has_two_factor_auth: data.has_two_factor_auth || false,
 			});
 			console.log("level e exp:", data.level, data.exp);
 			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
@@ -147,7 +147,7 @@ function renderProfile() {
 		level,
 		exp,
 		profileImageUrl,
-		is_2fa_enabled,
+		has_two_factor_auth,
 	} = getVariables();
 	console.log("level e exp:", level, exp);
 	let edit = false;
@@ -194,8 +194,9 @@ function renderProfile() {
 						</div>
 
 						<div class="profile-form-group">
+							<label for="2fAuth" style="height:21px"></label>
 							<button id="toggle2FAButton" type="button" class="btn btn-secondary">
-								${is_2fa_enabled ? "Disable" : "Enable"} 2FA
+								${has_two_factor_auth ? "Disable" : "Enable"} 2FA
 							</button>
 						</div>
 
@@ -289,7 +290,7 @@ function renderProfile() {
 	toggle2FAButton.addEventListener("click", async function(e) {
 		e.preventDefault();
 		console.log("2FA button clicked");
-		if (is_2fa_enabled) {
+		if (has_two_factor_auth) {
 			window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
 		}
 		else {

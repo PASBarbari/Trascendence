@@ -5,6 +5,14 @@ sudo apt upgrade -y
 sudo apt install gnome-terminal kubectl docker.io -y
 sudo apt install curl git -y
 
+
+# Create the necessary directories
+sudo mkdir -p /mnt/data/postgres/chat
+sudo mkdir -p /mnt/data/postgres/notifications
+sudo mkdir -p /mnt/data/postgres/pong
+sudo mkdir -p /mnt/data/postgres/user
+sudo mkdir -p /mnt/data/postgres/login
+
 # Exit immediately if a command exits with a non-zero status
 set -eux
 if ! command -v kubecolor &> /dev/null; then

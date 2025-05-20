@@ -14,7 +14,9 @@ class UserProfile(models.Model):
 	level = models.IntegerField(default=0)
 	current_avatar_url = models.URLField(max_length=500, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link')
 	last_modified = models.DateTimeField(auto_now=True)
-	two_factor_enabled = models.BooleanField(default=False)
+	has_two_factor_auth = models.BooleanField(default=False)
+	samu_e_un_coglione = models.BooleanField(default=True)
+
 
 	friends = models.ManyToManyField(
 		'self', 

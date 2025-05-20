@@ -356,36 +356,37 @@ class Setup2FAView(APIView):
 		# Return the OTP URI as a URL for the frontend to generate the QR code
 		return Response({"otp_uri": otp_uri}, status=status.HTTP_200_OK)
 
-		def post(self, request):
-			user = request.user
-			otp = request.data.get('otp_code')
-			if not otp:
-				return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
-			
-			if verify_otp(user, otp):
-				user.is_2fa_enabled = True
-				user.save()
-				# Update the two_factor_enabled flag in user microservice
-				user_service_url = f"{Microservices['Users']}/user/update-2fa/"
-			
-				response = requests.post(
-					user_service_url,
-					json={
-						'user_id': user.user_id,
-						'enabled': True
-					},
-					headers={
-						'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
-						'Content-Type': 'application/json'
-					}
-				)
-			
-				if response.status_code == 200:
-					return redirect('https://trascendence.42firenze.it/#home')
-				else:
-					return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+	def post(self, request):
+		user = request.user
+		otp = request.data.get('otp_code')
+		if not otp:
+			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if verify_otp(user, otp):
+			user.has_two_factor_auth = True
+			user.save()
+			# Update the has_two_factor_auth flag in user microservice
+			user_service_url = f"{Microservices['Users']}/user/user/update-2fa/"
+		
+			response = requests.post(
+				user_service_url,
+				json={
+					'user_id': user.user_id,
+					'enabled': True
+				},
+				headers={
+					'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+					'Content-Type': 'application/json',
+					'X-API-KEY': settings.API_KEY,
+				}
+			)
+		
+			if response.status_code == 200:
+				return redirect('https://trascendence.42firenze.it/#home')
 			else:
-				return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
+				return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		else:
+			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
 			
 def verify_otp(user, otp):
 	if not user.two_factor_secret:
@@ -439,14 +440,14 @@ class Disable2FAView(APIView):
 
 	def post(self, request):
 		user = request.user
-		if user.is_2fa_enabled:
+		if user.has_two_factor_auth:
 			# First update the local model
-			user.is_2fa_enabled = False
+			user.has_two_factor_auth = False
 			user.two_factor_secret = None
 			user.save()
 			
 			# Then update the user microservice
-			user_service_url = f"{Microservices['Users']}/user/update-2fa/"
+			user_service_url = f"{Microservices['Users']}/user/user/update-2fa/"
 			
 			response = requests.post(
 				user_service_url,
@@ -456,7 +457,8 @@ class Disable2FAView(APIView):
 				},
 				headers={
 					'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					'X-API-KEY': settings.API_KEY,
 				}
 			)
 			
@@ -464,7 +466,7 @@ class Disable2FAView(APIView):
 				return redirect('https://trascendence.42firenze.it/#home')
 			else:
 				# If the user service update fails, we should revert our local change
-				user.is_2fa_enabled = True
+				user.has_two_factor_auth = True
 				user.save()
 				return Response({"error": "Failed to disable 2FA in user service"}, 
 							   status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -476,7 +478,7 @@ class Is2FAEnabledView(APIView):
 
 	def get(self, request):
 		user = request.user
-		return Response({"is_enabled": user.is_2fa_enabled}, status=status.HTTP_200_OK)
+		return Response({"is_enabled": user.has_two_factor_auth}, status=status.HTTP_200_OK)
 
 
 # Update the UserRegister class to handle potential oauth users
@@ -556,7 +558,7 @@ class UserLogin(APIView):
 			user = serializer.check_user(data)
 
 			# Check if 2FA is enabled for this user
-			if user.is_2fa_enabled:
+			if user.has_two_factor_auth:
 				# Generate a temporary token valid only for 2FA verification
 				temp_token = RefreshToken.for_user(user)
 				temp_token['2fa_pending'] = True	# Add a custom claim to indicate this token is for 2FA verification only

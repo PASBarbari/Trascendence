@@ -373,6 +373,7 @@ class Update2FAStatus(APIView):
 	"""
 	# Allow both service authentication and JWT authentication
 	authentication_classes = [ServiceAuthentication]
+	permission_classes = []
 		
 	def post(self, request):
 		user_id = request.data.get('user_id')
@@ -390,14 +391,14 @@ class Update2FAStatus(APIView):
 				enabled = enabled.lower() == 'true'
 				
 			user = get_object_or_404(UserProfile, user_id=user_id)
-			user.two_factor_enabled = enabled
-			user.save(update_fields=['two_factor_enabled'])
+			user.has_two_factor_auth = enabled
+			user.save(update_fields=['has_two_factor_auth'])
 			
 			return Response(
 				{
 					'message': f'2FA {"enabled" if enabled else "disabled"} for user {user_id}',
 					'user_id': user_id,
-					'two_factor_enabled': enabled
+					'has_two_factor_auth': enabled
 				}, 
 				status=status.HTTP_200_OK
 			)
