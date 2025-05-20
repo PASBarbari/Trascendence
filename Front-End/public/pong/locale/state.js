@@ -61,6 +61,14 @@ export let state = {
 	},
 	controls: null,
 	animationFrameId: null,
+	score: {
+		p1: 0,
+		p2: 0,
+	},
+	scoreMesh: {
+		p1: null,
+		p2: null,
+	},
 };
 
 state.ring.height = (9 / 16) * state.ring.length;

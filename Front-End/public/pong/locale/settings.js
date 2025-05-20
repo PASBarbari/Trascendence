@@ -126,44 +126,88 @@ function resumeGame() {
 }
 
 export function cleanupPong() {
-	return new Promise((resolve) => {
-		console.log("Cleaning up Pong game resources...");
+	console.log("Starting complete cleanup...");
 
-		// Cancel animation frame
-		if (state.animationFrameId) {
-			cancelAnimationFrame(state.animationFrameId);
-		}
+	// 1. Dispose all meshes in the game group
+	if (state.game) {
+		console.log(
+			`Cleaning game group with ${state.game.children.length} objects`
+		);
+		while (state.game.children.length > 0) {
+			const obj = state.game.children[0];
+			state.game.remove(obj);
 
-		// Recursive function to dispose meshes
-		function disposeMesh(mesh) {
-			if (mesh.children.length > 0) {
-				// Clone the children array since it will be modified during iteration
-				[...mesh.children].forEach((child) => disposeMesh(child));
-			}
+			if (obj.geometry) obj.geometry.dispose();
 
-			if (mesh.geometry) {
-				mesh.geometry.dispose();
-			}
-
-			if (mesh.material) {
-				// Handle both single materials and material arrays
-				if (Array.isArray(mesh.material)) {
-					mesh.material.forEach((material) => material.dispose());
+			if (obj.material) {
+				if (Array.isArray(obj.material)) {
+					obj.material.forEach((mat) => mat.dispose());
 				} else {
-					mesh.material.dispose();
+					obj.material.dispose();
 				}
 			}
 		}
+	}
 
-		// Clean up game group
-		if (state.game) {
-			// Dispose all meshes in the game group
-			[...state.game.children].forEach((mesh) => {
-				disposeMesh(mesh);
-				state.game.remove(mesh);
-			});
+	// 2. Dispose all scene objects
+	if (state.scene) {
+		console.log(
+			`Cleaning scene with ${state.scene.children.length} objects`
+		);
+		while (state.scene.children.length > 0) {
+			const obj = state.scene.children[0];
+			state.scene.remove(obj);
+
+			// Skip disposing game since we already handled it
+			if (obj === state.game) continue;
+
+			// Dispose if it's a mesh
+			if (obj.isMesh) {
+				if (obj.geometry) obj.geometry.dispose();
+
+				if (obj.material) {
+					if (Array.isArray(obj.material)) {
+						obj.material.forEach((mat) => mat.dispose());
+					} else {
+						obj.material.dispose();
+					}
+				}
+			}
 		}
-	});
+	}
+
+	// 3. Remove renderer from DOM
+	if (state.renderer) {
+		const container = document.getElementById("threejs-container");
+		if (
+			container &&
+			state.renderer.domElement &&
+			container.contains(state.renderer.domElement)
+		) {
+			container.removeChild(state.renderer.domElement);
+		}
+		state.renderer.dispose();
+		state.renderer = null;
+	}
+
+	// 4. Remove event listeners
+	window.removeEventListener("resize", state.onWindowResize);
+
+	// 5. Cancel animation frame if active
+	if (state.animationFrameId) {
+		cancelAnimationFrame(state.animationFrameId);
+		state.animationFrameId = null;
+	}
+
+	// 6. Reset state variables
+	state.ball = null;
+	state.players = [];
+	state.p1_score = 0;
+	state.p2_score = 0;
+	state.isStarted = false;
+	state.game = new THREE.Group(); // Create fresh game group
+
+	console.log("Cleanup complete");
 }
 
 function exitGame() {
@@ -173,7 +217,9 @@ function exitGame() {
 
 	cleanupPong();
 
-	showMainMenu();
-	// UTILS.restart_game();
+	// Uncomment this to navigate to home
 	window.navigateTo("#home");
+
+	// Or use this to show main menu
+	// showMainMenu();
 }

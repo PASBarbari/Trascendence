@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import { state } from "../state.js";
-export default class Ball {
+export default class Ball extends THREE.EventDispatcher {
 	speed = 25;
 	velocity = new THREE.Vector3(0.5, 0, 1);
 
 	constructor(scene, radius, boundaries, players) {
+		super();
 		this.scene = scene;
 		this.players = players;
 		this.radius = radius;
@@ -20,13 +21,18 @@ export default class Ball {
 		this.raycaster.near = 0;
 		this.raycaster.far = this.boundaries.y * 2.5;
 
-		this.pointCollision = new THREE.Mesh(
-			new THREE.SphereGeometry(1),
-			new THREE.MeshBasicMaterial({ color: 0xff0000 })
-		);
-		state.game.add(this.pointCollision);
+		// this.pointCollision = new THREE.Mesh(
+		// 	new THREE.SphereGeometry(1),
+		// 	new THREE.MeshBasicMaterial({ color: 0xff0000 })
+		// );
+		// state.game.add(this.pointCollision);
 		state.game.add(this.mesh);
 		state.ball = this;
+	}
+
+	resetSpeed() {
+		this.speed = 25;
+		this.velocity.normalize().multiplyScalar(this.speed);
 	}
 
 	update(dt) {
@@ -37,17 +43,16 @@ export default class Ball {
 		this.raycaster.set(this.mesh.position, this.dir);
 
 		// Debug ball parameters
-		console.log("Ball position:", this.mesh.position);
-		console.log("Direction:", this.dir);
-		console.log("Velocity:", this.velocity);
-
 		// Regular boundary collision code...
 		const dx =
 			this.boundaries.x - this.radius - Math.abs(this.mesh.position.x);
 		const dz =
 			this.boundaries.y - this.radius - Math.abs(this.mesh.position.z);
 		if (dx <= 0) {
+			const message = this.mesh.position.x > 0 ? "p1" : "p2";
+			this.dispatchEvent({ type: "score", message: message });
 			tPos.set(0, 0, 0);
+			this.resetSpeed();
 			this.velocity.x *= -1;
 		}
 		if (dz <= 0) {
@@ -121,7 +126,7 @@ export default class Ball {
 				const collisionPoint = target.mesh.position.clone();
 				collisionPoint.x += innerFaceX;
 				collisionPoint.z += relativePos.z;
-				this.pointCollision.position.copy(collisionPoint);
+				// this.pointCollision.position.copy(collisionPoint);
 
 				// Calculate hit position relative to paddle center (range: -1 to 1)
 				const hitPosition = relativePos.z / paddleHalfHeight;
@@ -143,38 +148,10 @@ export default class Ball {
 				this.velocity.z = Math.sin(bounceAngle) * speed;
 
 				// Slightly increase speed with each hit to prevent endless rallies
-				this.speed *= 1.05;
-				this.speed = Math.min(this.speed, 40); // Cap max speed
+				this.speed *= 1.1;
+				console.log("New speed after hit:", this.speed);
+				this.speed = Math.min(this.speed, 90); // Cap max speed
 			}
-			// ...existing code...
-			// Collision with bottom edge
-			else if (isWithinPaddleWidth && isNearBottom) {
-				console.log("COLLISION DETECTED on bottom edge!");
-
-				// Visual feedback
-				const collisionPoint = target.mesh.position.clone();
-				collisionPoint.x += relativePos.x;
-				collisionPoint.z = target.mesh.position.z + bottomEdgeZ;
-				this.pointCollision.position.copy(collisionPoint);
-
-				// Calculate hit position relative to paddle center (range: -1 to 1)
-				const hitPosition = relativePos.x / paddleHalfWidth;
-
-				// Calculate bounce direction based on where it hit the bottom edge
-				const bounceAngle = hitPosition * 0.7; // More moderate angle for bottom hits
-
-				// Maintain horizontal component but angled based on hit position
-				this.velocity.z *= -1; // Reverse vertical direction
-
-				// Add sideways force based on hit position (positive on right side, negative on left)
-				this.velocity.x += hitPosition * 5;
-
-				// Normalize and maintain speed
-				this.velocity.normalize().multiplyScalar(this.speed);
-			}
-			// Remove the duplicate bottom edge collision handling code
-
-			// ...existing code...
 		} else {
 			console.warn("Target or target.mesh not found");
 		}

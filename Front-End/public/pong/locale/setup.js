@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import { state } from "./state.js";
-import { createScore } from "./utils.js";
+// import { createScore, updateScore } from "./utils.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
+import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import Ball from "./src/Ball.js";
 import Player from "./src/Player.js";
 
@@ -111,11 +113,6 @@ export function setupGame() {
 		state.mat.ring
 	);
 
-	// state.ground = new THREE.Mesh(
-	// 	new THREE.BoxGeometry(state.ring.length - state.ring.thickness * 2, state.ring.height, 0),
-	// 	state.mat.ground
-	// );
-
 	state.r_bottom.position.set(
 		0,
 		-((state.ring.height + state.ring.thickness) / 2),
@@ -136,7 +133,6 @@ export function setupGame() {
 		0,
 		0
 	);
-	// state.ground.position.set(0, 0, -state.ring.depth / 4);
 	state.ring3D = new THREE.Group();
 	state.ring3D.add(
 		state.r_bottom,
@@ -166,6 +162,18 @@ export function setupGame() {
 		state.players[1],
 	]);
 
+	state.ball.addEventListener("score", (event) => {
+		console.log("Score event:", event);
+		if (event.message === "p1") {
+			state.p1_score++;
+		} else if (event.message === "p2") {
+			state.p2_score++;
+		}
+		updateScore(event.message);
+
+		console.log("Player 1 score:", state.p1_score);
+		console.log("Player 2 score:", state.p2_score);
+	});
 	// //Light setup
 
 	// let dirLight = new THREE.DirectionalLight(0xffffff, 10);
@@ -185,6 +193,40 @@ export function setupGame() {
 	state.game.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI / 3);
 	state.scene.add(state.game);
 	// createScore();
+
+	const fontLoader = new FontLoader();
+	const fontUrl =
+		"https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
+	fontLoader.load(fontUrl, function (font) {
+		const textGeometry = new TextGeometry("0", {
+			font: font,
+			size: 20,
+			depth: 0.5,
+			curveSegments: 12,
+			bevelEnabled: false,
+			bevelThickness: 0.1,
+			bevelSize: 0.1,
+			bevelOffset: 0,
+			bevelSegments: 5,
+		});
+		textGeometry.center();
+
+		state.scoreMesh.p1 = new THREE.Mesh(
+			textGeometry,
+			new THREE.MeshNormalMaterial()
+		);
+		state.scoreMesh.p2 = new THREE.Mesh(
+			textGeometry,
+			new THREE.MeshNormalMaterial()
+		);
+		state.scoreMesh.p1.position.x = -state.boundaries.x * 0.8;
+		state.scoreMesh.p2.position.x = state.boundaries.x * 0.8;
+		state.scoreMesh.p1.position.z = -state.boundaries.y * 2;
+		state.scoreMesh.p2.position.z = -state.boundaries.y * 2;
+		state.scoreMesh.p1.rotateX(-Math.PI / 2);
+		state.scoreMesh.p2.rotateX(-Math.PI / 2);
+		state.game.add(state.scoreMesh.p1, state.scoreMesh.p2);
+	});
 
 	//Movement setup
 
@@ -208,4 +250,48 @@ export function initGame() {
 	state.game.ballSpeed = state.ball_speed;
 	state.game.playerSpeed = state.player_speed;
 	state.game.ballRadius = state.ball_radius;
+}
+
+function updateScore(player) {
+	const scoreValue = player === "p1" ? state.p1_score : state.p2_score;
+	const scoreMesh = player === "p1" ? state.scoreMesh.p1 : state.scoreMesh.p2;
+
+	// Don't proceed if the score mesh isn't created yet
+	if (!scoreMesh) {
+		console.warn("Score mesh not initialized yet");
+		return;
+	}
+
+	const fontLoader = new FontLoader();
+	const fontUrl =
+		"https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
+
+	fontLoader.load(fontUrl, function (font) {
+		// Create new text geometry with current score
+		const textGeometry = new TextGeometry(scoreValue.toString(), {
+			font: font,
+			size: 20,
+			depth: 0.5,
+			curveSegments: 12,
+			bevelEnabled: false,
+			bevelThickness: 0.1,
+			bevelSize: 0.1,
+			bevelOffset: 0,
+			bevelSegments: 5,
+		});
+
+		textGeometry.center();
+
+		// Store the original position and rotation
+		const originalPosition = scoreMesh.position.clone();
+		const originalRotation = scoreMesh.rotation.clone();
+
+		// Remove old geometry and replace with new one
+		scoreMesh.geometry.dispose();
+		scoreMesh.geometry = textGeometry;
+
+		// Restore original position and rotation
+		scoreMesh.position.copy(originalPosition);
+		scoreMesh.rotation.copy(originalRotation);
+	});
 }
