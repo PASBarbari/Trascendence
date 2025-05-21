@@ -196,7 +196,7 @@ function renderProfile() {
 
 						<div class="profile-form-group">
 							<label for="2fAuth" style="height:21px"></label>
-							<button id="toggle2FAButton" type="button" class="btn btn-secondary">
+							<button id="toggle2FAButton" type="button" class="btn btn-outline-secondary">
 								${has_two_factor_auth ? "Disable" : "Enable"} 2FA
 							</button>
 						</div>
@@ -393,7 +393,7 @@ function renderProfile() {
 						toggle2FAButton.innerText = "Disable 2FA";
 						showAlertForXSeconds("2FA setup successful", "success", 3, { asToast: true });
 						document.body.removeChild(qrModal);
-						renderProfile();
+						//renderProfile();
 					} else {
 						console.error("2FA setup failed");
 						showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });

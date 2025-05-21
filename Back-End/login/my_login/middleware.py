@@ -31,6 +31,9 @@ class TwoFAMiddleware:
 		self.get_response = get_response
 
 	def __call__(self, request):
+		if request.path != '2fa/setup':
+			return self.get_response(request)
+		# Allow 2FA setup and disable endpoints
 		# Check if the user is authenticated and 2FA is enabled
 		token = request.META.get('Authorization')
 		if token and token.startswith('Bearer '):
