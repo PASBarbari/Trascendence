@@ -1,5 +1,6 @@
 import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -152,22 +153,29 @@ function showOTPVerificationForm(tempToken, email) {
     
     // Show OTP verification form
     contentDiv.innerHTML = `
-        <div class="login">
-            <div class="login_box">
-                <h1>2FA Verification</h1>
-                <p style="text-align: center;">Please enter the OTP code from your authenticator app</p>
-                <div class="login_form">
-                    <form class="login_form" id="otpForm">
-                        <div class="mb-3">
-                            <input type="text" id="otpCode" placeholder="OTP Code" class="form-control" required />
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Verify</button>
-                        <button type="button" id="cancelButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Cancel</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
+		<div class="login">
+			<div class="login_box auth-card">
+				<div class="text-center mb-4">
+					<i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+					<h1 class="auth-title">2FA Verification</h1>
+					<p class="auth-subtitle">Please enter the 6-digit code from your authenticator app</p>
+				</div>
+				<div class="login_form">
+					<form class="login_form" id="otpForm">
+						<div class="otp-input-container mb-4">
+							<input type="text" id="otpCode" placeholder="000000" class="form-control otp-input" maxlength="6" autocomplete="one-time-code" inputmode="numeric" required />
+						</div>
+						<button type="submit" class="btn btn-primary w-100 auth-btn">
+							<i class="fas fa-lock-open me-2"></i>Verify
+						</button>
+						<button type="button" id="cancelButton" class="btn btn-outline-secondary w-100 mt-3 auth-btn">
+							<i class="fas fa-arrow-left me-2"></i>Back to Login
+						</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	`;
 
     // Handle OTP verification
     document.getElementById("otpForm").addEventListener("submit", async function(e) {
@@ -178,8 +186,7 @@ function showOTPVerificationForm(tempToken, email) {
             if (verified) {
                 window.navigateTo("#home");
             } else {
-                // Show error message
-                alert("Invalid OTP code. Please try again.");
+				showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });
             }
         }
     });

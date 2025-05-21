@@ -1,5 +1,6 @@
 import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -111,10 +112,10 @@ async function GetProfile() {
 
 		} else {
 			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
+			console.error("Error fetching profile:", errorData);
 		}
 	} catch (error) {
-		console.error("Errore nella richiesta:", error);
+		console.error("Error fetching profile:", error);
 	}
 }
 
@@ -291,35 +292,29 @@ function renderProfile() {
 		e.preventDefault();
 		console.log("2FA button clicked");
 		if (has_two_factor_auth) {
-			//window.location.href = `${getVariables().url_api}/login/login/2fa/disable`;
+			// Disable 2FA
 			try {
-				// Instead of redirecting, make an API call to disable 2FA
-				const response = await fetch(`${getVariables().url_api}/login/login/2fa/disable`, {
+				const response = await fetch(`${getVariables().url_api}/login/login/2fa/disable/`, {
 					method: "POST",
 					headers: {
-						"Authorization": `Bearer ${getVariables().token}`,
-						"Content-Type": "application/json"
-					}
-				});
-				
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${getVariables().token}`
+						}
+					});
 				if (response.ok) {
-					// Update local state
 					setVariables({
 						has_two_factor_auth: false
 					});
-					
-					// Update button text immediately
-					toggle2FAButton.textContent = "Enable 2FA";
-					
-					// Show success message
-					alert("Two-factor authentication has been disabled");
+					showAlertForXSeconds("2FA disabled successfully", "success", 3, { asToast: true });
+					console.log("2FA disabled successfully");
+					toggle2FAButton.innerText = "Enable 2FA";
+					renderProfile();
 				} else {
-					const errorData = await response.json();
-					alert(errorData.error || "Failed to disable 2FA");
+					const data = await response.json();
+					alert(data.error || "Error disabling 2FA");
 				}
 			} catch (error) {
-				console.error("Error disabling 2FA:", error);
-				alert("Network error while disabling 2FA");
+				alert("Error disabling 2FA");
 			}
 		}
 		else {
@@ -390,16 +385,18 @@ function renderProfile() {
 					});
 
 					if (response.ok) {
+						console.log("2FA setup successful");
 						// Successo: chiudi la modale e aggiorna lo stato 2FA
 						setVariables({
-                            has_two_factor_auth: true
-                        });
-						toggle2FAButton.textContent = "Disable 2FA";
+							has_two_factor_auth: true
+						});
+						toggle2FAButton.innerText = "Disable 2FA";
+						showAlertForXSeconds("2FA setup successful", "success", 3, { asToast: true });
 						document.body.removeChild(qrModal);
 						//renderProfile();
 					} else {
-						const data = await response.json();
-						alert(data.error || "Errore nella verifica del codice OTP");
+						console.error("2FA setup failed");
+						showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });
 					}
 				} catch (error) {
 					alert("Errore di rete durante la verifica del codice OTP");
