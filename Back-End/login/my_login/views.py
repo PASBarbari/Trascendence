@@ -392,94 +392,115 @@ class Setup2FAView(APIView):
 			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
 			
 def verify_otp(user, otp):
-    if not user.two_factor_secret:
-        return False
-    
-    # 1. Ottieni il timestamp corrente
-    timestamp = int(time.time())
-    
-    # 2. Calcola time counter (intervalli di 30 secondi dal 1970)
-    time_counter = timestamp // 30
-    
-    # 3. Verifica il codice corrente e un intervallo prima/dopo (per compensare desincronizzazioni di orario)
-    for i in range(-1, 2):
-        current_counter = time_counter + i
-        
-        # 4. Converti il counter in bytes (formato big-endian 8-byte)
-        time_bytes = struct.pack(">Q", current_counter)
-        
-        # 5. Decodifica il secret dalla base32
-        key = base64.b32decode(user.two_factor_secret.upper() + '=' * ((8 - len(user.two_factor_secret) % 8) % 8))
-        
-        # 6. Calcola l'HMAC-SHA1
-        h = hmac.new(key, time_bytes, hashlib.sha1).digest()
-        
-        # 7. Applica "dynamic truncation" per ottenere 4 bytes
-        offset = h[-1] & 0x0F
-        truncated_hash = h[offset:offset+4]
-        
-        # 8. Converti in un numero intero, elimina il bit più significativo
-        code = struct.unpack('>I', truncated_hash)[0] & 0x7FFFFFFF
-        
-        # 9. Prendi solo le ultime 6 cifre
-        code = code % 1000000
-        
-        # 10. Formatta come stringa con zeri iniziali
-        code_str = '{:06d}'.format(code)
-        
-        # 11. Confronta con il codice inserito dall'utente
-        if code_str == otp:
-            return True
-    
-    return False
+	try:
+		if not user.two_factor_secret:
+			return False
+		
+		# 1. Ottieni il timestamp corrente
+		timestamp = int(time.time())
+		
+		# 2. Calcola time counter (intervalli di 30 secondi dal 1970)
+		time_counter = timestamp // 30
+		
+		# 3. Verifica il codice corrente e un intervallo prima/dopo (per compensare desincronizzazioni di orario)
+		for i in range(-1, 2):
+			current_counter = time_counter + i
+			
+			# 4. Converti il counter in bytes (formato big-endian 8-byte)
+			time_bytes = struct.pack(">Q", current_counter)
+			
+			# 5. Decodifica il secret dalla base32
+			key = base64.b32decode(user.two_factor_secret.upper() + '=' * ((8 - len(user.two_factor_secret) % 8) % 8))
+			
+			# 6. Calcola l'HMAC-SHA1
+			h = hmac.new(key, time_bytes, hashlib.sha1).digest()
+			
+			# 7. Applica "dynamic truncation" per ottenere 4 bytes
+			offset = h[-1] & 0x0F
+			truncated_hash = h[offset:offset+4]
+			
+			# 8. Converti in un numero intero, elimina il bit più significativo
+			code = struct.unpack('>I', truncated_hash)[0] & 0x7FFFFFFF
+			
+			# 9. Prendi solo le ultime 6 cifre
+			code = code % 1000000
+			
+			# 10. Formatta come stringa con zeri iniziali
+			code_str = '{:06d}'.format(code)
+			
+			# 11. Confronta con il codice inserito dall'utente
+			if code_str == otp:
+				return True
+		
+		return False
+	except Exception as e:
+		logger.error(f"Error verifying OTP: {str(e)}")
+		return False
 
 def create_manual_totp_uri(secret, email, issuer="Transcendence"):
-    # Codifica il label (issuer:account) per URL
-    label = f"{issuer}:{email}"
-    encoded_label = urllib.parse.quote(label)
-    
-    # Crea l'URI con i parametri necessari
-    uri = f"otpauth://totp/{encoded_label}?secret={secret}&issuer={urllib.parse.quote(issuer)}"
-    
-    # Parametri opzionali (questi sono i valori predefiniti)
-    uri += "&algorithm=SHA1&digits=6&period=30"
-    
-    return uri
+	# Codifica il label (issuer:account) per URL
+	label = f"{issuer}:{email}"
+	encoded_label = urllib.parse.quote(label)
+		
+	# Crea l'URI con i parametri necessari
+	uri = f"otpauth://totp/{encoded_label}?secret={secret}&issuer={urllib.parse.quote(issuer)}"
+		
+	# Parametri opzionali (questi sono i valori predefiniti)
+	uri += "&algorithm=SHA1&digits=6&period=30"
+		
+	return uri
 
 def generate_random_base32(length=16):
-    """
-    Genera una stringa casuale in formato base32.
-    
-    Args:
-        length: Lunghezza in byte dei dati casuali prima della codifica
-        
-    Returns:
-        Una stringa base32 (caratteri A-Z, 2-7)
-    """
-    # Ottieni byte casuali sicuri usando os.urandom
-    random_bytes = os.urandom(length)
-    
-    # Codifica in base32
-    base32_str = base64.b32encode(random_bytes).decode('utf-8')
-    
-    # Rimuovi eventuali padding '='
-    base32_str = base32_str.rstrip('=')
-    
-    return base32_str
+	"""
+	Genera una stringa casuale in formato base32.
+		
+	Args:
+		length: Lunghezza in byte dei dati casuali prima della codifica
+		
+	Returns:
+		Una stringa base32 (caratteri A-Z, 2-7)
+	"""
+	# Ottieni byte casuali sicuri usando os.urandom
+	random_bytes = os.urandom(length)
+		
+	# Codifica in base32
+	base32_str = base64.b32encode(random_bytes).decode('utf-8')
+		
+	# Rimuovi eventuali padding '='
+	base32_str = base32_str.rstrip('=')
+		
+	return base32_str
 
 class Verify2FALoginView(APIView):
 	permission_classes = [permissions.AllowAny]
+	authentication_classes = [] # Use empty list to bypass DRF's authentication
 
 	def post(self, request):
-		user = request.user
+		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+		if not auth_header.startswith('Bearer '):
+			return Response({"error": "Invalid authorization header"}, status=status.HTTP_401_UNAUTHORIZED)
+		
+		token = auth_header.split('Bearer ')[1]
 		otp_code = request.data.get('otp_code')
 
-		if not user or not otp_code:
-			return Response({"error": "User and OTP code are required"}, status=status.HTTP_400_BAD_REQUEST)
+		if not otp_code:
+			logger.error("OTP code not provided")
+			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-		try:		
+		try:
+			# Decodifica il token per ottenere user_id
+			decoded_token = RefreshToken(token)
+			user_id = decoded_token.get('user_id')
+
+			# Ottieni l'utente direttamente dal database
+			User = get_user_model()
+			user = User.objects.get(user_id=user_id)
+			
+			logger.info(f"Verifying 2FA for user {user.username} with OTP code: {otp_code}")
+	
 			# Verify OTP code
 			if not verify_otp(user, otp_code):
+				logger.warning(f"Invalid OTP code for user {user.username}")
 				return Response({"error": "Invalid OTP code"}, 
 							   status=status.HTTP_400_BAD_REQUEST)
 
@@ -490,7 +511,8 @@ class Verify2FALoginView(APIView):
 			refresh = RefreshToken.for_user(user)
 			access_token = str(refresh.access_token)
 			refresh_token = str(refresh)
-
+			
+			logger.info(f"User {user.username} logged in with 2FA")
 			return Response({
 				'access_token': access_token,
 				'refresh_token': refresh_token,
@@ -503,6 +525,7 @@ class Verify2FALoginView(APIView):
 			return Response({"error": "User not found"}, 
 						  status=status.HTTP_404_NOT_FOUND)
 		except Exception as e:
+			logger.error(f"Error during 2FA verification: {str(e)}")
 			return Response({"error": str(e)}, 
 						  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

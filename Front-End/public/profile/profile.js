@@ -344,7 +344,7 @@ function renderProfile() {
 						<form id="setup2FAForm" class="d-flex flex-column align-items-center">
 							<div class="form-group" style="width: 100%; margin-bottom: 15px;">
 								<label for="otpCode">Enter the code shown in the app:</label>
-								<input type="text" id="otpCode" class="form-control" required>
+								<input type="text" id="otpCode" class="form-control" required maxlength="6" inputmode="numeric">
 							</div>
 							<div style="display: flex; gap: 10px; width: 100%;">
 								<button type="submit" class="btn btn-primary" style="flex: 1;">Verify</button>
