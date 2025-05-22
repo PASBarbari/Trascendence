@@ -40,7 +40,7 @@ function saveSettings() {
 function resetSettings() {
 	document.getElementById("player1Color").value = "#4deeea";
 	document.getElementById("player2Color").value = "#4deeea";
-	document.getElementById("ballColor").value = "#ff2b2b";
+	document.getElementById("ballColor").value = "#8c5fb3";
 	document.getElementById("ringColor").value = "#ffe700";
 	document.getElementById("planeColor").value = "#089c00";
 
