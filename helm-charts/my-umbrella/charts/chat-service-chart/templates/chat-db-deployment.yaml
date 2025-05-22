@@ -1,46 +1,53 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-db") }}
-  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "chat") }}
+  name: {{ .Release.Name }}-chat-db
+  namespace: {{ .Values.namespace }}
   labels:
-    {{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Component" "chat-db") | nindent 4 }}
+    app: {{ .Release.Name }}-chat-db
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
-  serviceName: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat-db") }}
+  serviceName: {{ .Release.Name }}-chat-db
   replicas: 1
   selector:
     matchLabels:
-      {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat-db") | nindent 6 }}
+      app: {{ .Release.Name }}-chat-db
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat-db") | nindent 8 }}
+        app: {{ .Release.Name }}-chat-db
+        release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ include "common.serviceAccountName" (dict "Values" .Values "Release" .Release "Component" "chat-db") }}
-      containers:
-      - name: postgres
-        image: postgres:13
-        ports:
-        - containerPort: 5432
-        env:
-        - name: POSTGRES_DB
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "common.dbSecretName" (dict "Release" .Release "Component" "chat") }}
-              key: chat-db
-        - name: POSTGRES_USER
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "common.dbSecretName" (dict "Release" .Release "Component" "chat") }}
-              key: chat-db-user
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "common.dbSecretName" (dict "Release" .Release "Component" "chat") }}
-              key: chat-db-password
-        volumeMounts:
-        - name: data
-          mountPath: /var/lib/postgresql/data
+        serviceAccountName: {{ .Values.serviceAccount.dbName | default "default" }}
+        containers:
+          - name: postgres
+            image: postgres:13
+            imagePullPolicy: IfNotPresent
+            ports:
+            - containerPort: 5432
+              name: db
+            env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.database.name }}
+                  key: chat-db
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.database.user }}
+                  key: chat-db-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.database.password }}
+                  key: chat-db-password
+            volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
   volumeClaimTemplates:
   - metadata:
       name: data

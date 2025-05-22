@@ -2,7 +2,7 @@
 replicaCount: 1
 
 image:
-  repository: marcor42/chatservice
+  repository: bombatomica/chat
   pullPolicy: Always
   tag: latest
 
@@ -70,9 +70,11 @@ ingress:
     forceRedirect: "true"
   tls:
     enabled: true
-    secretName: traefik-tls
+    secretName: chat-tls
 
 serviceAccount:
+  name: "trascendence-chat-sa"
+  dbName: "chat-db-service-account"
   create: true
   annotations: {}
   automount: true

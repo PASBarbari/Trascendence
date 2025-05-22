@@ -1,14 +1,14 @@
 
 clusterIssuers:
   letsencrypt:
-    enabled: true
-    name: letsencrypt-prod
-    email: qualcosa2001@gmail.com
-    server: https://acme-v02.api.letsencrypt.org/directory
-    privateKeySecretName: letsencrypt-prod
-    solvers:
-      - http01:
-          ingressClass: traefik  # Changed from nginx to traefik as per your setup
+    enabled: false
+    # name: letsencrypt-prod
+    # email: qualcosa2001@gmail.com
+    # server: https://acme-v02.api.letsencrypt.org/directory
+    # privateKeySecretName: letsencrypt-prod
+    # solvers:
+    #   - http01:
+    #       ingressClass: traefik  # Changed from nginx to traefik as per your setup
 
   selfsigned:
     enabled: true
@@ -32,7 +32,7 @@ certificates:
       
   chat:
     enabled: true
-    name: chat-cert
+    name: chat-tls
     namespace: chat
     secretName: chat-tls
     issuerRef:

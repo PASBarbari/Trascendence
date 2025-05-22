@@ -1,10 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "chat") }}
-  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "chat") }}
+  name: "{{ .Release.Name }}-chat-service"
+  namespace: chat
   labels:
-    {{- include "common.labels" (dict "Chart" .Chart "Release" .Release "Component" "chat") | nindent 4 }}
+    app: {{ .Release.Name }}-chat
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -12,4 +15,5 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
   selector:
-    {{- include "common.selectorLabels" (dict "Release" .Release "Component" "chat") | nindent 4 }}
+    app: {{ .Release.Name }}-chat
+    release: {{ .Release.Name }}

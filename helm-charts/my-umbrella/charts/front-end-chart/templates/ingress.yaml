@@ -1,15 +1,15 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") }}-ingress
-  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
+  name: {{ .Release.Name }}-frontend-ingress
+  namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
     # Traefik specific annotations
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    # Redirect HTTP to HTTPS
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Release.Name }}-redirect-https@kubernetescrd
+    # All middlewares on one line, comma-separated
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Release.Name }}-websocket-headers@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-redirect-https@kubernetescrd
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -23,7 +23,7 @@ spec:
         pathType: {{ .Values.ingress.pathType | default "Prefix" }}
         backend:
           service:
-            name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend-service") }}
+            name: {{ .Release.Name }}-frontend-service
             port:
               number: {{ .Values.service.port }}
   {{- if .Values.ingress.tls.enabled }}

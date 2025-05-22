@@ -1,21 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "common.fullname" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") }}
-  namespace: {{ include "common.namespace" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
+  name: {{ .Release.Name }}-frontend
+  namespace: {{ .Values.namespace }}
   labels:
-    {{- include "common.labels" (dict "Chart" .Chart "Values" .Values "Release" .Release "Component" "frontend") | nindent 4 }}
+    app: {{ .Release.Name }}-frontend
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "common.selectorLabels" (dict "Release" .Release "Component" "frontend") | nindent 6 }}
+      app: {{ .Release.Name }}-frontend
   template:
     metadata:
       labels:
-        {{- include "common.selectorLabels" (dict "Release" .Release "Component" "frontend") | nindent 8 }}
+        app: {{ .Release.Name }}-frontend
+        release: {{ .Release.Name }}
     spec:
-      serviceAccountName: {{ include "common.serviceAccountName" (dict "Values" .Values "Release" .Release "Component" "frontend") }}
+      serviceAccountName: {{ .Values.serviceAccount.name | default "default" }}
       {{- with .Values.hostAliases }}
       hostAliases:
         {{- toYaml . | nindent 8 }}
