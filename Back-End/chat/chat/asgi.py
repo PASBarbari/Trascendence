@@ -15,7 +15,7 @@ BASE_DIR = Path('/app')
 
 from my_chat.middleware import JWTAuthMiddleware
 from my_chat import consumers
-from .routing import websocket_urlpatterns
+from chat.routing import websocket_urlpatterns
 # import shutil
 import logging
 

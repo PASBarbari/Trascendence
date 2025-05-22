@@ -17,7 +17,17 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 import logging
 from .Permissions import ChatRoomPermissions , IsAuthenticatedUserProfile , IsOwnUserProfile
 from django.views.decorators.csrf import csrf_exempt
+from functools import wraps
 
+logger = logging.getLogger('django')
+
+
+def post_api_view(func):
+	@wraps(func)
+	def wrapper(self, request, *args, **kwargs):
+		logger.info(f"POST API called: {func.__name__} by user {getattr(request.user, 'username', 'Anonymous')}")
+		return func(self, request, *args, **kwargs)
+	return wrapper
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -81,7 +91,6 @@ class new_user(generics.ListCreateAPIView):
         # You can add additional logging for audit purposes
         # logger.info(f"Creating new user from service: {self.request.headers.get('User-Agent')}")
         return serializer.save()
-
 
 class CreateChat(generics.ListCreateAPIView):
 	serializer_class = chat_roomSerializer
