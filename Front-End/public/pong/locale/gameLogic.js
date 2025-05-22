@@ -13,7 +13,8 @@ import Ball from "./src/Ball.js";
 const clock = new THREE.Clock();
 
 export function animate() {
-	const deltaTime = clock.getDelta();
+	const originalDelta = clock.getDelta();
+	const deltaTime = originalDelta; // Convert to milliseconds
 
 	if (state.isPaused === false) {
 		if (state.stats) {
@@ -38,9 +39,9 @@ export function animate() {
 		if (state.controls) {
 			state.controls.update();
 		}
-		if (state.renderer && state.scene && state.camera) {
-			state.renderer.render(state.scene, state.camera);
-		}
+	}
+	if (state.renderer && state.scene && state.camera) {
+		state.renderer.render(state.scene, state.camera);
 	}
 	state.animationFrameId = requestAnimationFrame(animate);
 }

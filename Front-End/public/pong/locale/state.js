@@ -14,7 +14,11 @@ export let state = {
 	mat: {
 		plane: new THREE.MeshPhongMaterial({ color: 0x089c00, shininess: 100 }),
 		ring: new THREE.MeshPhongMaterial({ color: 0xffe700, shininess: 100 }),
-		player: new THREE.MeshPhongMaterial({
+		p1: new THREE.MeshPhongMaterial({
+			color: 0x4deeea,
+			shininess: 100,
+		}),
+		p2: new THREE.MeshPhongMaterial({
 			color: 0x4deeea,
 			shininess: 100,
 		}),

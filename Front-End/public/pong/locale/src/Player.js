@@ -13,16 +13,16 @@ const HELPER_GEOMETRY = new THREE.BoxGeometry(
 );
 GEOMETRY.rotateX(Math.PI / 2);
 HELPER_GEOMETRY.rotateX(Math.PI / 2);
-const MATERIAL = state.mat.player;
+const MATERIAL = [state.mat.p1, state.mat.p2];
+
 const HELPER_MATERIAL = state.mat.helper;
 
 export default class Player {
-	constructor(position) {
+	constructor(position, n) {
 		this.scene = state.scene;
 		this.geometry = GEOMETRY;
 		this.material = MATERIAL;
-		this.mesh = new THREE.Mesh(GEOMETRY, MATERIAL);
-		console.log("Player geometry:", state.ball_radius);
+		this.mesh = new THREE.Mesh(GEOMETRY, MATERIAL[n]);
 
 		this.helperMesh = new THREE.Mesh(HELPER_GEOMETRY, HELPER_MATERIAL);
 

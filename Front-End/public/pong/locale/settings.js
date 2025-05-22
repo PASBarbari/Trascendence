@@ -23,36 +23,32 @@ export {
 
 function saveSettings() {
 	const player1Color = document.getElementById("player1Color").value;
-	const player1Emissive = document.getElementById("player1Emissive").value;
 	const player2Color = document.getElementById("player2Color").value;
-	const player2Emissive = document.getElementById("player2Emissive").value;
 	const ballColor = document.getElementById("ballColor").value;
-	const ballEmissive = document.getElementById("ballEmissive").value;
 	const ringColor = document.getElementById("ringColor").value;
-	const ringEmissive = document.getElementById("ringEmissive").value;
+	const planeColor = document.getElementById("planeColor").value;
 
 	state.mat.p1.color.set(player1Color);
-	state.mat.p1.emissive.set(player1Emissive);
 	state.mat.p2.color.set(player2Color);
-	state.mat.p2.emissive.set(player2Emissive);
 	state.mat.ball.color.set(ballColor);
-	state.mat.ball.emissive.set(ballEmissive);
 	state.mat.ring.color.set(ringColor);
-	state.mat.ring.emissive.set(ringEmissive);
+	state.mat.plane.color.set(planeColor);
 
 	showMainMenu();
 }
 
 function resetSettings() {
 	document.getElementById("player1Color").value = "#4deeea";
-	document.getElementById("player2Color").value = "#ffe700";
-	document.getElementById("ballColor").value = "#0bff01";
-	document.getElementById("ringColor").value = "#ff0000";
+	document.getElementById("player2Color").value = "#4deeea";
+	document.getElementById("ballColor").value = "#ff2b2b";
+	document.getElementById("ringColor").value = "#ffe700";
+	document.getElementById("planeColor").value = "#089c00";
 
 	state.mat.p1.color.set("#4deeea");
-	state.mat.p2.color.set("#ffe700");
-	state.mat.ball.color.set("#0bff01");
-	state.mat.ring.color.set("#ff0000");
+	state.mat.p2.color.set("#4deeea");
+	state.mat.ball.color.set("#8c5fb3");
+	state.mat.ring.color.set("#ffe700");
+	state.mat.plane.color.set("#089c00");
 }
 
 function shownbrOfPlayerMenu() {

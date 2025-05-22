@@ -64,9 +64,9 @@ export function setupGame() {
 
 	setupRing();
 
-	new Player(new THREE.Vector3(-((state.ring.length * 2) / 5), 0, 0));
+	new Player(new THREE.Vector3(-((state.ring.length * 2) / 5), 0, 0), 0);
 
-	new Player(new THREE.Vector3((state.ring.length * 2) / 5, 0, 0));
+	new Player(new THREE.Vector3((state.ring.length * 2) / 5, 0, 0), 1);
 	// //Ball setup
 
 	console.log("Ball radius:", state.ball_radius);

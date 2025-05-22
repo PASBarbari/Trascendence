@@ -80,21 +80,28 @@ export function renderPong() {
 			<div class="mb-3">
 				<label for="player2Color" class="form-label text-light">Player 2 Color:</label>
 				<div class="d-flex gap-2">
-				<input type="color" class="form-control form-control-color" id="player2Color" value="#ffe700" title="Choose player 2 color">
+				<input type="color" class="form-control form-control-color" id="player2Color" value="#4deeea" title="Choose player 2 color">
 				</div>
 			</div>
 			
 			<div class="mb-3">
 				<label for="ballColor" class="form-label text-light">Ball Color:</label>
 				<div class="d-flex gap-2">
-				<input type="color" class="form-control form-control-color" id="ballColor" value="#0bff01" title="Choose ball color">
+				<input type="color" class="form-control form-control-color" id="ballColor" value="#8c5fb3" title="Choose ball color">
 				</div>
 			</div>
 			
 			<div class="mb-3">
 				<label for="ringColor" class="form-label text-light">Ring Color:</label>
 				<div class="d-flex gap-2">
-				<input type="color" class="form-control form-control-color" id="ringColor" value="#ff0000" title="Choose ring color">
+				<input type="color" class="form-control form-control-color" id="ringColor" value="#ffe700" title="Choose ring color">
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label for="planeColor" class="form-label text-light">Plane Color:</label>
+				<div class="d-flex gap-2">
+				<input type="color" class="form-control form-control-color" id="planeColor" value="#089c00" title="Choose plane color">
 				</div>
 			</div>
 			
@@ -187,6 +194,10 @@ export function renderPong() {
 
 	document.getElementById("ringColor").addEventListener("input", (event) => {
 		state.mat.ring.color.set(event.target.value);
+	});
+
+	document.getElementById("planeColor").addEventListener("input", (event) => {
+		state.mat.plane.color.set(event.target.value);
 	});
 
 	document.getElementById("showStats").addEventListener("change", (event) => {
