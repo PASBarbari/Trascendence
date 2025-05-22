@@ -22,8 +22,6 @@ export default class Ball extends THREE.EventDispatcher {
 		this.raycaster.far = this.boundaries.y * 2.5;
 
 		this.mesh.castShadow = true;
-		this.mesh.receiveShadow = true;
-
 		// this.pointCollision = new THREE.Mesh(
 		// 	new THREE.SphereGeometry(1),
 		// 	new THREE.MeshBasicMaterial({ color: 0xff0000 })

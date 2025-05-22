@@ -1,27 +1,54 @@
-import { AmbientLight } from "three";
-import { state } from "../state.js";
 import * as THREE from "three";
+import { state } from "../state.js";
 
 export function initLights() {
-	// Set the background color of the scene
+	// Remove any previous lights
+	if (state.lights && Array.isArray(state.lights)) {
+		state.lights.forEach((light) => {
+			if (light && light.parent) light.parent.remove(light);
+		});
+	}
+	state.lights = [];
 
-	const LIGHT_COLOR = 0xffff00;
-	const AMBIENT_COLOR = 0x404040;
+	// Ambient light for base visibility
+	const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+	state.scene.add(ambientLight);
+	state.lights.push(ambientLight);
 
-	const dirlLight = new THREE.DirectionalLight(LIGHT_COLOR, 1);
-	const ambientLight = new THREE.AmbientLight(AMBIENT_COLOR, 0.5);
+	// Directional light that will point to the ball
+	const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+	dirLight.position.set(0, 50, 50);
+	dirLight.castShadow = true;
+	dirLight.shadow.mapSize.width = 1024;
+	dirLight.shadow.mapSize.height = 1024;
+	dirLight.shadow.camera.left = -100;
+	dirLight.shadow.camera.right = 100;
+	dirLight.shadow.camera.top = 100;
+	dirLight.shadow.camera.bottom = -100;
+	dirLight.shadow.camera.near = 1;
+	dirLight.shadow.camera.far = 200;
 
-	dirlLight.position.set(0, 80, 20);
-	dirlLight.castShadow = true;
+	const cameraHelper = new THREE.CameraHelper(dirLight.shadow.camera);
+	// state.scene.add(cameraHelper);
+	// state.lights.push(cameraHelper);
 
-	const lightHelper = new THREE.DirectionalLightHelper(dirlLight, 1);
-	lightHelper.visible = true;
-	// Create a helper to visualize the directional light
+	// Create a target object for the light
+	const lightTarget = new THREE.Object3D();
+	state.scene.add(lightTarget);
+	dirLight.target = lightTarget;
+	state.lightTarget = lightTarget;
 
-	// Store the helper to update it later if needed
-	dirlLight.helper = lightHelper;
+	state.scene.add(dirLight);
+	state.lights.push(dirLight);
 
-	// Store the lights in the state
-	state.lights = [dirlLight, lightHelper, ambientLight];
-	state.scene.add(dirlLight, lightHelper, ambientLight);
+	// Set the light's shadow properties
+	const dirLightHelper = new THREE.DirectionalLightHelper(
+		dirLight,
+		10,
+		0xffaa00
+	);
+	// state.scene.add(dirLightHelper);
+	// state.lights.push(dirLightHelper);
+
+	// Store the target for updates
 }

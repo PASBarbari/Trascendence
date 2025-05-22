@@ -16,8 +16,15 @@ export function animate() {
 	const deltaTime = clock.getDelta();
 
 	if (state.isPaused === false) {
+		if (state.stats) {
+			state.stats.update();
+		}
 		if (state.ball) {
 			state.ball.update(deltaTime);
+			// if (state.ball && state.lightTarget) {
+			// 	state.lightTarget.position.copy(state.ball.mesh.position);
+			// 	state.lightTarget.updateMatrixWorld(); // Ensure world matrix is updated
+			// }
 		}
 
 		if (state.players[0]) {
@@ -31,7 +38,6 @@ export function animate() {
 		if (state.controls) {
 			state.controls.update();
 		}
-
 		if (state.renderer && state.scene && state.camera) {
 			state.renderer.render(state.scene, state.camera);
 		}
