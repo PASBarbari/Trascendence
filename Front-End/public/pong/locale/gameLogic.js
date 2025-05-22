@@ -32,7 +32,9 @@ export function animate() {
 			state.players[0].move(state.p1_move_y);
 		}
 
-		if (state.players[1]) {
+		if (state.players[1] && state.IAisActive) {
+			IA.moveIA();
+		} else if (state.players[1]) {
 			state.players[1].move(state.p2_move_y);
 		}
 

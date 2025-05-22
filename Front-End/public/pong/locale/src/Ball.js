@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { state } from "../state.js";
 export default class Ball extends THREE.EventDispatcher {
 	speed = 25;
-	velocity = new THREE.Vector3(0.5, 0, 1);
+	velocity = new THREE.Vector3(1, 0, 0);
 
 	constructor(scene, radius, boundaries, players) {
 		super();
@@ -37,6 +37,17 @@ export default class Ball extends THREE.EventDispatcher {
 	}
 
 	update(dt) {
+		// Calculate number of sub-steps based on ball speed
+		const substeps = Math.max(1, Math.ceil(this.speed / 15));
+		const subDt = dt / substeps;
+
+		// Execute multiple smaller steps
+		for (let i = 0; i < substeps; i++) {
+			this.updateStep(subDt);
+		}
+	}
+
+	updateStep(dt) {
 		const s = this.velocity.clone().multiplyScalar(dt);
 		const tPos = this.mesh.position.clone().add(s);
 
@@ -111,10 +122,6 @@ export default class Ball extends THREE.EventDispatcher {
 			const isWithinPaddleWidth =
 				Math.abs(relativePos.x) <= paddleHalfWidth;
 
-			// ...existing code...
-
-			// ...existing code...
-
 			// Collision with inner face
 			if (
 				isInFrontOfInnerFace &&
@@ -151,7 +158,7 @@ export default class Ball extends THREE.EventDispatcher {
 				// Slightly increase speed with each hit to prevent endless rallies
 				this.speed *= 1.1;
 				console.log("New speed after hit:", this.speed);
-				this.speed = Math.min(this.speed, 90); // Cap max speed
+				// this.speed = Math.min(this.speed, 90); // Cap max speed
 			}
 		} else {
 			console.warn("Target or target.mesh not found");
