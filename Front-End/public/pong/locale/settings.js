@@ -45,22 +45,14 @@ function saveSettings() {
 
 function resetSettings() {
 	document.getElementById("player1Color").value = "#4deeea";
-	document.getElementById("player1Emissive").value = "#4deeea";
 	document.getElementById("player2Color").value = "#ffe700";
-	document.getElementById("player2Emissive").value = "#ffe700";
 	document.getElementById("ballColor").value = "#0bff01";
-	document.getElementById("ballEmissive").value = "#0bff01";
 	document.getElementById("ringColor").value = "#ff0000";
-	document.getElementById("ringEmissive").value = "#0000ff";
 
 	state.mat.p1.color.set("#4deeea");
-	state.mat.p1.emissive.set("#4deeea");
 	state.mat.p2.color.set("#ffe700");
-	state.mat.p2.emissive.set("#ffe700");
 	state.mat.ball.color.set("#0bff01");
-	state.mat.ball.emissive.set("#0bff01");
 	state.mat.ring.color.set("#ff0000");
-	state.mat.ring.emissive.set("#0000ff");
 }
 
 function shownbrOfPlayerMenu() {

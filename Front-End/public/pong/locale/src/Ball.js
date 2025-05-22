@@ -76,8 +76,8 @@ export default class Ball extends THREE.EventDispatcher {
 			const helperMesh = target.mesh.children[0];
 
 			// Get paddle dimensions
-			const paddleWidth = state.p.width;
-			const paddleHeight = state.p.height;
+			const paddleWidth = state.p.width + state.ball_radius;
+			const paddleHeight = state.p.height + state.ball_radius;
 			const paddleHalfWidth = paddleWidth / 2;
 			const paddleHalfHeight = paddleHeight / 2;
 

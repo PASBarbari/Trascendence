@@ -22,6 +22,8 @@ export default class Player {
 		this.geometry = GEOMETRY;
 		this.material = MATERIAL;
 		this.mesh = new THREE.Mesh(GEOMETRY, MATERIAL);
+		console.log("Player geometry:", state.ball_radius);
+
 		this.helperMesh = new THREE.Mesh(HELPER_GEOMETRY, HELPER_MATERIAL);
 
 		this.mesh.add(this.helperMesh);

@@ -59,8 +59,8 @@ export function setupGame() {
 
 	state.controls = new OrbitControls(state.camera, state.renderer.domElement);
 
-	state.stats = new Stats();
-	document.body.appendChild(state.stats.dom);
+	// state.stats = new Stats();
+	// document.body.appendChild(state.stats.dom);
 
 	setupRing();
 
@@ -69,6 +69,7 @@ export function setupGame() {
 	new Player(new THREE.Vector3((state.ring.length * 2) / 5, 0, 0));
 	// //Ball setup
 
+	console.log("Ball radius:", state.ball_radius);
 	new Ball(state.scene, state.ball_radius, state.boundaries, [
 		state.players[0],
 		state.players[1],
