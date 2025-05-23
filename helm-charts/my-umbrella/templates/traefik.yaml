@@ -1,4 +1,4 @@
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ .Release.Name }}-websocket-headers
@@ -10,7 +10,7 @@ spec:
     customResponseHeaders:
       Connection: "Upgrade"
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ .Release.Name }}-redirect-https
@@ -20,7 +20,7 @@ spec:
     scheme: https
     permanent: true
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: {{ .Release.Name }}-strip-prefix
@@ -34,14 +34,14 @@ spec:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Release.Name }}-traefik-containous-crd-permissions
+  name: {{ .Release.Name }}-traefik-crd-permissions # Renamed for clarity
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
     helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 rules:
 - apiGroups:
-  - "traefik.containo.us" # Note: k3s might use traefik.containo.us
+  - "traefik.io" # Updated API Group
   resources:
   - middlewares
   - middlewaretcps
@@ -51,7 +51,7 @@ rules:
   - tlsoptions
   - tlsstores
   - traefikservices
-  # Add any other CRDs from traefik.containo.us you might use
+  # Add any other CRDs from traefik.io you might use
   verbs:
   - get
   - list
@@ -60,7 +60,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Release.Name }}-traefik-containous-crd-binding
+  name: {{ .Release.Name }}-traefik-crd-binding # Renamed for clarity
   labels:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/instance: {{ .Release.Name }}
@@ -71,5 +71,5 @@ subjects:
   namespace: kube-system # Namespace of Traefik's ServiceAccount
 roleRef:
   kind: ClusterRole
-  name: {{ .Release.Name }}-traefik-containous-crd-permissions # Name of the ClusterRole created above
+  name: {{ .Release.Name }}-traefik-crd-permissions # Updated to match new ClusterRole name
   apiGroup: rbac.authorization.k8s.io
