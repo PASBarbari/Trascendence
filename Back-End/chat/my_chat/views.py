@@ -28,6 +28,7 @@ def post_api_view(func):
 		logger.info(f"POST API called: {func.__name__} by user {getattr(request.user, 'username', 'Anonymous')}")
 		return func(self, request, *args, **kwargs)
 	return wrapper
+
 class GetChatMessage(generics.ListAPIView):
 	"""
 	API endpoint that allows users to be viewed or edited.
@@ -45,17 +46,52 @@ class GetChatMessage(generics.ListAPIView):
 	serializer_class = chat_messageSerializer
 	lookup_url_kwarg = 'room_id'
 	authentication_classes = [JWTAuth]
-	permission_classes = [ChatRoomPermissions]
+	# permission_classes = [ChatRoomPermissions] TODO: samu fai le permissioni
+	permission_classes = (IsAuthenticatedUserProfile,)
 
-	@swagger_auto_schema(
-		manual_parameters=[
-			openapi.Parameter('Authorization', openapi.IN_HEADER, description="OAuth2 Token", type=openapi.TYPE_STRING)
-		]
-	)
 	def get_queryset(self):
-		room_id = self.kwargs.get(self.lookup_url_kwarg)
-		return ChatMessage.objects.filter(room_id=room_id)
-
+		try:
+			room_id = self.kwargs.get(self.lookup_url_kwarg)
+			logger.info(f"GetChatMessage: Attempting to get messages for room_id={room_id}")
+			if not room_id:
+				logger.error("Missing room_id parameter in request")
+				return ChatMessage.objects.none()
+				
+			user = self.request.user
+			
+			# First verify the user is a member of this room
+			if isinstance(user, AnonymousUser) or not hasattr(user, 'user_id'):
+				logger.warning("Unauthenticated user attempted to access chat messages")
+				return ChatMessage.objects.none()
+				
+			# Check membership directly in the view
+			room_exists = ChatRoom.objects.filter(
+				room_id=room_id,
+				users__user_id=user.user_id
+			).exists()
+			
+			if not room_exists:
+				logger.warning(f"User {user} attempted to access messages in room {room_id} but is not a member")
+				return ChatMessage.objects.none()
+				
+			# User is a member, return messages (even if empty)
+			messages = ChatMessage.objects.filter(room__room_id=room_id)
+			logger.info(f"Found {messages.count()} messages in room {room_id}")
+			return messages
+			
+		except Exception as e:
+			import traceback
+			logger.error(f"ERROR in get_queryset: {str(e)}\n{traceback.format_exc()}")
+			return ChatMessage.objects.none()
+			
+	# def list(self, request, *args, **kwargs):
+	# 	try:
+	# 		# Use parent implementation but catch any exceptions
+	# 		return super().list(request, *args, **kwargs)
+	# 	except Exception as e:
+	# 		logger.error(f"Error listing chat messages: {str(e)}")
+	# 		# Return empty list on error
+	# 		return Response([], status=status.HTTP_200_OK)
 
 
 class GetChatInfo(generics.RetrieveAPIView):
@@ -75,34 +111,49 @@ class GetChatInfo(generics.RetrieveAPIView):
 		return ChatRoom.objects.filter(room_id=room_id)
 
 class new_user(generics.ListCreateAPIView):
-    serializer_class = userSerializer
-    queryset = UserProfile.objects.all()
+	serializer_class = userSerializer
+	queryset = UserProfile.objects.all()
 
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            self.permission_classes = []  # No need for permissions as authentication will handle it
-            self.authentication_classes = [ServiceAuthentication]
-        else:
-            self.permission_classes = (IsAuthenticatedUserProfile,)
-            self.authentication_classes = (JWTAuthentication,)
-        return super().get_permissions()
-        
-    def perform_create(self, serializer):
-        # You can add additional logging for audit purposes
-        # logger.info(f"Creating new user from service: {self.request.headers.get('User-Agent')}")
-        return serializer.save()
+	def get_permissions(self):
+		if self.request.method == 'POST':
+			self.permission_classes = []  # No need for permissions as authentication will handle it
+			self.authentication_classes = [ServiceAuthentication]
+		else:
+			self.permission_classes = (IsAuthenticatedUserProfile,)
+			self.authentication_classes = (JWTAuthentication,)
+		return super().get_permissions()
+		
+	def perform_create(self, serializer):
+		# You can add additional logging for audit purposes
+		# logger.info(f"Creating new user from service: {self.request.headers.get('User-Agent')}")
+		return serializer.save()
 
 class CreateChat(generics.ListCreateAPIView):
 	serializer_class = chat_roomSerializer
 	queryset = ChatRoom.objects.all()
 
 class GetChats(generics.ListAPIView):
-	serializer_class = chat_roomSerializer
-	permission_classes = (IsAuthenticatedUserProfile,)
-	authentication_classes = [JWTAuth]
-	filter_backends = [DjangoFilterBackend]
-	filterset_fields = ['users__user_id']
-	queryset = ChatRoom.objects.all()
+    serializer_class = chat_roomSerializer
+    permission_classes = (IsAuthenticatedUserProfile,)
+    authentication_classes = [JWTAuth]
+    
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Gestione sicura di utenti non autenticati
+        if isinstance(user, AnonymousUser) or not hasattr(user, 'user_id'):
+            logger.warning("Unauthenticated user attempted to access chats")
+            return ChatRoom.objects.none()
+        
+        # Log per debugging
+        logger.info(f"Retrieving chats for user: {user.user_id} ({getattr(user, 'username', 'unknown')})")
+        
+        try:
+            # Filtraggio usando specificamente l'user_id invece dell'oggetto intero
+            return ChatRoom.objects.filter(users__user_id=user.user_id)
+        except Exception as e:
+            logger.error(f"Error retrieving chats for user {user.user_id}: {str(e)}")
+            return ChatRoom.objects.none()
 
 class AddUsersToChat(generics.UpdateAPIView):
 		serializer_class = chat_roomSerializer

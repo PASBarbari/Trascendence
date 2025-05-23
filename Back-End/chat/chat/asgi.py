@@ -14,43 +14,24 @@ django.setup()
 BASE_DIR = Path('/app')
 
 from my_chat.middleware import JWTAuthMiddleware
-from my_chat import consumers
-from chat.routing import websocket_urlpatterns
+from my_chat import routing
 # import shutil
 import logging
 
 
 logger = logging.getLogger('django')
 
-# http_app = get_asgi_application()
-
-# # Update the path to point to staticfiles directory instead of static
-# static_app = BlackNoise(http_app)
-# static_app.add(BASE_DIR / 'staticfiles', '/static/')
-
-
-
-# swagger_files = []
-# for root, dirs, files in os.walk(BASE_DIR / 'staticfiles'):
-# 	for file in files:
-# 		if 'swagger' in file:
-# 			source_file = os.path.join(root, file)
-# 			destination_file = os.path.join('/static', os.path.relpath(source_file, BASE_DIR / 'staticfiles'))
-# 			os.makedirs(os.path.dirname(destination_file), exist_ok=True)
-# 			shutil.copy2(source_file, destination_file)
-# 			swagger_files.append(source_file)
-# 			logger.info(f"Found and copied swagger file: {source_file}")
-			
-# print(f"Found and copied swagger files: {swagger_files[:5]}")  # Show first 5 files
-
-
 print("ASGI APPLICATION LOADED")
+
+from my_chat.middleware import DebugMiddleware
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),
     "websocket": AllowedHostsOriginValidator(
-        JWTAuthMiddleware(
-            URLRouter(websocket_urlpatterns)
+        (
+            JWTAuthMiddleware(
+                URLRouter(routing.websocket_urlpatterns)
+            )
         )
     ),
 })

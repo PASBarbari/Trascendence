@@ -128,7 +128,7 @@ class JWTAuth(JWTAuthentication):
 				logger.warning(f"User ID {user_id} from token not found in UserProfile")
 				cache.set(cache_key, "anonymous", timeout=60)
 				return None
-				
+
 		except Exception as e:
 			# Log the error but don't cache exceptions
 			logger.warning(f"JWT authentication failed: {str(e)}")
@@ -190,7 +190,7 @@ class JWTAuthMiddleware(BaseMiddleware):
 			if auth_header:
 				token_str = auth_header.decode()
 				if token_str.startswith('Bearer '):
-					token = token_str[7:]  # Remove 'Bearer ' prefix
+					token = token_str[7:]
 		
 		if token:
 			# Get user from token
@@ -234,6 +234,37 @@ def JWTAuthMiddlewareStack(inner):
 	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
 	"""
 	return JWTAuthMiddleware(AuthMiddlewareStack(inner))
+
+
+import logging
+from channels.middleware import BaseMiddleware
+
+logger = logging.getLogger('django')
+
+class DebugMiddleware(BaseMiddleware):
+    async def __call__(self, scope, receive, send):
+        # Log dettagli della richiesta
+        if scope['type'] == 'websocket':
+            logger.info(f"⭐ WEBSOCKET REQUEST ⭐")
+            logger.info(f"PATH: {scope['path']}")
+            logger.info(f"HEADERS: {scope.get('headers', [])}")
+            logger.info(f"QUERY_STRING: {scope.get('query_string', b'').decode()}")
+            
+        # Passa al middleware successivo
+        return await super().__call__(scope, receive, send)
+
+class ErrorLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            response = self.get_response(request)
+            return response
+        except Exception as e:
+            import traceback
+            logger.error(f"Uncaught exception: {str(e)}\n{traceback.format_exc()}")
+            raise
 
 # class TokenAuthMiddleware(BaseMiddleware):
 # 	async def __call__(self, scope, receive, send):
