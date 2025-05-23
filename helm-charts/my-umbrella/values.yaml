@@ -121,4 +121,5 @@ cert-manager-config:
       solvers:
         - http01:
             ingressClass: traefik
-    
+
+

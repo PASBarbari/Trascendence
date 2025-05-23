@@ -74,3 +74,4 @@ Manifests/skaffold
 Manifests/skaffolds
 Manifests/skaffold
 Manifests/skaffolds
+helm-charts/my-umbrella/values.yaml

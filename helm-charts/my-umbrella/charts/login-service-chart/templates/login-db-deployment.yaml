@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+	name: {{ .Release.Name }}-login-db
+	namespace: {{ .Values.namespace | default .Release.Namespace }}
+	labels:
+		app: {{ .Release.Name }}-login-db
+		chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+		release: {{ .Release.Name }}
+		heritage: {{ .Release.Service }} 
+spec:
+  serviceName: {{ .Release.Name }}-login-db
+  replicas: 1
+  selector:
+	matchLabels:
+	  app: {{ .Release.Name }}-login-db
+	  release: {{ .Release.Name }}
+  template:
+	metadata:
+	  labels:
+		app: {{ .Release.Name }}-login-db
+		release: {{ .Release.Name }}
+	spec:
+	  serviceAccountName: {{ .Values.serviceAccount.dbName | default "default" }}
+	  containers:
+	  - name: postgres
+		image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
+		imagePullPolicy: IfNotPresent
+		ports:
+		- name: db
+		  containerPort: {{ .Values.db.service.port | default 5432 }}
+		  protocol: TCP
+		env:
+		- name: POSTGRES_DB
+		  valueFrom:
+			secretKeyRef:
+			  name: {{ .Values.db.secrets.name }}
+			  key: login-db-name
+		- name: POSTGRES_USER
+		  valueFrom:
+			secretKeyRef:
+			  name: {{ .Values.db.secrets.user }}
+			  key: login-db-user
+		- name: POSTGRES_PASSWORD
+		  valueFrom:
+			secretKeyRef:
+			  name: {{ .Values.db.secrets.password }}
+			  key: login-db-password
+		volumeMounts:
+		- name: data
+		  mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+	  name: data
+	spec:
+	  accessModes: [ "ReadWriteOnce" ]
+	  storageClassName: {{ .Values.db.persistence.storageClass | default "standard" }}
+	  resources:
+		requests:
+		  storage: {{ .Values.db.persistence.size | default "512Mi" }}

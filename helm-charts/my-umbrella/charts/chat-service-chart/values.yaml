@@ -48,14 +48,14 @@ configMap:
 
 secrets:
   database:
-    name: "chat_db"
-    user: "postgres"
-    password: "postgres"
+    name: "placeholder"
+    user: "placeholder"
+    password: "placeholder"
   admin:
-    username: "admin"
-    password: "adminpassword"
-    email: "admin@example.com"
-    secretKey: "your-secret-key"
+    username: "placeholder"
+    password: "placeholder"
+    email: "placeholder"
+    secretKey: "placeholder"
 
 ingress:
   enabled: true

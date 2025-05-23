@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-login-server
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    helm.sh/chart: {{ include "login-service.chart" . }}
+    app: login-server # For selector
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: login-server
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: login-server
+        app.kubernetes.io/name: {{ .Chart.Name }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "login-service.serviceAccountName" . }}
+      {{- end }}
+      initContainers:
+      - name: init-login-server
+        image: busybox # Consider making image configurable: {{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}
+        imagePullPolicy: IfNotPresent # Consider making image configurable: {{ .Values.initContainer.image.pullPolicy }}
+        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Values.configMap.data.DB_HOST }} on port {{ .Values.configMap.data.DB_PORT }}"; while ! nc -z {{ .Values.configMap.data.DB_HOST }} {{ .Values.configMap.data.DB_PORT }}; do sleep 1; done; echo "Database service is up and running"']
+      containers:
+      - name: login-server
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        # readinessProbe: # Consider enabling and configuring this
+        #   httpGet:
+        #     path: /login/health # TODO: Verify health check endpoint
+        #     port: http
+        #   initialDelaySeconds: 15
+        #   periodSeconds: 10
+        # livenessProbe: # Consider enabling and configuring this
+        #   httpGet:
+        #     path: /login/health # TODO: Verify health check endpoint
+        #     port: http
+        #   initialDelaySeconds: 30
+        #   periodSeconds: 20
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Release.Name }}-login-config
+        - secretRef:
+            name: {{ .Release.Name }}-login-secrets
+        # Individual env vars can still be set if needed, for example to override configmap/secret values or for non-sensitive items
+        # env:
+        # - name: EXAMPLE_VAR
+        #   value: "example_value"
