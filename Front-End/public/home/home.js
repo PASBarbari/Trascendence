@@ -27,11 +27,11 @@ stylesheets.forEach((href) => {
 async function toggleProfile() {
 	const profileDiv = document.getElementById("profile");
 	if (profileDiv) {
-		if (profileDiv.style.display === "none") {
+		if (profileDiv.style.display === "block") {
+			profileDiv.style.display = "none";
+		} else {
 			profileDiv.style.display = "block";
 			await initializeProfile();
-		} else {
-			profileDiv.style.display = "none";
 		}
 	} else {
 		console.error("Elemento #profile non trovato nel DOM");
@@ -42,19 +42,20 @@ function renderHome() {
     const contentDiv = document.getElementById('content');
     contentDiv.innerHTML = `
         <div class="content-home">
-            <div class="profile" id="profile" style="display: none;"></div>
-            <div class="task-container" id="taskAvailableContainer"></div>
-            <div class="task-container" id="taskActiveContainer"></div>
+            <div class="profile" id="profile" style="display: block;"></div>
+            <!-- <div class="task-container" id="taskAvailableContainer"></div> -->
+            <!-- <div class="task-container" id="taskActiveContainer"></div> -->
             <div class="task-container" id="notificationContainer"></div>
             <div class="task-container" id="pongContainer"></div>
         </div>
     `;
 
-	renderTaskAvaiable();
-	renderTaskActive();
+	//renderTaskAvaiable();
+	//renderTaskActive();
 	renderNotification();
 	initializeWebSocket();
 	renderPongInfo();
+	initializeProfile();
 }
 
 export { renderHome, toggleProfile };
