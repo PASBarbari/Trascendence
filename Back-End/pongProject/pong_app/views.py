@@ -10,6 +10,9 @@ from .middleware import ServiceAuthentication , JWTAuth
 from django.contrib.auth.models import AnonymousUser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
+import logging
+
+
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
     """

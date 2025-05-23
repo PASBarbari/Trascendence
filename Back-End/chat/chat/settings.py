@@ -159,7 +159,7 @@ MIDDLEWARE = [
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	# 'my_chat.middleware.TokenAuthMiddlewareHTTP',
+	'my_chat.middleware.ErrorLoggingMiddleware',
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
@@ -296,9 +296,6 @@ CHANNEL_LAYERS = {
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': [
 		'my_chat.middleware.JWTAuth',
-		],
-		'DEFAULT_PERMISSION_CLASSES': [
-				'my_chat.Permissions.IsAuthenticatedUserProfile',
 		],
 		'DEFAULT_FILTER_BACKENDS': [
 			'django_filters.rest_framework.DjangoFilterBackend',

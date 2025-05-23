@@ -25,11 +25,11 @@ async function getChatRooms() {
 	console.log("/-----ExpandableSidebar.js-----\\");
 	console.log("user_id in sidechat: ", userId);
 	console.log("Token getChatRooms:", token);
-	console.log(`${url_api}/chat/chat_rooms/getchat/?users=${userId}`);
+	console.log(`${url_api}/chat/chat_rooms/getchat/`);
 	console.log("\\_____ExpandableSidebar.js_____/");
 	try {
 		const response = await fetch(
-			`${url_api}/chat/chat/chat_rooms/getchat/?user_id=${userId}`,
+			`${url_api}/chat/chat/chat_rooms/getchat/`,
 			{
 				method: "GET",
 				headers: {
@@ -42,15 +42,15 @@ async function getChatRooms() {
 
 		if (response.ok) {
 			const data = await response.json();
-			console.log("Risposta dal server:", data);
+			console.log("Risposta di getChatRooms:", data);
 			return data;
 		} else {
 			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
+			console.error("Errore nella risposta di getChatRooms:", errorData);
 			return null;
 		}
 	} catch (error) {
-		console.error("Errore nella richiesta:", error);
+		console.error("Errore nella richiesta di getChatRooms:", error);
 		return null;
 	}
 }
@@ -122,6 +122,7 @@ function renderExpandableSidebar() {
 
 	// Fetch chat rooms and render them
 	updateChatList();
+	console.log("Chat rooms fetched and rendered.");
 }
 
 async function updateChatList() {
@@ -159,7 +160,7 @@ function renderChatItem(chat) {
 	const chatContainer = document.querySelector('.chat-container');
 	const chatItem = document.createElement('div');
 	chatItem.className = 'chat-item';
-	chatItem.dataset.id = chat.id; // Aggiungi l'attributo data-id
+	chatItem.dataset.id = chat.id;
 
 	chatItem.innerHTML = `
 		<div class="chat-item-header">
@@ -203,8 +204,7 @@ function renderChatItem(chat) {
 		if (!isOpen) {
 			// Apri il WebSocket per la chat room
 			const { token } = getVariables();
-			socket = new WebSocket(`${wss_api}/chat/ws/chat/${chat.id}/?token=${token}`);
-
+			socket = new WebSocket(`${wss_api}/chat/chat?room_id=${chat.id}&token=${token}`);
 			socket.onopen = () => {
 				console.log(`WebSocket connection opened for chat room ${chat.id}`);
 			};
@@ -282,7 +282,8 @@ function renderChatItem(chat) {
 
 					scrollToBottom(chatContent);
 				} else {
-					console.error("Errore nella risposta del server:", response.statusText);
+					const text = await response.text();
+        			console.error("Server error in get_message:", response.status, text);
 				}
 			} catch (error) {
 				console.error("Errore nella richiesta:", error);
@@ -300,20 +301,25 @@ function renderChatItem(chat) {
 	const inputField = chatsInput.querySelector('input');
 	const sendButton = chatsInput.querySelector('button');
 
+	// Modifica da apportare nel file ExpandableSidebar.js
+	// Nella funzione renderChatItem dove invii il messaggio
+	
 	chatsInput.addEventListener('submit', function (e) {
 		e.preventDefault();
 		const message = inputField.value;
 		if (message.trim() !== "" && socket && socket.readyState === WebSocket.OPEN) {
+			// Usa userUsername per identificare l'utente
+			const userVariables = getVariables();
 			const messageData = {
 				type: "chat_message",
 				room_id: chat.id,
 				message: message,
 				timestamp: new Date().toISOString(),
-				sender: getVariables().userUsername,
+				sender: userVariables.userUsername,
 			};
 			socket.send(JSON.stringify(messageData));
 			inputField.value = '';
-
+			
 			scrollToBottom(chatItem.querySelector('.scrollable-content'));
 		} else {
 			alert("Connessione WebSocket non attiva");
