@@ -116,12 +116,12 @@ spec:
            secretKeyRef:
             name: login-api
             key: google-client-secret
-        - name: CLIENT_ID_42
+        - name: 42_CLIENT_ID
           valueFrom:
            secretKeyRef:
             name: login-api
             key: 42-client-id
-        - name: CLIENT_SECRET_42
+        - name: 42_CLIENT_SECRET
           valueFrom:
            secretKeyRef:
             name: login-api
