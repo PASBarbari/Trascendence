@@ -70,6 +70,7 @@ class MultipleFieldLookupMixin:
 # 	serializer_class = AvatarsSerializer
 # 	lookup_url_kwarg = 'id'
 # 	queryset = Avatars.objects.all()
+# cazzo
 
 class UserGen(generics.ListCreateAPIView):
 	serializer_class = UsersSerializer
@@ -79,7 +80,6 @@ class UserGen(generics.ListCreateAPIView):
 
 	def get_permissions(self):
 		if self.request.method == 'POST':
-			print("POST here")
 			self.permission_classes = []
 			self.authentication_classes = [ServiceAuthentication]
 		else:
@@ -337,11 +337,11 @@ class AvatarManager(APIView):
 			if success:
 				# Update user's avatar
 				avatar = Avatars.objects.create(
-                	user=user, 
-                	name=avatar_name, 
-                	image=url,
-                	is_current=True
-            	)
+					user=user, 
+					name=avatar_name, 
+					image=url,
+					is_current=True
+				)
 				return Response({'message': 'Avatar uploaded successfully', 'avatar': avatar.image}, status=status.HTTP_200_OK)
 			else:
 				return Response({'error': 'Error uploading avatar'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -353,3 +353,55 @@ class AvatarManager(APIView):
 		avatar = get_object_or_404(Avatars, id=avatar_id)
 		serializer = AvatarsSerializer(avatar)
 		return Response(serializer.data, status=status.HTTP_200_OK)
+
+class Update2FAStatus(APIView):
+	"""
+	View to enable/disable two-factor authentication flag for a user.
+	Used by the login microservice to update the 2FA status after verification.
+		
+	POST:
+		Enable/disable 2FA for a specific user
+		
+	Parameters:
+		user_id (int): The ID of the user to update
+		enabled (bool): Whether 2FA should be enabled or disabled
+		
+	Returns:
+		200 OK: Status updated successfully
+		400 Bad Request: Invalid parameters
+		404 Not Found: User not found
+	"""
+	# Allow both service authentication and JWT authentication
+	authentication_classes = [ServiceAuthentication]
+	permission_classes = []
+		
+	def post(self, request):
+		user_id = request.data.get('user_id')
+		enabled = request.data.get('enabled')
+		
+		if user_id is None or enabled is None:
+			return Response(
+				{'error': 'Both user_id and enabled fields are required'}, 
+				status=status.HTTP_400_BAD_REQUEST
+			)
+			
+		try:
+			# Convert enabled to boolean if it comes as string
+			if isinstance(enabled, str):
+				enabled = enabled.lower() == 'true'
+				
+			user = get_object_or_404(UserProfile, user_id=user_id)
+			user.has_two_factor_auth = enabled
+			user.save(update_fields=['has_two_factor_auth'])
+			
+			return Response(
+				{
+					'message': f'2FA {"enabled" if enabled else "disabled"} for user {user_id}',
+					'user_id': user_id,
+					'has_two_factor_auth': enabled
+				}, 
+				status=status.HTTP_200_OK
+			)
+			
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -30,6 +30,13 @@ spec:
             name: chat-service
             port:
               number: 8000
+      - path: /api/chat/ws(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: chat-service
+            port:
+              number: 8000
   tls:
   - hosts:
     - trascendence.42firenze.it

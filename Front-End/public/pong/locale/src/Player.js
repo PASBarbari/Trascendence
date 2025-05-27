@@ -33,6 +33,7 @@ export default class Player {
 
 		state.game.add(this.mesh);
 		state.players.push(this);
+		state.players.push(this);
 	}
 
 	checkBoundaries(moveY) {

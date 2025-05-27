@@ -1,3 +1,4 @@
+import stat
 from urllib.parse import urlencode
 from django.contrib.auth import get_user_model, login, logout
 from django.utils.decorators import method_decorator
@@ -31,7 +32,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import logging, random, string, hashlib, base64
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+import pyotp
+from django_ratelimit.decorators import ratelimit
+import io
+import urllib.parse
+import hmac
+import time
+import struct
+import os
+
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
+
+logger = logging.getLogger('light_login')
 
 def get_jwt_token_for_user(user):
 	refresh = RefreshToken.for_user(user)
@@ -39,7 +51,7 @@ def get_jwt_token_for_user(user):
 
 # Update the CreateOnOtherServices function to handle errors properly
 @transaction.atomic
-def CreateOnOtherServices(user):
+def CreateOnOtherServices(user, **kwargs):
 	"""Create user in all microservices with proper transaction handling"""
 	Chat_url = Microservices['Chat'] + "/chat/new_user/"
 	Notification_url = Microservices['Notifications'] + "/notification/add_user"
@@ -58,17 +70,13 @@ def CreateOnOtherServices(user):
 		'username': user.username,
 		'email': user.email,
 	}
+
 		
 	# Create a savepoint for potential rollback
 	sid = transaction.savepoint()
 		
 	try:
-		# Create user in User service
-		user_response = requests.post(User_url, json=user_data, headers=headers)
-		if user_response.status_code != 201:
-			logging.error(f"User service error: {user_response.status_code} - {user_response.text}")
-			raise ValueError('User service failed to create user')
-			
+		
 		# Create user in Chat service
 		chat_response = requests.post(Chat_url, json=user_data, headers=headers)
 		if chat_response.status_code != 201:
@@ -86,6 +94,19 @@ def CreateOnOtherServices(user):
 		if pong_response.status_code != 201:
 			logging.error(f"Pong service error: {pong_response.status_code} - {pong_response.text}")
 			raise ValueError('Pong service failed to create user')
+		
+		# Create user in User service
+		if 'user_id' in kwargs:
+			user_data.append({
+				'first_name': kwargs.get('given_name'),
+				'last_name': kwargs.get('family_name'),
+				#'birth_date': kwargs.get('birth_date'),
+				'current_avatar_url': kwargs.get('picture'),
+			})
+		user_response = requests.post(User_url, json=user_data, headers=headers)
+		if user_response.status_code != 201:
+			logging.error(f"User service error: {user_response.status_code} - {user_response.text}")
+			raise ValueError('User service failed to create user')
 			
 		return True
 		
@@ -112,6 +133,7 @@ class OAuthLoginView(APIView):
 	permission_classes = (permissions.AllowAny,)
 
 	def get(self, request, provider):
+		logger.info(f"OAuth2 login initiated for provider: {provider}")
 		provider = provider.upper()
 		provider_config = OAUTH2_PROVIDERS.get(provider)
 		
@@ -120,7 +142,7 @@ class OAuthLoginView(APIView):
 				{"error": f"Provider '{provider}' not configured"}, 
 				status=status.HTTP_400_BAD_REQUEST
 			)
-			
+
 		code_verifier = self.generate_code_verifier()
 		code_challenge = self.generate_code_challenge(code_verifier)
 		
@@ -213,19 +235,18 @@ class OAuthCallbackView(APIView):
 		token_url = provider_config.get('token_url')
 
 		if provider == '42':
-			# Usare il metodo files per simulare curl -F
-			response = requests.post(
-				token_url,
-				files={
-					'grant_type': (None, 'authorization_code'),
-					'client_id': (None, provider_config.get('client_id')),
-					'client_secret': (None, provider_config.get('client_secret')),
-					'code': (None, code),
-					'redirect_uri': (None, provider_config.get('redirect_uri'))
-				}
-			)
+			data = {
+				'grant_type': 'authorization_code',
+				'client_id': provider_config.get('client_id'),
+				'client_secret': provider_config.get('client_secret'),
+				'code': code,
+				'redirect_uri': provider_config.get('redirect_uri'),
+			}
+			headers = {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			}
+			response = requests.post(token_url, data=data, headers=headers)
 		else:
-			# Metodo standard per provider che supportano PKCE
 			data = {
 				"client_id": provider_config.get('client_id'),
 				"client_secret": provider_config.get('client_secret'),
@@ -240,7 +261,7 @@ class OAuthCallbackView(APIView):
 
 		if "access_token" not in token_data:
 			return Response(
-				{"error": "Failed to obtain access token", "details": token_data}, 
+				{"error": "Failed to obtain access token", "details": token_data},
 				status=status.HTTP_400_BAD_REQUEST
 			)
 		
@@ -250,6 +271,7 @@ class OAuthCallbackView(APIView):
 		
 		headers = {"Authorization": f"Bearer {access_token}"}
 		user_info_response = requests.get(user_info_url, headers=headers)
+		#  {'id': '103782231708470005867', 'email': 'samybravy@gmail.com', 'verified_email': True, 'name': 'Samy Bravy', 'given_name': 'Samy', 'family_name': 'Bravy', 'picture': 'https://lh3.googleusercontent.com/a/ACg8ocJdtisqsQ_rcRsSOrRvpO6v1iIIM8veaI51sVW7DQK_5CwprO0=s96-c'}
 		user_info = user_info_response.json()
 
 		# Different providers have different response formats
@@ -280,10 +302,10 @@ class OAuthCallbackView(APIView):
 						email.split('@')[0])
 			
 			User = get_user_model()
-			
 			with transaction.atomic():
 				# First, check if the user already exists by email
 				try:
+					logger.debug(f"||||||||||||User info: {user_info}||||||||||")
 					user = User.objects.get(email=email)
 					# User exists - just log them in (don't update username to avoid conflicts)
 					created = False
@@ -294,35 +316,264 @@ class OAuthCallbackView(APIView):
 							{"error": "Username already exists", "email": email, "suggested_username": suggested_username}, 
 							status=status.HTTP_409_CONFLICT
 						)
-					
 					# Create a new user
 					random_password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
-					user = User.objects.create_user(email=email)
+					user = User.objects.create_user(email=email, password=random_password)
 					user.username = suggested_username
 					user.set_password(random_password)
 					user.save()
 					created = True
-					
 				# Create user in other services if new
 				if created:
 					try:
-						CreateOnOtherServices(user)
+						CreateOnOtherServices(user, user_info=user_info)
 					except Exception as e:
 						# This will rollback the transaction including the user creation
 						raise ValueError(f"Failed to create user in all services: {str(e)}")
-				
 				# Log the user in
 				login(request, user)
-				
 				# Generate JWT tokens
 				refresh = RefreshToken.for_user(user)
+				access_token = str(refresh.access_token)
+				refresh_token = str(refresh)
 				frontend_url = "https://trascendence.42firenze.it"
-				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh}&user_id={user.user_id}&username={user.username}&email={user.email}"
-
+				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh_token}&user_id={user.user_id}&username={user.username}&email={user.email}"
 				return redirect(redirect_url)
 				
 		except Exception as e:
 			return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@method_decorator(ratelimit(key='user', rate='3/m', method='GET'), name='get')
+class Setup2FAView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def get(self, request):
+		logger.info("Setting up 2FA for user")
+		user = request.user
+		
+		user.two_factor_secret = generate_random_base32()
+		user.save()
+
+		otp_uri = create_manual_totp_uri(user.two_factor_secret, user.email)
+
+		# Return the OTP URI as a URL for the frontend to generate the QR code
+		return Response({"otp_uri": otp_uri}, status=status.HTTP_200_OK)
+
+	def post(self, request):
+		user = request.user
+		otp = request.data.get('otp_code')
+		if not otp:
+			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if verify_otp(user, otp):
+			user.has_two_factor_auth = True
+			user.save()
+			# Update the has_two_factor_auth flag in user microservice
+			user_service_url = f"{Microservices['Users']}/user/user/update-2fa/"
+		
+			response = requests.post(
+				user_service_url,
+				json={
+					'user_id': user.user_id,
+					'enabled': True
+				},
+				headers={
+					'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+					'Content-Type': 'application/json',
+					'X-API-KEY': settings.API_KEY,
+				}
+			)
+		
+			if response.status_code == 200:
+				return redirect('https://trascendence.42firenze.it/#home')
+			else:
+				return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		else:
+			return Response({"error": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
+			
+def verify_otp(user, otp):
+	try:
+		if not user.two_factor_secret:
+			return False
+		
+		# 1. Ottieni il timestamp corrente
+		timestamp = int(time.time())
+		
+		# 2. Calcola time counter (intervalli di 30 secondi dal 1970)
+		time_counter = timestamp // 30
+		
+		# 3. Verifica il codice corrente e un intervallo prima/dopo (per compensare desincronizzazioni di orario)
+		for i in range(-1, 2):
+			current_counter = time_counter + i
+			
+			# 4. Converti il counter in bytes (formato big-endian 8-byte)
+			time_bytes = struct.pack(">Q", current_counter)
+			
+			# 5. Decodifica il secret dalla base32
+			key = base64.b32decode(user.two_factor_secret.upper() + '=' * ((8 - len(user.two_factor_secret) % 8) % 8))
+			
+			# 6. Calcola l'HMAC-SHA1
+			h = hmac.new(key, time_bytes, hashlib.sha1).digest()
+			
+			# 7. Applica "dynamic truncation" per ottenere 4 bytes
+			offset = h[-1] & 0x0F
+			truncated_hash = h[offset:offset+4]
+			
+			# 8. Converti in un numero intero, elimina il bit più significativo
+			code = struct.unpack('>I', truncated_hash)[0] & 0x7FFFFFFF
+			
+			# 9. Prendi solo le ultime 6 cifre
+			code = code % 1000000
+			
+			# 10. Formatta come stringa con zeri iniziali
+			code_str = '{:06d}'.format(code)
+			
+			# 11. Confronta con il codice inserito dall'utente
+			if code_str == otp:
+				return True
+		
+		return False
+	except Exception as e:
+		logger.error(f"Error verifying OTP: {str(e)}")
+		return False
+
+def create_manual_totp_uri(secret, email, issuer="Transcendence"):
+	# Codifica il label (issuer:account) per URL
+	label = f"{issuer}:{email}"
+	encoded_label = urllib.parse.quote(label)
+		
+	# Crea l'URI con i parametri necessari
+	uri = f"otpauth://totp/{encoded_label}?secret={secret}&issuer={urllib.parse.quote(issuer)}"
+		
+	# Parametri opzionali (questi sono i valori predefiniti)
+	uri += "&algorithm=SHA1&digits=6&period=30"
+		
+	return uri
+
+def generate_random_base32(length=16):
+	"""
+	Genera una stringa casuale in formato base32.
+		
+	Args:
+		length: Lunghezza in byte dei dati casuali prima della codifica
+		
+	Returns:
+		Una stringa base32 (caratteri A-Z, 2-7)
+	"""
+	# Ottieni byte casuali sicuri usando os.urandom
+	random_bytes = os.urandom(length)
+		
+	# Codifica in base32
+	base32_str = base64.b32encode(random_bytes).decode('utf-8')
+		
+	# Rimuovi eventuali padding '='
+	base32_str = base32_str.rstrip('=')
+		
+	return base32_str
+
+class Verify2FALoginView(APIView):
+	permission_classes = [permissions.AllowAny]
+	authentication_classes = [] # Use empty list to bypass DRF's authentication
+
+	def post(self, request):
+		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+		if not auth_header.startswith('Bearer '):
+			return Response({"error": "Invalid authorization header"}, status=status.HTTP_401_UNAUTHORIZED)
+		
+		token = auth_header.split('Bearer ')[1]
+		otp_code = request.data.get('otp_code')
+
+		if not otp_code:
+			logger.error("OTP code not provided")
+			return Response({"error": "OTP code is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+		try:
+			# Decodifica il token per ottenere user_id
+			decoded_token = RefreshToken(token)
+			user_id = decoded_token.get('user_id')
+
+			# Ottieni l'utente direttamente dal database
+			User = get_user_model()
+			user = User.objects.get(user_id=user_id)
+			
+			logger.info(f"Verifying 2FA for user {user.username} with OTP code: {otp_code}")
+	
+			# Verify OTP code
+			if not verify_otp(user, otp_code):
+				logger.warning(f"Invalid OTP code for user {user.username}")
+				return Response({"error": "Invalid OTP code"}, 
+							   status=status.HTTP_400_BAD_REQUEST)
+
+			# OTP verified, log the user in
+			login(request, user)
+
+			# Generate JWT tokens
+			refresh = RefreshToken.for_user(user)
+			access_token = str(refresh.access_token)
+			refresh_token = str(refresh)
+			
+			logger.info(f"User {user.username} logged in with 2FA")
+			return Response({
+				'access_token': access_token,
+				'refresh_token': refresh_token,
+				'user_id': user.user_id,
+				'username': user.username,
+				'email': user.email
+			}, status=status.HTTP_200_OK)
+
+		except User.DoesNotExist:
+			return Response({"error": "User not found"}, 
+						  status=status.HTTP_404_NOT_FOUND)
+		except Exception as e:
+			logger.error(f"Error during 2FA verification: {str(e)}")
+			return Response({"error": str(e)}, 
+						  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class Disable2FAView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def post(self, request):
+		user = request.user
+		if user.has_two_factor_auth:
+			# First update the local model
+			user.has_two_factor_auth = False
+			user.two_factor_secret = None
+			user.save()
+			
+			# Then update the user microservice
+			user_service_url = f"{Microservices['Users']}/user/user/update-2fa/"
+			
+			response = requests.post(
+				user_service_url,
+				json={
+					'user_id': user.user_id,
+					'enabled': False
+				},
+				headers={
+					'Authorization': f'Bearer {get_jwt_token_for_user(user)}',
+					'Content-Type': 'application/json',
+					'X-API-KEY': settings.API_KEY,
+				}
+			)
+			
+			if response.status_code == 200:
+				return redirect('https://trascendence.42firenze.it/#home')
+			else:
+				# If the user service update fails, we should revert our local change
+				user.has_two_factor_auth = True
+				user.save()
+				return Response({"error": "Failed to disable 2FA in user service"}, 
+							   status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+		else:
+			return Response({"error": "2FA is not enabled"}, status=status.HTTP_400_BAD_REQUEST)
+		
+class Is2FAEnabledView(APIView):
+	permission_classes = [permissions.IsAuthenticated]
+
+	def get(self, request):
+		user = request.user
+		return Response({"is_enabled": user.has_two_factor_auth}, status=status.HTTP_200_OK)
+
 
 # Update the UserRegister class to handle potential oauth users
 @method_decorator(csrf_exempt, name='dispatch')
@@ -399,6 +650,20 @@ class UserLogin(APIView):
 			serializer = UserLoginSerializer(data=data)
 			serializer.is_valid(raise_exception=True)
 			user = serializer.check_user(data)
+
+			# Check if 2FA is enabled for this user
+			if user.has_two_factor_auth:
+				# Generate a temporary token valid only for 2FA verification
+				temp_token = RefreshToken.for_user(user)
+				temp_token['2fa_pending'] = True	# Add a custom claim to indicate this token is for 2FA verification only
+				temp_token.set_exp(lifetime=timedelta(minutes=5))  # Set a short expiration time for the temp token
+				response = {
+					'temp_token': str(temp_token),
+					'message': '2FA is enabled. Please verify your OTP code.',
+				}
+				return Response(response, status=status.HTTP_200_OK)
+
+			# If 2FA is not enabled, proceed with normal login
 			login(request, user)
 			
 			# Generate tokens for the user
@@ -415,7 +680,7 @@ class UserLogin(APIView):
 			}, status=status.HTTP_200_OK)
 		except Exception as e:
 			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
-		
+
 			# headers = {
 			# 	'Content-Type': 'application/x-www-form-urlencoded',
 			# 	'Authorization': f'Basic {client["CLIENT_ID"]}:{client["CLIENT_SECRET"]}',

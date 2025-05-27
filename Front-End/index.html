@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <base href="https://trascendence.42firenze.it/">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <base href="https://trascendence.42firenze.it/">
     <title>Progetto Frontend</title>
     <meta name="description" content="Descrizione iniziale del sito">
     <!-- Bootstrap CSS -->
@@ -11,13 +13,12 @@
     <!-- Bootstrap Icons CSS -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.0/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/favicon/favicon.ico" type="image/x-icon">
     <link rel="apple-touch-icon" sizes="192x192" href="/android-chrome-192x192.png">
     <link rel="apple-touch-icon" sizes="512x512" href="/android-chrome-512x512.png">
     <link rel="manifest" href="/site.webmanifest">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/index.css">
-
     <script type="importmap">
         {
             "imports": {
@@ -26,13 +27,14 @@
             }
         }
     </script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div class="App">
         <div class="navbar">
             <img src="/home/logo.png" alt="logo" class="logo-image" />
-            <button class="propic-button" id="toggleSettingsButton">
-                <img src="/home/propic.jpeg" alt="propic" class="propic-image" />
+            <button class="btn btn-light" id="toggleSettingsButton">
+                <i class="bi bi-list"></i>
             </button>
         </div>
         <div class="undernavbar">

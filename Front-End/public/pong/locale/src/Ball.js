@@ -8,6 +8,7 @@ export default class Ball extends THREE.EventDispatcher {
 		super();
 		this.scene = scene;
 		this.players = players;
+		this.players = players;
 		this.radius = radius;
 		this.boundaries = boundaries;
 
