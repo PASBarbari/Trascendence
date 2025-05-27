@@ -1,41 +1,24 @@
 # Default values for login-service-chart.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-# This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
 
-# This sets the container image more information can be found here: https://kubernetes.io/docs/concepts/containers/images/
 image:
-  repository: nginx
-  # This sets the pull policy for images.
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  repository: bombatomica/login # Changed from nginx to your login service image
+  pullPolicy: Always # Changed from IfNotPresent, align with chat service
+  tag: latest # Or specify a version
 
-# This is for the secrets for pulling an image from a private repository more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
-imagePullSecrets: []
-# This is to override the chart name.
 nameOverride: ""
 fullnameOverride: ""
 
-# This section builds out the service account more information can be found here: https://kubernetes.io/docs/concepts/security/service-accounts/
-serviceAccount:
-  # Specifies whether a service account should be created
-  create: true
-  # Automatically mount a ServiceAccount's API credentials?
-  automount: true
-  # Annotations to add to the service account
-  annotations: {}
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
+# Namespace will typically be controlled by the umbrella chart or Helm's --namespace flag
+# namespace: login
 
-# This is for setting Kubernetes Annotations to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: "" # If not set and create is true, a name is generated
+
 podAnnotations: {}
-# This is for setting Kubernetes Labels to a Pod.
-# For more information checkout: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
 podLabels: {}
 
 podSecurityContext: {}
@@ -49,59 +32,132 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-# This is for setting up a service more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/
 service:
-  # This sets the service type more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
-  type: ClusterIP
-  # This sets the ports more information can be found here: https://kubernetes.io/docs/concepts/services-networking/service/#field-spec-ports
-  port: 80
+  type: ClusterIP # Changed from LoadBalancer (manual manifest) to ClusterIP, common for internal services
+  port: 8000 # Port the service will expose
+  targetPort: 8000 # Port the container listens on (http)
 
-# This block is for setting up the ingress for more information can be found here: https://kubernetes.io/docs/concepts/services-networking/ingress/
 ingress:
-  enabled: false
-  className: ""
+  enabled: true # Assuming you want ingress, similar to chat service
+  className: traefik # Your ingress controller class
   annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: chart-example.local
-      paths:
-        - path: /
-          pathType: ImplementationSpecific
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # Example
+  host: trascendence.42firenze.it # Example host, adjust as needed
+  path: /api/login(/|$)(.*)
+  pathType: ImplementationSpecific
+  tls:
+   - secretName: login-tls # Name of the TLS secret
+     hosts:
+       - trascendence.42firenze.it # Must match ingress.host
+  certManager: # Ensure this section exists
+    clusterIssuer: "letsencrypt-prod"
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
 
-# This is to setup the liveness and readiness probes more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+# Liveness and Readiness Probes
+# Adjust paths and ports as per your application's health endpoints
 livenessProbe:
   httpGet:
-    path: /
-    port: http
+    path: /health # Example, replace with your actual health check endpoint
+    port: http # Refers to the containerPort name 'http'
+  initialDelaySeconds: 30
+  periodSeconds: 20
+  failureThreshold: 3
+
 readinessProbe:
   httpGet:
-    path: /
-    port: http
+    path: /health # Example, replace with your actual health check endpoint
+    port: http # Refers to the containerPort name 'http'
+  initialDelaySeconds: 15
+  periodSeconds: 10
+  failureThreshold: 3
 
-# This section is for setting up autoscaling more information can be found here: https://kubernetes.io/docs/concepts/workloads/autoscaling/
 autoscaling:
-  enabled: false
+  enabled: false # Set to true to enable HPA
   minReplicas: 1
-  maxReplicas: 100
+  maxReplicas: 3 # Example
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
+
+# Non-sensitive configurations that will go into a ConfigMap
+# These keys will be available as environment variables in your container
+configMap:
+  data:
+    DEBUG: "False"
+    DJANGO_SETTINGS_MODULE: "login.settings" # Adjust if your settings module is different
+    LOGIN_PORT: "8000" # Port the application inside the container listens on
+    LOGIN_HOST: "0.0.0.0" # Host the application binds to
+    # Database connection details (host and port)
+    # DB_HOST should point to your PostgreSQL service name.
+    # If using the 'db' subchart below, it might be "{{ .Release.Name }}-postgresql"
+    DB_HOST: "login-db-service" # Placeholder: replace with actual DB service name or template it
+    DB_PORT: "5432"
+    # URLs for service discovery - these are examples, adjust hostnames and ports
+    # Consider using .Release.Name for service names if deployed by the same umbrella chart
+    LOGIN_URL: "http://login-service:8000" # Self-referential or external URL
+    CHAT_URL: "http://chat-service:8001"
+    USER_URL: "http://user-service:8002"
+    NOTIFICATIONS_URL: "http://notifications-service:8003"
+    PONG_URL: "http://pong-service:8004"
+    ALLOWED_HOSTS: "*" # Be more specific in production
+
+# Sensitive configurations that will go into a Secret
+# The keys here (DB_NAME, DB_USER, etc.) are defined in your secret.yaml template
+# The actual values will be base64 encoded by the template.
+secrets:
+  database:
+    name: "placeholder_login_db_name" # e.g., login_db
+    user: "placeholder_login_db_user"
+    password: "placeholder_login_db_password"
+  admin:
+    username: "placeholder_admin_username"
+    password: "placeholder_admin_password"
+    email: "admin@example.com"
+    secretKey: "placeholder_django_secret_key" # Your Django SECRET_KEY
+  # API keys for OAuth providers, matching your secret.yaml structure
+  apiKeys:
+    google:
+      clientId: "placeholder_google_client_id"
+      clientSecret: "placeholder_google_client_secret"
+    fortytwo: # 'fortytwo' to match secret.yaml key
+      clientId: "placeholder_42_client_id"
+      clientSecret: "placeholder_42_client_secret"
+
+# PostgreSQL subchart configuration (optional, if you want this chart to deploy its own DB)
+# If you use an external DB, you can remove or disable this 'db' section
+# and ensure DB_HOST, DB_USER, DB_NAME, DB_PASSWORD are correctly set for the external DB.
+db:
+  enabled: false # Set to true to deploy PostgreSQL along with the login service
+  image:
+    repository: postgres
+    tag: "13" # Specify your desired postgres version
+    pullPolicy: IfNotPresent
+  service:
+    port: 5432
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+  persistence:
+    enabled: true
+    storageClass: "" # Optional: If blank, uses default SC. Set to "-" to disable SC.
+    size: "1Gi"
+    annotations: {}
+  # PostgreSQL specific environment variables for the subchart
+  # These are used to initialize the PostgreSQL instance if db.enabled is true.
+  # The login application itself will use the values from .Values.secrets.database.*
+  postgresqlUsername: "" # Will default to .Values.secrets.database.user if not set and db.enabled=true
+  postgresqlPassword: "" # Will default to .Values.secrets.database.password if not set and db.enabled=true
+  postgresqlDatabase: "" # Will default to .Values.secrets.database.name if not set and db.enabled=true
 
 # Additional volumes on the output Deployment definition.
 volumes: []
@@ -117,38 +173,5 @@ volumeMounts: []
 #   readOnly: true
 
 nodeSelector: {}
-
 tolerations: []
-
 affinity: {}
-
-persistence:
-  db:
-    enabled: true
-    storageClass: standard 
-    size: 1Gi
-    annotations: {}
-    # subPath: "" # Optional: if you want to use a subpath within the volume for the main app
-
-# Database specific values (PostgreSQL)
-db:
-  replicaCount: 1
-  image:
-    repository: postgres
-    tag: "13" # Specify your desired postgres version
-    pullPolicy: IfNotPresent
-  service: # Values for the DB service, not the deployment's containerPort directly for this section
-    port: 5432 # The port the DB service will expose and the container listens on
-  resources:
-    limits:
-      cpu: "1" # Example limit
-      memory: "1Gi" # Example limit
-    requests:
-      cpu: "250m" # Example request
-      memory: "256Mi" # Example request
-  persistence:
-    enabled: true # Controls if PVC is used for the DB
-    storageClass: "" # Optional: If blank, uses default SC or inherits from global persistence.db.storageClass. Set to "-" to disable SC.
-    size: "1Gi"       # Size of the PVC for the database
-    annotations: {}
-    subPath: "" # Optional: if you want to use a subpath within the volume for postgres data (e.g., "postgresql-data")

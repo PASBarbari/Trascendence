@@ -24,7 +24,7 @@ spec:
         serviceAccountName: {{ .Values.serviceAccount.dbName | default "default" }}
         containers:
           - name: postgres
-            image: postgres:13
+            image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
             imagePullPolicy: IfNotPresent
             ports:
             - containerPort: 5432

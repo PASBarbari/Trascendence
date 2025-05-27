@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
 	name: {{ .Release.Name }}-login-db
-	namespace: {{ .Values.namespace | default .Release.Namespace }}
+	namespace: {{ .Release.Namespace }}
 	labels:
 		app: {{ .Release.Name }}-login-db
 		chart: {{ .Chart.Name }}-{{ .Chart.Version }}
@@ -30,25 +30,25 @@ spec:
 		- name: db
 		  containerPort: {{ .Values.db.service.port | default 5432 }}
 		  protocol: TCP
-		env:
-		- name: POSTGRES_DB
-		  valueFrom:
-			secretKeyRef:
-			  name: {{ .Values.db.secrets.name }}
-			  key: login-db-name
-		- name: POSTGRES_USER
-		  valueFrom:
-			secretKeyRef:
-			  name: {{ .Values.db.secrets.user }}
-			  key: login-db-user
-		- name: POSTGRES_PASSWORD
-		  valueFrom:
-			secretKeyRef:
-			  name: {{ .Values.db.secrets.password }}
-			  key: login-db-password
-		volumeMounts:
-		- name: data
-		  mountPath: /var/lib/postgresql/data
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-login-secrets # Use the main app secret
+              key: DB_NAME                         # Use the key from the main app secret
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-login-secrets # Use the main app secret
+              key: DB_USER                         # Use the key from the main app secret
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-login-secrets # Use the main app secret
+              key: DB_PASSWORD 
+        volumeMounts:
+          - name: data
+            mountPath: /var/lib/postgresql/data
   volumeClaimTemplates:
   - metadata:
 	  name: data
