@@ -1,1 +1,0 @@
-default_app_config = 'my_chat.apps.MyChatConfig'
