@@ -52,7 +52,7 @@ export function renderPong() {
 		<div class="color-setting">
 			<label for="ballColor">Ball Color:</label>
 			<div class="color-pickers">
-			<input type="color" id="ballColor" name="ballColor" value="#0bff01">
+			<input type="color" id="ballColor" name="ballColor" value="#8c5fb3">
 			<input type="color" id="ballEmissive" name="ballEmissive" value="#00ff00">
 			</div>
 		</div>
@@ -75,7 +75,7 @@ export function renderPong() {
 			<button id="resumeButton">Resume Game</button>
 			<button id="exitButtonPause">Exit</button>
 		</div>
-		<img id="gameOverImage" src="gungeon.png" alt="Game Over" style="display: none;">
+		<img id="gameOverImage" src="public/gungeon.png" alt="Game Over" style="display: none;">
 		<div id="threejs-container"></div>
 	</div>
 	`;

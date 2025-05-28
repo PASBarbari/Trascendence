@@ -74,31 +74,34 @@ export function renderPong() {
 				<label for="player1Color" class="form-label text-light">Player 1 Color:</label>
 				<div class="d-flex gap-2">
 				<input type="color" class="form-control form-control-color" id="player1Color" value="#4deeea" title="Choose player 1 color">
-				<input type="color" class="form-control form-control-color" id="player1Emissive" value="#4deeea" title="Choose player 1 glow">
 				</div>
 			</div>
 			
 			<div class="mb-3">
 				<label for="player2Color" class="form-label text-light">Player 2 Color:</label>
 				<div class="d-flex gap-2">
-				<input type="color" class="form-control form-control-color" id="player2Color" value="#ffe700" title="Choose player 2 color">
-				<input type="color" class="form-control form-control-color" id="player2Emissive" value="#ffe700" title="Choose player 2 glow">
+				<input type="color" class="form-control form-control-color" id="player2Color" value="#4deeea" title="Choose player 2 color">
 				</div>
 			</div>
 			
 			<div class="mb-3">
 				<label for="ballColor" class="form-label text-light">Ball Color:</label>
 				<div class="d-flex gap-2">
-				<input type="color" class="form-control form-control-color" id="ballColor" value="#0bff01" title="Choose ball color">
-				<input type="color" class="form-control form-control-color" id="ballEmissive" value="#00ff00" title="Choose ball glow">
+				<input type="color" class="form-control form-control-color" id="ballColor" value="#8c5fb3" title="Choose ball color">
 				</div>
 			</div>
 			
 			<div class="mb-3">
 				<label for="ringColor" class="form-label text-light">Ring Color:</label>
 				<div class="d-flex gap-2">
-				<input type="color" class="form-control form-control-color" id="ringColor" value="#ff0000" title="Choose ring color">
-				<input type="color" class="form-control form-control-color" id="ringEmissive" value="#0000ff" title="Choose ring glow">
+				<input type="color" class="form-control form-control-color" id="ringColor" value="#ffe700" title="Choose ring color">
+				</div>
+			</div>
+
+			<div class="mb-3">
+				<label for="planeColor" class="form-label text-light">Plane Color:</label>
+				<div class="d-flex gap-2">
+				<input type="color" class="form-control form-control-color" id="planeColor" value="#089c00" title="Choose plane color">
 				</div>
 			</div>
 			
@@ -180,44 +183,22 @@ export function renderPong() {
 		.addEventListener("input", (event) => {
 			state.mat.p1.color.set(event.target.value);
 		});
-
-	document
-		.getElementById("player1Emissive")
-		.addEventListener("input", (event) => {
-			state.mat.p1.emissive.set(event.target.value);
-		});
-
 	document
 		.getElementById("player2Color")
 		.addEventListener("input", (event) => {
 			state.mat.p2.color.set(event.target.value);
 		});
-
-	document
-		.getElementById("player2Emissive")
-		.addEventListener("input", (event) => {
-			state.mat.p2.emissive.set(event.target.value);
-		});
-
 	document.getElementById("ballColor").addEventListener("input", (event) => {
 		state.mat.ball.color.set(event.target.value);
 	});
-
-	document
-		.getElementById("ballEmissive")
-		.addEventListener("input", (event) => {
-			state.mat.ball.emissive.set(event.target.value);
-		});
 
 	document.getElementById("ringColor").addEventListener("input", (event) => {
 		state.mat.ring.color.set(event.target.value);
 	});
 
-	document
-		.getElementById("ringEmissive")
-		.addEventListener("input", (event) => {
-			state.mat.ring.emissive.set(event.target.value);
-		});
+	document.getElementById("planeColor").addEventListener("input", (event) => {
+		state.mat.plane.color.set(event.target.value);
+	});
 
 	document.getElementById("showStats").addEventListener("change", (event) => {
 		UTILS.toggleStats(event.target.checked);
@@ -225,12 +206,10 @@ export function renderPong() {
 
 	document.getElementById("menu").style.display = "block";
 
-
 	setTimeout(() => {
-		GAME.animate();
 		SETUP.setupGame();
+		GAME.animate();
 	}, 100);
-
 
 	// Inizializza il renderer di Three.js
 	// if (!state.renderer) {

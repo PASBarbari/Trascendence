@@ -13,22 +13,23 @@ const HELPER_GEOMETRY = new THREE.BoxGeometry(
 );
 GEOMETRY.rotateX(Math.PI / 2);
 HELPER_GEOMETRY.rotateX(Math.PI / 2);
-const MATERIAL = new THREE.MeshNormalMaterial();
-const HELPER_MATERIAL = new THREE.MeshNormalMaterial({
-	transparent: true,
-	opacity: 0.5,
-});
+const MATERIAL = [state.mat.p1, state.mat.p2];
+
+const HELPER_MATERIAL = state.mat.helper;
 
 export default class Player {
-	constructor(scene, position) {
-		this.scene = scene;
+	constructor(position, n) {
+		this.scene = state.scene;
 		this.geometry = GEOMETRY;
 		this.material = MATERIAL;
-		this.mesh = new THREE.Mesh(GEOMETRY, MATERIAL);
+		this.mesh = new THREE.Mesh(GEOMETRY, MATERIAL[n]);
+
 		this.helperMesh = new THREE.Mesh(HELPER_GEOMETRY, HELPER_MATERIAL);
 
 		this.mesh.add(this.helperMesh);
 		this.mesh.position.copy(position);
+
+		this.mesh.castShadow = true;
 
 		state.game.add(this.mesh);
 		state.players.push(this);

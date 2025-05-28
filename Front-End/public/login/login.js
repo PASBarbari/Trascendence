@@ -56,15 +56,15 @@ function renderLogin() {
 			console.log("Google login");
 		});
 
-    document
-        .getElementById("login42")
-        .addEventListener("click", async function () {
-            const csrftoken = getCookie("csrftoken");
-            const { url_api } = getVariables();
-            // Navigate to the OAuth flow in the current window
-            window.location.href = `${url_api}/login/login/oauth/42/`;
-            console.log("42 login");
-        });
+	document
+		.getElementById("login42")
+		.addEventListener("click", async function () {
+			const csrftoken = getCookie("csrftoken");
+			const { url_api } = getVariables();
+			// Navigate to the OAuth flow in the current window
+			window.location.href = `${url_api}/login/login/oauth/42/`;
+			console.log("42 login");
+		});
 }
 
 async function onHandleSubmit(e, email, password) {
@@ -107,9 +107,13 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 			if (response.ok) {
 				const data = await response.json();
 				console.log("Risposta dal server:", data);
-				
+
 				// Check if 2FA verification is needed
-				if (data.temp_token && data.message && data.message.includes('2FA')) {
+				if (
+					data.temp_token &&
+					data.message &&
+					data.message.includes("2FA")
+				) {
 					// Show OTP verification form
 					showOTPVerificationForm(data.temp_token, email);
 					return false; // Login not completed yet, waiting for OTP
@@ -147,12 +151,12 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 }
 
 function showOTPVerificationForm(tempToken, email) {
-    const contentDiv = document.getElementById("content");
-    // Save the original content to restore if needed
-    const originalContent = contentDiv.innerHTML;
-    
-    // Show OTP verification form
-    contentDiv.innerHTML = `
+	const contentDiv = document.getElementById("content");
+	// Save the original content to restore if needed
+	const originalContent = contentDiv.innerHTML;
+
+	// Show OTP verification form
+	contentDiv.innerHTML = `
 		<div class="login">
 			<div class="login_box auth-card">
 				<div class="text-center mb-4">
@@ -177,92 +181,109 @@ function showOTPVerificationForm(tempToken, email) {
 		</div>
 	`;
 
-    // Handle OTP verification
-    document.getElementById("otpForm").addEventListener("submit", async function(e) {
-        e.preventDefault();
-        const otpCode = document.getElementById("otpCode").value;
-        if (otpCode) {
-            const verified = await verifyOTP(tempToken, otpCode, email);
-            if (verified) {
-                window.navigateTo("#home");
-            } else {
-				showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });
-            }
-        }
-    });
+	// Handle OTP verification
+	document
+		.getElementById("otpForm")
+		.addEventListener("submit", async function (e) {
+			e.preventDefault();
+			const otpCode = document.getElementById("otpCode").value;
+			if (otpCode) {
+				const verified = await verifyOTP(tempToken, otpCode, email);
+				if (verified) {
+					window.navigateTo("#home");
+				} else {
+					showAlertForXSeconds(
+						"Invalid OTP code. Please try again.",
+						"error",
+						3,
+						{ asToast: true }
+					);
+				}
+			}
+		});
 
-    // Handle cancel button
-    document.getElementById("cancelButton").addEventListener("click", function() {
-        // Restore original login form
-        contentDiv.innerHTML = originalContent;
-        
-        // Re-attach event listeners to the restored content
-        document.getElementById("loginForm").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            await onHandleSubmit(e, email, password);
-        });
+	// Handle cancel button
+	document
+		.getElementById("cancelButton")
+		.addEventListener("click", function () {
+			// Restore original login form
+			contentDiv.innerHTML = originalContent;
 
-        document.getElementById("registerButton").addEventListener("click", function() {
-            window.navigateTo("#register");
-        });
+			// Re-attach event listeners to the restored content
+			document
+				.getElementById("loginForm")
+				.addEventListener("submit", async function (e) {
+					e.preventDefault();
+					const email = document.getElementById("email").value;
+					const password = document.getElementById("password").value;
+					await onHandleSubmit(e, email, password);
+				});
 
-        document.getElementById("loginGoogle").addEventListener("click", async function() {
-            const csrftoken = getCookie("csrftoken");
-            const { url_api } = getVariables();
-            window.location.href = `${url_api}/login/login/oauth/google/`;
-        });
+			document
+				.getElementById("registerButton")
+				.addEventListener("click", function () {
+					window.navigateTo("#register");
+				});
 
-        document.getElementById("login42").addEventListener("click", async function() {
-            const csrftoken = getCookie("csrftoken");
-            const { url_api } = getVariables();
-            window.location.href = `${url_api}/login/login/oauth/42/`;
-        });
-    });
+			document
+				.getElementById("loginGoogle")
+				.addEventListener("click", async function () {
+					const csrftoken = getCookie("csrftoken");
+					const { url_api } = getVariables();
+					window.location.href = `${url_api}/login/login/oauth/google/`;
+				});
+
+			document
+				.getElementById("login42")
+				.addEventListener("click", async function () {
+					const csrftoken = getCookie("csrftoken");
+					const { url_api } = getVariables();
+					window.location.href = `${url_api}/login/login/oauth/42/`;
+				});
+		});
 }
 
 async function verifyOTP(tempToken, otpCode, email) {
-    const { url_api } = getVariables();
-    const csrftoken = getCookie("csrftoken");
-    
-    try {
-        const response = await fetch(`${url_api}/login/login/2fa/verify/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken,
-                "Authorization": `Bearer ${tempToken}`
-            },
-            body: JSON.stringify({ otp_code: otpCode }),
-        });
+	const { url_api } = getVariables();
+	const csrftoken = getCookie("csrftoken");
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log("OTP verification successful:", data);
-            
-            // Set tokens and user info after successful verification
-            setVariables({ token: data.access_token });
-            setVariables({ refreshToken: data.refresh_token });
+	try {
+		const response = await fetch(`${url_api}/login/login/2fa/verify/`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": csrftoken,
+				Authorization: `Bearer ${tempToken}`,
+			},
+			body: JSON.stringify({ otp_code: otpCode }),
+		});
 
-            const { user_id, username, email } = data;
-            
-            setVariables({
-                userEmail: email,
-                userUsername: username,
-                userId: user_id,
-            });
-            
-            return true;
-        } else {
-            const errorData = await response.json();
-            console.error("OTP verification failed:", errorData);
-            return false;
-        }
-    } catch (error) {
-        console.error("Exception during OTP verification:", error);
-        return false;
-    }
+		if (response.ok) {
+			const data = await response.json();
+			console.log("OTP verification successful:", data);
+
+			// Set tokens and user info after successful verification
+			setVariables({ token: data.access_token });
+			setVariables({ refreshToken: data.refresh_token });
+
+			const { user_id, username, email } = data;
+
+			setVariables({
+				userEmail: email,
+				userUsername: username,
+				userId: user_id,
+			});
+
+			return true;
+		} else {
+			const errorData = await response.json();
+			console.error("OTP verification failed:", errorData);
+			return false;
+		}
+	} catch (error) {
+		console.error("Exception during OTP verification:", error);
+		return false;
+	}
 }
 
 async function loginProvider(csrftoken, isBaseLogin, provider) {

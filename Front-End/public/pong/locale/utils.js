@@ -48,12 +48,12 @@ export function createScore() {
 	);
 }
 
-export function updateScore() {
-	if (state.scoreText) {
-		state.scene.remove(state.scoreText);
-	}
-	createScore();
-}
+// export function updateScore() {
+// 	if (state.scoreText) {
+// 		state.scene.remove(state.scoreText);
+// 	}
+// 	createScore();
+// }
 
 export function toggleStats(show) {
 	state.stats.dom.style.display = show ? "block" : "none";
@@ -91,7 +91,7 @@ export function p2IsHit() {
 
 export function score() {
 	state.wallHitPosition = 0;
-	updateScore();
+	// updateScore();
 	state.ball.position.set(0, 0, 0);
 	state.ball_speed = state.ring.length / 150;
 	state.angle = Math.floor(Math.random() * 70);
@@ -157,7 +157,7 @@ export function restart_game() {
 	state.lastPowerUpSpawnTime = 0;
 	document.getElementById("gameOverImage").style.display = "none";
 	removeWinnerText();
-	updateScore();
+	// updateScore();
 	state.ball.position.set(0, 0, 0);
 	state.ball_speed = state.ring.length / 150;
 	state.p1.position.set(-((state.ring.length * 2) / 5), 0, 0);
