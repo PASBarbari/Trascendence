@@ -343,7 +343,7 @@ class OAuthCallbackView(APIView):
 		except Exception as e:
 			return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@method_decorator(ratelimit(key='user', rate='3/m', method='GET'), name='get')
+@method_decorator(ratelimit(key='user', rate='50/m', method='GET'), name='get')
 class Setup2FAView(APIView):
 	permission_classes = [permissions.IsAuthenticated]
 
