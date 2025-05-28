@@ -1,60 +1,108 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-	name: {{ .Release.Name }}-login-db
-	namespace: {{ .Release.Namespace }}
-	labels:
-		app: {{ .Release.Name }}-login-db
-		chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-		release: {{ .Release.Name }}
-		heritage: {{ .Release.Service }} 
+  name: {{ include "login-service-chart.fullname" . }}-db
+  namespace: {{ .Values.namespace }} # Changed from {{ .Values.namespace }}
+  labels:
+    {{- include "login-service-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+    app: {{ include "login-service-chart.name" . }}-db # Specific app label for DB
 spec:
-  serviceName: {{ .Release.Name }}-login-db
-  replicas: 1
+  serviceName: {{ include "login-service-chart.fullname" . }}-db
+  replicas: 1 # Consider making this configurable via .Values.db.replicaCount
   selector:
-	matchLabels:
-	  app: {{ .Release.Name }}-login-db
-	  release: {{ .Release.Name }}
+    matchLabels:
+      {{- include "login-service-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+      app: {{ include "login-service-chart.name" . }}-db # Ensure selector matches pod template
   template:
-	metadata:
-	  labels:
-		app: {{ .Release.Name }}-login-db
-		release: {{ .Release.Name }}
-	spec:
-	  serviceAccountName: {{ .Values.serviceAccount.dbName | default "default" }}
-	  containers:
-	  - name: postgres
-		image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
-		imagePullPolicy: IfNotPresent
-		ports:
-		- name: db
-		  containerPort: {{ .Values.db.service.port | default 5432 }}
-		  protocol: TCP
+    metadata:
+      labels:
+        {{- include "login-service-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+        app: {{ include "login-service-chart.name" . }}-db # Consistent app label for DB pods
+    spec:
+      {{- if .Values.serviceAccount.create }} # Assuming a separate SA for DB might be desired
+      serviceAccountName: {{ .Values.serviceAccount.dbName | default (printf "%s-db" (include "login-service-chart.fullname" .)) }}
+      {{- end }}
+      containers:
+      - name: postgres
+        image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
+        imagePullPolicy: {{ .Values.db.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: db
+          containerPort: {{ .Values.db.service.port | default 5432 }}
+          protocol: TCP
         env:
         - name: POSTGRES_DB
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-login-secrets # Use the main app secret
-              key: DB_NAME                         # Use the key from the main app secret
+              name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
+              key: DB_NAME
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-login-secrets # Use the main app secret
-              key: DB_USER                         # Use the key from the main app secret
+              name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
+              key: DB_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ .Release.Name }}-login-secrets # Use the main app secret
-              key: DB_PASSWORD 
-        volumeMounts:
-          - name: data
-            mountPath: /var/lib/postgresql/data
+              name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
+              key: DB_PASSWORD
+        # Add readiness and liveness probes for PostgreSQL
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER) # This requires POSTGRES_USER to be available in the env for the probe
+            - -d
+            - $(POSTGRES_DB)  # This requires POSTGRES_DB to be available in the env for the probe
+            - -h
+            - localhost
+            - -p
+            - "{{ .Values.db.service.port | default 5432 }}"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+            - -h
+            - localhost
+            - -p
+            - "{{ .Values.db.service.port | default 5432 }}"
+          initialDelaySeconds: 45
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.db.resources | nindent 10 }}
+        volumeMounts: # Corrected indentation
+        - name: data
+          mountPath: /var/lib/postgresql/data
   volumeClaimTemplates:
   - metadata:
-	  name: data
-	spec:
-	  accessModes: [ "ReadWriteOnce" ]
-	  storageClassName: {{ .Values.db.persistence.storageClass | default "standard" }}
-	  resources:
-		requests:
-		  storage: {{ .Values.db.persistence.size | default "512Mi" }}
+      name: data
+      labels: # Add labels to PVC template as well for consistency
+        {{- include "login-service-chart.labels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+  spec:
+    accessModes: [ "ReadWriteOnce" ]
+    # storageClassName: {{ .Values.db.persistence.storageClass | default "standard" }} # Use default or specify
+    {{- if .Values.db.persistence.storageClass }}
+    {{- if (eq "-" .Values.db.persistence.storageClass) }}
+    storageClassName: \"\"
+    {{- else }}
+    storageClassName: "{{ .Values.db.persistence.storageClass }}"
+    {{- end }}
+    {{- end }}
+    resources:
+      requests:
+        storage: {{ .Values.db.persistence.size | default "1Gi" }}

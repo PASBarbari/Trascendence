@@ -1,34 +1,55 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}-chat
-  namespace: {{ .Values.namespace }}
+  name: {{ include "chat-service.fullname" . }}
+  namespace: {{ .Values.namespace }} # Changed from .Values.namespace
   labels:
-    app: {{ .Release.Name }}-chat
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "chat-service.labels" . | nindent 4 }}
+    app: {{ include "chat-service.name" . }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-chat
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+      app: {{ include "chat-service.name" . }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-chat
-        release: {{ .Release.Name }}
+        {{- include "chat-service.selectorLabels" . | nindent 8 }}
+        app: {{ include "chat-service.name" . }}
     spec:
-      serviceAccountName: {{ .Values.serviceAccount.name | default "default" }}
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "chat-service.serviceAccountName" . }}
+      {{- else if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ include "chat-service.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: {{ .Values.service.targetPort }}
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
           envFrom:
             - configMapRef:
-                name: {{ .Release.Name }}-chat-configmap
+                name: {{ include "chat-service.fullname" . }}-configmap
+            - secretRef:
+                name: {{ include "chat-service.fullname" . }}-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

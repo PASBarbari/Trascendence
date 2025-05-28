@@ -9,14 +9,30 @@ image:
 nameOverride: ""
 fullnameOverride: ""
 
-# Namespace will typically be controlled by the umbrella chart or Helm's --namespace flag
-# namespace: login
+namespace: login
+
+service:
+  type: ClusterIP # Changed from LoadBalancer (manual manifest) to ClusterIP, common for internal services
+  port: 8000 # Port the service will expose
+  targetPort: 8000 
 
 serviceAccount:
+  name: "trascendence-login-sa"
+  dbName: "login-db-service-account"
   create: true
-  automount: true
   annotations: {}
-  name: "" # If not set and create is true, a name is generated
+  automount: true
+  dbAnnotations: {}
+  dbAutomount: true
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
 
 podAnnotations: {}
 podLabels: {}
@@ -32,58 +48,46 @@ securityContext: {}
   # runAsNonRoot: true
   # runAsUser: 1000
 
-service:
-  type: ClusterIP # Changed from LoadBalancer (manual manifest) to ClusterIP, common for internal services
-  port: 8000 # Port the service will expose
-  targetPort: 8000 # Port the container listens on (http)
 
 ingress:
   enabled: true # Assuming you want ingress, similar to chat service
   className: traefik # Your ingress controller class
   annotations: {}
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # Example
   host: trascendence.42firenze.it # Example host, adjust as needed
   path: /api/login(/|$)(.*)
   pathType: ImplementationSpecific
   tls:
-   - secretName: login-tls # Name of the TLS secret
-     hosts:
-       - trascendence.42firenze.it # Must match ingress.host
-  certManager: # Ensure this section exists
-    clusterIssuer: "letsencrypt-prod"
-
-resources:
-  limits:
-    cpu: 500m
-    memory: 512Mi
-  requests:
-    cpu: 250m
-    memory: 256Mi
-
-# Liveness and Readiness Probes
-# Adjust paths and ports as per your application's health endpoints
-livenessProbe:
-  httpGet:
-    path: /health # Example, replace with your actual health check endpoint
-    port: http # Refers to the containerPort name 'http'
-  initialDelaySeconds: 30
-  periodSeconds: 20
-  failureThreshold: 3
-
-readinessProbe:
-  httpGet:
-    path: /health # Example, replace with your actual health check endpoint
-    port: http # Refers to the containerPort name 'http'
-  initialDelaySeconds: 15
-  periodSeconds: 10
-  failureThreshold: 3
+    enabled: true # Enable TLS, similar to chat service
+    secretName: login-tls # Name of the TLS secret, ensure this matches your cert-manager setup
+    hosts:
+      - trascendence.42firenze.it # Must match ingress.host
+  certManager: # Corrected indentation: certManager is a direct child of ingress
+    clusterIssuer: letsencrypt-prod
 
 autoscaling:
-  enabled: false # Set to true to enable HPA
+  enabled: true
   minReplicas: 1
-  maxReplicas: 3 # Example
+  maxReplicas: 1
   targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+# Liveness and Readiness Probes
+# Adjust paths and ports as per your application's health endpoints
+# livenessProbe:
+#   httpGet:
+#     path: /health # Example, replace with your actual health check endpoint
+#     port: http # Refers to the containerPort name 'http'
+#   initialDelaySeconds: 30
+#   periodSeconds: 20
+#   failureThreshold: 3
+
+# readinessProbe:
+#   httpGet:
+#     path: /health # Example, replace with your actual health check endpoint
+#     port: http # Refers to the containerPort name 'http'
+#   initialDelaySeconds: 15
+#   periodSeconds: 10
+#   failureThreshold: 3
+
 
 # Non-sensitive configurations that will go into a ConfigMap
 # These keys will be available as environment variables in your container
@@ -119,7 +123,8 @@ secrets:
     username: "placeholder_admin_username"
     password: "placeholder_admin_password"
     email: "admin@example.com"
-    secretKey: "placeholder_django_secret_key" # Your Django SECRET_KEY
+    secretKey: "placeholder_django_secret_key"
+  servicePassword: "123" # This is the service password used for internal communication, not sensitive
   # API keys for OAuth providers, matching your secret.yaml structure
   apiKeys:
     google:
@@ -133,7 +138,7 @@ secrets:
 # If you use an external DB, you can remove or disable this 'db' section
 # and ensure DB_HOST, DB_USER, DB_NAME, DB_PASSWORD are correctly set for the external DB.
 db:
-  enabled: false # Set to true to deploy PostgreSQL along with the login service
+  enabled: true # Set to true to deploy PostgreSQL along with the login service
   image:
     repository: postgres
     tag: "13" # Specify your desired postgres version

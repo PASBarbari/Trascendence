@@ -40,6 +40,11 @@ dependencies:
     condition: chat-service.enabled
     tags:
       - chat
+  - name: login-service-chart
+    repository: file://charts/login-service-chart
+    version: 0.1.0
+    tags:
+      - login
   - name: cert-manager
     repository: https://charts.jetstack.io
     version: v1.13.2

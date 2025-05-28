@@ -8,11 +8,14 @@ dependencies:
 - name: chat-service-chart
   repository: file://charts/chat-service-chart
   version: 0.1.0
+- name: login-service-chart
+  repository: file://charts/login-service-chart
+  version: 0.1.0
 - name: cert-manager
   repository: https://charts.jetstack.io
   version: v1.13.2
 - name: cert-manager-chart
   repository: file://charts/cert-manager-chart
   version: 0.1.0
-digest: sha256:968857363eb8a9e11b7fc70799a4cfb1f9e008ed758e672e7df908ed54ff4355
-generated: "2025-05-19T11:31:59.283815055+02:00"
+digest: sha256:0f229a1f9ee33646cfbae77fc097f2f14a5148865ccc7eff4c3d563aeaa3976c
+generated: "2025-05-28T12:29:33.705699861+02:00"

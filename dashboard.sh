@@ -7,7 +7,7 @@ if ! command -v k3s &>/dev/null; then
   exit 1
 fi
 
-KUBECTL="k"
+KUBECTL="kubecolor"
 
 echo "1. Creazione alias kubectl per k3s"
 alias kubectl="${KUBECTL}"

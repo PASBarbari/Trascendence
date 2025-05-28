@@ -1,27 +1,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: {{ .Release.Name }}-chat-db
-  namespace: {{ .Values.namespace }}
+  name: {{ include "chat-service.fullname" . }}-db
+  namespace: {{ .Values.namespace }} # Changed from .Values.namespace
   labels:
-    app: {{ .Release.Name }}-chat-db
-    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+    {{- include "chat-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
 spec:
-  serviceName: {{ .Release.Name }}-chat-db
+  serviceName: {{ include "chat-service.fullname" . }}-db
   replicas: 1
   selector:
     matchLabels:
-      app: {{ .Release.Name }}-chat-db
-      release: {{ .Release.Name }}
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}-chat-db
-        release: {{ .Release.Name }}
+        {{- include "chat-service.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
     spec:
-        serviceAccountName: {{ .Values.serviceAccount.dbName | default "default" }}
+        serviceAccountName: {{ .Values.serviceAccount.dbName | default (include "chat-service.serviceAccountName" .) }}
         containers:
           - name: postgres
             image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
@@ -33,18 +31,18 @@ spec:
             - name: POSTGRES_DB
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.database.name }}
-                  key: chat-db
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: CHAT_DB_NAME
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.database.user }}
-                  key: chat-db-user
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: CHAT_DB_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.secrets.database.password }}
-                  key: chat-db-password
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: CHAT_DB_PASSWORD
             volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data

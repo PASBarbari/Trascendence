@@ -67,7 +67,7 @@ Usage: {{ include "trascendence.name" (dict "Chart" .Chart "Values" .Values "Rel
 {{- else if eq $ctx.Component "elk" -}}
 {{- "elk" -}}
 {{- else -}}
-{{- $ctx.Release.Namespace -}}
+{{- $ctx.Values.namespace -}}
 {{- end -}}
 {{- end -}}
 
@@ -137,7 +137,7 @@ app.kubernetes.io/instance: {{ $ctx.Release.Name }}
 {{- $ctx := . -}}
 {{- $refs := list -}}
 {{- range $ctx.Types -}}
-{{- $refs = append $refs (printf "%s-%s-%s@kubernetescrd" $ctx.Release.Namespace $ctx.Release.Name .) -}}
+{{- $refs = append $refs (printf "%s-%s-%s@kubernetescrd" $ctx.Values.namespace $ctx.Release.Name .) -}}
 {{- end -}}
 {{- join "," $refs -}}
 {{- end -}}

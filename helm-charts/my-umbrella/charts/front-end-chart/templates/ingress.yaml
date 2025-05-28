@@ -9,7 +9,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     # All middlewares on one line, comma-separated
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-{{ .Release.Name }}-websocket-headers@kubernetescrd,{{ .Release.Namespace }}-{{ .Release.Name }}-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.namespace }}-{{ .Release.Name }}-websocket-headers@kubernetescrd,{{ .Values.namespace }}-{{ .Release.Name }}-redirect-https@kubernetescrd
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
