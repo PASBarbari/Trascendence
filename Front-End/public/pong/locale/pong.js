@@ -3,7 +3,6 @@ import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { Group, remove } from "three/addons/libs/tween.module.js";
 import { state } from "./state.js";
-import * as IA from "./ai.js";
 import * as UTILS from "./utils.js";
 import * as SETUP from "./setup.js";
 import * as SETTINGS from "./settings.js";
@@ -213,7 +212,6 @@ export function renderPong() {
 		UTILS.toggleStats(event.target.checked);
 	});
 
-	// Add these event listeners to the bottom of your existing listener setup in renderPong
 	document
 		.getElementById("restartGameButton")
 		.addEventListener("click", SETTINGS.restartGame);
@@ -228,40 +226,7 @@ export function renderPong() {
 		SETUP.setupGame();
 		GAME.animate();
 	}, 100);
-
-	// Inizializza il renderer di Three.js
-	// if (!state.renderer) {
-	// 	state.renderer = new THREE.WebGLRenderer({ antialias: true });
-	// 	state.renderer.setSize(window.innerWidth, window.innerHeight);
-	// }
-
-	// // Inizializza la scena e la camera
-	// if (!state.scene) {
-	// 	state.scene = new THREE.Scene();
-	// }
-
-	// if (!state.camera) {
-	// 	state.camera = new THREE.PerspectiveCamera(
-	// 		75,
-	// 		window.innerWidth / window.innerHeight,
-	// 		0.1,
-	// 		1000
-	// 	);
-	// 	state.camera.position.z = 5;
-	// }
-
-	// // Aggiungi il canvas di Three.js al DOM
-	// const threejsContainer = document.getElementById("threejs-container");
-	// if (threejsContainer && state.renderer.domElement) {
-	// 	threejsContainer.appendChild(state.renderer.domElement);
-	// } else {
-	// 	console.error(
-	// 		"threejsContainer o state.renderer.domElement non trovato"
-	// 	);
-	// }
 }
-
-// Inizializza il gioco
 
 //Resize handler
 
@@ -340,19 +305,3 @@ document.addEventListener("keyup", function (event) {
 		}
 	}
 });
-
-// document.addEventListener("wheel", function (event) {
-// 	state.cam.z += event.deltaY / 10;
-// 	state.camera.position.set(state.cam.x, state.cam.y, state.cam.z);
-// });
-
-// document.addEventListener("mousemove", function (event) {
-// 	if (state.renderer && state.renderer.domElement) {
-// 		const rect = state.renderer.domElement.getBoundingClientRect();
-// 		const mouse = {
-// 			x: ((event.clientX - rect.left) / rect.width) * 2 - 1,
-// 			y: -((event.clientY - rect.top) / rect.height) * 2 + 1,
-// 		};
-// 		// console.log(mouse);
-// 	}
-// });

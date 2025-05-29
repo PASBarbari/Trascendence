@@ -39,7 +39,6 @@ export let state = {
 	isPaused: true,
 	isStarted: false,
 	IAisActive: false,
-	maxScore: 3,
 	wallHitPosition: 0,
 	player_speed: 0,
 	p1_score: 0,

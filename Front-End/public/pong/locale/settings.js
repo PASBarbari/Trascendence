@@ -1,9 +1,5 @@
 import * as THREE from "three";
 import { state } from "./state.js";
-import { createScore } from "./utils.js";
-import Stats from "three/addons/libs/stats.module.js";
-import * as UTILS from "./utils.js";
-import * as GAME from "./gameLogic.js";
 import { updateScore } from "./src/Score.js";
 
 export {

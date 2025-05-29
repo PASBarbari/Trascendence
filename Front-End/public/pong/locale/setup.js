@@ -3,14 +3,11 @@ import { state } from "./state.js";
 // import { createScore, updateScore } from "./utils.js";
 import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
-import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import Ball from "./src/Ball.js";
 import Player from "./src/Player.js";
 import { setupRing } from "./src/Ring.js";
 import { createScore, updateScore } from "./src/Score.js";
 import { initLights } from "./src/Light.js";
-import { showMainMenu } from "./settings.js";
 import { game_over } from "./utils.js";
 
 //Scene setup
