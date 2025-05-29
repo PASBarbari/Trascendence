@@ -6,6 +6,7 @@ import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 //import { renderProfile } from './profile/profile.js';
 import { settingsPopup } from "./settings/settings.js";
 import { cleanupPong } from "./pong/locale/settings.js";
+import { getVariables, setVariables } from "./var.js";
 
 function preloadPongCSS() {
 	const link = document.createElement("link");
@@ -46,6 +47,18 @@ const routes = {
 		// module: () => import("./pong/pongContainer.js").then(module => module.renderPong),
 		title: "Pong",
 		description: "This is the pong game",
+	},
+	oauth: {
+		render: () => {
+			const oautUrl = getVariables().oauth_url;
+			if (oautUrl) {
+            	window.location.href = oautUrl; // Reindirizza all'URL di Google OAuth
+        	} else {
+            	console.error("Oauth URL is not defined in getVariables().oauth_url");
+        	}
+		},
+		title: "OAuth Login",
+		description: "This is the OAuth login page",
 	},
 };
 
@@ -97,7 +110,64 @@ const locationHandler = async () => {
 		.setAttribute("content", route.description);
 };
 
+function handleOAuthCallback() {
+	console.log("Gestione callback OAuth...");
+    // Estrai i parametri dall'URL
+    const hashParams = window.location.hash.substring(1).split('?');
+    if (hashParams.length < 2) return;
+    
+    const params = new URLSearchParams(hashParams[1]);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const userId = params.get('user_id');
+    const username = params.get('username');
+    const email = params.get('email');
+    
+    if (accessToken && refreshToken) {
+        // Salva i token e le info utente
+        setVariables({
+            token: accessToken,
+            refreshToken: refreshToken,
+            userId: userId,
+            userUsername: username,
+            userEmail: email
+        });
+        
+        // Pulisci l'URL
+        window.history.replaceState({}, document.title, '/#home');
+        
+        // Reindirizza alla home
+        window.location.hash = "home";
+        
+        // Aggiungi un piccolo ritardo per assicurarti che il DOM sia aggiornato
+        setTimeout(() => {
+            // Reinizializza i listener per il menu
+            const toggleSettingsButton = document.getElementById("toggleSettingsButton");
+            if (toggleSettingsButton) {
+                // Rimuovi eventuali vecchi listener
+                const newButton = toggleSettingsButton.cloneNode(true);
+                toggleSettingsButton.parentNode.replaceChild(newButton, toggleSettingsButton);
+                
+                // Aggiungi il nuovo listener
+                newButton.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    settingsPopup(event);
+                });
+            }
+            
+            // Completa la gestione della navigazione
+            locationHandler();
+        }, 100);
+	}
+}
+
 const initializeApp = () => {
+	console.log("Inizializzazione dell'applicazione...");
+	if (window.location.hash.includes('access_token')) {
+        handleOAuthCallback();
+        return;
+    }
+
 	if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
         const currentHash = window.location.hash;
         window.location.href = '/' + currentHash;
@@ -108,9 +178,7 @@ const initializeApp = () => {
 	renderExpandableSidebar();
 	//renderProfile();
 
-	const toggleSettingsButton = document.getElementById(
-		"toggleSettingsButton"
-	);
+	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
 	if (toggleSettingsButton) {
 		toggleSettingsButton.addEventListener("click", (event) => {
 			event.preventDefault();

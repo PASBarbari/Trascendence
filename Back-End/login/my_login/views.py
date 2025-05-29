@@ -1,3 +1,4 @@
+from math import log
 import stat
 from urllib.parse import urlencode
 from django.contrib.auth import get_user_model, login, logout
@@ -150,7 +151,7 @@ class OAuthLoginView(APIView):
 		request.session['oauth_provider'] = provider
 		
 		if not provider == '42':
-			authorization_url = (
+			redirect_url = (
 				f"{provider_config.get('authorization_url')}?"
 				f"client_id={provider_config.get('client_id')}&"
 				"response_type=code&"
@@ -161,7 +162,7 @@ class OAuthLoginView(APIView):
 				"access_type=offline"
 			)
 		else:
-			authorization_url = (
+			redirect_url = (
 				f"{provider_config.get('authorization_url')}?"
 				f"client_id={provider_config.get('client_id')}&"
 				f"redirect_uri={provider_config.get('redirect_uri')}&"
@@ -170,7 +171,7 @@ class OAuthLoginView(APIView):
 				f"state={code_verifier}"
 			)
 
-		return redirect(authorization_url)
+		return Response({"redirect_url": redirect_url}, status=status.HTTP_200_OK)
 
 	def generate_code_verifier(self):
 		"""Generates a code_verifier for PKCE"""
@@ -260,6 +261,7 @@ class OAuthCallbackView(APIView):
 		token_data = response.json()
 
 		if "access_token" not in token_data:
+			logger.error(f"Failed to obtain access token, data: {data}")
 			return Response(
 				{"error": "Failed to obtain access token", "details": token_data},
 				status=status.HTTP_400_BAD_REQUEST
@@ -336,7 +338,7 @@ class OAuthCallbackView(APIView):
 				refresh = RefreshToken.for_user(user)
 				access_token = str(refresh.access_token)
 				refresh_token = str(refresh)
-				frontend_url = "https://trascendence.42firenze.it"
+				frontend_url = 'https://trascendence.42firenze.it'
 				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh_token}&user_id={user.user_id}&username={user.username}&email={user.email}"
 				return redirect(redirect_url)
 				
