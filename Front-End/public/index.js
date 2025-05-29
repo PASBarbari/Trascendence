@@ -10,7 +10,7 @@ import { cleanupPong } from "./pong/locale/settings.js";
 function preloadPongCSS() {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = "/pong/locale/pong.css";
+	link.href = "/public/pong/locale/pong.css";
 	document.head.appendChild(link);
 	console.log("Pong CSS precaricato");
 }
@@ -66,10 +66,12 @@ const locationHandler = async () => {
 	}
 
 	if (!routes[location]) {
-        console.log(`Route "${location}" non trovata, reindirizzamento a login`);
-        window.location.hash = "login";
-        return;
-    }
+		console.log(
+			`Route "${location}" non trovata, reindirizzamento a login`
+		);
+		window.location.hash = "login";
+		return;
+	}
 
 	if (currentRoute === "pong" && location !== "pong") {
 		console.log("Navigando via da Pong, eseguo cleanup...");
@@ -98,11 +100,14 @@ const locationHandler = async () => {
 };
 
 const initializeApp = () => {
-	if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-        const currentHash = window.location.hash;
-        window.location.href = '/' + currentHash;
-        return;
-    }
+	if (
+		window.location.pathname !== "/" &&
+		window.location.pathname !== "/index.html"
+	) {
+		const currentHash = window.location.hash;
+		window.location.href = "/" + currentHash;
+		return;
+	}
 
 	preloadPongCSS();
 	renderExpandableSidebar();
@@ -119,15 +124,15 @@ const initializeApp = () => {
 	}
 
 	locationHandler();
-	
+
 	const currentHash = window.location.hash;
 	if (currentHash === "#pong") {
-	    console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
+		console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
 		cleanupPong().then(() => {
 			console.log("Cleanup completato, avvio rendering...");
 			renderPong();
 		});
-    }
+	}
 };
 
 window.addEventListener("hashchange", locationHandler);

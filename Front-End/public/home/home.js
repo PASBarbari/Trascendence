@@ -39,8 +39,8 @@ async function toggleProfile() {
 }
 
 function renderHome() {
-    const contentDiv = document.getElementById('content');
-    contentDiv.innerHTML = `
+	const contentDiv = document.getElementById("content");
+	contentDiv.innerHTML = `
         <div class="content-home">
             <div class="profile" id="profile" style="display: block;"></div>
             <!-- <div class="task-container" id="taskAvailableContainer"></div> -->

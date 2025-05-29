@@ -4,8 +4,8 @@ export function moveIA() {
 	const iaSpeed = state.player_speed;
 	const delay = 1;
 	const timeStep = 0.01;
-	let simulatedBallY = state.ball.position.y;
-	let simulatedBallX = state.ball.position.x;
+	let simulatedBallY = state.ball.mesh.position.y;
+	let simulatedBallX = state.ball.mesh.position.x;
 	let simulatedAngle = state.angle;
 	let timeElapsed = 0;
 
@@ -32,9 +32,12 @@ export function moveIA() {
 
 	const futureBallY = simulatedBallY;
 
-	if (futureBallY > state.p2.position.y + state.player.y / 4) {
+	if (futureBallY > state.players[1].mesh.position.y + state.p.height / 4) {
 		state.p2_move_y = iaSpeed;
-	} else if (futureBallY < state.p2.position.y - state.player.y / 4) {
+	} else if (
+		futureBallY <
+		state.players[1].mesh.position.y - state.p.height / 4
+	) {
 		state.p2_move_y = -iaSpeed;
 	} else {
 		state.p2_move_y = 0;
@@ -42,12 +45,12 @@ export function moveIA() {
 
 	if (
 		(state.p2_move_y > 0 &&
-			state.p2.position.y + state.player.y / 2 <=
+			state.players[1].mesh.position.y + state.p.height / 2 <=
 				state.ring.height / 2 - state.ring.thickness / 2) ||
 		(state.p2_move_y < 0 &&
-			state.p2.position.y - state.player.y / 2 >=
+			state.players[1].mesh.position.y - state.p.height / 2 >=
 				-state.ring.height / 2 + state.ring.thickness / 2)
 	) {
-		state.p2.position.y += state.p2_move_y;
+		state.players[1].mesh.position.y += state.p2_move_y;
 	}
 }
