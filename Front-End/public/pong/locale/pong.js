@@ -125,7 +125,16 @@ export function renderPong() {
 				<button id="exitButtonPause" class="btn btn-danger btn-lg">Exit Game</button>
 			</div>
 			</div>
-			
+
+			/* Game Over Menu */
+			<div id="gameOverMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+  			<h2 class="text-light mb-3">Game Over</h2>
+  			<h3 id="winnerAnnouncement" class="text-warning mb-4">Player 1 Wins!</h3>
+ 			<div class="d-grid gap-3">
+				<button id="restartGameButton" class="btn btn-success btn-lg">Restart Game</button>
+				<button id="mainMenuButton" class="btn btn-primary btn-lg">Back to Main Menu</button>
+			</div>
+			</div>
 		</div>
 	</div>
 	`;
@@ -203,6 +212,15 @@ export function renderPong() {
 	document.getElementById("showStats").addEventListener("change", (event) => {
 		UTILS.toggleStats(event.target.checked);
 	});
+
+	// Add these event listeners to the bottom of your existing listener setup in renderPong
+	document
+		.getElementById("restartGameButton")
+		.addEventListener("click", SETTINGS.restartGame);
+
+	document
+		.getElementById("mainMenuButton")
+		.addEventListener("click", SETTINGS.restartMenu);
 
 	document.getElementById("menu").style.display = "block";
 

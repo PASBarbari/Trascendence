@@ -178,10 +178,9 @@ export function restart_game() {
 export function game_over() {
 	state.isStarted = false;
 	state.isPaused = true;
-	document.getElementById("gameOverImage").style.display = "block";
+
 	const winner = state.p1_score >= state.maxScore ? "Player 1" : "Player 2";
-	createWinnerText(winner);
-	UP.resetPowerUps();
-	state.powerUps.forEach((powerUp) => state.scene.remove(powerUp));
-	SETTINGS.showMainMenu();
+
+	// Show game over menu instead of main menu
+	SETTINGS.showGameOverMenu(winner);
 }

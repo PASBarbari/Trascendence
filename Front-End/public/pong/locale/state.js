@@ -69,7 +69,6 @@ export let state = {
 	game: new THREE.Group(),
 	scoreText: null,
 	winnerText: null,
-	stats: null,
 	r_bottom: null,
 	r_top: null,
 	r_left: null,
@@ -92,11 +91,12 @@ export let state = {
 	},
 	lights: [],
 	plane: null,
+	maxScore: 1,
 };
 
 state.ring.height = (9 / 16) * state.ring.length;
 state.p.height = state.ring.height / 6;
-state.player_speed = state.ring.length / 115;
+state.player_speed = state.ring.length / 80;
 state.ball_radius = state.ring.length / 80;
 state.ball_speed = state.ring.length / 150;
 state.angle = Math.floor(Math.random() * 70);

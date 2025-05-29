@@ -10,6 +10,8 @@ import Player from "./src/Player.js";
 import { setupRing } from "./src/Ring.js";
 import { createScore, updateScore } from "./src/Score.js";
 import { initLights } from "./src/Light.js";
+import { showMainMenu } from "./settings.js";
+import { game_over } from "./utils.js";
 
 //Scene setup
 
@@ -87,9 +89,16 @@ export function setupGame() {
 			state.p2_score++;
 		}
 		updateScore(event.message);
-
-		console.log("Player 1 score:", state.p1_score);
-		console.log("Player 2 score:", state.p2_score);
+		if (state.p1_score >= state.maxScore) {
+			state.isStarted = false;
+			state.isPaused = true;
+			game_over();
+		}
+		if (state.p2_score >= state.maxScore) {
+			state.isStarted = false;
+			state.isPaused = true;
+			game_over();
+		}
 	});
 
 	// //Game setup

@@ -4,6 +4,7 @@ import { createScore } from "./utils.js";
 import Stats from "three/addons/libs/stats.module.js";
 import * as UTILS from "./utils.js";
 import * as GAME from "./gameLogic.js";
+import { updateScore } from "./src/Score.js";
 
 export {
 	showMainMenu,
@@ -19,6 +20,9 @@ export {
 	resetSettings,
 	startCrazymode,
 	startClassicmode,
+	showGameOverMenu,
+	restartGame,
+	restartMenu,
 };
 
 function saveSettings() {
@@ -210,4 +214,67 @@ function exitGame() {
 
 	// Or use this to show main menu
 	// showMainMenu();
+}
+
+function showGameOverMenu(winner) {
+	// Hide other menus
+	document.getElementById("menu").style.display = "none";
+	document.getElementById("pauseMenu").style.display = "none";
+	document.getElementById("settingsMenu").style.display = "none";
+	document.getElementById("nbrOfPlayerMenu").style.display = "none";
+	document.getElementById("modeMenu").style.display = "none";
+
+	// Update winner text
+	document.getElementById(
+		"winnerAnnouncement"
+	).textContent = `${winner} Wins!`;
+
+	// Show game over menu
+	document.getElementById("gameOverMenu").style.display = "block";
+}
+
+// Add this function to restart the game with current settings
+function resetGame() {
+	// Hide game over menu
+	document.getElementById("gameOverMenu").style.display = "none";
+
+	// Reset scores and positions but keep other settings
+	state.p1_score = 0;
+	state.p2_score = 0;
+
+	updateScore("p1");
+	updateScore("p2");
+
+	if (state.players[0] && state.players[0].mesh) {
+		state.players[0].mesh.position.set(
+			-((state.ring.length * 2) / 5),
+			0,
+			0
+		);
+	}
+
+	if (state.players[1] && state.players[1].mesh) {
+		state.players[1].mesh.position.set((state.ring.length * 2) / 5, 0, 0);
+	}
+
+	if (state.ball && state.ball.mesh) {
+		state.ball.mesh.position.set(0, 0, 0);
+		state.ball.resetSpeed();
+	}
+
+	// Start the game with current settings
+}
+
+function restartMenu() {
+	// Hide game over menu
+	document.getElementById("gameOverMenu").style.display = "none";
+	// Show main menu
+	showMainMenu();
+	resetGame();
+}
+
+function restartGame() {
+	resetGame();
+	state.isStarted = true;
+	state.isPaused = false;
 }
