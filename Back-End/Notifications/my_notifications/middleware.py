@@ -211,6 +211,23 @@ class JWTAuthMiddleware(BaseMiddleware):
 			logger.error(f"JWT token validation failed: {str(e)}")
 			return AnonymousUser()
 
+class DebugMiddleware(BaseMiddleware):
+	"""
+	Debug middleware to log WebSocket connection attempts and details
+	"""
+	async def __call__(self, scope, receive, send):
+		logger.info(f"=== WebSocket Debug Info ===")
+		logger.info(f"Path: {scope.get('path')}")
+		logger.info(f"Query string: {scope.get('query_string', b'').decode()}")
+		logger.info(f"Headers: {dict(scope.get('headers', []))}")
+		logger.info(f"User: {scope.get('user', 'Not set')}")
+		logger.info(f"User type: {type(scope.get('user', 'Not set'))}")
+		if hasattr(scope.get('user'), 'user_id'):
+			logger.info(f"User ID: {scope['user'].user_id}")
+		logger.info(f"=== End Debug Info ===")
+		
+		return await super().__call__(scope, receive, send)
+
 def JWTAuthMiddlewareStack(inner):
 	"""
 	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
