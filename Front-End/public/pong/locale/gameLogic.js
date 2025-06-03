@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { FontLoader } from "three/addons/loaders/FontLoader.js";
 import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { Group, remove } from "three/addons/libs/tween.module.js";
+import { moveIA } from "./ai.js";
 import { state } from "./state.js";
 
 const clock = new THREE.Clock();
@@ -27,7 +28,7 @@ export function animate() {
 		}
 
 		if (state.players[1] && state.IAisActive) {
-			IA.moveIA();
+			moveIA();
 		} else if (state.players[1]) {
 			state.players[1].move(state.p2_move_y);
 		}
