@@ -14,8 +14,6 @@ export {
 	exitGame,
 	saveSettings,
 	resetSettings,
-	startCrazymode,
-	startClassicmode,
 	showGameOverMenu,
 	restartGame,
 	restartMenu,
@@ -53,7 +51,6 @@ function resetSettings() {
 
 function shownbrOfPlayerMenu() {
 	document.getElementById("menu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "none";
 	document.getElementById("nbrOfPlayerMenu").style.display = "block";
 }
 
@@ -79,32 +76,16 @@ function hidePauseMenu() {
 
 function startOnePlayerGame() {
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "block";
 	state.IAisActive = true;
+	state.isStarted = true;
+	state.isPaused = false;
 }
 
 function startTwoPlayerGame() {
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "block";
 	state.IAisActive = false;
-}
-
-function startCrazymode() {
-	document.getElementById("modeMenu").style.display = "none";
-	// UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
-	state.spawnPowerUpFlag = true;
-	// GAME.animate();
-}
-
-function startClassicmode() {
-	document.getElementById("modeMenu").style.display = "none";
-	// UTILS.restart_game();
-	state.isStarted = true;
-	state.isPaused = false;
-	state.spawnPowerUpFlag = true;
-	// GAME.animate();
 }
 
 function resumeGame() {
@@ -218,7 +199,6 @@ function showGameOverMenu(winner) {
 	document.getElementById("pauseMenu").style.display = "none";
 	document.getElementById("settingsMenu").style.display = "none";
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "none";
 
 	// Update winner text
 	document.getElementById(

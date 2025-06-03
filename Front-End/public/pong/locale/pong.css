@@ -35,7 +35,6 @@
 /* Common menu styles */
 .pong-app #menu,
 .pong-app #nbrOfPlayerMenu,
-.pong-app #modeMenu,
 .pong-app #settingsMenu,
 .pong-app #pauseMenu {
 	transition: all 0.3s ease;
@@ -52,7 +51,6 @@
 /* Menu headings */
 .pong-app #menu h1,
 .pong-app #nbrOfPlayerMenu h2,
-.pong-app #modeMenu h2,
 .pong-app #settingsMenu h2,
 .pong-app #pauseMenu h2 {
 	color: #fff;

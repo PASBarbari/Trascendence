@@ -56,16 +56,6 @@ export function renderPong() {
 			</div>
 			</div>
 			
-			<!-- Game Mode Menu -->
-			<div id="modeMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
-			<h2 class="text-light mb-4">Select Mode</h2>
-			<div class="d-grid gap-3">
-				<button id="classicModeButton" class="btn btn-primary btn-lg">Classic</button>
-				<button id="crazyModeButton" class="btn btn-warning btn-lg">Crazy</button>
-				<button id="backFromModeButton" class="btn btn-secondary btn-lg">Back</button>
-			</div>
-			</div>
-			
 			<!-- Settings Menu -->
 			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
 			<h2 class="text-light mb-4 text-center">Settings</h2>
@@ -156,18 +146,6 @@ export function renderPong() {
 	document
 		.getElementById("backButton")
 		.addEventListener("click", SETTINGS.showMainMenu);
-
-	document
-		.getElementById("classicModeButton")
-		.addEventListener("click", SETTINGS.startClassicmode);
-
-	document
-		.getElementById("crazyModeButton")
-		.addEventListener("click", SETTINGS.startCrazymode);
-
-	document
-		.getElementById("backFromModeButton")
-		.addEventListener("click", SETTINGS.shownbrOfPlayerMenu);
 
 	document
 		.getElementById("saveSettingsButton")
