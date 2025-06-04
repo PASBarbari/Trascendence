@@ -22,6 +22,6 @@ djangorestframework-simplejwt==5.4.0
     # via -r Back-End/requirements.in
 drf-yasg==1.21.8
     # via -r Back-End/requirements.in
-gunicorn==22.0.0
+gunicorn==23.0.0
 pyotp==2.9.0
 django-encrypted-model-fields==0.6.5
