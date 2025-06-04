@@ -12,7 +12,7 @@ let variables = {
 	exp: 0,
 	profileImageUrl: null,
 	has_two_factor_auth: false,
-
+	oauth_url: null,
 	multiplayer_username: null,
 	multiplayer_id: null,
 	url_api: "https://trascendence.42firenze.it/api",

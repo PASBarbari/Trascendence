@@ -48,23 +48,44 @@ function renderLogin() {
 
 	document
 		.getElementById("loginGoogle")
-		.addEventListener("click", async function () {
-			const csrftoken = getCookie("csrftoken");
-			const { url_api } = getVariables();
-			// Navigate to the OAuth flow in the current window
-			window.location.href = `${url_api}/login/login/oauth/google/`;
-			console.log("Google login");
-		});
+		.addEventListener("click", () => handleOAuthLogin("google"));
 
 	document
 		.getElementById("login42")
-		.addEventListener("click", async function () {
-			const csrftoken = getCookie("csrftoken");
-			const { url_api } = getVariables();
-			// Navigate to the OAuth flow in the current window
-			window.location.href = `${url_api}/login/login/oauth/42/`;
-			console.log("42 login");
-		});
+		.addEventListener("click", () => handleOAuthLogin("42"));
+}
+
+/**
+ * Gestisce il login OAuth per diversi provider
+ * @param {string} provider - Il provider OAuth ("google" o "42")
+ */
+async function handleOAuthLogin(provider) {
+    console.log(`${provider} login`);
+    const csrftoken = getCookie("csrftoken");
+    const { url_api } = getVariables();
+    
+    try {
+        const response = await fetch(`${url_api}/login/login/oauth/${provider}/`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrftoken,
+            },
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`${provider} OAuth response:`, data);
+            setVariables({ oauth_url: data.redirect_url });
+            console.log("OAuth URL aggiornato:", getVariables().oauth_url);
+            window.navigateTo("#oauth");
+        } else {
+            const errorData = await response.json();
+            console.error(`${provider} OAuth error:`, errorData);
+        }
+    } catch (error) {
+        console.error(`Exception during ${provider} OAuth:`, error);
+    }
 }
 
 async function onHandleSubmit(e, email, password) {
