@@ -2,7 +2,7 @@ import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
-//import { createGame } from './serverSide.js';
+// import { createGame } from "./multiplayer/serverSide.js";
 import { renderPong } from "./locale/pong.js";
 
 const link = document.createElement("link");
@@ -30,13 +30,17 @@ async function handleLocalePong() {
 	// TODO comunque chiamata a gu anche se in singolo e Redirect to pong game
 	// const { createGame } = await import("./multiplayer/serverSide.js");
 	// const { userId } = getVariables();
-	// createGame(userId, 13);
+	// createGame(userId, 2);
 	window.navigateTo("#pong");
 	// renderPong();
 }
 
 function handleMultiPong() {
-	showLoginBox();
+	// const { createGame } = await import("./multiplayer/serverSide.js");
+	// const { userId } = getVariables();
+	// createGame(userId, 13);
+	openFriendList();
+	// window.navigateTo("#pong");
 }
 
 function showLoginBox() {
@@ -172,6 +176,137 @@ async function onHandleRegisterSubmit(e, username, email, password) {
 		showLoginBox();
 	}
 }
+
+async function openFriendList() {
+	let friendListContainer = document.getElementById("friendListContainer");
+	if (!friendListContainer) {
+		friendListContainer = document.createElement("div");
+		friendListContainer.id = "friendListContainer";
+		friendListContainer.className = "friend-list-modal";
+		friendListContainer.style.cssText = `
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			z-index: 1000;
+		`;
+		friendListContainer.innerHTML = `
+			<div class="friend-list-box" style="
+				background: white;
+				padding: 20px;
+				border-radius: 8px;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+				max-width: 400px;
+				width: 90%;
+			">
+				<h2>Your Friends</h2>
+				<ul id="friendList" class="friend-list" style="
+					list-style: none;
+					padding: 0;
+					margin: 10px 0;
+					max-height: 200px;
+					overflow-y: auto;
+				">
+					<!-- Friends will be listed here -->
+				</ul>
+				<button class="btn btn-secondary mt-2" onclick="closeFriendList()">Close</button>
+			</div>
+		`;
+		document.body.appendChild(friendListContainer);
+
+		// Add click outside to close
+		friendListContainer.addEventListener("click", function (e) {
+			if (e.target === friendListContainer) {
+				closeFriendList();
+			}
+		});
+
+		// Fetch friends from API
+		try {
+			const { accessToken, url_api } = getVariables();
+			const response = await fetch(
+				`${url_api}/user/friendships/?status=accepted`,
+				{
+					method: "GET",
+					headers: {
+						Authorization: `Bearer ${accessToken}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			if (response.ok) {
+				const friendsData = await response.json();
+				const friendList = document.getElementById("friendList");
+
+				if (friendsData.length === 0) {
+					const li = document.createElement("li");
+					li.textContent = "No friends found";
+					li.style.cssText =
+						"padding: 10px; text-align: center; color: #666;";
+					friendList.appendChild(li);
+				} else {
+					friendsData.forEach((friendship) => {
+						const li = document.createElement("li");
+						// Extract friend name (you'll need to adjust based on your serializer structure)
+						const friendName =
+							friendship.user_1.username ||
+							friendship.user_2.username;
+						li.textContent = friendName;
+						li.style.cssText =
+							"padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;";
+						li.addEventListener(
+							"mouseover",
+							() => (li.style.backgroundColor = "#f5f5f5")
+						);
+						li.addEventListener(
+							"mouseout",
+							() => (li.style.backgroundColor = "transparent")
+						);
+						li.addEventListener("click", () => {
+							// Handle friend selection for multiplayer
+							console.log(`Selected friend: ${friendName}`);
+							// TODO: Implement multiplayer game invitation
+						});
+						friendList.appendChild(li);
+					});
+				}
+			} else if (response.status === 404) {
+				console.log("No friends found (404)");
+				const friendList = document.getElementById("friendList");
+				const li = document.createElement("li");
+				li.textContent = "No friends 🥲";
+				li.style.cssText =
+					"padding: 10px; text-align: center; color: #666;";
+				friendList.appendChild(li);
+			} else {
+				console.error("Failed to fetch friends");
+				const friendList = document.getElementById("friendList");
+				const li = document.createElement("li");
+				li.textContent = "Error loading friends";
+				li.style.cssText =
+					"padding: 10px; text-align: center; color: #red;";
+				friendList.appendChild(li);
+			}
+		} catch (error) {
+			console.error("Error fetching friends:", error);
+		}
+	}
+}
+
+function closeFriendList() {
+	const friendListContainer = document.getElementById("friendListContainer");
+	if (friendListContainer) {
+		friendListContainer.remove();
+	}
+}
+
+window.closeFriendList = closeFriendList;
 
 window.handleLocalePong = handleLocalePong;
 window.handleMultiPong = handleMultiPong;

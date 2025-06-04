@@ -178,9 +178,9 @@ document.addEventListener("keyup", function (event) {
 });
 
 // function getVariables() {
-//     // Example implementation to retrieve the token from local storage or environment variables
-//     const token = localStorage.getItem('token') || process.env.TOKEN;
-//     return { token };
+// 	// Example implementation to retrieve the token from local storage or environment variables
+// 	const token = localStorage.getItem("token") || process.env.TOKEN;
+// 	return { token };
 // }
 
 export { createGame, initializeWebSocket, updateGameState, socket };
