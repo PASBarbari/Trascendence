@@ -15,12 +15,13 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Notifications.settings')
 django.setup()
 
 from my_notifications.routing import websocket_urlpatterns
-from my_notifications.middleware import JWTAuthMiddlewareStack
-
+from my_notifications.middleware import JWTAuthMiddlewareStack, DebugMiddleware
 
 application = ProtocolTypeRouter({
 	'http': get_asgi_application(),
-	'websocket': JWTAuthMiddlewareStack(
-		URLRouter(websocket_urlpatterns)
+	'websocket': DebugMiddleware(
+		JWTAuthMiddlewareStack(
+			URLRouter(websocket_urlpatterns)
+		)
 	),
 })
