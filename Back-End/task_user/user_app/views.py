@@ -95,27 +95,27 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 		return get_object_or_404(UserProfile, user_id=self.request.user.user_id)
 
 class FriendList(generics.ListAPIView):
-	permission_classes = (IsAuthenticatedUserProfile,)
-	authentication_classes = [JWTAuth]
-	serializer_class = FriendshipsSerializer
-		
-	def get_queryset(self):
-		user_id = self.request.user.user_id
-		
-		status_filter = self.request.query_params.get('status')
-		
-		# Base query - all relationships involving current user
-		queryset = Friendships.objects.filter(
-			Q(user_1__user_id=user_id) | Q(user_2__user_id=user_id)
-		)
-		
-		# Filter by acceptance status if requested
-		if status_filter == 'accepted':
-			queryset = queryset.filter(accepted=True)
-		elif status_filter == 'pending':
-			queryset = queryset.filter(accepted=False)
-			
-		return queryset
+    permission_classes = (IsAuthenticatedUserProfile,)
+    authentication_classes = [JWTAuth]
+    serializer_class = FriendshipsSerializer
+        
+    def get_queryset(self):
+        user = self.request.user
+        
+        status_filter = self.request.query_params.get('status')
+        
+        # Base query - all relationships involving current user
+        queryset = Friendships.objects.filter(
+            Q(user_1=user) | Q(user_2=user)
+        )
+        
+        # Filter by acceptance status if requested
+        if status_filter == 'accepted':
+            queryset = queryset.filter(accepted=True)
+        elif status_filter == 'pending':
+            queryset = queryset.filter(accepted=False)
+            
+        return queryset
 
 class LevelUp(APIView):
 	""" Use this endpoint to add exp to a user.
@@ -138,60 +138,64 @@ class LevelUp(APIView):
 			user.exp = 0
 		user.save()
 		return Response({'message': 'user level up'}, status=status.HTTP_200_OK)
-		
 
-from .notification import Microservices
 
 class AddFriend(APIView):
 	""" Use this endpoint to send a friend request, accept a friend request or delete a friendship.
 
+		methods:
+		- POST: Send a friend request to another user.
+		- PATCH: Accept a friend request from another user.
+		- DELETE: Delete a friendship with another user.
+
 		Args:
-			user_1 (int): The id of the user sending the request.
-			user_2 (int): The id of the user receiving the request.
+			receiver (int): The id of the user receiving the request.
 	"""
 	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 
 	def post(self, request):
-		serializer = FriendshipsSerializer(data=request.data)
-		serializer.is_valid(raise_exception=True)
-		u1 = UserProfile.objects.get(user_id=serializer.data['user_1'])
-		u2 = UserProfile.objects.get(user_id=serializer.data['user_2'])
-		if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
-			if Friendships.objects.get(user_1=u1, user_2=u2).accepted:
+		try:
+			u1 = request.user
+			u2 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
+			if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
+				# Check if already friends
+				friendship = Friendships.objects.filter(user_1=u1, user_2=u2).first() or Friendships.objects.filter(user_1=u2, user_2=u1).first()
+				if friendship and friendship.accepted:
+					return Response({
+						'info': 'users are already friends'
+					}, status=status.HTTP_200_OK)
 				return Response({
-					'info': 'users are already friends'
+					'info': 'friend request is pending'
 				}, status=status.HTTP_200_OK)
+			if u1.user_id == u2.user_id:
+				return Response({
+					'error': 'You cannot send a friend request to yourself, lmao!'
+				}, status=status.HTTP_400_BAD_REQUEST)
+			fs = Friendships.objects.create(
+				user_1=u1,
+				user_2=u2
+			)
+			fs.save()
+			notifi = ImmediateNotification.objects.create(
+				Sender="Users",
+				message=u1,
+				user_id=u2.user_id,
+				group_id=None,
+			)
+			SendNotificationSync(notifi)
 			return Response({
-				'info': 'friend request is pending'
+				'info': 'friend request sent'
 			}, status=status.HTTP_200_OK)
-		fs = Friendships.objects.create(
-			user_1=u1,
-			user_2=u2
-		)
-		fs.save()
-		notifi = ImmediateNotification.objects.create(
-			Sender="Users",
-			message=f'Friend request from {u1.first_name} {u1.last_name}',
-			user_id=u2.user_id,
-			group_id=None,
-		)
-		SendNotificationSync(notifi)
-		return Response({
-			'info': 'friend request sent'
-		}, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response({
+				'error': str(e)
+			}, status=status.HTTP_400_BAD_REQUEST)
 
 	def patch(self, request):
 		try:
-			serializer = FriendshipsSerializer(data=request.data)
-			serializer.is_valid(raise_exception=True)
-		
-			# Make sure current user is the recipient
-			if self.request.user.user_id != serializer.data['user_2']:
-				return Response({
-					'error': 'You can only accept requests sent to you'
-				}, status=status.HTTP_403_FORBIDDEN)
-			u1 = UserProfile.objects.get(user_id=serializer.data['user_1'])
-			u2 = UserProfile.objects.get(user_id=serializer.data['user_2'])
+			u1 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
+			u2 = request.user
 			# Find the friendship in either direction
 			friendship = Friendships.objects.filter(
 				user_1=u1, user_2=u2
@@ -221,10 +225,14 @@ class AddFriend(APIView):
 
 	def delete(self, request):
 		try:
-			serializer = FriendshipsSerializer(data=request.data)
-			serializer.is_valid(raise_exception=True)
-			u1 = UserProfile.objects.get(user_id=serializer.data['user_1'])
-			u2 = UserProfile.objects.get(user_id=serializer.data['user_2'])
+			u1 = request.user
+			u2 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
+			if u1.user_id == u2.user_id:
+				return Response({
+					'error': 'You cannot delete a friendship with yourself, lmao!'
+				}, status=status.HTTP_400_BAD_REQUEST)
+			# Find the friendship in either direction
+			# This will find the friendship regardless of who is user_1 or user_2
 			friendship = Friendships.objects.filter(
 					(Q(user_1=u1) & Q(user_2=u2)) | (Q(user_1=u2) & Q(user_2=u1))
 			).first()
@@ -234,13 +242,6 @@ class AddFriend(APIView):
 							Sender="Users",
 							message=f'deleted friendship with {u2.user_id}',
 							user_id=u1.user_id,
-							group_id=None,
-					)
-					SendNotificationSync(notifi)
-					notifi = ImmediateNotification.objects.create(
-							Sender="Users",
-							message=f'deleted friendship with {u1.user_id}',
-							user_id=u2.user_id,
 							group_id=None,
 					)
 					SendNotificationSync(notifi)

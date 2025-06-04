@@ -65,7 +65,7 @@ class JWTAuth(JWTAuthentication):
 		# Skip authentication for specific paths if needed
 		if request.path.endswith('/chat/new_user/') and request.method == 'POST':
 			logger.debug(f"Skipping JWT auth for {request.path}")
-			return (AnonymousUser(), None)
+			return None
 			
 		# Check for cached authentication result first
 		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
@@ -88,9 +88,10 @@ class JWTAuth(JWTAuthentication):
 				
 				# Cache the result (None results don't need caching)
 				if auth_result:
+					user, validated_token = auth_result
 					# Cache successful authentications for 5 minutes (adjust as needed)
 					cache.set(cache_key, auth_result, timeout=300)
-					logger.debug(f"JWT auth successful for user {auth_result[0]}")
+					logger.debug(f"JWT auth successful for user {user}")
 					return auth_result
 				else:
 					# Cache negative results for a shorter time (1 minute)
@@ -106,30 +107,32 @@ class JWTAuth(JWTAuthentication):
 					user_id = decoded.get('user_id')
 					logger.warning(f"User ID from token: {user_id}, exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
 				except Exception as inner_e:
-							logger.warning(f"Token decode failed: {str(inner_e)}")
+					logger.warning(f"Token decode failed: {str(inner_e)}")
 				return None
 		
 		# No auth header or not a Bearer token
-		return super().authenticate(request)
+		return None
 
 	def get_user(self, validated_token):
 		"""
-		Sovrascrive il metodo get_user per utilizzare UserProfile invece del modello User standard
+		Override to use UserProfile instead of standard User model
 		"""
 		try:
 			user_id = validated_token[self.user_id_claim]
 			
-			# Cerca l'utente nel modello UserProfile
+			# Get user from UserProfile model
 			user = UserProfile.objects.get(user_id=user_id)
 			
 			return user
 		except UserProfile.DoesNotExist:
 			logger.warning(f"User ID {user_id} from token not found in UserProfile")
 			return None
+		except KeyError:
+			logger.warning(f"Token missing {self.user_id_claim} claim")
+			return None
 		except Exception as e:
 			logger.error(f"Error getting user from token: {str(e)}")
 			return None
-
 class APIKeyPermission(BasePermission):
 	"""
 	Simple API key permission class

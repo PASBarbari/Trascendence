@@ -10,28 +10,28 @@ document.head.appendChild(link);
 let messageHistory = [];
 let socket;
 
-async function handleFriendRequest(str_method, user_id, friend_id, index) {
+async function handleFriendRequest(str_method, receiver_id, index) {
 	
 	// Pulisce l'input dopo aver inviato la richiesta
+	receiver_id = Number(receiver_id);
 	const friendInput = document.getElementById('friendID');
 	if (friendInput) {
 		friendInput.value = '';
 	}
 	const { url_api } = getVariables();
 	console.log(`/----handleFriendRequest ${str_method}----\\`);
-	console.log("User ID:", user_id);
-	console.log("Friend ID:", friend_id);
+	console.log("Friend ID:", receiver_id);
 	const card = document.getElementById(`notification-card-${index}`);
 	const deleteCard = document.getElementById(`friend-item-${index}`);
 	try {
-		const response = await fetch(`${url_api}/user/addfriend`, {
+		const response = await fetch(`${url_api}/user/user/addfriend`, {
 			method: str_method,
 			headers: {
+				"Authorization": `Bearer ${getVariables().token}`,
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
-				user_1: user_id,
-				user_2: friend_id,
+				receiver: receiver_id
 			}),
 		});
 
@@ -110,7 +110,7 @@ function renderFriendsList(friends) {
             <div class="friend-item" id="friend-item-${index}">
                 <p>Friend ID: ${friendId}</p>
                 <button class="btn btn-outline-danger btn-square" type="button"
-                    onclick="handleFriendRequest('DELETE', '${userId}', ${friendId}, ${index})">
+                    onclick="handleFriendRequest('DELETE', ${friendId}, ${index})">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
@@ -128,11 +128,11 @@ function renderFriendRequest() {
                 <div class="card-body">
                     <p class="card-text">User ID: ${message.user_id}</p>
                     <button class="btn btn-outline-primary" type="button"
-                        onclick="handleFriendRequest('PATCH', ${Number(message.message)}, '${userId}', ${index})">
+                        onclick="handleFriendRequest('PATCH', ${Number(message.message)}, ${index})">
                         Accept
                     </button>
                     <button class="btn btn-outline-secondary" type="button"
-                        onclick="handleFriendRequest('DELETE', '${userId}', ${Number(message.message)}, ${index})">
+                        onclick="handleFriendRequest('DELETE', ${Number(message.message)}, ${index})">
                         Decline
                     </button>
                 </div>
@@ -154,8 +154,8 @@ function renderNotification() {
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
 			<div class="input-group mb-3">
 				<input type="text" class="form-control" id="friendID" placeholder="User ID">
-				<button class="btn btn-outline-primary" type="button" onclick="handleFriendRequest('POST', '${userId}', Number(document.getElementById('friendID').value))">Send Friend Request</button>
-				<button class="btn btn-outline-secondary" type="button" onclick="handleFriendRequest('DELETE', '${userId}', Number(document.getElementById('friendID').value))">Delete Friend Request</button>
+				<button class="btn btn-outline-primary" type="button" onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))">Send Friend Request</button>
+				<button class="btn btn-outline-secondary" type="button" onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>
 			</div>
 		</div>
 	`;
@@ -178,7 +178,7 @@ function initializeWebSocket() {
 
 		const messageId = message.id;
 		const sender = message.Sender;
-		const sender_id = Number(message.message);
+		const sender_id = message.message;
 		const isSent = message.is_sent;
 		const userId = message.user_id;
 		const info = message.message;
