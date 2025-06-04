@@ -14,7 +14,7 @@ Types = {
 class BaseNotification(models.Model):
 	id = models.AutoField(primary_key=True)
 	Sender = models.CharField(max_length=200, choices=[(key, key) for key in Microservices.keys()])
-	message = models.TextField()
+	message = models.JSONField()
 
 	class Meta:
 		abstract = True
