@@ -179,7 +179,10 @@ class AddFriend(APIView):
 			fs.save()
 			notifi = ImmediateNotification.objects.create(
 				Sender="Users",
-				message={'friend_request': u1},
+				message={
+					'type': 'friend_request',
+					'data': UserNotificationSerializer(u1).data
+				},
 				user_id=u2.user_id,
 				group_id=None,
 			)

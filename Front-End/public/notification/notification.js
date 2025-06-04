@@ -72,10 +72,10 @@ async function getFriends() {
 	console.log("/----getFirends notification.js----\\");
 	console.log("User ID:", userId);
 	console.log("Token:", token);
-	console.log("indirizzo:", `${url_api}/user/friend?user_id=${userId}&accepted=true`)
+	console.log("indirizzo:", `${url_api}/user/friend?user_id=${userId}`)
 	try {
 		const response = await fetch(
-			`${url_api}/user/user/friend?user_id=${userId}&status=accepted`,
+			`${url_api}/user/user/friend?user_id=${userId}`,
 			{
 				method: "GET",
 				headers: {
@@ -88,7 +88,13 @@ async function getFriends() {
 		if (response.ok) {
 			const data = await response.json();
 			console.log("getFriends data:", data);
-			renderFriendsList(data);
+
+			const acceptedFriends = data.filter(friendship => friendship.accepted === true);
+			console.log("Accepted Friends:", acceptedFriends);
+			const pendingFriends = data.filter(friendship => friendship.accepted === false);
+			console.log("Pending Friends:", pendingFriends);
+			renderFriendsList(acceptedFriends);
+			//renderFriendRequest(pendingFriends);
 		} else {
 			console.error("Errore nella risposta del server:", response.statusText);
 		}
@@ -122,17 +128,20 @@ function renderFriendRequest() {
     console.log("/***********renderFriendRequest************/");
     const { userId } = getVariables();
     const notificationContent = document.getElementById('notificationContent');
-    notificationContent.innerHTML = messageHistory.map((message, index) => {	
+
+    notificationContent.innerHTML = messageHistory.map((friendRequests, index) => {	
+		const senderData = friendRequests.userData;
+		const senderId = friendRequests.user_id;
         return `
             <div class="card mb-3" id="notification-card-${index}">
                 <div class="card-body">
-                    <p class="card-text">User ID: ${message.user_id}</p>
+                    <p class="card-text">User ID: ${senderId}</p>
                     <button class="btn btn-outline-primary" type="button"
-                        onclick="handleFriendRequest('PATCH', ${Number(message.message)}, ${index})">
+                        onclick="handleFriendRequest('PATCH', ${senderId}, ${index})">
                         Accept
                     </button>
                     <button class="btn btn-outline-secondary" type="button"
-                        onclick="handleFriendRequest('DELETE', ${Number(message.message)}, ${index})">
+                        onclick="handleFriendRequest('DELETE', ${senderId}, ${index})">
                         Decline
                     </button>
                 </div>
@@ -176,37 +185,48 @@ function initializeWebSocket() {
 		console.log("/----websocket notification.js----\\");
 		console.log("Nuovo messaggio:", message);
 
-		const messageId = message.id;
-		const sender = message.Sender;
-		const sender_id = message.message;
-		const isSent = message.is_sent;
-		const userId = message.user_id;
-		const info = message.message;
-		console.log("Message ID:", messageId);
-		console.log("Sender:", sender);
-		console.log("sender_id:", sender_id);
-		console.log("Is Sent:", isSent);
-		console.log("User ID:", userId);
-		console.log("Info:", info);                        //------------------------
+		if (message.message && typeof message.message === 'object' && message.message.type === 'friend_request') {
+			const userData = message.message.data;
+			console.log(`User avatar: ${userData.current_avatar_url}`);
+			console.log(`User status: ${userData.first_name} ${userData.last_name}`);
+			console.log(`User level: ${userData.level}`);
+			console.log(`User ID: ${userData.user_id}`);
+			console.log(`Friend request from: ${userData.username}`);
 
-		messageHistory.push(message);
-		if (info === "accepted your friend request") {
-			getFriends();
+			const sender_avatar = userData.current_avatar_url || '/static/default_avatar.png';
+			const sender_name = `${userData.first_name} ${userData.last_name}`;
+			const sender_level = userData.level || 0;
+			const sender_id = userData.user_id || 0;
+			const sender_username = userData.username || 'Unknown User';
+			
+			messageHistory.push({
+				user_id: sender_id,
+				type: 'friend_request',
+				userData: userData
+			});
+			
+			renderFriendRequest();
 		}
-		else if (info.includes("deleted friendship with")) {
-			getFriends()
-			// const parts = info.split(' ');
-			// const friendId = parts[parts.length - 1]; // ultimo token, es. "4"
-			// console.log("deleted friendship with ID:", friendId);
-
-			// const friendItems = Array.from(document.querySelectorAll('.friend-item'));
-			// const itemToRemove = friendItems.find(item => item.innerText.includes(`Friend ID: ${friendId}`));
-			// if (itemToRemove) {
-			// 	itemToRemove.remove();
-			// }
-		}
-		else if (info.includes("Chat Room")) {
-			updateChatList();
+		else if (typeof message.message === 'string')
+		{
+        	const info = message.message;
+        
+			if (info === "accepted your friend request")
+			{
+				getFriends();
+			}
+			else if (info.includes("deleted friendship with"))
+			{
+				getFriends();
+			}
+			else if (info.includes("Chat Room"))
+			{
+				updateChatList();
+			}
+			else
+			{
+				renderFriendRequest();
+			}
 		}
 		else {
 			renderFriendRequest();

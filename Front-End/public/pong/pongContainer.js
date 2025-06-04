@@ -228,14 +228,15 @@ async function openFriendList() {
 
 		// Fetch friends from API
 		try {
-			const { accessToken, url_api } = getVariables();
+			const { token, url_api, userId } = getVariables();
 			const response = await fetch(
-				`${url_api}/user/friendships/?status=accepted`,
+				`${url_api}/user/user/friend?user_id=${userId}&status=accepted`,
 				{
 					method: "GET",
 					headers: {
-						Authorization: `Bearer ${accessToken}`,
 						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`,
+						'X-CSRFToken': getCookie('csrftoken'),
 					},
 				}
 			);
@@ -243,7 +244,8 @@ async function openFriendList() {
 			if (response.ok) {
 				const friendsData = await response.json();
 				const friendList = document.getElementById("friendList");
-
+				console.log("Friends data:", friendsData);
+				
 				if (friendsData.length === 0) {
 					const li = document.createElement("li");
 					li.textContent = "No friends found";

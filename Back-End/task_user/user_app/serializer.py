@@ -26,6 +26,11 @@ class UsersSerializer(serializers.ModelSerializer):
 		model = UserProfile
 		fields = '__all__'
 
+class UserNotificationSerializer(serializers.ModelSerializer):
+	"""Lightweight serializer for user data in notifications"""
+	class Meta:
+		model = UserProfile
+		fields = ['user_id', 'username', 'first_name', 'last_name', 'current_avatar_url', 'level']
 
 class FriendshipsSerializer(serializers.ModelSerializer):
 	# user_1 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
