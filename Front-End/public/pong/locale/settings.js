@@ -1,9 +1,6 @@
 import * as THREE from "three";
 import { state } from "./state.js";
-import { createScore } from "./utils.js";
-import Stats from "three/addons/libs/stats.module.js";
-import * as UTILS from "./utils.js";
-import * as GAME from "./gameLogic.js";
+import { updateScore } from "./src/Score.js";
 
 export {
 	showMainMenu,
@@ -17,55 +14,43 @@ export {
 	exitGame,
 	saveSettings,
 	resetSettings,
-	startCrazymode,
-	startClassicmode,
+	showGameOverMenu,
+	restartGame,
+	restartMenu,
 };
 
 function saveSettings() {
 	const player1Color = document.getElementById("player1Color").value;
-	const player1Emissive = document.getElementById("player1Emissive").value;
 	const player2Color = document.getElementById("player2Color").value;
-	const player2Emissive = document.getElementById("player2Emissive").value;
 	const ballColor = document.getElementById("ballColor").value;
-	const ballEmissive = document.getElementById("ballEmissive").value;
 	const ringColor = document.getElementById("ringColor").value;
-	const ringEmissive = document.getElementById("ringEmissive").value;
+	const planeColor = document.getElementById("planeColor").value;
 
 	state.mat.p1.color.set(player1Color);
-	state.mat.p1.emissive.set(player1Emissive);
 	state.mat.p2.color.set(player2Color);
-	state.mat.p2.emissive.set(player2Emissive);
 	state.mat.ball.color.set(ballColor);
-	state.mat.ball.emissive.set(ballEmissive);
 	state.mat.ring.color.set(ringColor);
-	state.mat.ring.emissive.set(ringEmissive);
+	state.mat.plane.color.set(planeColor);
 
 	showMainMenu();
 }
 
 function resetSettings() {
 	document.getElementById("player1Color").value = "#4deeea";
-	document.getElementById("player1Emissive").value = "#4deeea";
-	document.getElementById("player2Color").value = "#ffe700";
-	document.getElementById("player2Emissive").value = "#ffe700";
-	document.getElementById("ballColor").value = "#0bff01";
-	document.getElementById("ballEmissive").value = "#0bff01";
-	document.getElementById("ringColor").value = "#ff0000";
-	document.getElementById("ringEmissive").value = "#0000ff";
+	document.getElementById("player2Color").value = "#4deeea";
+	document.getElementById("ballColor").value = "#8c5fb3";
+	document.getElementById("ringColor").value = "#ffe700";
+	document.getElementById("planeColor").value = "#089c00";
 
 	state.mat.p1.color.set("#4deeea");
-	state.mat.p1.emissive.set("#4deeea");
-	state.mat.p2.color.set("#ffe700");
-	state.mat.p2.emissive.set("#ffe700");
-	state.mat.ball.color.set("#0bff01");
-	state.mat.ball.emissive.set("#0bff01");
-	state.mat.ring.color.set("#ff0000");
-	state.mat.ring.emissive.set("#0000ff");
+	state.mat.p2.color.set("#4deeea");
+	state.mat.ball.color.set("#8c5fb3");
+	state.mat.ring.color.set("#ffe700");
+	state.mat.plane.color.set("#089c00");
 }
 
 function shownbrOfPlayerMenu() {
 	document.getElementById("menu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "none";
 	document.getElementById("nbrOfPlayerMenu").style.display = "block";
 }
 
@@ -91,32 +76,16 @@ function hidePauseMenu() {
 
 function startOnePlayerGame() {
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "block";
 	state.IAisActive = true;
+	state.isStarted = true;
+	state.isPaused = false;
 }
 
 function startTwoPlayerGame() {
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	document.getElementById("modeMenu").style.display = "block";
 	state.IAisActive = false;
-}
-
-function startCrazymode() {
-	document.getElementById("modeMenu").style.display = "none";
-	// UTILS.restart_game();
 	state.isStarted = true;
 	state.isPaused = false;
-	state.spawnPowerUpFlag = true;
-	// GAME.animate();
-}
-
-function startClassicmode() {
-	document.getElementById("modeMenu").style.display = "none";
-	// UTILS.restart_game();
-	state.isStarted = true;
-	state.isPaused = false;
-	state.spawnPowerUpFlag = true;
-	// GAME.animate();
 }
 
 function resumeGame() {
@@ -126,44 +95,88 @@ function resumeGame() {
 }
 
 export function cleanupPong() {
-	return new Promise((resolve) => {
-		console.log("Cleaning up Pong game resources...");
+	console.log("Starting complete cleanup...");
 
-		// Cancel animation frame
-		if (state.animationFrameId) {
-			cancelAnimationFrame(state.animationFrameId);
-		}
+	// 1. Dispose all meshes in the game group
+	if (state.game) {
+		console.log(
+			`Cleaning game group with ${state.game.children.length} objects`
+		);
+		while (state.game.children.length > 0) {
+			const obj = state.game.children[0];
+			state.game.remove(obj);
 
-		// Recursive function to dispose meshes
-		function disposeMesh(mesh) {
-			if (mesh.children.length > 0) {
-				// Clone the children array since it will be modified during iteration
-				[...mesh.children].forEach((child) => disposeMesh(child));
-			}
+			if (obj.geometry) obj.geometry.dispose();
 
-			if (mesh.geometry) {
-				mesh.geometry.dispose();
-			}
-
-			if (mesh.material) {
-				// Handle both single materials and material arrays
-				if (Array.isArray(mesh.material)) {
-					mesh.material.forEach((material) => material.dispose());
+			if (obj.material) {
+				if (Array.isArray(obj.material)) {
+					obj.material.forEach((mat) => mat.dispose());
 				} else {
-					mesh.material.dispose();
+					obj.material.dispose();
 				}
 			}
 		}
+	}
 
-		// Clean up game group
-		if (state.game) {
-			// Dispose all meshes in the game group
-			[...state.game.children].forEach((mesh) => {
-				disposeMesh(mesh);
-				state.game.remove(mesh);
-			});
+	// 2. Dispose all scene objects
+	if (state.scene) {
+		console.log(
+			`Cleaning scene with ${state.scene.children.length} objects`
+		);
+		while (state.scene.children.length > 0) {
+			const obj = state.scene.children[0];
+			state.scene.remove(obj);
+
+			// Skip disposing game since we already handled it
+			if (obj === state.game) continue;
+
+			// Dispose if it's a mesh
+			if (obj.isMesh) {
+				if (obj.geometry) obj.geometry.dispose();
+
+				if (obj.material) {
+					if (Array.isArray(obj.material)) {
+						obj.material.forEach((mat) => mat.dispose());
+					} else {
+						obj.material.dispose();
+					}
+				}
+			}
 		}
-	});
+	}
+
+	// 3. Remove renderer from DOM
+	if (state.renderer) {
+		const container = document.getElementById("threejs-container");
+		if (
+			container &&
+			state.renderer.domElement &&
+			container.contains(state.renderer.domElement)
+		) {
+			container.removeChild(state.renderer.domElement);
+		}
+		state.renderer.dispose();
+		state.renderer = null;
+	}
+
+	// 4. Remove event listeners
+	window.removeEventListener("resize", state.onWindowResize);
+
+	// 5. Cancel animation frame if active
+	if (state.animationFrameId) {
+		cancelAnimationFrame(state.animationFrameId);
+		state.animationFrameId = null;
+	}
+
+	// 6. Reset state variables
+	state.ball = null;
+	state.players = [];
+	state.p1_score = 0;
+	state.p2_score = 0;
+	state.isStarted = false;
+	state.game = new THREE.Group(); // Create fresh game group
+
+	console.log("Cleanup complete");
 }
 
 function exitGame() {
@@ -173,7 +186,71 @@ function exitGame() {
 
 	cleanupPong();
 
-	showMainMenu();
-	// UTILS.restart_game();
+	// Uncomment this to navigate to home
 	window.navigateTo("#home");
+
+	// Or use this to show main menu
+	// showMainMenu();
+}
+
+function showGameOverMenu(winner) {
+	// Hide other menus
+	document.getElementById("menu").style.display = "none";
+	document.getElementById("pauseMenu").style.display = "none";
+	document.getElementById("settingsMenu").style.display = "none";
+	document.getElementById("nbrOfPlayerMenu").style.display = "none";
+
+	// Update winner text
+	document.getElementById(
+		"winnerAnnouncement"
+	).textContent = `${winner} Wins!`;
+
+	// Show game over menu
+	document.getElementById("gameOverMenu").style.display = "block";
+}
+
+// Add this function to restart the game with current settings
+function resetGame() {
+	// Hide game over menu
+	document.getElementById("gameOverMenu").style.display = "none";
+
+	// Reset scores and positions but keep other settings
+	state.p1_score = 0;
+	state.p2_score = 0;
+
+	updateScore("p1");
+	updateScore("p2");
+
+	if (state.players[0] && state.players[0].mesh) {
+		state.players[0].mesh.position.set(
+			-((state.ring.length * 2) / 5),
+			0,
+			0
+		);
+	}
+
+	if (state.players[1] && state.players[1].mesh) {
+		state.players[1].mesh.position.set((state.ring.length * 2) / 5, 0, 0);
+	}
+
+	if (state.ball && state.ball.mesh) {
+		state.ball.mesh.position.set(0, 0, 0);
+		state.ball.resetSpeed();
+	}
+
+	// Start the game with current settings
+}
+
+function restartMenu() {
+	// Hide game over menu
+	document.getElementById("gameOverMenu").style.display = "none";
+	// Show main menu
+	showMainMenu();
+	resetGame();
+}
+
+function restartGame() {
+	resetGame();
+	state.isStarted = true;
+	state.isPaused = false;
 }

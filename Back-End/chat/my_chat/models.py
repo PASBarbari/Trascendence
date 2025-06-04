@@ -3,11 +3,39 @@ from django.db import models
 # Create your models here.
 
 class UserProfile(models.Model):
+    """
+    Standardized UserProfile model for all microservices.
+    Contains all essential fields for user management across the platform.
+    """
+    # Core identity fields
     user_id = models.IntegerField(primary_key=True)
-    username = models.CharField(max_length=255, null=True)
+    username = models.CharField(max_length=255, unique=True, default="LVL1_noob")
     email = models.EmailField(max_length=255, unique=True, null=True)
+    
+    # Personal information
+    first_name = models.CharField(max_length=255, null=True, default="", blank=True)
+    last_name = models.CharField(max_length=255, null=True, default="", blank=True)
+    birth_date = models.DateField(null=True, default=None, blank=True)
+    bio = models.TextField(default="", null=True, blank=True)
+    
+    # Platform-specific fields
     is_staff = models.BooleanField(default=False)
-
+    exp = models.IntegerField(default=0)
+    level = models.IntegerField(default=0)
+    current_avatar_url = models.URLField(
+        max_length=500, 
+        default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link',
+        blank=True
+    )
+    
+    # Security and metadata
+    has_two_factor_auth = models.BooleanField(default=False)
+    last_modified = models.DateTimeField(auto_now=True)
+    
+    # Chat-specific fields (only for chat service)
+    # These will be ignored by other services but provide compatibility
+    
+    # Authentication properties for Django compatibility
     @property
     def is_authenticated(self):
         return True
@@ -18,11 +46,14 @@ class UserProfile(models.Model):
 
     @property
     def id(self):
-        """Aggiunge compatibilità con codice che cerca 'id' invece di 'user_id'"""
+        """Provides compatibility with code that uses 'id' instead of 'user_id'"""
         return self.user_id
 
     def __str__(self):
         return self.username or f"User {self.user_id}"
+    
+    class Meta:
+        db_table = 'userprofile'  # Consistent table name across services
 
 class ChatRoom(models.Model):
     room_id = models.AutoField(primary_key=True)

@@ -12,14 +12,33 @@ export let state = {
 	},
 	p: { height: 0, width: 2.5, depth: 2.5 },
 	mat: {
-		ring: new THREE.MeshNormalMaterial({}),
+		plane: new THREE.MeshPhongMaterial({ color: 0x089c00, shininess: 100 }),
+		ring: new THREE.MeshPhongMaterial({ color: 0xffe700, shininess: 100 }),
+		p1: new THREE.MeshPhongMaterial({
+			color: 0x4deeea,
+			shininess: 100,
+		}),
+		p2: new THREE.MeshPhongMaterial({
+			color: 0x4deeea,
+			shininess: 100,
+		}),
+		helper: new THREE.MeshPhongMaterial({
+			color: 0xff2b2b,
+			transparent: true,
+			opacity: 0.5,
+			visible: false,
+		}),
+		ball: new THREE.MeshPhongMaterial({
+			color: 0x8c5fb3,
+			shininess: 100,
+		}),
+		score: new THREE.MeshPhongMaterial({ color: 0xff2b2b, shininess: 100 }),
 	},
 	P1cursor: null,
 	P2cursor: null,
 	isPaused: true,
 	isStarted: false,
 	IAisActive: false,
-	maxScore: 3,
 	wallHitPosition: 0,
 	player_speed: 0,
 	p1_score: 0,
@@ -38,6 +57,7 @@ export let state = {
 	camera: null,
 	renderer: null,
 	boundaries: null,
+	lightTarget: null,
 	p1: null,
 	p2: null,
 	players: [],
@@ -48,7 +68,6 @@ export let state = {
 	game: new THREE.Group(),
 	scoreText: null,
 	winnerText: null,
-	stats: null,
 	r_bottom: null,
 	r_top: null,
 	r_left: null,
@@ -61,11 +80,22 @@ export let state = {
 	},
 	controls: null,
 	animationFrameId: null,
+	score: {
+		p1: 0,
+		p2: 0,
+	},
+	scoreMesh: {
+		p1: null,
+		p2: null,
+	},
+	lights: [],
+	plane: null,
+	maxScore: 1,
 };
 
 state.ring.height = (9 / 16) * state.ring.length;
 state.p.height = state.ring.height / 6;
-state.player_speed = state.ring.length / 115;
+state.player_speed = state.ring.length / 80;
 state.ball_radius = state.ring.length / 80;
 state.ball_speed = state.ring.length / 150;
 state.angle = Math.floor(Math.random() * 70);
