@@ -61,7 +61,7 @@ class Friendships(models.Model):
 	user_2 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='u2')
 	accepted = models.BooleanField(default=False)
 	last_modified = models.DateTimeField(auto_now=True)
-		
+
 	class Meta:
 		unique_together = ('user_1', 'user_2')
 	

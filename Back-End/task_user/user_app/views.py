@@ -209,7 +209,7 @@ class AddFriend(APIView):
 				# Send notification
 				notifi = ImmediateNotification.objects.create(
 					Sender="Users",
-					message=f'{u2.first_name} {u2.last_name} accepted your friend request',
+					message={ 'type': 'friend_request_accepted', 'data': UserNotificationSerializer(u2).data },
 					user_id=u1.user_id,
 					group_id=None,
 				)
@@ -243,8 +243,11 @@ class AddFriend(APIView):
 					friendship.delete()
 					notifi = ImmediateNotification.objects.create(
 							Sender="Users",
-							message=f'deleted friendship with {u2.user_id}',
-							user_id=u1.user_id,
+							message={
+									'type': 'friendship_deleted',
+									'data': UserNotificationSerializer(u2).data
+							},
+							user_id=u2.user_id,
 							group_id=None,
 					)
 					SendNotificationSync(notifi)
