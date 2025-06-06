@@ -38,6 +38,10 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 			const data = await response.json();
 			console.log("Friend Request Sent:", data);
 
+			if (index !== undefined) {
+				messageHistory.splice(index, 1);
+			}
+
 			const info = data.info;
 			console.log("Info handleFriendRequest:", info); //------------------------
 			if (info === "friend request accepted") {
@@ -50,6 +54,9 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 				console.log("friendship deleted handleFriendRequest");
 				if (deleteCard) {
 					deleteCard.remove();
+				}
+				if (card) {
+					card.remove();
 				}
 			} else {
 				console.log("else handleFriendRequest");

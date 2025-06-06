@@ -444,7 +444,7 @@ function closeRegisterBox() {
 window.closeFriendList = closeFriendList;
 window.handleLocalePong = handleLocalePong;
 window.handleMultiPong = handleMultiPong;
-window.inviteToGame = inviteToGame;
+// window.inviteToGame = inviteToGame;
 window.closeLoginBox = closeLoginBox;
 window.closeRegisterBox = closeRegisterBox;
 
