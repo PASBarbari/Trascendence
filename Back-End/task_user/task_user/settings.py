@@ -145,7 +145,7 @@ INSTALLED_APPS = [
 	'rest_framework_simplejwt',
 	'django_filters',
 	'oauth2_provider',
-	'task_app',
+	# 'task_app',
 	'user_app',
 	'corsheaders',
 	'minio_storage',

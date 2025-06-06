@@ -20,8 +20,14 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 	const { url_api } = getVariables();
 	console.log(`/----handleFriendRequest ${str_method}----\\`);
 	console.log("Friend ID:", receiver_id);
-	const card = document.getElementById(`notification-card-${index}`);
+	console.log("Index:", index);
+
+	let card = document.getElementById(`notification-card-${index}`);
+	if (!card) {
+        card = document.getElementById(`notification-card-${receiver_id}`);
+    }
 	const deleteCard = document.getElementById(`friend-item-${index}`);
+
 	try {
 		const response = await fetch(`${url_api}/user/user/addfriend`, {
 			method: str_method,
@@ -38,9 +44,12 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 			const data = await response.json();
 			console.log("Friend Request Sent:", data);
 
-			if (index !== undefined) {
+			if (index !== undefined && index !== null && index >= 0) {
 				messageHistory.splice(index, 1);
 			}
+			if (str_method === 'DELETE') {
+                messageHistory = messageHistory.filter(msg => msg.user_id !== receiver_id);
+            }
 
 			const info = data.info;
 			console.log("Info handleFriendRequest:", info); //------------------------
@@ -58,9 +67,13 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 				if (card) {
 					card.remove();
 				}
+				getFriends();
+			} else if (info === "friend request sent") {
+				console.log("Friend request sent handleFriendRequest");
+				renderSentFriendRequest(receiver_id, true);
 			} else {
 				console.log("else handleFriendRequest");
-				//renderNotification();
+				getFriends();
 			}
 		} else {
 			const errorData = await response.json();
@@ -71,15 +84,42 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 	}
 }
 
+function renderSentFriendRequest(receiver_id, addToDOM = false) {
+    console.log("/***********renderSentFriendRequest************/");
+    console.log("Rendering sent friend request for ID:", receiver_id);
+    
+    const notificationContent = document.getElementById("notificationContent");
+    
+    // Create the HTML
+    const htmlToAdd = `
+        <div class="card mb-3" id="notification-card-${receiver_id}">
+            <div class="card-body">
+                <p class="card-text">Friend request sent to User ID: ${receiver_id}</p>
+                <button class="btn btn-outline-secondary" type="button"
+                    onclick="handleFriendRequest('DELETE', ${receiver_id})">
+                    Cancel Request
+                </button>
+            </div>
+        </div>
+    `;
+
+	if (addToDOM) {
+        const notificationContent = document.getElementById("notificationContent");
+        notificationContent.innerHTML += htmlToAdd;
+    }
+    
+    return htmlToAdd;
+}
+
 async function getFriends() {
 	const { token, userId, url_api } = getVariables();
 	console.log("/----getFirends notification.js----\\");
 	console.log("User ID:", userId);
 	console.log("Token:", token);
-	console.log("indirizzo:", `${url_api}/user/friend?user_id=${userId}`);
+	console.log("indirizzo:", `${url_api}/user/friend`);
 	try {
 		const response = await fetch(
-			`${url_api}/user/user/friend?user_id=${userId}`,
+			`${url_api}/user/user/friend`,
 			{
 				method: "GET",
 				headers: {
@@ -102,7 +142,7 @@ async function getFriends() {
 			);
 			console.log("Pending Friends:", pendingFriends);
 			renderFriendsList(acceptedFriends);
-			//renderFriendRequest(pendingFriends);
+			renderFriendRequest2(pendingFriends);
 		} else {
 			console.error(
 				"Errore nella risposta del server:",
@@ -257,6 +297,51 @@ function renderFriendRequest() {
 		.join("");
 }
 
+function renderFriendRequest2(friends) {
+	console.log("/***********renderFriendRequest2************/");
+	const { userId } = getVariables();
+	const notificationContent = document.getElementById("notificationContent");
+	console.log("Friends:", friends);
+
+	const existingFriendIds = friends.map(f => f.friend_info.user_id);
+    messageHistory = messageHistory.filter(msg => {
+        // Mantieni solo i messaggi che esistono ancora come pending friends
+        return existingFriendIds.includes(msg.user_id);
+    });
+
+	notificationContent.innerHTML = friends
+		.map((friendship, index) => {
+			const Data = friendship.friend_info;
+			const otherId = friendship.friend_info.user_id;
+			const actualSenderId = friendship.friend_info.sent_by.user_id;
+			console.log("otherId:", otherId);
+			console.log("actualSenderId:", actualSenderId);
+			console.log("userId:", userId);
+			if (actualSenderId == userId) {
+				return renderSentFriendRequest(otherId);
+				//return ""; // Skip if the user sent the request
+			}
+			else {
+				return `
+				<div class="card mb-3" id="notification-card-${index}">
+					<div class="card-body">
+						<p class="card-text">User ID: ${otherId}</p>
+						<button class="btn btn-outline-primary" type="button"
+							onclick="handleFriendRequest('PATCH', ${otherId}, ${index})">
+							Accept
+						</button>
+						<button class="btn btn-outline-secondary" type="button"
+							onclick="handleFriendRequest('DELETE', ${otherId}, ${index})">
+							Decline
+						</button>
+					</div>
+				</div>
+				`;
+			}
+		})
+		.join("");
+}
+
 function renderNotification() {
 	console.log("/***********renderNotification************/");
 	const { userId } = getVariables();
@@ -272,8 +357,10 @@ function renderNotification() {
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
 			<div class="input-group mb-3">
 				<input type="text" class="form-control" id="friendID" placeholder="User ID">
-				<button class="btn btn-outline-primary" type="button" onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))">Send Friend Request</button>
-				<button class="btn btn-outline-secondary" type="button" onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>
+				<button class="btn btn-outline-primary" type="button" 
+					onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))">Send Friend Request</button>
+				<button class="btn btn-outline-secondary" type="button" 
+					onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>
 			</div>
 		</div>
 	`;

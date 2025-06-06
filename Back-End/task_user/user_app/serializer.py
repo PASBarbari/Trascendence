@@ -38,7 +38,7 @@ class FriendshipsSerializer(serializers.ModelSerializer):
 		class Meta:
 			model = Friendships
 			fields = ['id', 'accepted', 'friend_info']
-		
+
 		def get_friend_info(self, obj):
 			# Get the current user from context
 			request = self.context.get('request')
@@ -51,12 +51,15 @@ class FriendshipsSerializer(serializers.ModelSerializer):
 				friend = obj.user_2
 			else:
 				friend = obj.user_1
-				
-			return {
+			
+			data = {
 				'user_id': friend.user_id,
 				'username': friend.username,
 				'email': friend.email,
+				'sent_by': UsersSerializer(obj.user_1).data
 			}
+
+			return data
 
 class BlockUserSerializer(serializers.Serializer):
 	user_id = serializers.IntegerField()

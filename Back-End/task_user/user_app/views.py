@@ -174,7 +174,8 @@ class AddFriend(APIView):
 				}, status=status.HTTP_400_BAD_REQUEST)
 			fs = Friendships.objects.create(
 				user_1=u1,
-				user_2=u2
+				user_2=u2,
+				accepted=False,
 			)
 			fs.save()
 			notifi = ImmediateNotification.objects.create(
