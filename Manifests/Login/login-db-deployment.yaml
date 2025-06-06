@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: login-db-deployment
-  namespace: login
+  namespace: {{ .Values.namespace | default "login" }}
   labels:
     app: login-db
 spec:
@@ -73,7 +73,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: login-db-service
-  namespace: login
+  namespace: {{ .Values.namespace | default "login" }}
 spec:
   selector:
     app: login-db
@@ -86,7 +86,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: login-postgres-pvc
-  namespace: login
+  namespace: {{ .Values.namespace | default "login" }}
 spec:
   accessModes:
     - ReadWriteOnce

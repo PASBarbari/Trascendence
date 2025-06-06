@@ -1,5 +1,5 @@
 apiVersion: v2
-name: Trascendence_0.1.0
+name: trascendence
 description: A Helm chart for Kubernetes, k3s
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -45,10 +45,10 @@ dependencies:
     version: 0.1.0
     tags:
       - login
-  - name: cert-manager
-    repository: https://charts.jetstack.io
-    version: v1.13.2
-    condition: cert-manager.enabled
+  # - name: cert-manager
+  #   repository: https://charts.jetstack.io
+  #   version: v1.13.2
+  #   condition: cert-manager.enabled
   - name: cert-manager-chart
     repository: file://charts/cert-manager-chart
     version: 0.1.0

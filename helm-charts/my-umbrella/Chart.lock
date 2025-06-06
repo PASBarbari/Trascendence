@@ -11,11 +11,8 @@ dependencies:
 - name: login-service-chart
   repository: file://charts/login-service-chart
   version: 0.1.0
-- name: cert-manager
-  repository: https://charts.jetstack.io
-  version: v1.13.2
 - name: cert-manager-chart
   repository: file://charts/cert-manager-chart
   version: 0.1.0
-digest: sha256:0f229a1f9ee33646cfbae77fc097f2f14a5148865ccc7eff4c3d563aeaa3976c
-generated: "2025-05-28T12:29:33.705699861+02:00"
+digest: sha256:c7b1f2c48accac2aec58150d894ade216b11b9f6c83846ee2860b0b7d16cf8a1
+generated: "2025-05-29T11:52:13.192854994+02:00"

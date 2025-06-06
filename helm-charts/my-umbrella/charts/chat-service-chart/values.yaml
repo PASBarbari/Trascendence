@@ -39,17 +39,17 @@ configMap:
     DJANGO_SETTINGS_MODULE: "chat.settings"
     CHAT_PORT: "8000"
     CHAT_HOST: "0.0.0.0"
-    DB_HOST: "chat-db-service" # This should point to your chat DB service
-    DB_PORT: "5432"
-    # DB_NAME, DB_USER, DB_PASSWORD, SERVICE_PASSWORD are now sourced from secrets
+    POSTGRES_HOST: "trascendence-chat-db-service" # This should point to your chat DB service
+    POSTGRES_PORT: "5432"
+    # POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, SERVICE_PASSWORD are now sourced from secrets
     REDIS_HOST: "redis"
     REDIS_PORT: "6379"
     REDIS_CHANNEL_DB: "1"
-    LOGIN_URL: "http://login-service:8000"
+    LOGIN_URL: "http://trascendence-login-service:8000"
     USER_URL: "http://user-service:8000"
     NOTIFICATIONS_URL: "http://notifications-service:8000"
     PONG_URL: "http://pong-service:8000"
-    OAUTH2_INTROSPECTION_URL: "http://login-service:8000/o/introspect/"
+    OAUTH2_INTROSPECTION_URL: "http://trascendence-login-service:8000/o/introspect/"
     SERVICE_PASSWORD: "123"
     ALLOWED_HOSTS: "*"
 

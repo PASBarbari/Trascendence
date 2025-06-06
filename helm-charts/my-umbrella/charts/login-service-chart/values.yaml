@@ -100,12 +100,12 @@ configMap:
     # Database connection details (host and port)
     # DB_HOST should point to your PostgreSQL service name.
     # If using the 'db' subchart below, it might be "{{ .Release.Name }}-postgresql"
-    DB_HOST: "login-db-service" # Placeholder: replace with actual DB service name or template it
-    DB_PORT: "5432"
+    POSTGRES_HOST: "trascendence-login-db-service" # Use the actual service name
+    POSTGRES_PORT: "5432" # Default PostgreSQL port
     # URLs for service discovery - these are examples, adjust hostnames and ports
     # Consider using .Release.Name for service names if deployed by the same umbrella chart
-    LOGIN_URL: "http://login-service:8000" # Self-referential or external URL
-    CHAT_URL: "http://chat-service:8001"
+    LOGIN_URL: "http://trascendence-login-service:8000" # Self-referential or external URL
+    CHAT_URL: "http://trascendence-chat-service:8000"
     USER_URL: "http://user-service:8002"
     NOTIFICATIONS_URL: "http://notifications-service:8003"
     PONG_URL: "http://pong-service:8004"

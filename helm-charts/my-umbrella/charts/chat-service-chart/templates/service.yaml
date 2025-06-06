@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "{{ .Release.Name }}-chat-service"
-  namespace: chat
+  namespace: {{ .Values.namespace | default "chat" }}
   labels:
     app: {{ .Release.Name }}-chat
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}

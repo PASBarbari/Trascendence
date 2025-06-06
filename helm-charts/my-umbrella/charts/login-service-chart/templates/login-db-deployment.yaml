@@ -93,16 +93,15 @@ spec:
       labels: # Add labels to PVC template as well for consistency
         {{- include "login-service-chart.labels" . | nindent 8 }}
         app.kubernetes.io/component: database
-  spec:
-    accessModes: [ "ReadWriteOnce" ]
-    # storageClassName: {{ .Values.db.persistence.storageClass | default "standard" }} # Use default or specify
-    {{- if .Values.db.persistence.storageClass }}
-    {{- if (eq "-" .Values.db.persistence.storageClass) }}
-    storageClassName: \"\"
-    {{- else }}
-    storageClassName: "{{ .Values.db.persistence.storageClass }}"
-    {{- end }}
-    {{- end }}
-    resources:
-      requests:
-        storage: {{ .Values.db.persistence.size | default "1Gi" }}
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.db.persistence.storageClass }}
+      {{- if (eq "-" .Values.db.persistence.storageClass) }}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: "{{ .Values.db.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.db.persistence.size | default "1Gi" }}
