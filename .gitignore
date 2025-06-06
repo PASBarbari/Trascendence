@@ -77,3 +77,4 @@ helm-charts/my-umbrella/values.yaml
 values.yaml
 v*.yaml
 helm-charts/my-umbrella/values.yaml
+*/values.yaml
