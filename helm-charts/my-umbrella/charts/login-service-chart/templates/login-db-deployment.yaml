@@ -38,17 +38,17 @@ spec:
           valueFrom:
             secretKeyRef:
               name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
-              key: DB_NAME
+              key: POSTGRES_DB
         - name: POSTGRES_USER
           valueFrom:
             secretKeyRef:
               name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
-              key: DB_USER
+              key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
-              key: DB_PASSWORD
+              key: POSTGRES_PASSWORD
         # Add readiness and liveness probes for PostgreSQL
         readinessProbe:
           exec:

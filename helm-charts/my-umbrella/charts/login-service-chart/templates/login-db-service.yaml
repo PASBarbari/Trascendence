@@ -14,5 +14,5 @@ spec:
       targetPort: 5432
       protocol: TCP
   selector:
-    app: {{ .Release.Name }}-login-db
-    release: {{ .Release.Name }}
+    app: {{ include "login-service-chart.name" . }}-db
+    app.kubernetes.io/instance: {{ .Release.Name }}

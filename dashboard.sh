@@ -12,12 +12,12 @@ KUBECTL="kubecolor"
 echo "1. Creazione alias kubectl per k3s"
 alias kubectl="${KUBECTL}"
 
-echo "2. Applicazione manifest Dashboard"
-${KUBECTL} apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.8.0/aio/deploy/recommended.yaml
+# echo "2. Applicazione manifest Dashboard"
+# ${KUBECTL} apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.8.0/aio/deploy/recommended.yaml
 
-echo "3. Espongo il Service come NodePort"
-${KUBECTL} -n kubernetes-dashboard patch svc kubernetes-dashboard \
-  -p '{"spec":{"type":"NodePort"}}'
+# echo "3. Espongo il Service come NodePort"
+# ${KUBECTL} -n kubernetes-dashboard patch svc kubernetes-dashboard \
+#   -p '{"spec":{"type":"NodePort"}}'
 
 echo "4. Creo ServiceAccount e ClusterRoleBinding"
 cat <<EOF | ${KUBECTL} apply -f -

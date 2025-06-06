@@ -14,5 +14,6 @@ spec:
       targetPort: 5432
       protocol: TCP
   selector:
-    app: {{ .Release.Name }}-chat-db
-    release: {{ .Release.Name }}
+    {{- include "chat-service.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+    app: {{ include "chat-service.name" . }}-db

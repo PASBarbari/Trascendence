@@ -13,11 +13,13 @@ spec:
     matchLabels:
       {{- include "chat-service.selectorLabels" . | nindent 6 }}
       app.kubernetes.io/component: database
+      app: {{ include "chat-service.name" . }}-db
   template:
     metadata:
       labels:
         {{- include "chat-service.selectorLabels" . | nindent 8 }}
         app.kubernetes.io/component: database
+        app: {{ include "chat-service.name" . }}-db
     spec:
         serviceAccountName: {{ .Values.serviceAccount.dbName | default (include "chat-service.serviceAccountName" .) }}
         containers:

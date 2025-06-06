@@ -15,5 +15,5 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
   selector:
-    app: {{ .Release.Name }}-chat
-    release: {{ .Release.Name }}
+    {{- include "chat-service.selectorLabels" . | nindent 4 }}
+    app: {{ include "chat-service.name" . }}

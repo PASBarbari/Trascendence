@@ -15,5 +15,5 @@ spec:
       targetPort: {{ .Values.service.targetPort }}
       protocol: TCP
   selector:
-    app: {{ .Release.Name }}-login
-    release: {{ .Release.Name }}
+    {{- include "login-service-chart.selectorLabels" . | nindent 4 }}
+    app: {{ include "login-service-chart.name" . }}
