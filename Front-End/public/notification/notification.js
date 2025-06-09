@@ -356,11 +356,11 @@ function renderNotification() {
 			<div id="friendsList" class="mb-3"></div>
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
 			<div class="input-group mb-3">
-				<input type="text" class="form-control" id="friendID" placeholder="User ID">
+				<input type="text" class="form-control" id="friendID" placeholder="User ID" style="width: 32%;">
 				<button class="btn btn-outline-primary" type="button" 
 					onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))">Send Friend Request</button>
-				<button class="btn btn-outline-secondary" type="button" 
-					onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>
+				<!--<button class="btn btn-outline-secondary" type="button" 
+					onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>-->
 			</div>
 		</div>
 	`;

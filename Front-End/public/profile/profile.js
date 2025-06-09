@@ -196,7 +196,7 @@ function renderProfile() {
 
 						<div class="profile-form-group">
 							<label for="2fAuth" style="height:21px"></label>
-							<button id="toggle2FAButton" type="button" class="btn btn-outline-secondary">
+							<button id="toggle2FAButton" type="button" class="btn btn-outline-danger">
 								${has_two_factor_auth ? "Disable" : "Enable"} 2FA
 							</button>
 						</div>
@@ -211,10 +211,10 @@ function renderProfile() {
 						</div>
 					</button>
 					<div class="buttons">
-						<button id="editButton" class="edit-button btn btn-light">
+						<button id="editButton" class="btn btn-outline-warning">
 							<i class="bi bi-pencil edit-icon"></i>
 						</button>
-						<button id="saveButton" class="save-button btn btn-light">
+						<button id="saveButton" class="btn btn-outline-success">
 							<i class="bi bi-save save-icon"></i>
 						</button>
 					</div>
