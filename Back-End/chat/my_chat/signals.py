@@ -32,7 +32,12 @@ def chat_room_created(sender, instance, action, **kwargs):
                 print('passed')
                 notification = ImmediateNotification(
                     Sender='Chat',
-                    message=f'Chat Room {instance.room_id} created',
+                    message={
+                        'type': 'chat_room_created',
+                        'room_id': instance.room_id,
+                        'room_name': instance.room_name,
+                        'message': f'Chat Room {instance.room_id} created'
+                    },
                     user_id=user.user_id
                 )
                 SendNotificationSync(notification)

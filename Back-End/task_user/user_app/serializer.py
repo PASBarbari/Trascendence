@@ -33,14 +33,33 @@ class UserNotificationSerializer(serializers.ModelSerializer):
 		fields = ['user_id', 'username', 'first_name', 'last_name', 'current_avatar_url', 'level']
 
 class FriendshipsSerializer(serializers.ModelSerializer):
-	# user_1 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
-	# user_2 = serializers.PrimaryKeyRelatedField(queryset=Users.objects.all(), many=False)
-	# accepted = serializers.BooleanField(read_only=True)
-	# last_modified = serializers.DateTimeField(read_only=True)
+		friend_info = serializers.SerializerMethodField()
+		
+		class Meta:
+			model = Friendships
+			fields = ['id', 'accepted', 'friend_info']
 
-	class Meta:
-		model = Friendships
-		fields = '__all__'
+		def get_friend_info(self, obj):
+			# Get the current user from context
+			request = self.context.get('request')
+			if not request or not request.user:
+				return None
+			current_user = request.user
+			
+			# Determine who is the friend (not the current user)
+			if obj.user_1 == current_user:
+				friend = obj.user_2
+			else:
+				friend = obj.user_1
+			
+			data = {
+				'user_id': friend.user_id,
+				'username': friend.username,
+				'email': friend.email,
+				'sent_by': UsersSerializer(obj.user_1).data
+			}
+
+			return data
 
 class BlockUserSerializer(serializers.Serializer):
 	user_id = serializers.IntegerField()

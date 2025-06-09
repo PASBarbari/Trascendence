@@ -15,7 +15,6 @@ class UserProfile(models.Model):
 	current_avatar_url = models.URLField(max_length=500, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link')
 	last_modified = models.DateTimeField(auto_now=True)
 	has_two_factor_auth = models.BooleanField(default=False)
-	samu_e_un_coglione = models.BooleanField(default=True)
 
 
 	friends = models.ManyToManyField(
@@ -61,16 +60,19 @@ class Friendships(models.Model):
 	user_2 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='u2')
 	accepted = models.BooleanField(default=False)
 	last_modified = models.DateTimeField(auto_now=True)
-		
+
 	class Meta:
 		unique_together = ('user_1', 'user_2')
 	
+	@staticmethod
 	def get_friends(user):
 	# Get friendships where user is either user_1 or user_2 and accepted=True
 		return UserProfile.objects.filter(
-		Q(u1__user_2=user, u1__accepted=True) |
-		Q(u2__user_1=user, u2__accepted=True)
-	)
+			Q(u1__user_2=user, u1__accepted=True) |
+			Q(u2__user_1=user, u2__accepted=True)
+		)
+
+	@staticmethod
 	def are_friends(user1, user2):
 		return Friendships.objects.filter(
 			(Q(user_1=user1, user_2=user2) | Q(user_1=user2, user_2=user1)),
