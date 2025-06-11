@@ -15,7 +15,7 @@ from oauth2_provider.contrib.rest_framework import OAuth2Authentication , TokenH
 from .errors import error_codes
 from oauth2_provider.models import AccessToken , Application
 from oauthlib.common import generate_token
-from django.http import HttpRequest, JsonResponse
+from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.middleware.csrf import get_token
 from oauth2_provider.views import TokenView
@@ -41,6 +41,10 @@ import hmac
 import time
 import struct
 import os
+from django.http import HttpResponse #use rest
+import requests
+import secrets
+import logging
 
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
@@ -119,49 +123,38 @@ def CreateOnOtherServices(user, **kwargs):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class OAuthLoginView(APIView):
-	"""
-	Initiates OAuth2 authorization flow with PKCE for various providers.
-		
-	GET /login/oauth/{provider}/
-	---
-	parameters:
-	  - name: provider
-		in: path
-		required: true
-		type: string
-		description: OAuth provider (google, github, facebook, etc.)
-	"""
 	permission_classes = (permissions.AllowAny,)
-
+		
 	def get(self, request, provider):
 		logger.info(f"OAuth2 login initiated for provider: {provider}")
-		provider = provider.upper()
-		provider_config = OAUTH2_PROVIDERS.get(provider)
 		
+		provider_config = OAUTH2_PROVIDERS.get(provider.upper())
 		if not provider_config:
 			return Response(
 				{"error": f"Provider '{provider}' not configured"}, 
 				status=status.HTTP_400_BAD_REQUEST
 			)
-
+		
+		# Genera code_verifier e code_challenge per PKCE
 		code_verifier = self.generate_code_verifier()
 		code_challenge = self.generate_code_challenge(code_verifier)
 		
+		# Salva il code_verifier nella sessione
 		request.session['code_verifier'] = code_verifier
-		request.session['oauth_provider'] = provider
+		request.session['oauth_provider'] = provider.upper()
 		
-		if not provider == '42':
+		if provider.upper() == 'GOOGLE':
 			redirect_url = (
 				f"{provider_config.get('authorization_url')}?"
 				f"client_id={provider_config.get('client_id')}&"
-				"response_type=code&"
 				f"redirect_uri={provider_config.get('redirect_uri')}&"
+				"response_type=code&"
 				f"scope={provider_config.get('scope')}&"
 				f"code_challenge={code_challenge}&"
 				"code_challenge_method=S256&"
-				"access_type=offline"
+				f"state={code_verifier}"
 			)
-		else:
+		else:  # 42
 			redirect_url = (
 				f"{provider_config.get('authorization_url')}?"
 				f"client_id={provider_config.get('client_id')}&"
@@ -170,180 +163,286 @@ class OAuthLoginView(APIView):
 				f"scope={provider_config.get('scope')}&"
 				f"state={code_verifier}"
 			)
-
+		
+		logger.info(f"Generated redirect URL for {provider}")
 		return Response({"redirect_url": redirect_url}, status=status.HTTP_200_OK)
 
 	def generate_code_verifier(self):
 		"""Generates a code_verifier for PKCE"""
-		return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(random.randint(43, 128)))
+		return ''.join(random.choice(string.ascii_letters + string.digits + '-._~') for _ in range(128))
 
 	def generate_code_challenge(self, code_verifier):
-		"""Generates code_challenge from code_verifier"""
+		"""Generates code_challenge from code_verifier using SHA256"""
 		sha256_hash = hashlib.sha256(code_verifier.encode('utf-8')).digest()
 		return base64.urlsafe_b64encode(sha256_hash).decode('utf-8').replace('=', '')
 
-
 @method_decorator(csrf_exempt, name='dispatch')
 class OAuthCallbackView(APIView):
-	"""
-	Handles OAuth2 callback and token exchange from various providers.
-		
-	GET /login/oauth/callback/{provider}/
-	---
-	parameters:
-	  - name: provider
-		in: path
-		required: true
-		type: string
-		description: OAuth provider (google, github, facebook, etc.)
-	  - name: code
-		in: query
-		required: true
-		type: string
-		description: Authorization code returned by OAuth provider
-	"""
 	permission_classes = (permissions.AllowAny,)
 
+	
 	def get(self, request, provider):
-		code = request.GET.get("code")
-		state = request.GET.get("state")
-		code_verifier = request.session.get('code_verifier')
-		stored_provider = request.session.get('oauth_provider')
-		
-		provider = stored_provider if stored_provider else provider.upper()
-		provider_config = OAUTH2_PROVIDERS.get(provider)
-		
-		if not provider_config:
-			return Response(
-				{"error": f"Provider '{provider}' not configured"}, 
-				status=status.HTTP_400_BAD_REQUEST
-			)
-		
-		if provider == '42':
-			if not state or state != code_verifier:
-				return Response(
-					{"error": "Invalid state parameter"}, 
-					status=status.HTTP_400_BAD_REQUEST
-				)
-		
-		if not code or not code_verifier:
-			return Response(
-				{"error": "Missing authorization code or code_verifier"}, 
-				status=status.HTTP_400_BAD_REQUEST
-			)
-
-
-		token_url = provider_config.get('token_url')
-
-		if provider == '42':
-			data = {
-				'grant_type': 'authorization_code',
-				'client_id': provider_config.get('client_id'),
-				'client_secret': provider_config.get('client_secret'),
-				'code': code,
-				'redirect_uri': provider_config.get('redirect_uri'),
-			}
-			headers = {
-				'Content-Type': 'application/x-www-form-urlencoded',
-			}
-			response = requests.post(token_url, data=data, headers=headers)
-		else:
-			data = {
-				"client_id": provider_config.get('client_id'),
-				"client_secret": provider_config.get('client_secret'),
-				"grant_type": "authorization_code",
-				"code": code,
-				"redirect_uri": provider_config.get('redirect_uri'),
-				"code_verifier": code_verifier
-			}
-			response = requests.post(token_url, data=data)
-
-		token_data = response.json()
-
-		if "access_token" not in token_data:
-			logger.error(f"Failed to obtain access token, data: {data}")
-			return Response(
-				{"error": "Failed to obtain access token", "details": token_data},
-				status=status.HTTP_400_BAD_REQUEST
-			)
-		
-		# Get user info from provider
-		access_token = token_data['access_token']
-		user_info_url = provider_config.get('user_info_url')
-		
-		headers = {"Authorization": f"Bearer {access_token}"}
-		user_info_response = requests.get(user_info_url, headers=headers)
-		#  {'id': '103782231708470005867', 'email': 'samybravy@gmail.com', 'verified_email': True, 'name': 'Samy Bravy', 'given_name': 'Samy', 'family_name': 'Bravy', 'picture': 'https://lh3.googleusercontent.com/a/ACg8ocJdtisqsQ_rcRsSOrRvpO6v1iIIM8veaI51sVW7DQK_5CwprO0=s96-c'}
-		user_info = user_info_response.json()
-
-		# Different providers have different response formats
-		user_id = user_info.get('id') or user_info.get('sub')
-		if not user_id:
-			return Response(
-				{"error": "Could not fetch user information", "details": user_info}, 
-				status=status.HTTP_400_BAD_REQUEST
-			)
-
 		try:
-			# Extract user details - adapting to different provider response formats
-			email = user_info.get('email')
-			if not email and 'emails' in user_info and len(user_info['emails']) > 0:
-				email = user_info['emails'][0]['value']  # GitHub format
+			code = request.GET.get('code')
+			state = request.GET.get('state')
+			error = request.GET.get('error')
 			
-			# If still no email, create one based on ID
+			# ✅ DEBUG SPECIFICO PER 42
+			if provider.lower() == '42':
+				logger.info(f"🔧 42 OAuth Debug - Code: {code[:20]}..." if code else "No code")
+				logger.info(f"🔧 42 OAuth Debug - State: {state[:20]}..." if state else "No state")
+
+			if error:
+				logger.error(f'OAuth error: {error}')
+				return self.handle_popup_response(error=error)
+			
+			if not code:
+				logger.error('No authorization code received')
+				return self.handle_popup_response(error='no_code')
+			
+			# Get provider configuration
+			provider_config = settings.OAUTH2_PROVIDERS.get(provider.upper())
+			if not provider_config:
+				logger.error(f'Unsupported provider: {provider}')
+				return self.handle_popup_response(error='unsupported_provider')
+			
+			# ✅ DEBUG CONFIGURAZIONE 42
+			if provider.lower() == '42':
+				logger.info(f"🔧 42 Config - Client ID: {provider_config['client_id'][:10]}...")
+				logger.info(f"🔧 42 Config - Client Secret present: {bool(provider_config['client_secret'])}")
+				logger.info(f"🔧 42 Config - Token URL: {provider_config['token_url']}")
+				logger.info(f"🔧 42 Config - Redirect URI: {provider_config['redirect_uri']}")
+
+			# recupero code_verifier dalla sessione
+			code_verifier = request.session.get('code_verifier')
+			if not code_verifier:
+				logger.error('No code_verifier found in session')
+				return self.handle_popup_response(error='no_code_verifier')
+			
+			# dati del token in base al provider
+			if provider.upper() == 'GOOGLE':
+				token_data = {
+					'client_id': provider_config['client_id'],
+					'client_secret': provider_config['client_secret'],
+					'code': code,
+					'grant_type': 'authorization_code',
+					'redirect_uri': provider_config['redirect_uri'],
+					'code_verifier': code_verifier,  # PKCE richiesto da Google
+				}
+			else:  # 42
+				token_data = {
+					'client_id': provider_config['client_id'],
+					'client_secret': provider_config['client_secret'],
+					'code': code,
+					'grant_type': 'authorization_code',
+					'redirect_uri': provider_config['redirect_uri'],
+				}
+			
+		# ✅ DEBUG TOKEN DATA PER 42
+			if provider.lower() == '42':
+				logger.info(f"🔧 42 Token Request Data:")
+				logger.info(f"   - grant_type: {token_data['grant_type']}")
+				logger.info(f"   - client_id: {token_data['client_id'][:10]}...")
+				logger.info(f"   - code: {token_data['code'][:20]}...")
+				logger.info(f"   - redirect_uri: {token_data['redirect_uri']}")
+
+			logger.info(f"Making token request to: {provider_config['token_url']}")
+			logger.info(f"Token data keys: {list(token_data.keys())}")
+			
+			# Exchange code for access token
+			token_response = requests.post(provider_config['token_url'], data=token_data)
+			
+			logger.info(f"Token response status: {token_response.status_code}")
+			logger.info(f"Token response text: {token_response.text}")
+			
+			# ✅ DEBUG RISPOSTA TOKEN PER 42
+			if provider.lower() == '42':
+				logger.error(f"🔧 42 Token Response:")
+				logger.error(f"   - Status: {token_response.status_code}")
+				logger.error(f"   - Headers: {dict(token_response.headers)}")
+				logger.error(f"   - Text: {token_response.text}")
+
+			if not token_response.ok:
+				logger.error(f'Token exchange failed: {token_response.text}')
+				return self.handle_popup_response(error='token_exchange_failed')
+			
+			token_response_data = token_response.json()
+			access_token = token_response_data.get('access_token')
+			
+			if not access_token:
+				logger.error('No access token in response')
+				return self.handle_popup_response(error='no_access_token')
+			
+			# Get user info from provider
+			user_info_response = requests.get(
+				provider_config['user_info_url'],
+				headers={'Authorization': f'Bearer {access_token}'}  
+			)
+			
+			if not user_info_response.ok:
+				logger.error(f'User info request failed: {user_info_response.text}')
+				return self.handle_popup_response(error='user_info_failed')
+			
+			user_info = user_info_response.json()
+			logger.info(f"User info received: {user_info}")
+			
+			# Create or get user
+			if provider.lower() == 'google':
+				email = user_info.get('email')
+				username = user_info.get('name', email.split('@')[0] if email else 'user')
+			elif provider.lower() == '42':
+				email = user_info.get('email')
+				username = user_info.get('login', email.split('@')[0] if email else 'user')
+			else:
+				return self.handle_popup_response(error='unsupported_provider')
+			
 			if not email:
-				return Response(
-					{"error": "Could not fetch user email"}, 
-					status=status.HTTP_400_BAD_REQUEST
-				)
-				
-			# Get username from various possible fields
-			suggested_username = (user_info.get('name') or 
-						user_info.get('login') or 
-						user_info.get('displayName') or
-						email.split('@')[0])
+				logger.error('No email found in user info')
+				return self.handle_popup_response(error='no_email')
 			
-			User = get_user_model()
-			with transaction.atomic():
-				# First, check if the user already exists by email
-				try:
-					logger.debug(f"||||||||||||User info: {user_info}||||||||||")
-					user = User.objects.get(email=email)
-					# User exists - just log them in (don't update username to avoid conflicts)
-					created = False
-				except User.DoesNotExist:
-					# Check if username is already taken
-					if User.objects.filter(username=suggested_username).exists():
-						return Response(
-							{"error": "Username already exists", "email": email, "suggested_username": suggested_username}, 
-							status=status.HTTP_409_CONFLICT
-						)
-					# Create a new user
-					random_password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
-					user = User.objects.create_user(email=email, password=random_password)
-					user.username = suggested_username
-					user.set_password(random_password)
-					user.save()
-					created = True
-				# Create user in other services if new
-				if created:
-					try:
-						CreateOnOtherServices(user, user_info=user_info)
-					except Exception as e:
-						# This will rollback the transaction including the user creation
-						raise ValueError(f"Failed to create user in all services: {str(e)}")
-				# Log the user in
-				login(request, user)
-				# Generate JWT tokens
-				refresh = RefreshToken.for_user(user)
-				access_token = str(refresh.access_token)
-				refresh_token = str(refresh)
-				frontend_url = 'https://trascendence.42firenze.it'
-				redirect_url = f"{frontend_url}/#home?access_token={access_token}&refresh_token={refresh_token}&user_id={user.user_id}&username={user.username}&email={user.email}"
-				return redirect(redirect_url)
-				
+			# Get or create user
+			user, created = AppUser.objects.get_or_create(
+				email=email,
+				defaults={'username': username}
+			)
+			
+			if created:
+				# Set a random password for OAuth users
+				user.set_password(secrets.token_urlsafe(32))
+				user.save()
+				logger.info(f"New user created: {user.email}")
+			else:
+				logger.info(f"Existing user found: {user.email}")
+			
+			# PULISCI la sessione
+			request.session.pop('code_verifier', None)
+			request.session.pop('oauth_provider', None)
+			
+			# Generate JWT tokens
+			refresh = RefreshToken.for_user(user)
+			access_token_jwt = str(refresh.access_token)
+			refresh_token = str(refresh)
+			
+			logger.info(f"JWT tokens generated for user: {user.email}")
+			
+			# Return popup response with tokens
+			return self.handle_popup_response(
+				access_token=access_token_jwt,
+				refresh_token=refresh_token,
+				user_id=user.user_id,
+				username=user.username,
+				email=user.email
+			)
+			
 		except Exception as e:
-			return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			logger.error(f'OAuth callback error: {str(e)}', exc_info=True)
+			return self.handle_popup_response(error='callback_failed')
+		
+	def handle_popup_response(self, access_token=None, refresh_token=None, 
+							 user_id=None, username=None, email=None, error=None):
+		"""
+		Restituisce una pagina HTML che comunica con la finestra parent e si chiude
+		"""
+		if error:
+			html_content = f"""
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<title>OAuth Error</title>
+				<style>
+					body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }}
+					.error {{ color: #dc3545; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+				</style>
+			</head>
+			<body>
+				<div class="error">
+					<h2>Authentication Error</h2>
+					<p>Error: {error}</p>
+					<p>This window will close automatically...</p>
+				</div>
+				<script>
+					console.log('OAuth Error in popup:', '{error}');
+					
+					// LOCALSTORAGE invece di postMessage
+					try {{
+						const errorData = {{
+							type: 'OAUTH_ERROR',
+							error: '{error}',
+							timestamp: Date.now()
+						}};
+						
+						console.log('Saving error to localStorage:', errorData);
+						localStorage.setItem('oauth_result', JSON.stringify(errorData));
+						
+						console.log('Error saved to localStorage');
+					}} catch (e) {{
+						console.error('Error saving to localStorage:', e);
+					}}
+					
+					setTimeout(() => {{
+						console.log('Closing popup window');
+						window.close();
+					}}, 2000);
+				</script>
+			</body>
+			</html>
+			"""
+		else:
+			# ✅ ESCAPE dei dati per evitare problemi JavaScript
+			username_escaped = username.replace("'", "\\'").replace('"', '\\"') if username else ''
+			email_escaped = email.replace("'", "\\'").replace('"', '\\"') if email else ''
+			
+			html_content = f"""
+			<!DOCTYPE html>
+			<html>
+			<head>
+				<title>OAuth Success</title>
+				<style>
+					body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }}
+					.success {{ color: #28a745; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+				</style>
+			</head>
+			<body>
+				<div class="success">
+					<h2>Authentication Successful!</h2>
+					<p>Welcome, {username_escaped}!</p>
+					<p>This window will close automatically...</p>
+				</div>
+				<script>
+					console.log('OAuth Success in popup');
+					console.log('User: {username_escaped}');
+					console.log('Email: {email_escaped}');
+					
+					// LOCALSTORAGE invece di postMessage
+					try {{
+						const successData = {{
+							type: 'OAUTH_SUCCESS',
+							access_token: '{access_token}',
+							refresh_token: '{refresh_token}',
+							user_id: '{user_id}',
+							username: '{username_escaped}',
+							email: '{email_escaped}',
+							timestamp: Date.now()
+						}};
+						
+						console.log('Saving success data to localStorage:', successData);
+						localStorage.setItem('oauth_result', JSON.stringify(successData));
+						
+						console.log('Success data saved to localStorage');
+					}} catch (e) {{
+						console.error('Error saving to localStorage:', e);
+					}}
+					
+					setTimeout(() => {{
+						console.log('Closing popup window');
+						window.close();
+					}}, 2000);
+				</script>
+			</body>
+			</html>
+			"""
+		
+		return HttpResponse(html_content, content_type='text/html')
 
 @method_decorator(ratelimit(key='user', rate='50/m', method='GET'), name='get')
 class Setup2FAView(APIView):
@@ -387,7 +486,7 @@ class Setup2FAView(APIView):
 			)
 		
 			if response.status_code == 200:
-				return redirect('https://trascendence.42firenze.it/#home')
+				return redirect('https://trascendence.42firenze.it/oauth-callback.html')
 			else:
 				return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		else:
@@ -559,7 +658,7 @@ class Disable2FAView(APIView):
 			)
 			
 			if response.status_code == 200:
-				return redirect('https://trascendence.42firenze.it/#home')
+				return redirect('https://trascendence.42firenze.it/oauth-callback.html')
 			else:
 				# If the user service update fails, we should revert our local change
 				user.has_two_factor_auth = True

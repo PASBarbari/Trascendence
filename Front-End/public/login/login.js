@@ -10,26 +10,26 @@ document.head.appendChild(link);
 function renderLogin() {
 	const contentDiv = document.getElementById("content");
 	contentDiv.innerHTML = `
-        <div class="login">
-            <div class="login_box">
-                <h1>Login</h1>
-                <div class="login_form">
-                    <form class="login_form" id="loginForm">
-                        <div class="mb-3">
-                            <input type="email" id="email" placeholder="Email" class="form-control" required />
-                        </div>
-                        <div class="mb-3">
-                            <input type="password" id="password" placeholder="Password" class="form-control" required />
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
-                        <button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
-                        <button type="button" id="loginGoogle" class="btn btn-danger w-100 mt-2" style="height: 40px;">Login with Google</button>
-                        <button type="button" id="login42" class="btn btn-primary w-100 mt-2" style="height: 40px;">Login with 42</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
+		<div class="login">
+			<div class="login_box">
+				<h1>Login</h1>
+				<div class="login_form">
+					<form class="login_form" id="loginForm">
+						<div class="mb-3">
+							<input type="email" id="email" placeholder="Email" class="form-control" required />
+						</div>
+						<div class="mb-3">
+							<input type="password" id="password" placeholder="Password" class="form-control" required />
+						</div>
+						<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
+						<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
+						<button type="button" id="loginGoogle" class="btn btn-danger w-100 mt-2" style="height: 40px;">Login with Google</button>
+						<button type="button" id="login42" class="btn btn-primary w-100 mt-2" style="height: 40px;">Login with 42</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	`;
 
 	document
 		.getElementById("loginForm")
@@ -56,13 +56,16 @@ function renderLogin() {
 }
 
 /**
- * Gestisce il login OAuth per diversi provider
+ * Gestisce il login OAuth per diversi provider - VERSIONE LOCALSTORAGE
  * @param {string} provider - Il provider OAuth ("google" o "42")
  */
 async function handleOAuthLogin(provider) {
-    console.log(`${provider} login`);
+    console.log(`${provider} login con popup`);
     const csrftoken = getCookie("csrftoken");
     const { url_api } = getVariables();
+    
+    let popup = null;
+    let storageCheckInterval;
     
     try {
         const response = await fetch(`${url_api}/login/login/oauth/${provider}/`, {
@@ -76,15 +79,129 @@ async function handleOAuthLogin(provider) {
         if (response.ok) {
             const data = await response.json();
             console.log(`${provider} OAuth response:`, data);
-            setVariables({ oauth_url: data.redirect_url });
-            console.log("OAuth URL aggiornato:", getVariables().oauth_url);
-            window.navigateTo("#oauth");
+            console.log(`OAuth URL:`, data.redirect_url);
+            
+            // PULISCI localStorage prima di iniziare
+            localStorage.removeItem('oauth_result');
+            
+            // Apri il popup OAuth
+            popup = window.open(
+                data.redirect_url,
+                'oauth-popup',
+                'width=500,height=600,scrollbars=yes,resizable=yes,left=' + 
+                (window.screen.width / 2 - 250) + ',top=' + 
+                (window.screen.height / 2 - 300)
+            );
+            
+            if (!popup) {
+                console.error('Popup bloccato dal browser');
+                showAlertForXSeconds('Il popup è stato bloccato. Permetti i popup per questo sito e riprova.', 'error', 5, { asToast: true });
+                return;
+            }
+            
+            console.log('Popup aperto:', popup);
+            
+            // controllo localStorage ogni secondo
+            storageCheckInterval = setInterval(() => {
+                try {
+                    const resultString = localStorage.getItem('oauth_result');
+                    
+                    if (resultString) {
+                        console.log('OAuth result found in localStorage:', resultString);
+                        
+                        const result = JSON.parse(resultString);
+                        
+                        // Pulisci localStorage
+                        localStorage.removeItem('oauth_result');
+                        
+                        // Pulisci interval
+                        clearInterval(storageCheckInterval);
+                        storageCheckInterval = null;
+                        
+                        // Chiudi popup se ancora aperto
+                        if (popup && !popup.closed) {
+                            popup.close();
+                        }
+                        
+                        // Processa il risultato
+                        if (result.type === 'OAUTH_SUCCESS') {
+                            console.log('OAuth login successful!');
+                            console.log('Received data:', result);
+                            
+                            // Verifica che i dati ci siano
+                            if (!result.access_token || !result.refresh_token) {
+                                console.error('Token mancanti nel risultato:', result);
+                                showAlertForXSeconds('Errore: token mancanti nella risposta OAuth', 'error', 5, { asToast: true });
+                                return;
+                            }
+                            
+                            console.log('Salvando i token...');
+                            
+                            // Salva i token
+                            setVariables({
+                                token: result.access_token,
+                                refreshToken: result.refresh_token,
+                                userId: result.user_id,
+                                userUsername: result.username,
+                                userEmail: result.email
+                            });
+                            
+                            console.log('Token salvati, verifico...');
+                            const { token } = getVariables();
+                            console.log('Token verificato:', token ? token.substring(0, 20) + '...' : 'MANCANTE');
+                            
+                            // Reindirizza alla home
+                            console.log('Reindirizzando alla home...');
+                            navigateTo("#home");
+                            
+                            // Mostra messaggio di successo
+                            setTimeout(() => {
+                                showAlertForXSeconds("Login OAuth effettuato con successo!", "success", 3, { asToast: true });
+                            }, 500);
+                            
+                        } else if (result.type === 'OAUTH_ERROR') {
+                            console.error('OAuth login failed:', result.error);
+                            showAlertForXSeconds(`Login fallito: ${result.error}`, "error", 5, { asToast: true });
+                        }
+                    }
+                    
+                    // Controlla se il popup è stato chiuso manualmente
+                    if (popup && popup.closed) {
+                        console.log('Popup è stato chiuso manualmente');
+                        clearInterval(storageCheckInterval);
+                        storageCheckInterval = null;
+                        
+                        // Se non c'è risultato in localStorage, probabilmente è stato chiuso prima di completare
+                        if (!localStorage.getItem('oauth_result')) {
+                            console.log('Popup chiuso senza risultato OAuth');
+                        }
+                    }
+                } catch (e) {
+                    console.error('Errore controllo localStorage:', e);
+                }
+            }, 1000);
+            
+            // Timeout di sicurezza (5 minuti)
+            setTimeout(() => {
+                console.log('Timeout OAuth, pulizia...');
+                if (storageCheckInterval) {
+                    clearInterval(storageCheckInterval);
+                    storageCheckInterval = null;
+                }
+                if (popup && !popup.closed) {
+                    popup.close();
+                }
+                localStorage.removeItem('oauth_result');
+            }, 300000); // 5 minuti
+            
         } else {
             const errorData = await response.json();
             console.error(`${provider} OAuth error:`, errorData);
+            showAlertForXSeconds('Errore durante l\'autenticazione. Riprova.', 'error', 3, { asToast: true });
         }
     } catch (error) {
-        console.error(`Exception during ${provider} OAuth:`, error);
+        console.error(`${provider} OAuth exception:`, error);
+        showAlertForXSeconds('Errore di connessione durante l\'autenticazione.', 'error', 3, { asToast: true });
     }
 }
 
@@ -223,45 +340,37 @@ function showOTPVerificationForm(tempToken, email) {
 			}
 		});
 
-	// Handle cancel button
-	document
-		.getElementById("cancelButton")
-		.addEventListener("click", function () {
-			// Restore original login form
-			contentDiv.innerHTML = originalContent;
+// Handle cancel button
+document
+	.getElementById("cancelButton")
+	.addEventListener("click", function () {
+		// Restore original login form
+		contentDiv.innerHTML = originalContent;
 
-			// Re-attach event listeners to the restored content
-			document
-				.getElementById("loginForm")
-				.addEventListener("submit", async function (e) {
-					e.preventDefault();
-					const email = document.getElementById("email").value;
-					const password = document.getElementById("password").value;
-					await onHandleSubmit(e, email, password);
-				});
+		// Re-attach event listeners to the restored content
+		document
+			.getElementById("loginForm")
+			.addEventListener("submit", async function (e) {
+				e.preventDefault();
+				const email = document.getElementById("email").value;
+				const password = document.getElementById("password").value;
+				await onHandleSubmit(e, email, password);
+			});
 
-			document
-				.getElementById("registerButton")
-				.addEventListener("click", function () {
-					window.navigateTo("#register");
-				});
+		document
+			.getElementById("registerButton")
+			.addEventListener("click", function () {
+				window.navigateTo("#register");
+			});
 
-			document
-				.getElementById("loginGoogle")
-				.addEventListener("click", async function () {
-					const csrftoken = getCookie("csrftoken");
-					const { url_api } = getVariables();
-					window.location.href = `${url_api}/login/login/oauth/google/`;
-				});
+		document
+			.getElementById("loginGoogle")
+			.addEventListener("click", () => handleOAuthLogin("google"));
 
-			document
-				.getElementById("login42")
-				.addEventListener("click", async function () {
-					const csrftoken = getCookie("csrftoken");
-					const { url_api } = getVariables();
-					window.location.href = `${url_api}/login/login/oauth/42/`;
-				});
-		});
+		document
+			.getElementById("login42")
+			.addEventListener("click", () => handleOAuthLogin("42"));
+	});
 }
 
 async function verifyOTP(tempToken, otpCode, email) {
@@ -307,87 +416,5 @@ async function verifyOTP(tempToken, otpCode, email) {
 	}
 }
 
-async function loginProvider(csrftoken, isBaseLogin, provider) {
-	const { url_api } = getVariables();
-	try {
-		const response = await fetch(
-			`${url_api}/login/login/oauth/${provider}`,
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"X-CSRFToken": csrftoken,
-				},
-			}
-		);
-
-		if (response.ok) {
-			const data = await response.json();
-			console.log("Risposta dal server:", data);
-
-			if (isBaseLogin) {
-				setVariables({ token: data.access_token });
-
-				const { user, user_id } = data;
-				const { email, username } = user;
-
-				setVariables({
-					userEmail: email,
-					userUsername: username,
-					userId: user_id,
-				});
-			} else {
-				setVariables({ multiplayer_username: data.username });
-				setVariables({ multiplayer_id: data.user_id });
-			}
-			return true;
-		} else {
-			const errorData = await response.json();
-			console.error("Errore login:", errorData);
-			return false;
-		}
-	} catch (error) {
-		console.error("Exception login:", error);
-		return false;
-	}
-}
-
-// async function handleGetUser(csrftoken) {
-// 	try {
-// 		const { token } = getVariables();
-// 		const response = await fetch(
-// 			"trascendence.42firenze.it/api/login/login/user",
-// 			{
-// 				method: "GET",
-// 				headers: {
-// 					"Content-Type": "application/json",
-// 					"X-CSRFToken": csrftoken,
-// 					Authorization: `Bearer ${token}`,
-// 				},
-// 			}
-// 		);
-
-// 		if (response.ok) {
-// 			const data = await response.json();
-// 			const { user, user_id } = data;
-// 			const { email, username } = user;
-
-// 			setVariables({
-// 				userEmail: email,
-// 				userUsername: username,
-// 				userId: user_id,
-// 			});
-
-// 			console.log("User email:", email);
-// 			console.log("User username:", username);
-// 			console.log("User ID:", user_id);
-// 		} else {
-// 			const errorData = await response.json();
-// 			console.error("Errore nella risposta del server:", errorData);
-// 		}
-// 	} catch (error) {
-// 		console.error("Errore nella richiesta:", error);
-// 	}
-// }
 
 export { renderLogin, loginUser };
