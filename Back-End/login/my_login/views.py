@@ -244,7 +244,8 @@ class OAuthCallbackView(APIView):
 				logger.info("   - Sensitive fields have been redacted for security.")
 
 			logger.info(f"Making token request to: {provider_config['token_url']}")
-			logger.info(f"Token data keys: {[key if key != 'client_secret' else '[REDACTED]' for key in token_data.keys()]}")
+			sanitized_token_data_keys = [key for key in token_data.keys() if key != 'client_secret']
+			logger.info(f"Token data keys: {sanitized_token_data_keys}")
 			
 			# Exchange code for access token
 			token_response = requests.post(provider_config['token_url'], data=token_data)
