@@ -240,12 +240,8 @@ class OAuthCallbackView(APIView):
 			
 		# ✅ DEBUG TOKEN DATA PER 42
 			if provider.lower() == '42':
-				logger.info(f"🔧 42 Token Request Data:")
-				logger.info(f"   - grant_type: {token_data['grant_type']}")
-				logger.info("   - client_id: [PRESENT]")
-				logger.info("   - code: [REDACTED]")
-				logger.info("   - redirect_uri: [REDACTED]")
-				logger.info(f"   - client_secret: [REDACTED]")
+				logger.info("🔧 42 Token Request Data: [REDACTED]")
+				logger.info("   - Sensitive fields have been redacted for security.")
 
 			logger.info(f"Making token request to: {provider_config['token_url']}")
 			logger.info(f"Token data keys: {[key if key != 'client_secret' else '[REDACTED]' for key in token_data.keys()]}")
