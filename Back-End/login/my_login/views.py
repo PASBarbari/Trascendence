@@ -242,7 +242,7 @@ class OAuthCallbackView(APIView):
 			if provider.lower() == '42':
 				logger.info(f"🔧 42 Token Request Data:")
 				logger.info(f"   - grant_type: {token_data['grant_type']}")
-				logger.info(f"   - client_id: {token_data['client_id'][:10]}...")
+				logger.info("   - client_id: [PRESENT]")
 				logger.info(f"   - code: {token_data['code'][:20]}...")
 				logger.info(f"   - redirect_uri: {token_data['redirect_uri']}")
 				logger.info(f"   - client_secret: [REDACTED]")
