@@ -302,7 +302,7 @@ OAUTH2_PROVIDERS = {
 		'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/google/',
 		'authorization_url': "https://accounts.google.com/o/oauth2/v2/auth",
 		'token_url': "https://oauth2.googleapis.com/token",
-		'scope': "https://www.googleapis.com/auth/userinfo.profile email&",
+		'scope': "openid email profile",
 		'user_info_url': "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
 		'client_id': os.getenv('GOOGLE_CLIENT_ID', 'pippo'),
 		'client_secret': os.getenv('GOOGLE_CLIENT_SECRET', 'moltosegreto'),

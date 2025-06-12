@@ -48,18 +48,6 @@ const routes = {
 		title: "Pong",
 		description: "This is the pong game",
 	},
-	oauth: {
-		render: () => {
-			const oautUrl = getVariables().oauth_url;
-			if (oautUrl) {
-            	window.location.href = oautUrl; // Reindirizza all'URL di Google OAuth
-        	} else {
-            	console.error("Oauth URL is not defined in getVariables().oauth_url");
-        	}
-		},
-		title: "OAuth Login",
-		description: "This is the OAuth login page",
-	},
 };
 
 const navigateTo = (path) => {
@@ -110,91 +98,38 @@ const locationHandler = async () => {
 		.setAttribute("content", route.description);
 };
 
-function handleOAuthCallback() {
-	console.log("Gestione callback OAuth...");
-    // Estrai i parametri dall'URL
-    const hashParams = window.location.hash.substring(1).split('?');
-    if (hashParams.length < 2) return;
-    
-    const params = new URLSearchParams(hashParams[1]);
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
-    const userId = params.get('user_id');
-    const username = params.get('username');
-    const email = params.get('email');
-    
-    if (accessToken && refreshToken) {
-        // Salva i token e le info utente
-        setVariables({
-            token: accessToken,
-            refreshToken: refreshToken,
-            userId: userId,
-            userUsername: username,
-            userEmail: email
-        });
-        
-        // Pulisci l'URL
-        window.history.replaceState({}, document.title, '/#home');
-        
-        // Reindirizza alla home
-        window.location.hash = "home";
-        
-        // Aggiungi un piccolo ritardo per assicurarti che il DOM sia aggiornato
-        setTimeout(() => {
-            // Reinizializza i listener per il menu
-            const toggleSettingsButton = document.getElementById("toggleSettingsButton");
-            if (toggleSettingsButton) {
-                // Rimuovi eventuali vecchi listener
-                const newButton = toggleSettingsButton.cloneNode(true);
-                toggleSettingsButton.parentNode.replaceChild(newButton, toggleSettingsButton);
-                
-                // Aggiungi il nuovo listener
-                newButton.addEventListener("click", (event) => {
-                    event.preventDefault();
-                    settingsPopup(event);
-                });
-            }
-            
-            // Completa la gestione della navigazione
-            locationHandler();
-        }, 100);
-	}
-}
-
 const initializeApp = () => {
-	console.log("Inizializzazione dell'applicazione...");
-	if (window.location.hash.includes('access_token')) {
-        handleOAuthCallback();
-        return;
-    }
+    console.log("Inizializzazione dell'applicazione...");
+    console.log("URL corrente:", window.location.href);
+    console.log("Hash:", window.location.hash);
+    console.log("Search:", window.location.search);
 
-	if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
         const currentHash = window.location.hash;
         window.location.href = '/' + currentHash;
         return;
     }
 
-	preloadPongCSS();
-	renderExpandableSidebar();
-	//renderProfile();
+    preloadPongCSS();
+    renderExpandableSidebar();
 
-	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
-	if (toggleSettingsButton) {
-		toggleSettingsButton.addEventListener("click", (event) => {
-			event.preventDefault();
-			settingsPopup(event);
-		});
-	}
+    const toggleSettingsButton = document.getElementById("toggleSettingsButton");
+    if (toggleSettingsButton) {
+        toggleSettingsButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            settingsPopup(event);
+        });
+    }
 
-	locationHandler();
-	
-	const currentHash = window.location.hash;
-	if (currentHash === "#pong") {
-	    console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
-		cleanupPong().then(() => {
-			console.log("Cleanup completato, avvio rendering...");
-			renderPong();
-		});
+    locationHandler();
+    
+    const currentHash = window.location.hash;
+    if (currentHash === "#pong") {
+        console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
+        cleanupPong().then(() => {
+            console.log("Cleanup completato, avvio rendering...");
+            renderPong();
+        });
     }
 };
 
