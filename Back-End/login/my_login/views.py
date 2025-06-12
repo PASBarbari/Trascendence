@@ -248,7 +248,7 @@ class OAuthCallbackView(APIView):
 				logger.info(f"   - client_secret: [REDACTED]")
 
 			logger.info(f"Making token request to: {provider_config['token_url']}")
-			logger.info(f"Token data keys: {list(token_data.keys())}")
+			logger.info(f"Token data keys: {[key if key != 'client_secret' else '[REDACTED]' for key in token_data.keys()]}")
 			
 			# Exchange code for access token
 			token_response = requests.post(provider_config['token_url'], data=token_data)
