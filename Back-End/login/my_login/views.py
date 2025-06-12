@@ -245,6 +245,7 @@ class OAuthCallbackView(APIView):
 				logger.info(f"   - client_id: {token_data['client_id'][:10]}...")
 				logger.info(f"   - code: {token_data['code'][:20]}...")
 				logger.info(f"   - redirect_uri: {token_data['redirect_uri']}")
+				logger.info(f"   - client_secret: [REDACTED]")
 
 			logger.info(f"Making token request to: {provider_config['token_url']}")
 			logger.info(f"Token data keys: {list(token_data.keys())}")
