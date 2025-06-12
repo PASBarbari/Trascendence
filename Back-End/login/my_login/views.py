@@ -45,6 +45,8 @@ from django.http import HttpResponse #use rest
 import requests
 import secrets
 import logging
+import html
+import json
 
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
@@ -363,13 +365,16 @@ class OAuthCallbackView(APIView):
 		except Exception as e:
 			logger.error(f'OAuth callback error: {str(e)}', exc_info=True)
 			return self.handle_popup_response(error='callback_failed')
-		
+	
 	def handle_popup_response(self, access_token=None, refresh_token=None, 
 							 user_id=None, username=None, email=None, error=None):
 		"""
 		Restituisce una pagina HTML che comunica con la finestra parent e si chiude
 		"""
 		if error:
+			# SANITIZZA l'errore per HTML
+			error_escaped = html.escape(str(error))
+			
 			html_content = f"""
 			<!DOCTYPE html>
 			<html>
@@ -383,17 +388,17 @@ class OAuthCallbackView(APIView):
 			<body>
 				<div class="error">
 					<h2>Authentication Error</h2>
-					<p>Error: {error}</p>
+					<p>Error: {error_escaped}</p>
 					<p>This window will close automatically...</p>
 				</div>
 				<script>
-					console.log('OAuth Error in popup:', '{error}');
+					console.log('OAuth Error in popup');
 					
-					// LOCALSTORAGE invece di postMessage
+					// JSON.stringify per sanitizzazione automatica
 					try {{
 						const errorData = {{
 							type: 'OAUTH_ERROR',
-							error: '{error}',
+							error: {json.dumps(str(error))},
 							timestamp: Date.now()
 						}};
 						
@@ -414,9 +419,8 @@ class OAuthCallbackView(APIView):
 			</html>
 			"""
 		else:
-			# ✅ ESCAPE dei dati per evitare problemi JavaScript
-			username_escaped = username.replace("'", "\\'").replace('"', '\\"') if username else ''
-			email_escaped = email.replace("'", "\\'").replace('"', '\\"') if email else ''
+			# SANITIZZA tutti i dati per HTML
+			username_html = html.escape(str(username)) if username else ''
 			
 			html_content = f"""
 			<!DOCTYPE html>
@@ -431,23 +435,21 @@ class OAuthCallbackView(APIView):
 			<body>
 				<div class="success">
 					<h2>Authentication Successful!</h2>
-					<p>Welcome, {username_escaped}!</p>
+					<p>Welcome, {username_html}!</p>
 					<p>This window will close automatically...</p>
 				</div>
 				<script>
 					console.log('OAuth Success in popup');
-					console.log('User: {username_escaped}');
-					console.log('Email: {email_escaped}');
 					
-					// LOCALSTORAGE invece di postMessage
+					// JSON.stringify per sanitizzazione completa
 					try {{
 						const successData = {{
 							type: 'OAUTH_SUCCESS',
-							access_token: '{access_token}',
-							refresh_token: '{refresh_token}',
-							user_id: '{user_id}',
-							username: '{username_escaped}',
-							email: '{email_escaped}',
+							access_token: {json.dumps(str(access_token)) if access_token else 'null'},
+							refresh_token: {json.dumps(str(refresh_token)) if refresh_token else 'null'},
+							user_id: {json.dumps(str(user_id)) if user_id else 'null'},
+							username: {json.dumps(str(username)) if username else 'null'},
+							email: {json.dumps(str(email)) if email else 'null'},
 							timestamp: Date.now()
 						}};
 						
