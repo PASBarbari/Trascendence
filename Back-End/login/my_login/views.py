@@ -101,13 +101,13 @@ def CreateOnOtherServices(user, **kwargs):
 			raise ValueError('Pong service failed to create user')
 		
 		# Create user in User service
-		if 'user_id' in kwargs:
-			user_data.append({
+		if 'given_name' in kwargs or 'family_name' in kwargs or 'picture' in kwargs:
+			user_data.update({
 				'first_name': kwargs.get('given_name'),
 				'last_name': kwargs.get('family_name'),
-				#'birth_date': kwargs.get('birth_date'),
 				'current_avatar_url': kwargs.get('picture'),
 			})
+		
 		user_response = requests.post(User_url, json=user_data, headers=headers)
 		if user_response.status_code != 201:
 			logging.error(f"User service error: {user_response.status_code} - {user_response.text}")
@@ -311,6 +311,34 @@ class OAuthCallbackView(APIView):
 				user.set_password(secrets.token_urlsafe(32))
 				user.save()
 				logger.info(f"New user created: {user.email}")
+
+				# ✅ AGGIUNGI: Crea l'utente negli altri microservizi
+				try:
+					# Prepara dati aggiuntivi per i microservizi (da user_info se disponibili)
+					oauth_data = {}
+					if provider.lower() == 'google':
+						oauth_data = {
+							'given_name': user_info.get('given_name'),
+							'family_name': user_info.get('family_name'),
+							'picture': user_info.get('picture'),
+						}
+					elif provider.lower() == '42':
+						oauth_data = {
+							'given_name': user_info.get('first_name'),
+							'family_name': user_info.get('last_name'),
+							'picture': user_info.get('image', {}).get('link') if user_info.get('image') else None,
+						}
+					
+					CreateOnOtherServices(user, **oauth_data)
+					logger.info(f"User {user.email} created in all microservices")
+					
+				except Exception as e:
+					# Se fallisce la creazione negli altri servizi, elimina l'utente locale
+					logger.error(f"Failed to create user in microservices: {str(e)}")
+					user.delete()
+					return self.handle_popup_response(error='microservices_creation_failed')
+					# Se l'utente esiste già, non fare nulla
+
 			else:
 				logger.info(f"Existing user found: {user.email}")
 			

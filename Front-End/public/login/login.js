@@ -165,17 +165,17 @@ async function handleOAuthLogin(provider) {
                         }
                     }
                     
-                    // Controlla se il popup è stato chiuso manualmente
-                    if (popup && popup.closed) {
-                        console.log('Popup è stato chiuso manualmente');
-                        clearInterval(storageCheckInterval);
-                        storageCheckInterval = null;
+                    // Controlla se il popup è stato chiuso manualmente DA ERRORE CORS
+                    // if (popup && popup.closed) {
+                    //     console.log('Popup è stato chiuso manualmente');
+                    //     clearInterval(storageCheckInterval);
+                    //     storageCheckInterval = null;
                         
-                        // Se non c'è risultato in localStorage, probabilmente è stato chiuso prima di completare
-                        if (!localStorage.getItem('oauth_result')) {
-                            console.log('Popup chiuso senza risultato OAuth');
-                        }
-                    }
+                    //     // Se non c'è risultato in localStorage, probabilmente è stato chiuso prima di completare
+                    //     if (!localStorage.getItem('oauth_result')) {
+                    //         console.log('Popup chiuso senza risultato OAuth');
+                    //     }
+                    // }
                 } catch (e) {
                     console.error('Errore controllo localStorage:', e);
                 }
@@ -188,8 +188,12 @@ async function handleOAuthLogin(provider) {
                     clearInterval(storageCheckInterval);
                     storageCheckInterval = null;
                 }
-                if (popup && !popup.closed) {
-                    popup.close();
+                try {
+                    if (popup) {
+                        popup.close();
+                    }
+                } catch (e) {
+                    console.log('Popup già chiuso o non accessibile');
                 }
                 localStorage.removeItem('oauth_result');
             }, 300000); // 5 minuti
