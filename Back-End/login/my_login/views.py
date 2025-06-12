@@ -244,7 +244,7 @@ class OAuthCallbackView(APIView):
 				logger.info(f"   - grant_type: {token_data['grant_type']}")
 				logger.info("   - client_id: [PRESENT]")
 				logger.info("   - code: [REDACTED]")
-				logger.info(f"   - redirect_uri: {token_data['redirect_uri']}")
+				logger.info("   - redirect_uri: [REDACTED]")
 				logger.info(f"   - client_secret: [REDACTED]")
 
 			logger.info(f"Making token request to: {provider_config['token_url']}")
