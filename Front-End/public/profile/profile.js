@@ -11,7 +11,7 @@ async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId, url_api } = getVariables();
 
 	try {
-		const response = await fetch(`${url_api}/user/user/${userId}/`, {
+		const response = await fetch(`${url_api}/user/user/me`, {
 			// user/levelup user_id e exp
 			method: "PATCH",
 			headers: {
@@ -65,8 +65,9 @@ async function downloadImageAsBlob(imageUrl, token) {
 
 async function GetProfile() {
 	const { userId, token, url_api } = getVariables();
+	console.log("GetProfile called with userId:", userId, "token:", token, "url_api:", url_api);
 	try {
-		const response = await fetch(`${url_api}/user/user/user/me/`, {
+		const response = await fetch(`${url_api}/user/user/me`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
@@ -100,7 +101,7 @@ async function GetProfile() {
 			setVariables({
 				name: data.first_name || "",
 				surname: data.last_name || "",
-				birthdate: data.birth_date || "",
+				birthdate: data.birth_date === null ? "" : data.birth_date,
 				bio: data.bio || "",
 				level: data.level ?? "",
 				exp: data.exp ?? "",
@@ -242,12 +243,22 @@ function renderProfile() {
 				input.classList.remove("readonly-input");
 			});
 			profileImageContainer.classList.add("edit-mode");
+
+			const birthdateInput = document.getElementById("birthdate");
+			if (birthdateInput && birthdateInput.value === "") {
+				birthdateInput.type = "date";
+			}
 		} else {
 			form.querySelectorAll("input, textarea").forEach((input) => {
 				input.setAttribute("readonly", true);
 				input.classList.add("readonly-input");
 			});
 			profileImageContainer.classList.remove("edit-mode");
+
+			const birthdateInput = document.getElementById("birthdate");
+			if (birthdateInput && birthdateInput.value === "") {
+				birthdateInput.type = "text";
+			}
 		}
 	});
 

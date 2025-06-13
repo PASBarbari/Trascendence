@@ -91,8 +91,19 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
 	serializer_class = UsersSerializer
+	queryset = UserProfile.objects.all()
+    
 	def get_object(self):
-		return get_object_or_404(UserProfile, user_id=self.request.user.user_id)
+		return self.request.user
+
+class UserSearch(generics.ListAPIView):
+	"""Search for users by username or email."""
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
+	serializer_class = UsersSerializer
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['username', 'email']
+
 
 class FriendList(generics.ListAPIView):
     permission_classes = (IsAuthenticatedUserProfile,)

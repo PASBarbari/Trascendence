@@ -226,6 +226,10 @@
   transition: none;
 }
 
+input[type="date"].readonly-input {
+  color: transparent;
+}
+
 .readonly-input:focus {
   outline: none; /* Aggiungi questa regola per rimuovere l'illuminazione */
   border: var(--bs-border-width) solid var(--bs-border-color);

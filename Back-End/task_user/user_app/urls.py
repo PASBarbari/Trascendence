@@ -5,7 +5,7 @@ from .views import UserGen, UserManage, FriendList, LevelUp, AddFriend, BlockUse
 urlpatterns = [
 	path('avatar', AvatarManager.as_view(), name='avatar_gen'),
 	path('user', UserGen.as_view(), name='user_gen'),
-	path('user/me/', UserManage.as_view(), name='user_manage'),
+	path('me', UserManage.as_view(), name='user_manage'),
 	path('friend', FriendList.as_view(), name='friend_list'),
 	path('addfriend', AddFriend.as_view(), name='add_friend'),
 	path('levelup', LevelUp.as_view(), name='level_up'),

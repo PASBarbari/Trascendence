@@ -4,7 +4,7 @@ import { renderHome } from "./home/home.js";
 import { renderPong } from "./pong/locale/pong.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 //import { renderProfile } from './profile/profile.js';
-import { settingsPopup } from "./settings/settings.js";
+import { settingsPopup, Logout } from "./settings/settings.js";
 import { cleanupPong } from "./pong/locale/settings.js";
 import { getVariables, setVariables } from "./var.js";
 
@@ -21,32 +21,38 @@ const routes = {
 		template: "/templates/404.html",
 		title: "404",
 		description: "Page not found",
+		protected: false,
 	},
 	"/": {
 		render: renderLogin,
 		title: "Login",
 		description: "This is the login page",
+		protected: false,
 	},
 	login: {
 		render: renderLogin,
 		title: "Login",
 		description: "This is the login page",
+		protected: false,
 	},
 	register: {
 		render: renderRegister,
 		title: "Register",
 		description: "This is the register page",
+		protected: false,
 	},
 	home: {
 		render: renderHome,
 		title: "Home",
 		description: "This is the home page",
+		protected: true,
 	},
 	pong: {
 		render: renderPong,
 		// module: () => import("./pong/pongContainer.js").then(module => module.renderPong),
 		title: "Pong",
 		description: "This is the pong game",
+		protected: true,
 	},
 };
 
@@ -61,6 +67,19 @@ const locationHandler = async () => {
 	const wasOAuthRedirect = processOAuthRedirect();
 
 	var location = window.location.hash.replace("#", "");
+
+	if (routes[location]?.protected && !checkAuth()) {
+		console.log("Utente non autenticato, reindirizzamento a login");
+		Logout();
+		return;
+	}
+
+	if (location === 'login' && checkAuth()) {
+		console.log("Utente autenticato, reindirizzamento a home");
+		window.location.hash = "home";
+		return;
+	}
+
 	if (location.length == 0) {
 		window.location.hash = "login";
 		return;
@@ -132,6 +151,20 @@ const initializeApp = () => {
         });
     }
 };
+
+function checkAuth() {
+	const token = getVariables().token;
+	if (token && token.length > 0) {
+		try {
+			const payload = JSON.parse(atob(token.split('.')[1]));
+			const currentTime = Math.floor(Date.now() / 1000);
+			return payload.exp >= currentTime;
+		} catch {
+			return false;
+    	}
+	}
+	return false;
+}
 
 window.addEventListener("hashchange", locationHandler);
 window.addEventListener("load", initializeApp);

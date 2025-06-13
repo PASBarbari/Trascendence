@@ -140,4 +140,4 @@ function closePopup() {
     }
 }
 
-export { settingsPopup };
+export { settingsPopup, Logout };

@@ -351,7 +351,7 @@ function renderNotification() {
 	notificationContainer.innerHTML = `
 		<div class="notification-box">
 			<div class="d-flex justify-content-between align-items-center mb-3">
-				<h5>Notifications</h5>
+				<h5>Friends</h5>
 			</div>
 			<div id="friendsList" class="mb-3"></div>
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
