@@ -49,7 +49,7 @@ const routes = {
 	},
 	pong: {
 		render: renderPong,
-		// module: () => import("./pong/pongContainer.js").then(module => module.renderPong),
+		// module: () => import("./pong/locale/pong.js").then(module => module.renderPong),
 		title: "Pong",
 		description: "This is the pong game",
 		protected: true,
@@ -103,7 +103,15 @@ const locationHandler = async () => {
 	}
 
 	const route = routes[location] || routes["404"];
-	if (route.template) {
+	if (route.module) {
+        console.log(`Caricamento dinamico del modulo per: ${location}`);
+        try {
+            const renderFunction = await route.module();
+            renderFunction();
+        } catch (error) {
+            console.error(`Errore nel caricamento del modulo ${location}:`, error);
+        }
+    } else if (route.template) {
 		const html = await fetch(route.template).then((response) =>
 			response.text()
 		);
@@ -117,7 +125,7 @@ const locationHandler = async () => {
 		.setAttribute("content", route.description);
 };
 
-const initializeApp = () => {
+const initializeApp = async () => {
     console.log("Inizializzazione dell'applicazione...");
     console.log("URL corrente:", window.location.href);
     console.log("Hash:", window.location.hash);
@@ -140,16 +148,13 @@ const initializeApp = () => {
         });
     }
 
-    locationHandler();
-    
     const currentHash = window.location.hash;
     if (currentHash === "#pong") {
-        console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
-        cleanupPong().then(() => {
-            console.log("Cleanup completato, avvio rendering...");
-            renderPong();
-        });
+		console.log("Rilevato refresh su pagina Pong, forzo il rendering...");
+        await cleanupPong();
     }
+
+	locationHandler();
 };
 
 function checkAuth() {

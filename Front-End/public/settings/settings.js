@@ -1,7 +1,15 @@
 import { toggleProfile } from "../home/home.js";
 import { getVariables, setVariables } from '../var.js';
+import { cleanupPong } from "../pong/locale/settings.js";
 
 function Logout() {
+    try {
+        cleanupPong();
+        console.log("Cleanup Pong completato");
+    } catch (error) {
+        console.log("Cleanup Pong non necessario o già eseguito");
+    }
+
     // Chiude tutti i WebSocket attivi
     const webSocketInstances = window.activeWebSockets || [];
     if (webSocketInstances.length > 0) {

@@ -97,6 +97,8 @@ function resumeGame() {
 export function cleanupPong() {
 	console.log("Starting complete cleanup...");
 
+	resetPongMenuState();
+
 	// 1. Dispose all meshes in the game group
 	if (state.game) {
 		console.log(
@@ -161,6 +163,15 @@ export function cleanupPong() {
 
 	// 4. Remove event listeners
 	window.removeEventListener("resize", state.onWindowResize);
+	
+	if (window.pongKeydownHandler) {
+		document.removeEventListener("keydown", window.pongKeydownHandler);
+		window.pongKeydownHandler = null;
+	}
+	if (window.pongKeyupHandler) {
+		document.removeEventListener("keyup", window.pongKeyupHandler);
+		window.pongKeyupHandler = null;
+	}
 
 	// 5. Cancel animation frame if active
 	if (state.animationFrameId) {
@@ -239,6 +250,20 @@ function resetGame() {
 	}
 
 	// Start the game with current settings
+}
+
+function resetPongMenuState() {
+    // Reset solo le variabili di stato, non il DOM
+    state.p1_score = 0;
+    state.p2_score = 0;
+    state.isStarted = false;
+    state.isPaused = true;
+    state.IAisActive = false;
+    
+    // DOM reset solo se siamo sicuri che esista
+    if (document.getElementById("menu")) {
+        showMainMenu();
+    }
 }
 
 function restartMenu() {

@@ -126,7 +126,11 @@ export function renderPong() {
 	</div>
 	`;
 
-	// Your existing event listeners remain the same
+	document.addEventListener("keydown", pongKeyDownHandler);
+    document.addEventListener("keyup", pongKeyUpHandler);
+    
+    window.pongKeyDownHandler = pongKeyDownHandler;
+    window.pongKeyUpHandler = pongKeyUpHandler;
 
 	document
 		.getElementById("newGameButton")
@@ -219,8 +223,9 @@ window.addEventListener("resize", () => {
 	}
 });
 
-// Keyboard setup
-document.addEventListener("keydown", function (event) {
+
+function pongKeyDownHandler(event) {
+	if (!event || !event.key) return;
 	if (event.key.toLowerCase() == "s") {
 		state.p1_move_y = state.player_speed;
 		state.keys.s = true;
@@ -245,9 +250,10 @@ document.addEventListener("keydown", function (event) {
 			SETTINGS.showPauseMenu();
 		}
 	}
-});
+}
 
-document.addEventListener("keyup", function (event) {
+function pongKeyUpHandler(event) {
+	if (!event || !event.key) return;
 	if (event.key.toLowerCase() == "s") {
 		state.keys.s = false;
 		if (state.keys.w) {
@@ -280,4 +286,67 @@ document.addEventListener("keyup", function (event) {
 			state.p2_move_y = 0;
 		}
 	}
-});
+}
+
+// Keyboard setup
+// document.addEventListener("keydown", function (event) {
+// 	if (event.key.toLowerCase() == "s") {
+// 		state.p1_move_y = state.player_speed;
+// 		state.keys.s = true;
+// 	}
+// 	if (event.key.toLowerCase() == "w") {
+// 		state.p1_move_y = -state.player_speed;
+// 		state.keys.w = true;
+// 	}
+	// if (event.key == "ArrowDown" && !state.IAisActive) {
+	// 	state.p2_move_y = state.player_speed;
+	// 	state.keys.ArrowDown = true;
+	// }
+	// if (event.key == "ArrowUp" && !state.IAisActive) {
+	// 	state.p2_move_y = -state.player_speed;
+	// 	state.keys.ArrowUp = true;
+	// }
+// 	if (event.key == "Escape" && state.isStarted) {
+// 		if (state.isPaused) {
+// 			SETTINGS.resumeGame();
+// 		} else {
+// 			state.isPaused = true;
+// 			SETTINGS.showPauseMenu();
+// 		}
+// 	}
+// });
+
+// document.addEventListener("keyup", function (event) {
+// 	if (event.key.toLowerCase() == "s") {
+// 		state.keys.s = false;
+// 		if (state.keys.w) {
+// 			state.p1_move_y = -state.player_speed;
+// 		} else {
+// 			state.p1_move_y = 0;
+// 		}
+// 	}
+// 	if (event.key.toLowerCase() == "w") {
+// 		state.keys.w = false;
+// 		if (state.keys.s) {
+// 			state.p1_move_y = state.player_speed;
+// 		} else {
+// 			state.p1_move_y = 0;
+// 		}
+// 	}
+// 	if (event.key == "ArrowDown" && !state.IAisActive) {
+// 		state.keys.ArrowDown = false;
+// 		if (state.keys.ArrowUp) {
+// 			state.p2_move_y = -state.player_speed;
+// 		} else {
+// 			state.p2_move_y = 0;
+// 		}
+// 	}
+// 	if (event.key == "ArrowUp" && !state.IAisActive) {
+// 		state.keys.ArrowUp = false;
+// 		if (state.keys.ArrowDown) {
+// 			state.p2_move_y = state.player_speed;
+// 		} else {
+// 			state.p2_move_y = 0;
+// 		}
+// 	}
+// });
