@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
+from django.db import OperationalError, connections
+from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import UserProfile
@@ -143,154 +145,32 @@ class APIKeyPermission(BasePermission):
 			return api_key == settings.API_KEY
 		return False
 		
-# 		# Try to get token from query string first
-# 		query_string = parse_qs(scope["query_string"].decode())
-# 		token = None
+class HealthCheckMiddleware:
+	def __init__(self, get_response):
+		self.get_response = get_response
 		
-# 		if 'token' in query_string:
-# 			# Token from query param: ws://example.com/ws/chat/1/?token=<jwt_token>
-# 			token = query_string['token'][0]
-# 		else:
-# 			# Try to get token from headers (less common for WebSockets but possible)
-# 			headers = dict(scope['headers'])
-# 			auth_header = headers.get(b'authorization')
-# 			if auth_header:
-# 				token_str = auth_header.decode()
-# 				if token_str.startswith('Bearer '):
-# 					token = token_str[7:]  # Remove 'Bearer ' prefix
-		
-# 		if token:
-# 			# Get user from token
-# 			try:
-# 				scope['user'] = await self.get_user_from_jwt(token)
-# 				logger.info(f"WebSocket authenticated user: {scope['user']}")
-# 			except Exception as e:
-# 				logger.error(f"WebSocket JWT authentication failed: {str(e)}")
-# 				scope['user'] = AnonymousUser()
-# 		else:
-# 			scope['user'] = AnonymousUser()
+	def __call__(self, request):
+		# Allow health check endpoint regardless of host
+		if request.path.endswith('/health'): # Liveness probe
+			return JsonResponse({'status': 'ok'})
+		elif request.path.endswith('/ready'): # Readiness probe
+			db_ready = False
+			try:
+				# Check the default database connection
+				db_conn = connections['default']
+				db_conn.cursor() # Attempt to get a cursor to check connectivity
+				# Optionally, you could execute a very simple query:
+				# with db_conn.cursor() as cursor:
+				#     cursor.execute("SELECT 1")
+				#     cursor.fetchone()
+				db_ready = True
+			except OperationalError:
+				logger.error("Readiness probe: Database connection failed.")
+				# db_ready remains False
+
+			if db_ready:
+				return JsonResponse({'status': 'ready', 'database': 'ok'})
+			else:
+				return JsonResponse({'status': 'unready', 'database': 'unavailable'}, status=503)
 			
-# 		return await super().__call__(scope, receive, send)
-		
-# 	@database_sync_to_async
-# 	def get_user_from_jwt(self, token):
-# 		try:
-# 			# Decode the JWT token
-# 			access_token = AccessToken(token)
-# 			user_id = access_token['user_id']
-			
-# 			# Check if the user is already cached
-# 			user = cache.get(f"jwt_ws_user_{token}")
-# 			if user:
-# 				return user
-
-# def JWTAuthMiddlewareStack(inner):
-# 	"""
-# 	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
-# 	"""
-# 	return JWTAuthMiddleware(AuthMiddlewareStack(inner))
-
-# class TokenAuthMiddleware(BaseMiddleware):
-# 	async def __call__(self, scope, receive, send):
-# 		query_string = parse_qs(scope["query_string"].decode())
-# 		if scope['path'] == '/chat/new_user/':
-# 			scope['user'] = AnonymousUser()
-# 			return await super().__call__(scope, receive, send)
-# 		try:
-# 			token = query_string.get("token")
-# 			if token:
-# 				scope["user"] = await get_user_from_token(token[0])
-# 			else:
-# 				scope["user"] = AnonymousUser()
-# 		except Exception as e:
-# 			scope["user"] = AnonymousUser()
-# 		return await super().__call__(scope, receive, send)
-
-# def TokenAuthMiddlewareStack(inner):
-# 	return TokenAuthMiddleware(AuthMiddlewareStack(inner))
-
-# class TokenAuthMiddlewareHTTP(BaseMiddleware):
-# 	async def __call__(self, scope, receive, send):
-# 		if scope['path'] == '/chat/new_user/':
-# 			scope['user'] = AnonymousUser()
-# 			return await super().__call__(scope, receive, send)
-
-# 		headers = dict(scope['headers'])
-# 		token = headers.get(b'authorization')
-# 		if token:
-# 			token = token.decode().replace("Bearer ", "")
-# 			scope['user'] = await self.get_user_from_token(token)
-# 		else:
-# 			scope['user'] = AnonymousUser()
-
-# 		return await super().__call__(scope, receive, send)
-
-# 	@database_sync_to_async
-# 	def get_user_from_token(self, token):
-# 		try:
-# 			# Decode the token
-# 			access_token = AccessToken(token)
-# 			user_id = access_token['user_id']
-			
-# 			# Check if the user is already cached
-# 			user = cache.get(token)
-# 			if user:
-# 				return user
-
-# 			# Retrieve the user from the database
-# 			try:
-# 				user = UserProfile.objects.get(user_id=user_id)
-# 				# Cache the user with a timeout (e.g., 5 minutes)
-# 				cache.set(token, user, timeout=300)
-# 				return user
-# 			except UserProfile.DoesNotExist:
-# 				return AnonymousUser()
-# 		except Exception as e:
-# 			return AnonymousUser()
-
-
-# class TokenAuthPermission(BasePermission):
-# 	def get_user_from_token(self, token):
-# 		try:
-# 			# Decode the token
-# 			access_token = AccessToken(token)
-# 			user_id = access_token['user_id']
-			
-# 			# Check if the user is already cached
-# 			user = cache.get(token)
-# 			if user:
-# 				return user
-
-# 			# Retrieve the user from the database
-# 			try:
-# 				user = UserProfile.objects.get(user_id=user_id)
-# 				# Cache the user with a timeout (e.g., 5 minutes)
-# 				cache.set(token, user, timeout=300)
-# 				return user
-# 			except UserProfile.DoesNotExist:
-# 				return AnonymousUser()
-# 		except Exception as e:
-# 			return AnonymousUser()
-
-# 	def has_permission(self, request, view):
-# 		if request.path == '/chat/new_user/' and request.method == 'POST':
-# 			request.user = AnonymousUser()
-# 			return True
-# 		token = request.META.get('HTTP_AUTHORIZATION')
-# 		if token:
-# 			token = token.replace("Bearer ", "")
-# 			user = self.get_user_from_token(token)
-# 			if user and not isinstance(user, AnonymousUser):
-# 				request.user = user
-# 				return True
-# 		return False
-
-# from django.conf import settings
-# from rest_framework.permissions import BasePermission
-
-# class APIKeyPermission(BasePermission):
-# 	def has_permission(self, request, view):
-# 		api_key = request.headers.get('X-API-KEY')
-# 		if api_key:
-# 			return api_key == settings.API_KEY
-# 		return False
+		return self.get_response(request)

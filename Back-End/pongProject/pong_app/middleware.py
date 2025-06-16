@@ -4,6 +4,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from channels.auth import AuthMiddlewareStack
 from django.core.cache import cache
+from django.db import OperationalError, connections
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import BasePermission
@@ -306,3 +307,33 @@ class ExceptionMiddleware:
             }, status=500)
         
         return None  # Lascia che Django gestisca la risposta in produzione
+	
+class HealthCheckMiddleware:
+	def __init__(self, get_response):
+		self.get_response = get_response
+		
+	def __call__(self, request):
+		# Allow health check endpoint regardless of host
+		if request.path.endswith('/health'): # Liveness probe
+			return JsonResponse({'status': 'ok'})
+		elif request.path.endswith('/ready'): # Readiness probe
+			db_ready = False
+			try:
+				# Check the default database connection
+				db_conn = connections['default']
+				db_conn.cursor() # Attempt to get a cursor to check connectivity
+				# Optionally, you could execute a very simple query:
+				# with db_conn.cursor() as cursor:
+				#     cursor.execute("SELECT 1")
+				#     cursor.fetchone()
+				db_ready = True
+			except OperationalError:
+				logger.error("Readiness probe: Database connection failed.")
+				# db_ready remains False
+
+			if db_ready:
+				return JsonResponse({'status': 'ready', 'database': 'ok'})
+			else:
+				return JsonResponse({'status': 'unready', 'database': 'unavailable'}, status=503)
+			
+		return self.get_response(request)
