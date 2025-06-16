@@ -37,6 +37,15 @@ function renderLogin() {
 			e.preventDefault();
 			const email = document.getElementById("email").value;
 			const password = document.getElementById("password").value;
+			if (password.length < 8) {
+				showAlertForXSeconds(
+					"Password must be at least 8 characters long.",
+					"error",
+					3,
+					{ asToast: true }
+				);
+				return;
+			}
 			await onHandleSubmit(e, email, password);
 		});
 
@@ -222,6 +231,7 @@ async function onHandleSubmit(e, email, password) {
 		}
 	} else {
 		console.log("Per favore, inserisci sia email che password.");
+		showAlertForXSeconds("Per favore, inserisci sia email che password.", "error", 3, { asToast: true });
 	}
 }
 
@@ -279,11 +289,28 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 				return true;
 			} else {
 				const errorData = await response.json();
-				console.error("Errore login:", errorData);
+				let errorMessage = errorData.error || "Controlla le tue credenziali";
+				console.error("Errore login:", errorData.error);
+				if (errorData.error === "{'email': [ErrorDetail(string='Enter a valid email address.', code='invalid')]}")
+				{
+					errorMessage = "Indirizzo email non valido.";
+				}
+				showAlertForXSeconds(
+					`Errore durante il login: ${errorMessage}`,
+					"error",
+					3,
+					{ asToast: true }
+				);
 				return false;
 			}
 		} catch (error) {
 			console.error("Exception login:", error);
+			showAlertForXSeconds(
+				"Errore di connessione durante il login. Riprova più tardi.",
+				"error",
+				3,
+				{ asToast: true }
+			);
 			return false;
 		}
 	} else {

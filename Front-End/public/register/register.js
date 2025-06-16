@@ -1,5 +1,6 @@
 import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -89,20 +90,41 @@ async function registerUser(username, email, password, isBaseRegister) {
 					errorData.error
 				);
 				if (errorData.error === "['email already in use']") {
-					alert(
-						"L'email inserita è già in uso. Scegli un'altra email."
+					showAlertForXSeconds(
+						"L'email inserita è già in uso. Scegli un'altra email.",
+						"error",
+						5,
+						{ asToast: true }
 					);
 				} else if (errorData.error === "['weak password']") {
-					alert("La password deve contenere almeno 8 caratteri.");
+					showAlertForXSeconds(
+						"La password deve contenere almeno 8 caratteri.",
+						"error",
+						5,
+						{ asToast: true }
+					);
 				} else if (errorData.error === "['username already in use']") {
-					alert("Per favore, inserisci un nome utente valido.");
+					showAlertForXSeconds(
+						"Per favore, inserisci un nome utente valido.",
+						"error",
+						5,
+						{ asToast: true }
+					);
+				} else if (errorData.error === "{'email': [ErrorDetail(string='Enter a valid email address.', code='invalid')]}") {
+					showAlertForXSeconds(
+						"Per favore, inserisci un'email valida.",
+						"error",
+						5,
+						{ asToast: true }
+					);
 				} else {
-					alert("Si è verificato un errore. Per favore, riprova.");
+					showAlertForXSeconds(
+						"Si è verificato un errore. Per favore, riprova.",
+						"error",
+						5,
+						{ asToast: true }
+					);
 				}
-				console.error(
-					"Errore nella risposta del server:",
-					response.statusText
-				);
 				return false;
 			}
 		} catch (error) {
