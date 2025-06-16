@@ -12,7 +12,6 @@ async function PatchProfile(name, surname, birthdate, bio) {
 
 	try {
 		const response = await fetch(`${url_api}/user/user/me`, {
-			// user/levelup user_id e exp
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
@@ -28,44 +27,20 @@ async function PatchProfile(name, surname, birthdate, bio) {
 		});
 
 		if (response.ok) {
-			const data = await response.json();
-			console.log("Profile:", data);
+			showAlertForXSeconds("Profile updated successfully", "success", 3, { asToast: true });
 		} else {
 			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
+			console.error("Server response error:", errorData);
+			showAlertForXSeconds("Error updating profile", "error", 3, { asToast: true });
 		}
 	} catch (error) {
-		console.error("Errore nella richiesta:", error);
-	}
-}
-
-// Aggiungi questa funzione al tuo file
-async function downloadImageAsBlob(imageUrl, token) {
-	try {
-		const imageResponse = await fetch(imageUrl, {
-			headers: {
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (imageResponse.ok) {
-			const imageBlob = await imageResponse.blob();
-			const localImageUrl = URL.createObjectURL(imageBlob);
-			console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
-			return localImageUrl;
-		} else {
-			console.error("Errore nel recupero dell'immagine:", imageResponse.status);
-			return null;
-		}
-	} catch (error) {
-		console.error("Errore durante il download dell'immagine:", error);
-		return null;
+		console.error("Request error:", error);
+		showAlertForXSeconds("Network error", "error", 3, { asToast: true });
 	}
 }
 
 async function GetProfile() {
 	const { userId, token, url_api } = getVariables();
-	console.log("GetProfile called with userId:", userId, "token:", token, "url_api:", url_api);
 	try {
 		const response = await fetch(`${url_api}/user/user/me`, {
 			method: "GET",
@@ -78,24 +53,12 @@ async function GetProfile() {
 
 		if (response.ok) {
 			const data = await response.json();
-			console.log("Profile:", data);
 
-			let localImageUrl = null;
-			let avatarUrl = "";
-			if (data.current_avatar_url) {
-				// Estrai solo il nome del file
-				const filename = data.current_avatar_url.split('/').pop();
-				
-				// URL corretto per il proxy
-				// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
-				avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
-				// avatarUrl = avatarUrl.replace(" ", "%20");
-
-				console.log("Downloading profile image from:", avatarUrl);
-			}
-
-			if (avatarUrl !== "") {
-				localImageUrl = await downloadImageAsBlob(avatarUrl, token);
+			let profileImageUrl = "";
+			
+			// Handle current_avatar object structure
+			if (data.current_avatar && data.current_avatar.image_url) {
+				profileImageUrl = url_api + '/user' + data.current_avatar.image_url;
 			}
 
 			setVariables({
@@ -105,11 +68,9 @@ async function GetProfile() {
 				bio: data.bio || "",
 				level: data.level ?? "",
 				exp: data.exp ?? "",
-				profileImageUrl: localImageUrl || "",
+				profileImageUrl: profileImageUrl,
 				has_two_factor_auth: data.has_two_factor_auth || false,
 			});
-			console.log("level e exp:", data.level, data.exp);
-			console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
 
 		} else {
 			const errorData = await response.json();
@@ -127,9 +88,8 @@ async function initializeProfile() {
 		});
 	}
 
-	// Verifica che l'elemento esista
 	if (!document.getElementById("profile")) {
-		console.error("TODO remove Elemento #profile non trovato nel DOM");
+		console.error("Profile element not found in DOM");
 		return;
 	}
 
@@ -151,7 +111,6 @@ function renderProfile() {
 		profileImageUrl,
 		has_two_factor_auth,
 	} = getVariables();
-	console.log("level e exp:", level, exp);
 	let edit = false;
 
 	const profileDiv = document.getElementById("profile");
@@ -192,7 +151,6 @@ function renderProfile() {
 						<div class="profile-form-group level">
 							<label for="level" id="level">Level: ${level}, Exp: ${exp}</label>
 							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-range readonly-input custom-range">
-							<!--span id="expValue">exp: ${exp}</span-->
 						</div>
 
 						<div class="profile-form-group">
@@ -286,22 +244,16 @@ function renderProfile() {
 		profileImageContainer.classList.remove("edit-mode");
 	});
 
-	// Aggiungi l'event listener per aggiornare lo stile della barra di scorrimento
+	// Update progress bar styling
 	const expInput = document.getElementById("exp");
-	// const expValueSpan = document.getElementById('expValue');
-
 	expInput.addEventListener("input", function () {
-		// expValueSpan.textContent = `exp: ${expInput.value}`;
 		expInput.style.setProperty("--value", `${expInput.value}%`);
 	});
-
-	// Imposta il valore iniziale
 	expInput.style.setProperty("--value", `${expInput.value}%`);
 
 	const toggle2FAButton = document.getElementById("toggle2FAButton");
 	toggle2FAButton.addEventListener("click", async function(e) {
 		e.preventDefault();
-		console.log("2FA button clicked");
 		if (has_two_factor_auth) {
 			// Disable 2FA
 			try {
@@ -317,7 +269,6 @@ function renderProfile() {
 						has_two_factor_auth: false
 					});
 					showAlertForXSeconds("2FA disabled successfully", "success", 3, { asToast: true });
-					console.log("2FA disabled successfully");
 					toggle2FAButton.innerText = "Enable 2FA";
 					renderProfile();
 				} else {
@@ -396,31 +347,27 @@ function renderProfile() {
 					});
 
 					if (response.ok) {
-						console.log("2FA setup successful");
-						// Successo: chiudi la modale e aggiorna lo stato 2FA
 						setVariables({
 							has_two_factor_auth: true
 						});
 						toggle2FAButton.innerText = "Disable 2FA";
 						showAlertForXSeconds("2FA setup successful", "success", 3, { asToast: true });
 						document.body.removeChild(qrModal);
-						//renderProfile();
 					} else {
-						console.error("2FA setup failed");
 						showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });
 					}
 				} catch (error) {
-					alert("Errore di rete durante la verifica del codice OTP");
+					showAlertForXSeconds("Network error during OTP verification", "error", 3, { asToast: true });
 				}
 			});
 
 			} catch (error) {
-				console.error("Errore durante la configurazione del 2FA:", error);
+				console.error("Error during 2FA setup:", error);
 			}
 		}
 	});
 
-	// Event listener per l'immagine del profilo
+	// Profile image upload handler
 	profileImage.addEventListener("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -429,15 +376,15 @@ function renderProfile() {
 		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
 		<div class="login_box">
-			<h1>Seleziona un'immagine</h1>
+			<h1>Select an image</h1>
 			<div class="profile-image-preview">
 				<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
 			</div>
 			<div class="profile-image-controls">
-				<label for="imageUpload" class="upload-btn">Scegli un file</label>
+				<label for="imageUpload" class="upload-btn">Choose file</label>
 				<input type="file" id="imageUpload" accept="image/*" style="display: none;">
-				<button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
-				<button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
+				<button id="uploadImageBtn" class="btn btn-primary">Upload image</button>
+				<button id="cancelImageBtn" class="btn btn-secondary">Cancel</button>
 			</div>
 		</div>
 	`;
@@ -445,12 +392,9 @@ function renderProfile() {
 
 		// Add event listeners for the file input and buttons
 		const imageUpload = profileImageSelector.querySelector("#imageUpload");
-		const imagePreview =
-			profileImageSelector.querySelector("#imagePreview");
-		const uploadImageBtn =
-			profileImageSelector.querySelector("#uploadImageBtn");
-		const cancelImageBtn =
-			profileImageSelector.querySelector("#cancelImageBtn");
+		const imagePreview = profileImageSelector.querySelector("#imagePreview");
+		const uploadImageBtn = profileImageSelector.querySelector("#uploadImageBtn");
+		const cancelImageBtn = profileImageSelector.querySelector("#cancelImageBtn");
 
 		// Preview the selected image
 		imageUpload.addEventListener("change", function (event) {
@@ -463,109 +407,72 @@ function renderProfile() {
 				reader.readAsDataURL(file);
 			}
 		});
-					//TODO se carichi l'immagine poi fa get a https://https//minio.trascendence.42firenze.it/user-media/avatars/Avatar_for_marco24 perche' data.avatar e' sbagliato
-
-		// Upload the selected image
+		
 		uploadImageBtn.addEventListener("click", async function () {
 			const file = imageUpload.files[0];
 			if (!file) {
-				console.error("Nessun file selezionato");
+				showAlertForXSeconds("No file selected", "error", 3, { asToast: true });
 				return;
 			}
 
-			// Check if file is an image png or jpeg
 			if (!file.type.startsWith("image/")) {
-				console.error("Il file selezionato non è un'immagine");
+				showAlertForXSeconds("Selected file is not an image", "error", 3, { asToast: true });
 				return;
 			}
-			// Check if file size is greater than 10MB (10 * 1024 * 1024 bytes)
-			const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
+			const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 			if (file.size > MAX_FILE_SIZE) {
-				console.error("File troppo grande, massimo 10MB");
+				showAlertForXSeconds("File too large, maximum 10MB", "error", 3, { asToast: true });
 				return;
 			}
 
 			try {
 				const formData = new FormData();
 				formData.append("image", file);
-				//add https to url al posto di http
 
-				const { userId, token, url_api } = getVariables();
+				const { token, url_api } = getVariables();
 
-				const response = await fetch(
-					`${url_api}/user/user/avatar`,
-					{
-						method: "POST",
-						headers: {
-							Authorization: `Bearer ${token}`,
-							// Don't set Content-Type here, it will be set automatically for FormData
-						},
-						body: formData,
-					}
-				);
+				const response = await fetch(`${url_api}/user/user/avatar`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+					body: formData,
+				});
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("Immagine caricata con successo:", data);
-
-					let avatarPost = data.avatar;
-
-					// Rimuovi doppi protocolli (se presenti)
-					if (avatarPost && avatarPost.match(/^https?:\/\/https?:\/\//)) {
-						avatarPost = avatarPost.replace(/^(https?:\/\/)https?:\/\//, "$1");
-					}
 					
-					// Forza HTTPS se necessario
-					if (avatarPost && avatarPost.startsWith("http://")) {
-						avatarPost = avatarPost.replace("http://", "https://");
-					}
+					// Update avatar URL
+					const avatarUrl = url_api + '/user' + data.avatar;
+					setVariables({
+						profileImageUrl: avatarUrl
+					});
 					
-					// Estrai il nome del file per consistenza con il resto del codice
-					if (avatarPost) {
-						const filename = avatarPost.split('/').pop();
-						// Usa lo stesso formato usato nella funzione GetProfile
-						avatarPost = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
-					}
-					
-					console.log("URL normalizzato:", avatarPost);
+					// Update the image in the UI
+					document.querySelector(".profile-card-image").src = avatarUrl;
+					showAlertForXSeconds("Avatar uploaded successfully", "success", 3, { asToast: true });
 
-					// Scarica l'immagine come blob
-					const localImageUrl = await downloadImageAsBlob(avatarPost, token);
-					if (localImageUrl) {
-						setVariables({
-							profileImageUrl: localImageUrl
-						});
-						
-						// Aggiorna l'immagine nell'UI
-						document.querySelector(".profile-card-image").src = localImageUrl;
-					} else {
-						// Fallback all'anteprima locale
-						document.querySelector(".profile-card-image").src = imagePreview.src;
-					}
-
-					// Close the modal
 					closeProfileImageSelector();
 				} else {
 					const errorData = await response.json();
-					console.error(
-						"Errore nel caricamento dell'immagine:",
-						errorData
-					);
+					console.error("Error uploading image:", errorData);
+					showAlertForXSeconds("Error uploading image", "error", 3, { asToast: true });
 				}
 			} catch (error) {
-				console.error("Errore durante il caricamento:", error);
+				console.error("Upload error:", error);
+				showAlertForXSeconds("Upload failed", "error", 3, { asToast: true });
 			}
 		});
 
 		// Cancel button
-		cancelImageBtn.addEventListener("click", function () {
-			closeProfileImageSelector();
-		});
+		cancelImageBtn.addEventListener("click", closeProfileImageSelector);
 
 		function closeProfileImageSelector() {
 			document.body.removeChild(profileImageSelector);
 		}
 
+		// Close modal when clicking outside
 		window.addEventListener("click", function (event) {
 			if (event.target === profileImageSelector) {
 				closeProfileImageSelector();
@@ -573,7 +480,5 @@ function renderProfile() {
 		});
 	});
 }
-
-// initializeProfile();
 
 export { renderProfile, initializeProfile };

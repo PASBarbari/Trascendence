@@ -1,5 +1,15 @@
+import os
 from django.db import models
 from django.db.models import Q
+from django.conf import settings
+
+def avatar_upload_path(instance, filename):
+    """Generate upload path for avatar files"""
+    # Extract file extension
+    ext = filename.split('.')[-1]
+    # Generate filename as: avatar_<user_id>_<filename>.<ext>
+    filename = f'avatar_{instance.user.user_id}_{filename}'
+    return os.path.join('avatars', filename)
 
 class UserProfile(models.Model):
 	staff = models.BooleanField(default=False)
@@ -12,7 +22,7 @@ class UserProfile(models.Model):
 	bio = models.TextField(default="", null=True, blank=True)
 	exp = models.IntegerField(default=0)
 	level = models.IntegerField(default=0)
-	current_avatar_url = models.URLField(max_length=500, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link')
+	current_avatar_url = models.URLField(max_length=500, default='https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link', blank=True)
 	last_modified = models.DateTimeField(auto_now=True)
 	has_two_factor_auth = models.BooleanField(default=False)
 
@@ -38,7 +48,7 @@ class UserProfile(models.Model):
 class Avatars(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
-    image = models.URLField(max_length=500)
+    image = models.ImageField(upload_to=avatar_upload_path, max_length=500)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='avatars', null=True, blank=True, default=None)
     is_current = models.BooleanField(default=False)
     last_modified = models.DateTimeField(auto_now=True)
@@ -48,10 +58,24 @@ class Avatars(models.Model):
         if self.is_current:
             # Unset any other current avatars for this user
             Avatars.objects.filter(user=self.user, is_current=True).exclude(pk=self.pk).update(is_current=False)
-            # Update the user's current avatar URL
-            self.user.current_avatar_url = self.image
-            self.user.save(update_fields=['current_avatar_url'])
+            # Update the user's current avatar URL to the full URL
+            if self.image:
+                self.user.current_avatar_url = f"{settings.MEDIA_URL}{self.image.name}"
+                self.user.save(update_fields=['current_avatar_url'])
         super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        # Delete the actual file when the model instance is deleted
+        if self.image:
+            if os.path.isfile(self.image.path):
+                os.remove(self.image.path)
+        super().delete(*args, **kwargs)
+    
+    def get_image_url(self):
+        """Get the full URL for the image"""
+        if self.image:
+            return f"{settings.MEDIA_URL}{self.image.name}"
+        return None
 
 
 class Friendships(models.Model):

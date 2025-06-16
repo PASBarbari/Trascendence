@@ -11,7 +11,6 @@ from django.db.models import Q
 import asyncio
 from .middleware import ServiceAuthentication , JWTAuth
 from django_filters.rest_framework import DjangoFilterBackend
-from .minio_client import MinioService
 from rest_framework.parsers import MultiPartParser, FormParser
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
@@ -336,6 +335,7 @@ class AvatarManager(APIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
 	parser_classes = (MultiPartParser, FormParser)
+	
 	def post(self, request):
 		try:
 			if 'image' not in request.FILES:
@@ -351,27 +351,69 @@ class AvatarManager(APIView):
 			if image.size > 10 * 1024 * 1024:
 				return Response({'error': 'Image size too large (max 10MB)'}, status=status.HTTP_400_BAD_REQUEST)
 
-			minio_serv = MinioService.get_instance()
-			success, url = minio_serv.upload_avatar(user.user_id, image, filename=avatar_name)
-			if success:
-				# Update user's avatar
-				avatar = Avatars.objects.create(
-					user=user, 
-					name=avatar_name, 
-					image=url,
-					is_current=True
-				)
-				return Response({'message': 'Avatar uploaded successfully', 'avatar': avatar.image}, status=status.HTTP_200_OK)
-			else:
-				return Response({'error': 'Error uploading avatar'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			# Create the avatar object first to use the upload_to function
+			avatar = Avatars(
+				user=user, 
+				name=avatar_name,
+				is_current=True
+			)
+			
+			# Save the image using Django's ImageField
+			avatar.image = image
+			avatar.save()
+			
+			return Response({
+				'message': 'Avatar uploaded successfully', 
+				'avatar': avatar.get_image_url(),
+				'avatar_id': avatar.id
+			}, status=status.HTTP_200_OK)
+			
 		except Exception as e:
 			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		
 	def get(self, request):
 		avatar_id = request.query_params.get('avatar_id')
-		avatar = get_object_or_404(Avatars, id=avatar_id)
-		serializer = AvatarsSerializer(avatar)
-		return Response(serializer.data, status=status.HTTP_200_OK)
+		if avatar_id:
+			avatar = get_object_or_404(Avatars, id=avatar_id)
+			serializer = AvatarsSerializer(avatar)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		else:
+			# Return all avatars for the user
+			avatars = Avatars.objects.filter(user=request.user)
+			serializer = AvatarsSerializer(avatars, many=True)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+	
+	def delete(self, request):
+		"""Delete an avatar"""
+		try:
+			avatar_id = request.data.get('avatar_id')
+			if not avatar_id:
+				return Response({'error': 'avatar_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+			
+			avatar = get_object_or_404(Avatars, id=avatar_id, user=request.user)
+			
+			# If this was the current avatar, we need to handle that
+			was_current = avatar.is_current
+			
+			# Delete the avatar (this will also delete the file due to our model's delete method)
+			avatar.delete()
+			
+			# If this was the current avatar, set a default or another avatar as current
+			if was_current:
+				# Try to find another avatar to set as current
+				other_avatar = Avatars.objects.filter(user=request.user).first()
+				if other_avatar:
+					other_avatar.is_current = True
+					other_avatar.save()
+				else:
+					# Reset to default avatar URL
+					request.user.current_avatar_url = 'https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link'
+					request.user.save(update_fields=['current_avatar_url'])
+			
+			return Response({'message': 'Avatar deleted successfully'}, status=status.HTTP_200_OK)
+			
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Update2FAStatus(APIView):
 	"""

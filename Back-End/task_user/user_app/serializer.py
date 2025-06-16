@@ -5,26 +5,32 @@ import datetime
 class AvatarsSerializer(serializers.ModelSerializer):
 	name = serializers.CharField(max_length=255)
 	image = serializers.ImageField()
+	image_url = serializers.SerializerMethodField()
 
 	class Meta:
 		model = Avatars
-		fields = '__all__'
+		fields = ['id', 'name', 'image', 'image_url', 'user', 'is_current', 'last_modified']
+	
+	def get_image_url(self, obj):
+		"""Get the full URL for the image"""
+		return obj.get_image_url()
 
 class UsersSerializer(serializers.ModelSerializer):
-	# staff = serializers.BooleanField(default=False)
-	# first_name = serializers.CharField(max_length=255, default="")
-	# last_name = serializers.CharField(max_length=255, default="")
-	# birth_date = serializers.DateField(default=None)
-	# bio = serializers.CharField(default="")
-	# exp = serializers.IntegerField(default=0)
-	# level = serializers.IntegerField(default=0)
-	# # avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=Avatars.objects.get(id=1))
-	# #TODO avatar = serializers.PrimaryKeyRelatedField(queryset=Avatars.objects.all(), many=False, default=Avatars.objects.get(id=1))
-	# last_modified = serializers.DateTimeField(read_only=True)
-    
+	current_avatar = serializers.SerializerMethodField()
+	
 	class Meta:
 		model = UserProfile
 		fields = '__all__'
+	
+	def get_current_avatar(self, obj):
+		"""Get the current avatar object for the user"""
+		try:
+			current_avatar = Avatars.objects.filter(user=obj, is_current=True).first()
+			if current_avatar:
+				return AvatarsSerializer(current_avatar).data
+			return None
+		except Exception:
+			return None
 
 class UserNotificationSerializer(serializers.ModelSerializer):
 	"""Lightweight serializer for user data in notifications"""

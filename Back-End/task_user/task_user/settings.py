@@ -148,7 +148,6 @@ INSTALLED_APPS = [
 	# 'task_app',
 	'user_app',
 	'corsheaders',
-	'minio_storage',
 ]
 
 MIDDLEWARE = [
@@ -300,25 +299,9 @@ SIMPLE_JWT = {
 	'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
-# MinIO Storage Configuration
-DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
-STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
-MINIO_STORAGE_ENDPOINT = os.getenv('MINIO_STORAGE_ENDPOINT', 'minio:9000')
-MINIO_STORAGE_ACCESS_KEY = os.getenv('MINIO_STORAGE_ACCESS_KEY', 'pippo')
-MINIO_STORAGE_SECRET_KEY = os.getenv('MINIO_STORAGE_SECRET_KEY', 'minni')
+# Media and Static Files Configuration
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-MINIO_STORAGE_USE_HTTPS = True
-MINIO_STORAGE_MEDIA_OBJECT_METADATA = {"Cache-Control": "max-age=1111"}
-MINIO_STORAGE_MEDIA_BUCKET_NAME = 'user-media'
-MINIO_STORAGE_MEDIA_BACKUP_BUCKET = "user-backup"
-MINIO_STORAGE_MEDIA_BACKUP_FORMAT = '%c/'
-MINIO_STORAGE_AUTO_CREATE_MEDIA_BUCKET = True
-MINIO_STORAGE_STATIC_BUCKET_NAME = "user-static"
-MINIO_STORAGE_AUTO_CREATE_STATIC_BUCKET = True
-MINIO_PUBLIC_ENDPOINT = os.getenv('MINIO_PUBLIC_ENDPOINT', 'https://minio.trascendence.42firenze.it')
-
-# Additional protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'
-protocol = 'https' if MINIO_STORAGE_USE_HTTPS else 'http'
-MINIO_STORAGE_MEDIA_URL = os.getenv('MINIO_MEDIA_URL', f'{protocol}://{MINIO_STORAGE_ENDPOINT}/{MINIO_STORAGE_MEDIA_BUCKET_NAME}/')
-MINIO_STORAGE_STATIC_URL = os.getenv('MINIO_STATIC_URL', f'{protocol}://{MINIO_STORAGE_ENDPOINT}/{MINIO_STORAGE_STATIC_BUCKET_NAME}/')
-MINIO_STORAGE_POLICY = os.getenv('MINIO_STORAGE_POLICY', 'public-read')
+# Ensure media directory exists
+os.makedirs(MEDIA_ROOT, exist_ok=True)
