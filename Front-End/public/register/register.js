@@ -61,11 +61,8 @@ async function onHandleSubmit(e, username, email, password) {
  * @returns {Promise<boolean>} - Ritorna true se la registrazione ha successo, altrimenti false.
  */
 async function registerUser(username, email, password, isBaseRegister) {
-	if (email && password) {
+	if (email && password && username) {
 		const { url_api } = getVariables();
-		console.log("Username:", username);
-		console.log("Email:", email);
-		console.log("Password:", password);
 		try {
 			const response = await fetch(`${url_api}/login/login/register`, {
 				method: "POST",
@@ -75,64 +72,121 @@ async function registerUser(username, email, password, isBaseRegister) {
 				},
 				body: JSON.stringify({ username, email, password }),
 			});
-
-			if (response.ok) {
-				const data = await response.json();
-				console.log("Risposta dal server:", data);
-				if (isBaseRegister) {
-					window.navigateTo("#login");
-				}
-				return true;
-			} else {
-				const errorData = await response.json();
-				console.error(
-					"Errore nella risposta del server:",
-					errorData.error
-				);
-				if (errorData.error === "['email already in use']") {
-					showAlertForXSeconds(
-						"L'email inserita è già in uso. Scegli un'altra email.",
-						"error",
-						5,
-						{ asToast: true }
-					);
-				} else if (errorData.error === "['weak password']") {
-					showAlertForXSeconds(
-						"La password deve contenere almeno 8 caratteri.",
-						"error",
-						5,
-						{ asToast: true }
-					);
-				} else if (errorData.error === "['username already in use']") {
-					showAlertForXSeconds(
-						"Per favore, inserisci un nome utente valido.",
-						"error",
-						5,
-						{ asToast: true }
-					);
-				} else if (errorData.error === "{'email': [ErrorDetail(string='Enter a valid email address.', code='invalid')]}") {
-					showAlertForXSeconds(
-						"Per favore, inserisci un'email valida.",
-						"error",
-						5,
-						{ asToast: true }
-					);
-				} else {
-					showAlertForXSeconds(
-						"Si è verificato un errore. Per favore, riprova.",
-						"error",
-						5,
-						{ asToast: true }
-					);
-				}
-				return false;
+		if (response.ok) {
+			const data = await response.json();
+			
+			showAlertForXSeconds(
+				"Registration successful! Please login with your credentials.",
+				"success",
+				3,
+				{ asToast: true }
+			);
+			
+			if (isBaseRegister) {
+				window.navigateTo("#login");
 			}
+			return true;
+		} else {
+			const errorData = await response.json();
+			console.error("Registration error:", errorData);
+			
+			// Handle different error formats
+			let errorMessage = "An error occurred during registration";
+			
+			if (errorData.error) {
+				// Handle array format errors
+				if (Array.isArray(errorData.error)) {
+					errorMessage = errorData.error.join(', ');
+				} else if (typeof errorData.error === 'string') {
+					// Handle string errors that might be stringified arrays
+					if (errorData.error.includes("['") && errorData.error.includes("']")) {
+						// Parse string that looks like "['error message']"
+						const match = errorData.error.match(/\['(.+?)'\]/);
+						if (match) {
+							errorMessage = match[1];
+						}
+					} else {
+						errorMessage = errorData.error;
+					}
+				}
+			} else if (typeof errorData === 'object') {
+				// Handle Django REST Framework validation errors
+				const errors = [];
+				for (const [field, fieldErrors] of Object.entries(errorData)) {
+					if (Array.isArray(fieldErrors)) {
+						fieldErrors.forEach(error => {
+							if (typeof error === 'object' && error.string) {
+								errors.push(`${field}: ${error.string}`);
+							} else {
+								errors.push(`${field}: ${error}`);
+							}
+						});
+					} else {
+						errors.push(`${field}: ${fieldErrors}`);
+					}
+				}
+				if (errors.length > 0) {
+					errorMessage = errors.join('; ');
+				}
+			}
+			
+			// Show user-friendly error messages
+			if (errorMessage.includes("email already in use") || (errorMessage.includes("email") && errorMessage.includes("already"))) {
+				showAlertForXSeconds(
+					"This email is already registered. Please use a different email.",
+					"error",
+					5,
+					{ asToast: true }
+				);
+			} else if (errorMessage.includes("weak password") || errorMessage.includes("password")) {
+				showAlertForXSeconds(
+					"Password must be at least 8 characters long and contain letters and numbers.",
+					"error",
+					5,
+					{ asToast: true }
+				);
+			} else if (errorMessage.includes("username already in use") || errorMessage.includes("username")) {
+				showAlertForXSeconds(
+					"This username is already taken. Please choose a different username.",
+					"error",
+					5,
+					{ asToast: true }
+				);
+			} else if (errorMessage.includes("Enter a valid email address")) {
+				showAlertForXSeconds(
+					"Please enter a valid email address.",
+					"error",
+					5,
+					{ asToast: true }
+				);
+			} else {
+				showAlertForXSeconds(
+					`Registration failed: ${errorMessage}`,
+					"error",
+					5,
+					{ asToast: true }
+				);
+			}
+			
+			return false;
+		}
 		} catch (error) {
-			console.error("Errore nella richiesta:", error);
+			console.error("Registration error:", error);
+			showAlertForXSeconds(
+				"Connection error during registration. Please try again later.",
+				"error",
+				3,
+				{ asToast: true }
+			);
 			return false;
 		}
 	} else {
-		console.log("Per favore, inserisci sia username che password.");
+		showAlertForXSeconds(
+			"Please fill in all required fields.",
+			"error",
+			3,
+			{ asToast: true }
+		);
 		return false;
 	}
 }

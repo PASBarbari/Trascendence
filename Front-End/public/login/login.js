@@ -69,7 +69,6 @@ function renderLogin() {
  * @param {string} provider - Il provider OAuth ("google" o "42")
  */
 async function handleOAuthLogin(provider) {
-    console.log(`${provider} login con popup`);
     const csrftoken = getCookie("csrftoken");
     const { url_api } = getVariables();
     
@@ -87,8 +86,6 @@ async function handleOAuthLogin(provider) {
         
         if (response.ok) {
             const data = await response.json();
-            console.log(`${provider} OAuth response:`, data);
-            console.log(`OAuth URL:`, data.redirect_url);
             
             // PULISCI localStorage prima di iniziare
             localStorage.removeItem('oauth_result');
@@ -103,12 +100,9 @@ async function handleOAuthLogin(provider) {
             );
             
             if (!popup) {
-                console.error('Popup bloccato dal browser');
-                showAlertForXSeconds('Il popup è stato bloccato. Permetti i popup per questo sito e riprova.', 'error', 5, { asToast: true });
+                showAlertForXSeconds('Popup blocked by browser. Please allow popups for this site.', 'error', 5, { asToast: true });
                 return;
             }
-            
-            console.log('Popup aperto:', popup);
             
             // controllo localStorage ogni secondo
             storageCheckInterval = setInterval(() => {
@@ -116,8 +110,6 @@ async function handleOAuthLogin(provider) {
                     const resultString = localStorage.getItem('oauth_result');
                     
                     if (resultString) {
-                        console.log('OAuth result found in localStorage:', resultString);
-                        
                         const result = JSON.parse(resultString);
                         
                         // Pulisci localStorage
@@ -134,17 +126,12 @@ async function handleOAuthLogin(provider) {
                         
                         // Processa il risultato
                         if (result.type === 'OAUTH_SUCCESS') {
-                            console.log('OAuth login successful!');
-                            console.log('Received data:', result);
-                            
                             // Verifica che i dati ci siano
                             if (!result.access_token || !result.refresh_token) {
                                 console.error('Token mancanti nel risultato:', result);
-                                showAlertForXSeconds('Errore: token mancanti nella risposta OAuth', 'error', 5, { asToast: true });
+                                showAlertForXSeconds('OAuth authentication failed: missing tokens', 'error', 5, { asToast: true });
                                 return;
                             }
-                            
-                            console.log('Salvando i token...');
                             
                             // Salva i token
                             setVariables({
@@ -155,36 +142,18 @@ async function handleOAuthLogin(provider) {
                                 userEmail: result.email
                             });
                             
-                            console.log('Token salvati, verifico...');
-                            const { token } = getVariables();
-                            console.log('Token verificato:', token ? token.substring(0, 20) + '...' : 'MANCANTE');
-                            
                             // Reindirizza alla home
-                            console.log('Reindirizzando alla home...');
-                            navigateTo("#home");
+                            window.navigateTo("#home");
                             
                             // Mostra messaggio di successo
-                            setTimeout(() => {
-                                showAlertForXSeconds("Login OAuth effettuato con successo!", "success", 3, { asToast: true });
-                            }, 500);
+                            showAlertForXSeconds("OAuth login successful!", "success", 3, { asToast: true });
                             
                         } else if (result.type === 'OAUTH_ERROR') {
-                            console.error('OAuth login failed:', result.error);
-                            showAlertForXSeconds(`Login fallito: ${result.error}`, "error", 5, { asToast: true });
+                            showAlertForXSeconds(`OAuth login failed: ${result.error}`, "error", 5, { asToast: true });
                         }
                     }
                     
-                    // Controlla se il popup è stato chiuso manualmente DA ERRORE CORS
-                    // if (popup && popup.closed) {
-                    //     console.log('Popup è stato chiuso manualmente');
-                    //     clearInterval(storageCheckInterval);
-                    //     storageCheckInterval = null;
-                        
-                    //     // Se non c'è risultato in localStorage, probabilmente è stato chiuso prima di completare
-                    //     if (!localStorage.getItem('oauth_result')) {
-                    //         console.log('Popup chiuso senza risultato OAuth');
-                    //     }
-                    // }
+
                 } catch (e) {
                     console.error('Errore controllo localStorage:', e);
                 }
@@ -192,7 +161,6 @@ async function handleOAuthLogin(provider) {
             
             // Timeout di sicurezza (5 minuti)
             setTimeout(() => {
-                console.log('Timeout OAuth, pulizia...');
                 if (storageCheckInterval) {
                     clearInterval(storageCheckInterval);
                     storageCheckInterval = null;
@@ -209,29 +177,23 @@ async function handleOAuthLogin(provider) {
             
         } else {
             const errorData = await response.json();
-            console.error(`${provider} OAuth error:`, errorData);
-            showAlertForXSeconds('Errore durante l\'autenticazione. Riprova.', 'error', 3, { asToast: true });
+            showAlertForXSeconds('Authentication error. Please try again.', 'error', 3, { asToast: true });
         }
     } catch (error) {
-        console.error(`${provider} OAuth exception:`, error);
-        showAlertForXSeconds('Errore di connessione durante l\'autenticazione.', 'error', 3, { asToast: true });
+        showAlertForXSeconds('Connection error during authentication.', 'error', 3, { asToast: true });
     }
 }
 
 async function onHandleSubmit(e, email, password) {
 	e.preventDefault();
 	if (email && password) {
-		console.log("Email:", email);
-		console.log("Password:", password);
 		const csrftoken = getCookie("csrftoken");
 		const loginSuccess = await loginUser(email, password, csrftoken, true);
 		if (loginSuccess) {
-			//await handleGetUser(csrftoken);
 			window.navigateTo("#home");
 		}
 	} else {
-		console.log("Per favore, inserisci sia email che password.");
-		showAlertForXSeconds("Per favore, inserisci sia email che password.", "error", 3, { asToast: true });
+		showAlertForXSeconds("Please enter both email and password.", "error", 3, { asToast: true });
 	}
 }
 
@@ -244,8 +206,6 @@ async function onHandleSubmit(e, email, password) {
 async function loginUser(email, password, csrftoken, isBaseLogin) {
 	if (email && password) {
 		const { url_api } = getVariables();
-		console.log("Email:", email);
-		console.log("Password:", password);
 		try {
 			const response = await fetch(`${url_api}/login/login/login`, {
 				method: "POST",
@@ -258,7 +218,6 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log("Risposta dal server:", data);
 
 				// Check if 2FA verification is needed
 				if (
@@ -268,7 +227,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 				) {
 					// Show OTP verification form
 					showOTPVerificationForm(data.temp_token, email);
-					return false; // Login not completed yet, waiting for OTP
+					return false;
 				}
 
 				if (isBaseLogin) {
@@ -289,14 +248,24 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 				return true;
 			} else {
 				const errorData = await response.json();
-				let errorMessage = errorData.error || "Controlla le tue credenziali";
-				console.error("Errore login:", errorData.error);
-				if (errorData.error === "{'email': [ErrorDetail(string='Enter a valid email address.', code='invalid')]}")
-				{
-					errorMessage = "Indirizzo email non valido.";
+				console.error("Login error:", errorData);
+				
+				// Handle different error formats
+				let errorMessage = "Invalid credentials";
+				
+				if (errorData.error) {
+					if (typeof errorData.error === 'string') {
+						// Handle Django REST Framework validation errors in string format
+						if (errorData.error.includes("ErrorDetail")) {
+							errorMessage = "Please enter a valid email address";
+						} else {
+							errorMessage = errorData.error;
+						}
+					}
 				}
+				
 				showAlertForXSeconds(
-					`Errore durante il login: ${errorMessage}`,
+					`Login failed: ${errorMessage}`,
 					"error",
 					3,
 					{ asToast: true }
@@ -304,9 +273,8 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 				return false;
 			}
 		} catch (error) {
-			console.error("Exception login:", error);
 			showAlertForXSeconds(
-				"Errore di connessione durante il login. Riprova più tardi.",
+				"Connection error during login. Please try again later.",
 				"error",
 				3,
 				{ asToast: true }
@@ -314,7 +282,6 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 			return false;
 		}
 	} else {
-		console.log("Per favore, inserisci sia email che password.");
 		return false;
 	}
 }
@@ -421,7 +388,6 @@ async function verifyOTP(tempToken, otpCode, email) {
 
 		if (response.ok) {
 			const data = await response.json();
-			console.log("OTP verification successful:", data);
 
 			// Set tokens and user info after successful verification
 			setVariables({ token: data.access_token });
