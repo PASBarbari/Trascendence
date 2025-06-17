@@ -56,6 +56,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		except Exception as e:
 			logger.error(f"Error checking chat membership: {str(e)}")
 			return False
+
+	@database_sync_to_async
+	def is_user_blocked(self, sender_username):
+		"""Verifica se l'utente corrente ha bloccato il sender"""
+		try:
+			current_user = self.scope['user']
+			if not hasattr(current_user, 'user_id'):
+				return False
+				
+			sender_profile = UserProfile.objects.get(username=sender_username)
+			current_user_profile = UserProfile.objects.get(user_id=current_user.user_id)
+			
+			return current_user_profile.blockedUsers.filter(user_id=sender_profile.user_id).exists()
+		except Exception as e:
+			logger.error(f"Error checking if user is blocked: {str(e)}")
+			return False
 		
 	async def log_redis_connection(self):
 		try:

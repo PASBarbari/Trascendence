@@ -2,6 +2,7 @@ import { getVariables } from '../var.js';
 import { renderAddChat } from './AddChat.js';
 import { renderChatBubble } from './ChatBubble.js';
 import { getCookie } from '../cookie.js';
+import { getBlockedUsersList, showBlockedUsersModal } from './blockUser.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -10,6 +11,8 @@ document.head.appendChild(link);
 
 const displayedDates = new Set();
 let addChatContainer = null;
+let blockedUserListModal = null;
+let blockedUsers = []; // Cache degli utenti bloccati
 
 function isFirstMessageOfDay(date) {
 	const dateString = date.toLocaleDateString('it-IT');
@@ -18,6 +21,12 @@ function isFirstMessageOfDay(date) {
 		return true;
 	}
 	return false;
+}
+
+async function getBlockedUsers() {
+    blockedUsers = await getBlockedUsersList();
+    console.log("Utenti bloccati caricati:", blockedUsers);
+    return blockedUsers;
 }
 
 async function getChatRooms() {
@@ -55,7 +64,7 @@ async function getChatRooms() {
 	}
 }
 
-function renderExpandableSidebar() {
+async function renderExpandableSidebar() {
     const sidebarContainer = document.querySelector('.expandable-sidebar-container');
     sidebarContainer.innerHTML = `
         <div class="sidebar">
@@ -65,7 +74,7 @@ function renderExpandableSidebar() {
             <button id="createChatButton" class="btn btn-light mb-2">
                 <i class="bi bi-plus"></i>
             </button>
-            <button id="singleChatButton" class="btn btn-light mb-2">
+            <button id="blockUsers" class="btn btn-light mb-2">
                 <i class="bi bi-chat-dots"></i>
             </button>
             <button id="groupChatButton" class="btn btn-light mb-2">
@@ -103,7 +112,17 @@ function renderExpandableSidebar() {
 		}
 	});
 
-	document.getElementById('singleChatButton').addEventListener('click', function () {
+	document.getElementById('blockUsers').addEventListener('click', function () {
+		if (blockedUserListModal) {
+			chatContainer.removeChild(blockedUserListModal);
+			blockedUserListModal = null;
+		} else {
+			blockedUserListModal = showBlockedUsersModal();
+			chatContainer.insertBefore(blockedUserListModal, chatContainer.firstChild);
+		}
+	});
+
+	document.getElementById('groupChatButton').addEventListener('click', function () {
 		renderChatItem({
 			id: '5',
 			name: 'Eve',
@@ -112,29 +131,35 @@ function renderExpandableSidebar() {
 		});
 	});
 
-	document.getElementById('groupChatButton').addEventListener('click', function () {
-		alert('error');
-	});
-
 	document.getElementById('randomChatButton').addEventListener('click', function () {
 		alert('Random Chat clicked');
 	});
 
 	// Fetch chat rooms and render them
 	updateChatList();
+	
+	// Carica la lista degli utenti bloccati
+	await getBlockedUsers();
+	
 	console.log("Chat rooms fetched and rendered.");
 }
 
 async function updateChatList() {
 	const chats = await getChatRooms();
 	if (chats) {
-		const chatContainer = document.querySelector('.chat-container');
+		const chatContainer = document.getElementById('chatContainer');
 		if (addChatContainer && chatContainer.contains(addChatContainer)) {
 			chatContainer.removeChild(addChatContainer);
 			addChatContainer = null;
 		}
+		if (blockedUserListModal && chatContainer.contains(blockedUserListModal)) {
+            chatContainer.removeChild(blockedUserListModal);
+            blockedUserListModal = null;
+        }
 		
-		chatContainer.innerHTML = ''; // Pulisce il contenitore delle chat
+		const chatItems = chatContainer.querySelectorAll('.chat-item'); // Pulisce il contenitore delle chat
+		chatItems.forEach(item => item.remove());
+		
 		chats.forEach(chat => {
 			if (!chat.room_id) {
 				console.error("Chat ID non trovato:", chat);
@@ -213,6 +238,12 @@ function renderChatItem(chat) {
 				const data = JSON.parse(event.data);
 				console.log(`Messaggio ricevuto per chat room ${chat.id}:`, data);
 
+				// Verifica se il sender è bloccato
+				if (isUserBlocked(data.sender)) {
+					console.log(`Messaggio da utente bloccato ${data.sender} ignorato`);
+					return; // Non visualizzare il messaggio
+				}
+
 				const messageDate = new Date(data.timestamp);
 				const chatContent = chatItem.querySelector('.scrollable-content');
 
@@ -262,6 +293,12 @@ function renderChatItem(chat) {
 					const data = await response.json();
 					const chatContent = chatItem.querySelector('.scrollable-content');
 					data.forEach(msg => {
+						// Filtra i messaggi degli utenti bloccati anche dai messaggi storici
+						if (isUserBlocked(msg.sender)) {
+							console.log(`Messaggio storico da utente bloccato ${msg.sender} ignorato`);
+							return; // Non visualizzare il messaggio
+						}
+
 						const messageDate = new Date(msg.timestamp);
 
 						if (isFirstMessageOfDay(messageDate)) {
@@ -327,4 +364,14 @@ function renderChatItem(chat) {
 	});
 }
 
-export { renderExpandableSidebar, updateChatList };
+function isUserBlocked(username) {
+    return blockedUsers.some(user => user.username === username);
+}
+
+// Funzione per aggiornare la lista degli utenti bloccati (da chiamare quando si blocca/sblocca un utente)
+async function updateBlockedUsers() {
+	await getBlockedUsers();
+	console.log("Lista utenti bloccati aggiornata");
+}
+
+export { renderExpandableSidebar, updateChatList, updateBlockedUsers, isUserBlocked };

@@ -10,6 +10,10 @@ class userSerializer(serializers.ModelSerializer):
 		model = UserProfile
 		fields = '__all__'
 
+class userBlockedSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = UserProfile
+		fields = ['user_id', 'username']
 
 class chat_roomSerializer(serializers.ModelSerializer):
 	creator = serializers.PrimaryKeyRelatedField(queryset=UserProfile.objects.all())
@@ -23,37 +27,54 @@ class chat_roomSerializer(serializers.ModelSerializer):
 		model = ChatRoom
 		fields = ['room_id', 'room_name', 'room_description', 'creator', 'users']
 
-		def create(self, validated_data):
+	def create(self, validated_data):
 		# Estrai lista di user_ids
-			user_ids = validated_data.pop('users', [])
+		user_ids = validated_data.pop('users', [])
 
-			# Crea ChatRoom
-			chat_room = ChatRoom.objects.create(**validated_data)
+		# Crea ChatRoom
+		chat_room = ChatRoom.objects.create(**validated_data)
 
-			# Aggiungi gli utenti alla chat
-			if user_ids:
-				try:
-					# Trova i profili utente
-					user_profiles = UserProfile.objects.filter(user_id__in=user_ids)
-
-					# Aggiungi membri alla chat con ruoli predefiniti
-					for profile in user_profiles:
-						# Il creatore è admin, gli altri sono normal_user
-						role = 'admin' if profile.user_id == chat_room.creator.user_id else 'normal_user'
-						ChatMember.objects.create(
-							chat_room=chat_room,
-							user=profile,
-							role=role
-						)
-
-					logging.info(f"Created chat room {chat_room.room_id} with {len(user_profiles)} members")
-				except Exception as e:
-					logging.error(f"Error adding users to chat: {str(e)}")
-					# Se la creazione dei membri fallisce, elimina la chat
-					chat_room.delete()
-					raise
+		# Aggiungi gli utenti alla chat
+		if user_ids:
+			try:
+				# Trova i profili utente
+				user_profiles = UserProfile.objects.filter(user_id__in=user_ids)
 				
-			return chat_room
+				# Additional blocking check for users being added
+				creator = chat_room.creator
+				filtered_profiles = []
+				
+				for profile in user_profiles:
+					# Check if creator has blocked this user
+					if creator and creator.blockedUsers.filter(user_id=profile.user_id).exists():
+						logging.warning(f"Creator {creator.user_id} has blocked user {profile.user_id}, skipping")
+						continue
+					
+					# Check if this user has blocked the creator
+					if creator and profile.blockedUsers.filter(user_id=creator.user_id).exists():
+						logging.warning(f"User {profile.user_id} has blocked creator {creator.user_id}, skipping")
+						continue
+					
+					filtered_profiles.append(profile)
+
+				# Aggiungi membri alla chat con ruoli predefiniti
+				for profile in filtered_profiles:
+					# Il creatore è admin, gli altri sono normal_user
+					role = 'admin' if profile.user_id == chat_room.creator.user_id else 'normal_user'
+					ChatMember.objects.create(
+						chat_room=chat_room,
+						user=profile,
+						role=role
+					)
+
+				logging.info(f"Created chat room {chat_room.room_id} with {len(filtered_profiles)} members (filtered from {len(user_profiles)} due to blocking)")
+			except Exception as e:
+				logging.error(f"Error adding users to chat: {str(e)}")
+				# Se la creazione dei membri fallisce, elimina la chat
+				chat_room.delete()
+				raise
+			
+		return chat_room
 		
 	def to_representation(self, instance):
 		# Per le operazioni di lettura, includi gli utenti come elenco di id
