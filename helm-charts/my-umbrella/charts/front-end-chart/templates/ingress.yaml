@@ -2,14 +2,13 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Release.Name }}-frontend-ingress
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "front-end-chart.namespace" . }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
     # Traefik specific annotations
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
-    # All middlewares on one line, comma-separated
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.namespace }}-{{ .Release.Name }}-websocket-headers@kubernetescrd,{{ .Values.namespace }}-{{ .Release.Name }}-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.priority: "1" # Lower priority so API routes take precedence
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}

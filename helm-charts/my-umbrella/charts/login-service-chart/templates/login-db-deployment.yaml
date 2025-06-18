@@ -2,14 +2,14 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "login-service-chart.fullname" . }}-db
-  namespace: {{ .Values.namespace }} # Changed from {{ .Values.namespace }}
+  namespace: {{ include "login-service-chart.namespace" . }}
   labels:
     {{- include "login-service-chart.labels" . | nindent 4 }}
     app.kubernetes.io/component: database
     app: {{ include "login-service-chart.name" . }}-db # Specific app label for DB
 spec:
   serviceName: {{ include "login-service-chart.fullname" . }}-db
-  replicas: 1 # Consider making this configurable via .Values.db.replicaCount
+  replicas: 1 # Consider making this configurable via Values db replicaCount
   selector:
     matchLabels:
       {{- include "login-service-chart.selectorLabels" . | nindent 6 }}
@@ -84,9 +84,39 @@ spec:
           failureThreshold: 3
         resources:
           {{- toYaml .Values.db.resources | nindent 10 }}
-        volumeMounts: # Corrected indentation
+        volumeMounts:
         - name: data
           mountPath: /var/lib/postgresql/data
+      {{- if .Values.db.exporter.enabled }}
+      - name: postgres-exporter
+        image: "{{ .Values.db.exporter.image.repository }}:{{ .Values.db.exporter.image.tag }}"
+        imagePullPolicy: {{ .Values.db.exporter.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: metrics
+          containerPort: 9187
+          protocol: TCP
+        env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets
+              key: POSTGRES_DB
+        volumeMounts: []
+        resources:
+          {{- toYaml .Values.db.exporter.resources | nindent 10 }}
+      {{- end }}
   volumeClaimTemplates:
   - metadata:
       name: data

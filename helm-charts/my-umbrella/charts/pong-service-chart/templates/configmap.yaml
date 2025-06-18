@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "pong-service-chart.fullname" . }}-config
+  namespace: {{ include "pong-service-chart.namespace" . }}
+  labels:
+    {{- include "pong-service-chart.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.configMap.data }}
+  {{ $key }}: {{ tpl $value $ | quote }}
+  {{- end }}

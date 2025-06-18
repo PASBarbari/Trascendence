@@ -11,8 +11,23 @@ dependencies:
 - name: login-service-chart
   repository: file://charts/login-service-chart
   version: 0.1.0
+- name: user-service-chart
+  repository: file://charts/user-service-chart
+  version: 0.1.0
+- name: notifications-service-chart
+  repository: file://charts/notifications-service-chart
+  version: 0.1.0
+- name: pong-service-chart
+  repository: file://charts/pong-service-chart
+  version: 0.1.0
+- name: observability-chart
+  repository: file://charts/observability-chart
+  version: 0.1.0
+- name: redis-chart
+  repository: file://charts/redis-chart
+  version: 0.1.0
 - name: cert-manager-chart
   repository: file://charts/cert-manager-chart
   version: 0.1.0
-digest: sha256:c7b1f2c48accac2aec58150d894ade216b11b9f6c83846ee2860b0b7d16cf8a1
-generated: "2025-05-29T11:52:13.192854994+02:00"
+digest: sha256:a64a27fab74ed50134d9f819e92d2c92800a8da39198b82c96221a691d5cd5c0
+generated: "2025-06-16T18:02:11.446451664+02:00"

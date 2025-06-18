@@ -1,0 +1,19 @@
+{{- if .Values.db.exporter.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "login-service-chart.fullname" . }}-db-metrics
+  namespace: {{ include "login-service-chart.namespace" . }}
+  labels:
+    app: {{ .Release.Name }}-login-db
+    {{- include "login-service-chart.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-login-db
+      {{- include "login-service-chart.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+{{- end }}

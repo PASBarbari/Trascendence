@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "login-service-chart.fullname" . }}-ingress
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "login-service-chart.namespace" . }}
   labels:
     {{- include "login-service-chart.labels" . | nindent 4 }}
   annotations:
@@ -10,6 +10,7 @@ metadata:
     # Traefik specific annotations
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "1000" # Higher priority than frontend
     # Redirect HTTP to HTTPS
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
@@ -24,12 +25,12 @@ spec:
         pathType: {{ .Values.ingress.pathType }}
         backend:
           service:
-            name: {{ include "login-service-chart.fullname" . }} # Assumes service is named using fullname helper
+            name: "{{ .Release.Name }}-login-service"
             port:
               number: {{ .Values.service.port }}
   {{- if .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Values.ingress.host }}
-    secretName: {{ .Values.ingress.tls.secretName }} # This should align with cert-manager or manual cert creation
+    secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}

@@ -3,7 +3,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Release.Name }}-login-hpa
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "login-service-chart.namespace" . }}
   labels:
     app: {{ .Release.Name }}-login
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}

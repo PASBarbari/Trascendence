@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ include "chat-service.fullname" . }}-db
-  namespace: {{ .Values.namespace }} # Changed from .Values.namespace
+  namespace: {{ include "chat-service-chart.namespace" . }}
   labels:
     {{- include "chat-service.labels" . | nindent 4 }}
     app.kubernetes.io/component: database
@@ -48,6 +48,36 @@ spec:
             volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data
+          {{- if .Values.db.exporter.enabled }}
+          - name: postgres-exporter
+            image: "{{ .Values.db.exporter.image.repository }}:{{ .Values.db.exporter.image.tag }}"
+            imagePullPolicy: {{ .Values.db.exporter.image.pullPolicy | default "IfNotPresent" }}
+            ports:
+            - name: metrics
+              containerPort: 9187
+              protocol: TCP
+            env:
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_DB
+            volumeMounts: []
+            resources:
+              {{- toYaml .Values.db.exporter.resources | nindent 14 }}
+          {{- end }}
   volumeClaimTemplates:
   - metadata:
       name: data

@@ -1,0 +1,30 @@
+{{- if .Values.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name }}
+  namespace: {{ include "traefik-chart.namespace" . }}
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+  - port: {{ .Values.service.ports.web.port }}
+    targetPort: {{ .Values.service.ports.web.targetPort }}
+    protocol: {{ .Values.service.ports.web.protocol }}
+    name: web
+  - port: {{ .Values.service.ports.websecure.port }}
+    targetPort: {{ .Values.service.ports.websecure.targetPort }}
+    protocol: {{ .Values.service.ports.websecure.protocol }}
+    name: websecure
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: admin
+  selector:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

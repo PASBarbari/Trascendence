@@ -3,7 +3,7 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ .Release.Name }}-chat-hpa
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "chat-service-chart.namespace" . }}
   labels:
     app: {{ .Release.Name }}-chat
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}

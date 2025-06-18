@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}-frontend
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "front-end-chart.namespace" . }}
   labels:
     app: {{ .Release.Name }}-frontend
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: "{{ .Release.Name }}-chat-db-service"
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "chat-service-chart.namespace" . }}
   labels:
     app: {{ .Release.Name }}-chat-db
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
@@ -13,6 +13,13 @@ spec:
     - port: 5432
       targetPort: 5432
       protocol: TCP
+      name: postgres
+    {{- if .Values.db.exporter.enabled }}
+    - port: 9187
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
   selector:
     {{- include "chat-service.selectorLabels" . | nindent 4 }}
     app.kubernetes.io/component: database

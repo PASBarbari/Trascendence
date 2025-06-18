@@ -1,0 +1,19 @@
+{{- if and .Values.exporter.enabled .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "redis-chart.fullname" . }}-metrics
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: redis
+    {{- include "redis-chart.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: redis
+      {{- include "redis-chart.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+{{- end }}

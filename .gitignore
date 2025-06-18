@@ -81,3 +81,4 @@ helm-charts/my-umbrella/values.yaml
 helm-charts/my-umbrella/charts/chat-service-chart/values.yaml
 helm-charts/my-umbrella/charts/login-service-chart/values.yaml
 helm-charts/my-umbrella/charts/login-service-chart/values.yaml
+helm-charts/my-umbrella/charts/chat-service-chart/values.yaml

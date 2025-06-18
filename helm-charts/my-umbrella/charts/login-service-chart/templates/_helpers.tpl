@@ -60,3 +60,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Get the namespace name (supports both old and new format)
+*/}}
+{{- define "login-service-chart.namespace" -}}
+{{- if .Values.namespace.name -}}
+{{- .Values.namespace.name -}}
+{{- else -}}
+{{- .Values.namespace -}}
+{{- end -}}
+{{- end -}}

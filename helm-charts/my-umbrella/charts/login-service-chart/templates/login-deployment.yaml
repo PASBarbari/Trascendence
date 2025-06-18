@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "login-service-chart.fullname" . }}
-  namespace: {{ .Values.namespace }} # Changed from {{ .Values.namespace }}
+  namespace: {{ include "login-service-chart.namespace" . }}
   labels:
     {{- include "login-service-chart.labels" . | nindent 4 }}
     app: {{ include "login-service-chart.name" . }} # For selector matching
@@ -25,7 +25,7 @@ spec:
       - name: init-{{ include "login-service-chart.name" . }}
         image: busybox # Consider making image configurable
         imagePullPolicy: IfNotPresent # Consider making image configurable
-        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Values.configMap.data.POSTGRES_HOST }} on port {{ .Values.configMap.data.POSTGRES_PORT }}"; while ! nc -z {{ .Values.configMap.data.POSTGRES_HOST }} {{ .Values.configMap.data.POSTGRES_PORT }}; do sleep 1; done; echo "Database service is up and running"']
+        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Release.Name }}-login-db-service on port 5432"; while ! nc -z {{ .Release.Name }}-login-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
       containers:
       - name: {{ include "login-service-chart.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

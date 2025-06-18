@@ -2,14 +2,15 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ .Release.Name }}-chat-ingress
-  namespace: {{ .Values.namespace }}
+  namespace: {{ include "chat-service-chart.namespace" . }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
     # Traefik specific annotations
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.priority: "1000"
     # Redirect HTTP to HTTPS
-    traefik.ingress.kubernetes.io/router.middlewares: {{ .Values.namespace }}-{{ .Release.Name }}-websocket-headers@kubernetescrd,{{ .Values.namespace }}-{{ .Release.Name }}-redirect-https@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: {{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers,{{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https
     # WebSocket configurations
     traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
     traefik.ingress.kubernetes.io/service.sticky.cookie.name: chat_sticky

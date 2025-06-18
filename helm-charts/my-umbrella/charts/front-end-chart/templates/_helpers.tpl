@@ -9,6 +9,15 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
-{{/* 
-Any frontend-specific helper functions can remain here
+{{/*
+Get the namespace name (supports both old and new format)
 */}}
+{{- define "front-end-chart.namespace" -}}
+{{- if .Values.namespace.name -}}
+{{- .Values.namespace.name -}}
+{{- else -}}
+{{- .Values.namespace -}}
+{{- end -}}
+{{- end -}}
+
+// ...existing code...

@@ -1,0 +1,631 @@
+# Observability Stack Configuration with ECK
+global:
+  # TLS Configuration
+  tls:
+    enabled: true
+    # Custom CA certificate for internal communication
+    ca:
+      create: true
+      secretName: "observability-ca-tls"
+    # Certificate issuer
+    issuer:
+      name: "observability-issuer"
+      kind: ClusterIssuer
+
+# ECK Elasticsearch Configuration
+eck-elasticsearch:
+  enabled: true
+  fullnameOverride: "trascendence-elasticsearch"
+  
+  # Version of Elasticsearch
+  version: 8.5.1
+  
+  # Node configuration for single-node cluster
+  nodeSets:
+  - name: default
+    count: 1
+    config:
+      # Disable mmap for single-node development setups
+      node.store.allow_mmap: false
+      # Single-node cluster configuration
+      cluster.name: "trascendence-elasticsearch"
+      network.host: 0.0.0.0
+      xpack.security.enabled: true
+      xpack.security.transport.ssl.enabled: true
+      xpack.security.http.ssl.enabled: true
+      xpack.license.self_generated.type: basic
+    
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+        # Disable anti-affinity for single-node cluster
+        # affinity: {}
+        
+    # Persistence configuration
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 10Gi
+
+# ECK Kibana Configuration
+eck-kibana:
+  enabled: true
+  fullnameOverride: "trascendence-kibana"
+  
+  # Version of Kibana
+  version: 8.5.1
+  
+  # Reference to Elasticsearch cluster
+  elasticsearchRef:
+    name: "trascendence-elasticsearch"
+  
+  # Instance count
+  count: 1
+  
+  # Kibana configuration
+  config:
+      # Kibana configuration
+  config:
+    server.host: "0.0.0.0"
+    server.port: 5601
+    elasticsearch.ssl.verificationMode: certificate
+    
+  podTemplate:
+    spec:
+      containers:
+      - name: kibana
+        resources:
+          requests:
+            cpu: 100m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+  
+  # HTTP service configuration for ingress
+  http:
+    service:
+      spec:
+        type: ClusterIP
+        ports:
+        - name: https
+          port: 5601
+          targetPort: 5601
+
+# ECK Logstash Configuration (optional)
+eck-logstash:
+  enabled: false
+  
+# Traditional Elasticsearch configuration (disabled in favor of ECK)
+elasticsearch:
+  enabled: false
+
+# Traditional Kibana configuration (disabled in favor of ECK)
+kibana:
+  enabled: false
+
+# Ingress configuration for Kibana (using external ingress)
+ingress:
+  enabled: true
+  className: traefik
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "observability-issuer"
+  hosts:
+    - host: kibana.trascendence.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service:
+            name: trascendence-kibana-kb-http
+            port:
+              number: 5601
+  tls:
+    - secretName: kibana-tls
+      hosts:
+        - kibana.trascendence.local
+    kibana.yml: |
+      server.host: 0.0.0.0
+      server.publicBaseUrl: "https://kibana.trascendence.local"
+      elasticsearch.hosts: ["https://trascendence-elasticsearch-master:9200"]
+      elasticsearch.username: "elastic"
+      elasticsearch.password: "elastic123"
+      elasticsearch.ssl.verificationMode: none
+      xpack.security.enabled: true
+      xpack.encryptedSavedObjects.encryptionKey: "a-32-character-long-encryption-key"
+      xpack.reporting.encryptionKey: "a-32-character-long-encryption-key"
+      xpack.security.encryptionKey: "a-32-character-long-encryption-key"
+
+# Logstash Configuration  
+logstash:
+  enabled: true
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    ports:
+      - name: beats
+        port: 5044
+        protocol: TCP
+        targetPort: 5044
+      - name: http
+        port: 8080
+        protocol: TCP
+        targetPort: 8080
+  
+  # Logstash configuration
+  logstashConfig:
+    logstash.yml: |
+      http.host: 0.0.0.0
+      path.config: /usr/share/logstash/pipeline
+      xpack.monitoring.enabled: true
+      xpack.monitoring.elasticsearch.hosts: ["https://trascendence-elasticsearch-master:9200"]
+      xpack.monitoring.elasticsearch.username: "elastic"
+      xpack.monitoring.elasticsearch.password: "elastic123"
+      xpack.monitoring.elasticsearch.ssl.verification_mode: none
+  
+  # Pipeline configuration
+  logstashPipeline:
+    logstash.conf: |
+      input {
+        beats {
+          port => 5044
+        }
+      }
+      
+      filter {
+        # Parse JSON logs
+        if [message] =~ /^\{.*\}$/ {
+          json {
+            source => "message"
+          }
+        }
+        
+        # Add timestamp
+        date {
+          match => [ "timestamp", "ISO8601" ]
+        }
+        
+        # Parse Kubernetes logs
+        if [kubernetes] {
+          mutate {
+            add_field => {
+              "k8s_namespace" => "%{[kubernetes][namespace]}"
+              "k8s_pod" => "%{[kubernetes][pod][name]}"
+              "k8s_container" => "%{[kubernetes][container][name]}"
+            }
+          }
+        }
+        
+        # Parse Django logs
+        if [fields][service] == "django" {
+          grok {
+            match => { "message" => "\[%{TIMESTAMP_ISO8601:timestamp}\] %{LOGLEVEL:log_level} %{DATA:logger}: %{GREEDYDATA:log_message}" }
+          }
+        }
+        
+        # Parse Nginx access logs
+        if [fields][service] == "nginx" {
+          grok {
+            match => { "message" => "%{COMBINEDAPACHELOG}" }
+          }
+        }
+      }
+      
+      output {
+        elasticsearch {
+          hosts => ["https://trascendence-elasticsearch-master:9200"]
+          user => "elastic"
+          password => "elastic123"
+          ssl => true
+          ssl_certificate_verification => false
+          index => "trascendence-logs-%{+YYYY.MM.dd}"
+        }
+        
+        stdout {
+          codec => rubydebug
+        }
+      }
+
+# Filebeat Configuration
+filebeat:
+  enabled: true
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 200m
+      memory: 512Mi
+  
+  # Filebeat configuration
+  filebeatConfig:
+    filebeat.yml: |
+      filebeat.inputs:
+      - type: container
+        paths:
+          - /var/log/containers/*.log
+        processors:
+          - add_kubernetes_metadata:
+              host: ${NODE_NAME}
+              matchers:
+              - logs_path:
+                  logs_path: "/var/log/containers/"
+          - decode_json_fields:
+              fields: ["message"]
+              target: ""
+              overwrite_keys: true
+      
+      output.logstash:
+        hosts: ["observability-chart-logstash:5044"]
+      
+      setup.kibana:
+        host: "https://observability-chart-kibana:5601"
+        username: "elastic"
+        password: "elastic123"
+        ssl.verification_mode: none
+      
+      setup.template:
+        enabled: true
+        settings:
+          index.number_of_shards: 1
+          index.number_of_replicas: 0
+      
+      logging.level: info
+      logging.to_stderr: true
+
+# Prometheus Stack Configuration
+prometheus:
+  enabled: true
+  
+  # Prometheus configuration
+  prometheus:
+    prometheusSpec:
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+      
+      resources:
+        requests:
+          cpu: 200m
+          memory: 1Gi
+        limits:
+          cpu: 1000m
+          memory: 2Gi
+      
+      # Retention policy
+      retention: 15d
+      
+      # Service monitor selector
+      serviceMonitorSelectorNilUsesHelmValues: false
+      podMonitorSelectorNilUsesHelmValues: false
+      ruleSelectorNilUsesHelmValues: false
+  
+  # Alertmanager configuration
+  alertmanager:
+    alertmanagerSpec:
+      storage:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 2Gi
+      
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 512Mi
+  
+  # Grafana configuration (will be overridden by separate Grafana chart)
+  grafana:
+    enabled: false
+  
+  # Node exporter
+  nodeExporter:
+    enabled: true
+  
+  # Kube state metrics
+  kubeStateMetrics:
+    enabled: true
+  
+  # Service monitor for our services
+  additionalServiceMonitors:
+    - name: trascendence-services
+      selector:
+        matchLabels:
+          monitoring: "true"
+      endpoints:
+        - port: metrics
+          interval: 30s
+          path: /metrics
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  
+  # Admin credentials
+  adminUser: admin
+  adminPassword: admin123
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  
+  # Persistence
+  persistence:
+    enabled: true
+    size: 1Gi
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 80
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    annotations:
+      traefik.ingress.kubernetes.io/router.tls: "true"
+      cert-manager.io/cluster-issuer: "observability-issuer"
+    hosts:
+      - grafana.trascendence.local
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.trascendence.local
+  
+  # Grafana configuration
+  grafana.ini:
+    server:
+      domain: grafana.trascendence.local
+      root_url: "https://grafana.trascendence.local/"
+      serve_from_sub_path: false
+    
+    security:
+      admin_user: admin
+      admin_password: admin123
+      secret_key: SW2YcwTIb9zpOOhoPsMm
+    
+    auth:
+      disable_login_form: false
+      disable_signout_menu: false
+    
+    users:
+      allow_sign_up: false
+      auto_assign_org: true
+      auto_assign_org_role: Viewer
+    
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+  
+  # Data sources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          url: http://observability-chart-prometheus-prometheus:9090
+          access: proxy
+          isDefault: true
+          editable: true
+        - name: Elasticsearch
+          type: elasticsearch
+          url: https://trascendence-elasticsearch-master:9200
+          access: proxy
+          database: "trascendence-logs-*"
+          basicAuth: true
+          basicAuthUser: elastic
+          secureJsonData:
+            basicAuthPassword: elastic123
+          jsonData:
+            esVersion: "8.5.0"
+            timeField: "@timestamp"
+            interval: Daily
+            maxConcurrentShardRequests: 5
+            tlsSkipVerify: true
+  
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: 'default'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+  
+  # Pre-installed dashboards
+  dashboards:
+    default:
+      # Kubernetes cluster monitoring
+      kubernetes-cluster:
+        gnetId: 7249
+        revision: 1
+        datasource: Prometheus
+      
+      # Node exporter
+      node-exporter:
+        gnetId: 1860
+        revision: 27
+        datasource: Prometheus
+      
+      # Kubernetes pods
+      kubernetes-pods:
+        gnetId: 6417
+        revision: 1
+        datasource: Prometheus
+      
+      # Custom Trascendence dashboard
+      trascendence-overview:
+        json: |
+          {
+            "dashboard": {
+              "id": null,
+              "title": "Trascendence Overview",
+              "tags": ["trascendence"],
+              "style": "dark",
+              "timezone": "browser",
+              "panels": [
+                {
+                  "id": 1,
+                  "title": "Service Status",
+                  "type": "stat",
+                  "targets": [
+                    {
+                      "expr": "up{job=~\".*trascendence.*\"}",
+                      "legendFormat": "{{job}}"
+                    }
+                  ],
+                  "fieldConfig": {
+                    "defaults": {
+                      "color": {
+                        "mode": "thresholds"
+                      },
+                      "thresholds": {
+                        "steps": [
+                          {"color": "red", "value": 0},
+                          {"color": "green", "value": 1}
+                        ]
+                      }
+                    }
+                  },
+                  "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+                },
+                {
+                  "id": 2,
+                  "title": "Request Rate",
+                  "type": "graph",
+                  "targets": [
+                    {
+                      "expr": "rate(http_requests_total[5m])",
+                      "legendFormat": "{{service}}"
+                    }
+                  ],
+                  "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+                }
+              ],
+              "time": {
+                "from": "now-1h",
+                "to": "now"
+              },
+              "refresh": "30s"
+            }
+          }
+
+# Service Monitors for Trascendence services
+serviceMonitors:
+  enabled: true
+  
+  # Login service monitoring
+  loginService:
+    enabled: true
+    selector:
+      matchLabels:
+        app: login-service
+    endpoints:
+      - port: metrics
+        interval: 30s
+        path: /metrics
+  
+  # Chat service monitoring  
+  chatService:
+    enabled: true
+    selector:
+      matchLabels:
+        app: chat-service
+    endpoints:
+      - port: metrics
+        interval: 30s
+        path: /metrics
+  
+  # Frontend monitoring
+  frontend:
+    enabled: true
+    selector:
+      matchLabels:
+        app: frontend
+    endpoints:
+      - port: metrics
+        interval: 30s
+        path: /metrics
+
+# TLS Certificate configuration
+certificates:
+  enabled: true
+  
+  # CA Certificate
+  ca:
+    enabled: true
+    commonName: "Trascendence Observability CA"
+    duration: 8760h # 1 year
+    renewBefore: 720h # 30 days
+  
+  # Service certificates
+  services:
+    elasticsearch:
+      enabled: true
+      commonName: "trascendence-elasticsearch-master"
+      dnsNames:
+        - "trascendence-elasticsearch-master"
+        - "trascendence-elasticsearch-master.default.svc.cluster.local"
+    
+    kibana:
+      enabled: true
+      commonName: "observability-chart-kibana"
+      dnsNames:
+        - "observability-chart-kibana"
+        - "observability-chart-kibana.default.svc.cluster.local"
+        - "kibana.trascendence.local"
+    
+    grafana:
+      enabled: true
+      commonName: "observability-chart-grafana"
+      dnsNames:
+        - "observability-chart-grafana"
+        - "observability-chart-grafana.default.svc.cluster.local"
+        - "grafana.trascendence.local"
