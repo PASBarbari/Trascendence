@@ -172,10 +172,10 @@ if [ -d "helm-charts/my-umbrella" ]; then
     # Install or upgrade the application
     if helm list | grep -q "my-umbrella"; then
         print_status "Upgrading existing deployment..."
-        helm upgrade my-umbrella . --timeout=15m --wait --debug
+        helm upgrade my-umbrella . --timeout=15m --wait --debug --namespace default --create-namespace
     else
         print_status "Installing new deployment..."
-        helm install my-umbrella . --timeout=15m --wait --debug
+        helm install my-umbrella . --timeout=15m --wait --debug --namespace default --create-namespace
     fi
     
     print_success "Trascendence application deployed successfully"
