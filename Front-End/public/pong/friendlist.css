@@ -10,7 +10,6 @@
     justify-content: center;
     align-items: center;
     z-index: 1050;
-    backdrop-filter: blur(3px);
     animation: fadeIn 0.3s ease-out;
 }
 
