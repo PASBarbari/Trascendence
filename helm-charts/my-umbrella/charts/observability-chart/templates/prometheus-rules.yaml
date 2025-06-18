@@ -1,0 +1,94 @@
+{{- if .Values.prometheus.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: trascendence-alerts
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+    - name: trascendence.rules
+      rules:
+        # Service availability alerts
+        - alert: ServiceDown
+          expr: up{job=~".*trascendence.*"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Trascendence service is down"
+            description: "Service {{ `{{ $labels.job }}` }} has been down for more than 1 minute."
+        
+        # High error rate alert
+        - alert: HighErrorRate
+          expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High error rate detected"
+            description: "Service {{ `{{ $labels.service }}` }} has error rate above 10% for more than 2 minutes."
+        
+        # High memory usage alert
+        - alert: HighMemoryUsage
+          expr: (container_memory_usage_bytes{container=~".*trascendence.*"} / container_spec_memory_limit_bytes) > 0.9
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High memory usage"
+            description: "Container {{ `{{ $labels.container }}` }} memory usage is above 90% for more than 5 minutes."
+        
+        # High CPU usage alert
+        - alert: HighCPUUsage
+          expr: rate(container_cpu_usage_seconds_total{container=~".*trascendence.*"}[5m]) > 0.8
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU usage"
+            description: "Container {{ `{{ $labels.container }}` }} CPU usage is above 80% for more than 5 minutes."
+        
+        # Pod restart alert
+        - alert: PodRestarts
+          expr: increase(kube_pod_container_status_restarts_total{pod=~".*trascendence.*"}[1h]) > 3
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod restarting frequently"
+            description: "Pod {{ `{{ $labels.pod }}` }} has restarted more than 3 times in the last hour."
+        
+        # Database connection alert
+        - alert: DatabaseConnectionFailed
+          expr: up{job=~".*postgres.*"} == 0
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Database connection failed"
+            description: "PostgreSQL database {{ `{{ $labels.job }}` }} is not reachable."
+        
+        # Elasticsearch cluster health
+        - alert: ElasticsearchClusterRed
+          expr: elasticsearch_cluster_health_status{color="red"} == 1
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Elasticsearch cluster is red"
+            description: "Elasticsearch cluster health is red, some shards are not allocated."
+        
+        # Disk space alert
+        - alert: DiskSpaceUsage
+          expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Low disk space"
+            description: "Node {{ `{{ $labels.instance }}` }} has less than 10% disk space available."
+{{- end }}

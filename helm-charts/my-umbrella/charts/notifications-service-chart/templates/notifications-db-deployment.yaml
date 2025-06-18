@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-notifications-db
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+  labels:
+    app: {{ .Release.Name }}-notifications-db
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-notifications-db
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-notifications-db
+        release: {{ .Release.Name }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.dbName }}
+      {{- end }}
+      containers:
+      - name: postgres
+        image: "{{ .Values.db.image.repository }}:{{ .Values.db.image.tag }}"
+        imagePullPolicy: {{ .Values.db.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.db.service.port }}
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "notifications-service-chart.fullname" . }}-secrets
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "notifications-service-chart.fullname" . }}-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "notifications-service-chart.fullname" . }}-secrets
+              key: POSTGRES_PASSWORD
+        resources:
+          {{- toYaml .Values.db.resources | nindent 10 }}
+        volumeMounts:
+        - name: postgres-data
+          mountPath: /var/lib/postgresql/data
+        {{- if .Values.db.exporter.enabled }}
+      - name: postgres-exporter
+        image: "{{ .Values.db.exporter.image.repository }}:{{ .Values.db.exporter.image.tag }}"
+        imagePullPolicy: {{ .Values.db.exporter.image.pullPolicy }}
+        ports:
+        - containerPort: 9187
+        env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "notifications-service-chart.fullname" . }}-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "notifications-service-chart.fullname" . }}-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "notifications-service-chart.fullname" . }}-secrets
+              key: POSTGRES_DB
+        resources:
+          {{- toYaml .Values.db.exporter.resources | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: postgres-data
+        {{- if .Values.db.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-notifications-db-pvc
+        {{- else }}
+        emptyDir: {}
+        {{- end }}

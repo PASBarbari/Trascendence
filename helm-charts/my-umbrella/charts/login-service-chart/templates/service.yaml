@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Release.Name }}-login-service"
+  namespace: {{ include "login-service-chart.namespace" . }}
+  labels:
+    app: {{ .Release.Name }}-login
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+  selector:
+    {{- include "login-service-chart.selectorLabels" . | nindent 4 }}
+    app: {{ include "login-service-chart.name" . }}

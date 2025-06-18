@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chat-service.fullname" . }}
+  namespace: {{ include "chat-service-chart.namespace" . }}
+  labels:
+    {{- include "chat-service.labels" . | nindent 4 }}
+    app: {{ include "chat-service.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+      app: {{ include "chat-service.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "chat-service.selectorLabels" . | nindent 8 }}
+        app: {{ include "chat-service.name" . }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "chat-service.serviceAccountName" . }}
+      {{- else if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+      initContainers:
+      - name: init-{{ include "chat-service.name" . }}
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Release.Name }}-chat-db-service on port 5432"; while ! nc -z {{ .Release.Name }}-chat-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
+      containers:
+        - name: {{ include "chat-service.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "chat-service.fullname" . }}-configmap
+            - secretRef:
+                name: {{ include "chat-service.fullname" . }}-secrets
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

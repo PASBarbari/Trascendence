@@ -96,6 +96,10 @@ const locationHandler = async () => {
 		cleanupPong();
 	}
 
+	if (routes[location]?.protected && checkAuth()) {
+        renderExpandableSidebar();
+    }
+
 	currentRoute = location;
 
 	if (wasOAuthRedirect && location === "home") {
@@ -138,7 +142,10 @@ const initializeApp = async () => {
     }
 
     preloadPongCSS();
-    renderExpandableSidebar();
+
+	if (checkAuth()) {
+    	renderExpandableSidebar();
+	}
 
     const toggleSettingsButton = document.getElementById("toggleSettingsButton");
     if (toggleSettingsButton) {

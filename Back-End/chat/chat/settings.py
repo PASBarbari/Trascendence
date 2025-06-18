@@ -36,10 +36,33 @@ Microservices = {
 	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
 	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
 	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
+	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
+	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
 
+# Get service hosts from environment
+K8S_SERVICE_HOSTS_RAW = os.getenv('K8S_SERVICE_HOSTS', '').split(',') if os.getenv('K8S_SERVICE_HOSTS') else []
+
+# For ALLOWED_HOSTS: hostnames only (strip schemes/ports)
+K8S_SERVICE_HOSTS_CLEAN = []
+for host in K8S_SERVICE_HOSTS_RAW:
+	if host:
+		# Remove http:// or https:// if present
+		clean_host = host.replace('http://', '').replace('https://', '')
+		# Remove port if present
+		if ':' in clean_host:
+			clean_host = clean_host.split(':')[0]
+		K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
+
+# For CORS: full URLs with schemes
+K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_RAW if host]
+
+K8S_SERVICE_HOSTS = K8S_SERVICE_HOSTS_CLEAN
 # Get service hosts from environment
 K8S_SERVICE_HOSTS_RAW = os.getenv('K8S_SERVICE_HOSTS', '').split(',') if os.getenv('K8S_SERVICE_HOSTS') else []
 
@@ -83,6 +106,7 @@ CORS_ALLOWED_ORIGINS = [
 	Microservices['Users'],
 	Microservices['Notifications'],
 	Microservices['Pong'],
+]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
@@ -191,7 +215,7 @@ DATABASES = {
 	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
 	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
 	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5436'),
+	'PORT': os.getenv('POSTGRES_PORT', '5432'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',
@@ -441,13 +465,6 @@ SIMPLE_JWT = {
 }
 
 OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
-Microservices = {
-	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
-	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
-	'Personal' : "Self",
-}
 
 SWAGGER_SETTINGS = {
 	'USE_SESSION_AUTH': False,

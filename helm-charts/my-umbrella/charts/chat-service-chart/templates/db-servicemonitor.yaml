@@ -1,0 +1,19 @@
+{{- if .Values.db.exporter.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "chat-service.fullname" . }}-db-metrics
+  namespace: {{ include "chat-service-chart.namespace" . }}
+  labels:
+    app: {{ .Release.Name }}-chat-db
+    {{- include "chat-service.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-chat-db
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+{{- end }}

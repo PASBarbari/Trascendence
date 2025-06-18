@@ -1,0 +1,29 @@
+{{- if and .Values.db.enabled .Values.db.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-notifications-db-pvc
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+  labels:
+    app: {{ .Release.Name }}-notifications-db
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+  {{- with .Values.db.persistence.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.db.persistence.size }}
+  {{- if .Values.db.persistence.storageClass }}
+  {{- if (eq "-" .Values.db.persistence.storageClass) }}
+  storageClassName: ""
+  {{- else }}
+  storageClassName: {{ .Values.db.persistence.storageClass }}
+  {{- end }}
+  {{- end }}
+{{- end }}

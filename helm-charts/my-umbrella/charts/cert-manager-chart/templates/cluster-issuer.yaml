@@ -1,0 +1,25 @@
+{{- if .Values.clusterIssuers.letsencrypt.enabled }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.clusterIssuers.letsencrypt.name }}
+spec:
+  acme:
+    server: {{ .Values.clusterIssuers.letsencrypt.server }}
+    email: {{ .Values.clusterIssuers.letsencrypt.email }}
+    privateKeySecretRef:
+      name: {{ .Values.clusterIssuers.letsencrypt.privateKeySecretName }}
+    solvers:
+    {{- range .Values.clusterIssuers.letsencrypt.solvers }}
+    - {{ toYaml . | nindent 6 }}
+    {{- end }}
+{{- end }}
+---
+{{- if .Values.clusterIssuers.selfsigned.enabled }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.clusterIssuers.selfsigned.name }}
+spec:
+  selfSigned: {}
+{{- end }}

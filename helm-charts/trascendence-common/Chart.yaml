@@ -1,0 +1,6 @@
+apiVersion: v2
+name: trascendence-common
+description: Common templates and utilities for Trascendence application
+type: library
+version: 0.1.0
+appVersion: "1.0.0"

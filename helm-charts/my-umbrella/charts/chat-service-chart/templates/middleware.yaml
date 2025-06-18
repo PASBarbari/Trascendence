@@ -1,0 +1,31 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers
+  namespace: {{ include "chat-service-chart.namespace" . }}
+  labels:
+    {{- include "chat-service.labels" . | nindent 4 }}
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+      X-Forwarded-Port: "443"
+      Connection: "Upgrade"
+      Upgrade: "websocket"
+    customResponseHeaders:
+      X-Frame-Options: "SAMEORIGIN"
+      X-Content-Type-Options: "nosniff"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https
+  namespace: {{ include "chat-service-chart.namespace" . }}
+  labels:
+    {{- include "chat-service.labels" . | nindent 4 }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+{{- end }}

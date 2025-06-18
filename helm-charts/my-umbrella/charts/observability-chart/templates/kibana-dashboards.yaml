@@ -1,0 +1,56 @@
+{{- if .Values.kibana.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-dashboards
+  namespace: {{ .Release.Namespace }}
+data:
+  # Kubernetes Overview Dashboard
+  kubernetes-overview.json: |
+    {
+      "version": "8.5.1",
+      "objects": [
+        {
+          "id": "kubernetes-overview",
+          "type": "dashboard",
+          "attributes": {
+            "title": "Kubernetes Overview",
+            "type": "dashboard",
+            "description": "Overview of Kubernetes cluster metrics",
+            "panelsJSON": "[{\"version\":\"8.5.1\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":15,\"i\":\"1\"},\"panelIndex\":\"1\",\"embeddableConfig\":{},\"panelRefName\":\"panel_1\"}]",
+            "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"hidePanelTitles\":false}",
+            "version": 1,
+            "timeRestore": false,
+            "kibanaSavedObjectMeta": {
+              "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+            }
+          }
+        }
+      ]
+    }
+  
+  # Trascendence Services Dashboard
+  trascendence-services.json: |
+    {
+      "version": "8.5.1",
+      "objects": [
+        {
+          "id": "trascendence-services",
+          "type": "dashboard",
+          "attributes": {
+            "title": "Trascendence Services",
+            "type": "dashboard",
+            "description": "Monitoring dashboard for Trascendence microservices",
+            "panelsJSON": "[{\"version\":\"8.5.1\",\"gridData\":{\"x\":0,\"y\":0,\"w\":48,\"h\":15,\"i\":\"1\"},\"panelIndex\":\"1\",\"embeddableConfig\":{\"title\":\"Service Logs\"},\"panelRefName\":\"panel_1\"}]",
+            "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"hidePanelTitles\":false}",
+            "version": 1,
+            "timeRestore": false,
+            "kibanaSavedObjectMeta": {
+              "searchSourceJSON": "{\"query\":{\"query\":\"kubernetes.container.name:(\\\"login-service\\\" OR \\\"chat-service\\\" OR \\\"frontend\\\")\",\"language\":\"kuery\"},\"filter\":[]}"
+            }
+          }
+        }
+      ]
+    }
+{{- end }}

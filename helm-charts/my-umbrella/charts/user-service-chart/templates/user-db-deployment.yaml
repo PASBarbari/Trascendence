@@ -1,0 +1,137 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "login-service-chart.fullname" . }}-db
+  namespace: {{ include "user-service-chart.namespace" . }}
+  labels:
+    {{- include "login-service-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+    app: {{ include "login-service-chart.name" . }}-db # Specific app label for DB
+spec:
+  serviceName: {{ include "login-service-chart.fullname" . }}-db
+  replicas: 1 # Consider making this configurable via Values db replicaCount
+  selector:
+    matchLabels:
+      {{- include "login-service-chart.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+      app: {{ include "login-service-chart.name" . }}-db # Ensure selector matches pod template
+  template:
+    metadata:
+      labels:
+        {{- include "login-service-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+        app: {{ include "login-service-chart.name" . }}-db # Consistent app label for DB pods
+    spec:
+      {{- if .Values.serviceAccount.create }} # Assuming a separate SA for DB might be desired
+      serviceAccountName: {{ .Values.serviceAccount.dbName | default (printf "%s-db" (include "login-service-chart.fullname" .)) }}
+      {{- end }}
+      containers:
+      - name: postgres
+        image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
+        imagePullPolicy: {{ .Values.db.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: db
+          containerPort: {{ .Values.db.service.port | default 5432 }}
+          protocol: TCP
+        env:
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
+              key: POSTGRES_DB
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets # Secrets named with fullname
+              key: POSTGRES_PASSWORD
+        # Add readiness and liveness probes for PostgreSQL
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER) # This requires POSTGRES_USER to be available in the env for the probe
+            - -d
+            - $(POSTGRES_DB)  # This requires POSTGRES_DB to be available in the env for the probe
+            - -h
+            - localhost
+            - -p
+            - "{{ .Values.db.service.port | default 5432 }}"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - $(POSTGRES_USER)
+            - -d
+            - $(POSTGRES_DB)
+            - -h
+            - localhost
+            - -p
+            - "{{ .Values.db.service.port | default 5432 }}"
+          initialDelaySeconds: 45
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.db.resources | nindent 10 }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+      {{- if .Values.db.exporter.enabled }}
+      - name: postgres-exporter
+        image: "{{ .Values.db.exporter.image.repository }}:{{ .Values.db.exporter.image.tag }}"
+        imagePullPolicy: {{ .Values.db.exporter.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - name: metrics
+          containerPort: 9187
+          protocol: TCP
+        env:
+        - name: DATA_SOURCE_NAME
+          value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets
+              key: POSTGRES_USER
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "login-service-chart.fullname" . }}-secrets
+              key: POSTGRES_DB
+        volumeMounts: []
+        resources:
+          {{- toYaml .Values.db.exporter.resources | nindent 10 }}
+      {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels: # Add labels to PVC template as well for consistency
+        {{- include "login-service-chart.labels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      {{- if .Values.db.persistence.storageClass }}
+      {{- if (eq "-" .Values.db.persistence.storageClass) }}
+      storageClassName: ""
+      {{- else }}
+      storageClassName: "{{ .Values.db.persistence.storageClass }}"
+      {{- end }}
+      {{- end }}
+      resources:
+        requests:
+          storage: {{ .Values.db.persistence.size | default "1Gi" }}

@@ -1,0 +1,113 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: crd-manager-{{ randAlphaNum 5 | lower }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  template:
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Function to check if CRDs exist
+          check_all_crds() {
+            echo "Checking for required CRDs..."
+            missing_crds=false
+            
+            # Check cert-manager CRDs
+            if kubectl get crd | grep -q "cert-manager.io"; then
+              echo "✅ cert-manager CRDs already exist"
+            else
+              echo "❌ cert-manager CRDs not found"
+              missing_crds=true
+            fi
+            
+            # Check ECK CRDs
+            if kubectl get crd | grep -q "k8s.elastic.co"; then
+              echo "✅ ECK CRDs already exist"
+            else
+              echo "❌ ECK CRDs not found"
+              missing_crds=true
+            fi
+            
+            # Check Prometheus Operator CRDs
+            if kubectl get crd | grep -q "monitoring.coreos.com"; then
+              echo "✅ Prometheus Operator CRDs already exist"
+            else
+              echo "❌ Prometheus Operator CRDs not found"
+              missing_crds=true
+            fi
+            
+            # Check Traefik CRDs
+            if kubectl get crd | grep -q "traefik.containo.us"; then
+              echo "✅ Traefik CRDs already exist"
+            else
+              echo "❌ Traefik CRDs not found"
+              missing_crds=true
+            fi
+            
+            if [ "$missing_crds" = "false" ]; then
+              echo "✅ All required CRDs are present"
+              return 0
+            else
+              echo "❌ Some CRDs are missing, will install them"
+              return 1
+            fi
+          }
+
+          # Always install missing CRDs
+          echo "Starting CRD installation process..."
+          
+          # Install cert-manager CRDs if missing
+          if ! kubectl get crd | grep -q "cert-manager.io"; then
+            echo "Installing cert-manager CRDs..."
+            kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
+          fi
+          
+          # Install ECK CRDs and Operator if missing
+          if ! kubectl get crd | grep -q "k8s.elastic.co"; then
+            echo "Installing ECK CRDs and Operator..."
+            kubectl create -f https://download.elastic.co/downloads/eck/2.9.0/crds.yaml || echo "ECK CRDs already exist"
+            kubectl apply -f https://download.elastic.co/downloads/eck/2.9.0/operator.yaml || echo "ECK Operator already exists"
+          fi
+          
+          # Install Traefik CRDs if missing
+          if ! kubectl get crd | grep -q "traefik.containo.us"; then
+            echo "Installing Traefik CRDs..."
+            kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml || echo "Traefik CRDs already exist"
+          fi
+          
+          # Install Prometheus Operator CRDs if missing
+          if ! kubectl get crd | grep -q "monitoring.coreos.com"; then
+            echo "Installing Prometheus Operator CRDs..."
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml || echo "ServiceMonitor CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml || echo "PrometheusRule CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml || echo "Prometheus CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml || echo "AlertManager CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml || echo "PodMonitor CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml || echo "Probe CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml || echo "ThanosRuler CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml || echo "AlertManagerConfig CRD already exists"
+            kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml || echo "ScrapeConfig CRD already exists"
+          fi
+
+          # Create required namespaces if needed
+          echo "Creating required namespaces..."
+          kubectl get namespace cert-manager > /dev/null 2>&1 || kubectl create namespace cert-manager
+          kubectl get namespace elastic-system > /dev/null 2>&1 || kubectl create namespace elastic-system
+          kubectl get namespace monitoring > /dev/null 2>&1 || kubectl create namespace monitoring
+          
+          # Wait for ECK operator to be ready
+          echo "Waiting for ECK operator to be ready..."
+          kubectl wait --for=condition=available --timeout=300s deployment/elastic-operator -n elastic-system || echo "ECK operator may not be ready yet"
+          
+          echo "✅ CRD installation and namespace setup completed successfully"
+      restartPolicy: Never

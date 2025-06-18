@@ -61,6 +61,11 @@ K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_
 
 K8S_SERVICE_HOSTS = K8S_SERVICE_HOSTS_CLEAN
 
+# Add additional service hosts from environment if provided
+# if os.environ.get('K8S_SERVICE_HOSTS'):
+# 	additional_hosts = os.environ.get('K8S_SERVICE_HOSTS').split(',')
+# 	K8S_SERVICE_HOSTS.extend([host.strip() for host in additional_hosts if host.strip()])
+
 ALLOWED_HOSTS = [
 	'localhost',
 	'localhost:3000',

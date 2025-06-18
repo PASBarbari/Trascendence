@@ -1,0 +1,29 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "notifications-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+  labels:
+    {{- include "notifications-service-chart.labels" . | nindent 4 }}
+spec:
+  headers:
+    customRequestHeaders:
+      Connection: "upgrade"
+      Upgrade: "websocket"
+    customResponseHeaders:
+      Connection: "upgrade"
+      Upgrade: "websocket"
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "notifications-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+  labels:
+    {{- include "notifications-service-chart.labels" . | nindent 4 }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+{{- end }}
