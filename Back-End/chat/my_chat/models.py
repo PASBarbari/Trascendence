@@ -8,8 +8,13 @@ class UserProfile(models.Model):
 	username = models.CharField(max_length=255, null=True)
 	email = models.EmailField(max_length=255, unique=True, null=True)
 	is_staff = models.BooleanField(default=False)
-	blockedUsers = models.ManyToManyField('self', symmetrical=False, related_name='blocked_by', blank=True)
-
+	blockedUsers = models.ManyToManyField(
+		'self', 
+		symmetrical=False, 
+		related_name='blocked_by', 
+		blank=True
+	)
+		
 	@property
 	def is_authenticated(self):
 		return True

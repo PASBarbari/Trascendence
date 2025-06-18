@@ -9,6 +9,11 @@ class userSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = UserProfile
 		fields = '__all__'
+  
+class userCreateSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = UserProfile
+		fields =  ['user_id', 'username', 'email']
 
 class userBlockedSerializer(serializers.ModelSerializer):
 	class Meta:

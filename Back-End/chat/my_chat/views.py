@@ -9,7 +9,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from .models import ChatRoom, UserProfile, ChatMessage
 from django.contrib.auth.models import AnonymousUser
-from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer, userBlockedSerializer
+from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer, userBlockedSerializer, userCreateSerializer
 from .middleware import ServiceAuthentication, JWTAuthMiddleware , JWTAuth
 from .authentications import TokenAuthentication
 from drf_yasg.utils import swagger_auto_schema
@@ -119,7 +119,7 @@ class GetChatInfo(generics.RetrieveAPIView):
 		return ChatRoom.objects.filter(room_id=room_id)
 
 class new_user(generics.ListCreateAPIView):
-	serializer_class = userSerializer
+	serializer_class = userCreateSerializer
 	queryset = UserProfile.objects.all()
 
 	def get_permissions(self):

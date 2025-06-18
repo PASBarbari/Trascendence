@@ -22,6 +22,60 @@ fontAwesome.href =
 	"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css";
 document.head.appendChild(fontAwesome);
 
+async function testBackendHealth() {
+	console.log("🏥 Testing backend health...");
+
+	const { url_api } = getVariables();
+
+	try {
+		const response = await fetch(`${url_api}/pong/ready`);
+		console.log("Pong service status:", response.status);
+
+		if (response.ok) {
+			const data = await response.json();
+			console.log("✅ Pong service healthy:", data);
+			return true;
+		} else {
+			const text = await response.text();
+			console.error("❌ Pong service unhealthy:", text.substring(0, 200));
+			return false;
+		}
+	} catch (error) {
+		console.error("❌ Cannot reach pong service:", error);
+		return false;
+	}
+}
+
+async function testServerSideWebSocket() {
+	console.log("🧪 Testing serverSide WebSocket...");
+
+	try {
+		// First check if backend is healthy
+		const isHealthy = await testBackendHealth();
+
+		if (!isHealthy) {
+			throw new Error(
+				"Backend service is not healthy. Please restart services."
+			);
+		}
+
+		// Import the serverSide module
+		const { createGame } = await import("./multiplayer/serverSide.js");
+
+		// Get user data
+		const { userId } = getVariables();
+		console.log("User ID:", userId);
+
+		// Create game and connect WebSocket
+		await createGame(parseInt(userId), parseInt(userId));
+
+		console.log("✅ WebSocket test initiated");
+	} catch (error) {
+		console.error("❌ WebSocket test failed:", error);
+	}
+}
+
+// Update your existing renderPongInfo function
 function renderPongInfo() {
 	const pongInfoContainer = document.getElementById("pongContainer");
 	pongInfoContainer.innerHTML = `
@@ -36,6 +90,9 @@ function renderPongInfo() {
                 </button>
                 <button class="btn btn-secondary" onclick="handleMultiPong()">
                     <i class="fas fa-users me-2"></i>Online
+                </button>
+                <button class="btn btn-warning" onclick="testServerSideWebSocket()">
+                    <i class="fas fa-flask me-2"></i>Test ServerSide WS
                 </button>
             </div>
         </div>
@@ -444,7 +501,8 @@ function closeRegisterBox() {
 window.closeFriendList = closeFriendList;
 window.handleLocalePong = handleLocalePong;
 window.handleMultiPong = handleMultiPong;
-// window.inviteToGame = inviteToGame;
+window.testServerSideWebSocket = testServerSideWebSocket;
+window.testBackendHealth = testBackendHealth;
 window.closeLoginBox = closeLoginBox;
 window.closeRegisterBox = closeRegisterBox;
 

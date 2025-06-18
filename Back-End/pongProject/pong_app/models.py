@@ -22,7 +22,7 @@ class UserProfile(models.Model):
 
 class Game(models.Model):
 	id = models.AutoField(primary_key=True)
-	player_1 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_1')
+	player_1 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_1', null=True)
 	player_2 = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='player_2', null=True)
 	player_1_score = models.IntegerField(default=0)
 	player_2_score = models.IntegerField(default=0)
