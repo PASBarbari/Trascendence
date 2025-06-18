@@ -49,7 +49,7 @@ Grafana Dashboard:
 {{- end }}
 
 {{- if index .Values "observability-chart" "eck-kibana" "enabled" }}
-Kibana (ELK Stack):
+Kibana (observability Stack):
   {{- if index .Values "observability-chart" "ingress" "enabled" }}
   URL: https://kibana.trascendence.local
   {{- else }}

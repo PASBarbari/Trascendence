@@ -82,3 +82,11 @@ helm-charts/my-umbrella/charts/chat-service-chart/values.yaml
 helm-charts/my-umbrella/charts/login-service-chart/values.yaml
 helm-charts/my-umbrella/charts/login-service-chart/values.yaml
 helm-charts/my-umbrella/charts/chat-service-chart/values.yaml
+helm-charts/my-umbrella/charts/cert-manager-chart-0.1.0.tgz
+helm-charts/my-umbrella/charts/chat-service-chart-0.1.0.tgz
+helm-charts/my-umbrella/charts/front-end-chart-0.1.0.tgz
+helm-charts/my-umbrella/charts/login-service-chart-0.1.0.tgz
+helm-charts/my-umbrella/charts/pong-service-chart-0.1.0.tgz
+helm-charts/my-umbrella/charts/front-end-chart/values.yaml
+helm-charts/my-umbrella/charts/cert-manager-chart/values.yaml
+*.tgz

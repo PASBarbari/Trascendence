@@ -55,3 +55,14 @@ spec:
             name: {{ include "user-service-chart.fullname" . }}-config
         - secretRef:
             name: {{ include "user-service-chart.fullname" . }}-secrets
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: avatars-storage
+          mountPath: {{ .Values.persistence.mountPath }}
+        {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: avatars-storage
+        persistentVolumeClaim:
+          claimName: {{ include "user-service-chart.fullname" . }}-avatars-pvc
+      {{- end }}

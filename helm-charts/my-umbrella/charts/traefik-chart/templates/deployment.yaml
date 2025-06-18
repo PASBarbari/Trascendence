@@ -37,25 +37,7 @@ spec:
           containerPort: 8080
           protocol: TCP
         args:
-        - --global.checknewversion=false
-        - --global.sendanonymoususage=false
-        - --entrypoints.web.address=:80
-        - --entrypoints.web.http.redirections.entrypoint.to=websecure
-        - --entrypoints.web.http.redirections.entrypoint.scheme=https
-        - --entrypoints.websecure.address=:443
-        - --api=true
-        - --api.dashboard=true
-        - --api.insecure=true
-        - --providers.kubernetes=true
-        - --providers.kubernetes.ingressclass=traefik
-        - --providers.kubernetescrd=true
-        - --providers.kubernetescrd.allowcrossnamespace=true
-        - --log.level=INFO
-        - --accesslog=true
-        - --metrics.prometheus=true
-        - --metrics.prometheus.addentrypointslabels=true
-        - --metrics.prometheus.addserviceslabels=true
-        - --ping=true
+        - --configFile=/config/traefik.yml
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         livenessProbe:
@@ -79,9 +61,15 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: config
+          mountPath: /config
+          readOnly: true
       volumes:
       - name: data
         emptyDir: {}
+      - name: config
+        configMap:
+          name: {{ include "traefik-chart.fullname" . }}-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

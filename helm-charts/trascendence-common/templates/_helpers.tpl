@@ -64,8 +64,6 @@ Usage: {{ include "trascendence.name" (dict "Chart" .Chart "Values" .Values "Rel
 {{- "redis-namespace" -}}
 {{- else if eq $ctx.Component "minio" -}}
 {{- "minio" -}}
-{{- else if eq $ctx.Component "elk" -}}
-{{- "elk" -}}
 {{- else -}}
 {{- $ctx.Values.namespace -}}
 {{- end -}}
