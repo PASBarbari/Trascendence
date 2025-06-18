@@ -1,6 +1,48 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+.App{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+.logo-image {
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+.propic-image {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    min-width: 30px;
+}
+.navbar {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    padding: 8px !important;
+}
+.expandable-sidebar-container {
+    display: flex;
+    height: 100%;
+    min-width: 60px;
+}
 .content {
     height: 100%;
     width: 100%;
-	border-top-left-radius: 12px;
-
+    border-top-left-radius: 12px;
+    position: relative;
+    background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%);
 }

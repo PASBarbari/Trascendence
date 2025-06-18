@@ -1,17 +1,17 @@
 import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
-link.href = "/public/profile/profile.css";
+link.href = "/profile/profile.css";
 document.head.appendChild(link);
 
 async function PatchProfile(name, surname, birthdate, bio) {
 	const { userId, url_api } = getVariables();
 
 	try {
-		const response = await fetch(`${url_api}/user/user/${userId}/`, {
-			// user/levelup user_id e exp
+		const response = await fetch(`${url_api}/user/user/me`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
@@ -27,45 +27,22 @@ async function PatchProfile(name, surname, birthdate, bio) {
 		});
 
 		if (response.ok) {
-			const data = await response.json();
-			console.log("Profile:", data);
+			showAlertForXSeconds("Profile updated successfully", "success", 3, { asToast: true });
 		} else {
 			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
+			console.error("Server response error:", errorData);
+			showAlertForXSeconds("Error updating profile", "error", 3, { asToast: true });
 		}
 	} catch (error) {
-		console.error("Errore nella richiesta:", error);
+		console.error("Request error:", error);
+		showAlertForXSeconds("Network error", "error", 3, { asToast: true });
 	}
-}
-
-// Aggiungi questa funzione al tuo file
-async function downloadImageAsBlob(imageUrl, token) {
-    try {
-        const imageResponse = await fetch(imageUrl, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-
-        if (imageResponse.ok) {
-            const imageBlob = await imageResponse.blob();
-            const localImageUrl = URL.createObjectURL(imageBlob);
-            console.log("Immagine scaricata e convertita in URL locale:", localImageUrl);
-            return localImageUrl;
-        } else {
-            console.error("Errore nel recupero dell'immagine:", imageResponse.status);
-            return null;
-        }
-    } catch (error) {
-        console.error("Errore durante il download dell'immagine:", error);
-        return null;
-    }
 }
 
 async function GetProfile() {
 	const { userId, token, url_api } = getVariables();
 	try {
-		const response = await fetch(`${url_api}/user/user/user/me/`, {
+		const response = await fetch(`${url_api}/user/user/me`, {
 			method: "GET",
 			headers: {
 				"Content-Type": "application/json",
@@ -74,46 +51,33 @@ async function GetProfile() {
 			},
 		});
 
-        if (response.ok) {
-            const data = await response.json();
-            console.log("Profile:", data);
+		if (response.ok) {
+			const data = await response.json();
 
-		let localImageUrl = null;
-		let avatarUrl = "";
-		if (data.current_avatar_url) {
-			// Estrai solo il nome del file
-			const filename = data.current_avatar_url.split('/').pop();
+			let profileImageUrl = "";
 			
-			// URL corretto per il proxy
-			// avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${filename}?token=${token}`;
-			avatarUrl = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
-			// avatarUrl = avatarUrl.replace(" ", "%20");
+			// Handle current_avatar object structure
+			if (data.current_avatar && data.current_avatar.image_url) {
+				profileImageUrl = url_api + '/user' + data.current_avatar.image_url;
+			}
 
-			console.log("Downloading profile image from:", avatarUrl);
-		}
-
-		if (avatarUrl !== "") {
-			localImageUrl = await downloadImageAsBlob(avatarUrl, token);
-		}
-
-		setVariables({
-			name: data.first_name || "",
-			surname: data.last_name || "",
-			birthdate: data.birth_date || "",
-			bio: data.bio || "",
-			level: data.level ?? "",
-			exp: data.exp ?? "",
-			profileImageUrl: localImageUrl || "",
-		});
-		console.log("level e exp:", data.level, data.exp);
-		console.log("Variables after GetProfile:", getVariables()); // Aggiungi questo per il debug
+			setVariables({
+				name: data.first_name || "",
+				surname: data.last_name || "",
+				birthdate: data.birth_date === null ? "" : data.birth_date,
+				bio: data.bio || "",
+				level: data.level ?? "",
+				exp: data.exp ?? "",
+				profileImageUrl: profileImageUrl,
+				has_two_factor_auth: data.has_two_factor_auth || false,
+			});
 
 		} else {
 			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
+			console.error("Error fetching profile:", errorData);
 		}
 	} catch (error) {
-		console.error("Errore nella richiesta:", error);
+		console.error("Error fetching profile:", error);
 	}
 }
 
@@ -124,9 +88,8 @@ async function initializeProfile() {
 		});
 	}
 
-	// Verifica che l'elemento esista
 	if (!document.getElementById("profile")) {
-		console.error("TODO remove Elemento #profile non trovato nel DOM");
+		console.error("Profile element not found in DOM");
 		return;
 	}
 
@@ -146,8 +109,8 @@ function renderProfile() {
 		level,
 		exp,
 		profileImageUrl,
+		has_two_factor_auth,
 	} = getVariables();
-	console.log("level e exp:", level, exp);
 	let edit = false;
 
 	const profileDiv = document.getElementById("profile");
@@ -188,23 +151,29 @@ function renderProfile() {
 						<div class="profile-form-group level">
 							<label for="level" id="level">Level: ${level}, Exp: ${exp}</label>
 							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-range readonly-input custom-range">
-							<!--span id="expValue">exp: ${exp}</span-->
+						</div>
+
+						<div class="profile-form-group">
+							<label for="2fAuth" style="height:21px"></label>
+							<button id="toggle2FAButton" type="button" class="btn btn-outline-danger">
+								${has_two_factor_auth ? "Disable" : "Enable"} 2FA
+							</button>
 						</div>
 
 					</form>
 				</div>
 				<div class="profile-card-image-container">
 					<button class="profile-image-circle">
-						<img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" />
+						<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" />
 						<div class="edit-icon-overlay">
 							<i class="bi bi-pencil"></i>
 						</div>
 					</button>
 					<div class="buttons">
-						<button id="editButton" class="edit-button btn btn-light">
+						<button id="editButton" class="btn btn-outline-warning">
 							<i class="bi bi-pencil edit-icon"></i>
 						</button>
-						<button id="saveButton" class="save-button btn btn-light">
+						<button id="saveButton" class="btn btn-outline-success">
 							<i class="bi bi-save save-icon"></i>
 						</button>
 					</div>
@@ -232,12 +201,22 @@ function renderProfile() {
 				input.classList.remove("readonly-input");
 			});
 			profileImageContainer.classList.add("edit-mode");
+
+			const birthdateInput = document.getElementById("birthdate");
+			if (birthdateInput && birthdateInput.value === "") {
+				birthdateInput.type = "date";
+			}
 		} else {
 			form.querySelectorAll("input, textarea").forEach((input) => {
 				input.setAttribute("readonly", true);
 				input.classList.add("readonly-input");
 			});
 			profileImageContainer.classList.remove("edit-mode");
+
+			const birthdateInput = document.getElementById("birthdate");
+			if (birthdateInput && birthdateInput.value === "") {
+				birthdateInput.type = "text";
+			}
 		}
 	});
 
@@ -265,19 +244,130 @@ function renderProfile() {
 		profileImageContainer.classList.remove("edit-mode");
 	});
 
-	// Aggiungi l'event listener per aggiornare lo stile della barra di scorrimento
+	// Update progress bar styling
 	const expInput = document.getElementById("exp");
-	// const expValueSpan = document.getElementById('expValue');
-
 	expInput.addEventListener("input", function () {
-		// expValueSpan.textContent = `exp: ${expInput.value}`;
 		expInput.style.setProperty("--value", `${expInput.value}%`);
 	});
-
-	// Imposta il valore iniziale
 	expInput.style.setProperty("--value", `${expInput.value}%`);
 
-	// Event listener per l'immagine del profilo
+	const toggle2FAButton = document.getElementById("toggle2FAButton");
+	toggle2FAButton.addEventListener("click", async function(e) {
+		e.preventDefault();
+		if (has_two_factor_auth) {
+			// Disable 2FA
+			try {
+				const response = await fetch(`${getVariables().url_api}/login/login/2fa/disable/`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+						"Authorization": `Bearer ${getVariables().token}`
+						}
+					});
+				if (response.ok) {
+					setVariables({
+						has_two_factor_auth: false
+					});
+					showAlertForXSeconds("2FA disabled successfully", "success", 3, { asToast: true });
+					toggle2FAButton.innerText = "Enable 2FA";
+					renderProfile();
+				} else {
+					const data = await response.json();
+					alert(data.error || "Error disabling 2FA");
+				}
+			} catch (error) {
+				alert("Error disabling 2FA");
+			}
+		}
+		else {
+			try {
+				// Fetch the OTP URI from the server
+				const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
+					method: "GET",
+					headers: {
+						"Authorization": `Bearer ${getVariables().token}`
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error("Failed to fetch 2FA setup");
+				}
+
+				const data = await response.json();
+				const otpUri = data.otp_uri;
+
+				const qrModal = document.createElement("div");
+				qrModal.className = "login-box-modal";
+				qrModal.innerHTML = `
+					<div class="login_box">
+						<h1>Set up Two-Factor Authentication</h1>
+						<p>Scan this QR Code with your authenticator app (such as Google Authenticator)</p>
+						<div id="qrCodeContainer" style="text-align:center; margin: 20px 0;"></div>
+						<form id="setup2FAForm" class="d-flex flex-column align-items-center">
+							<div class="form-group" style="width: 100%; margin-bottom: 15px;">
+								<label for="otpCode">Enter the code shown in the app:</label>
+								<input type="text" id="otpCode" class="form-control" required maxlength="6" inputmode="numeric">
+							</div>
+							<div style="display: flex; gap: 10px; width: 100%;">
+								<button type="submit" class="btn btn-primary" style="flex: 1;">Verify</button>
+								<button type="button" id="closeQrModal" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+							</div>
+						</form>
+					</div>
+				`;
+				document.body.appendChild(qrModal);
+
+				// Genera il QR code usando la libreria
+				const qrCodeContainer = qrModal.querySelector("#qrCodeContainer");
+				new QRCode(qrCodeContainer, {
+					text: otpUri,
+					width: 200,
+					height: 200,
+					correctLevel: QRCode.CorrectLevel.H
+				});
+
+				const closeQrModalBtn = qrModal.querySelector("#closeQrModal");
+				closeQrModalBtn.addEventListener("click", function () {
+					document.body.removeChild(qrModal);
+				});
+
+				const setup2FAForm = qrModal.querySelector("#setup2FAForm");
+				setup2FAForm.addEventListener("submit", async function (event) {
+				event.preventDefault();
+				const otpCode = qrModal.querySelector("#otpCode").value;
+
+				try {
+					const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							"Authorization": `Bearer ${getVariables().token}`
+						},
+						body: JSON.stringify({ otp_code: otpCode })
+					});
+
+					if (response.ok) {
+						setVariables({
+							has_two_factor_auth: true
+						});
+						toggle2FAButton.innerText = "Disable 2FA";
+						showAlertForXSeconds("2FA setup successful", "success", 3, { asToast: true });
+						document.body.removeChild(qrModal);
+					} else {
+						showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });
+					}
+				} catch (error) {
+					showAlertForXSeconds("Network error during OTP verification", "error", 3, { asToast: true });
+				}
+			});
+
+			} catch (error) {
+				console.error("Error during 2FA setup:", error);
+			}
+		}
+	});
+
+	// Profile image upload handler
 	profileImage.addEventListener("click", function (e) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -285,29 +375,26 @@ function renderProfile() {
 		const profileImageSelector = document.createElement("div");
 		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
-        <div class="login_box">
-            <h1>Seleziona un'immagine</h1>
-            <div class="profile-image-preview">
-                <img src="${profileImageUrl || '/public/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
-            </div>
-            <div class="profile-image-controls">
-                <label for="imageUpload" class="upload-btn">Scegli un file</label>
-                <input type="file" id="imageUpload" accept="image/*" style="display: none;">
-                <button id="uploadImageBtn" class="btn btn-primary">Carica immagine</button>
-                <button id="cancelImageBtn" class="btn btn-secondary">Annulla</button>
-            </div>
-        </div>
-    `;
+		<div class="login_box">
+			<h1>Select an image</h1>
+			<div class="profile-image-preview">
+				<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
+			</div>
+			<div class="profile-image-controls">
+				<label for="imageUpload" class="upload-btn">Choose file</label>
+				<input type="file" id="imageUpload" accept="image/*" style="display: none;">
+				<button id="uploadImageBtn" class="btn btn-primary">Upload image</button>
+				<button id="cancelImageBtn" class="btn btn-secondary">Cancel</button>
+			</div>
+		</div>
+	`;
 		document.body.appendChild(profileImageSelector);
 
 		// Add event listeners for the file input and buttons
 		const imageUpload = profileImageSelector.querySelector("#imageUpload");
-		const imagePreview =
-			profileImageSelector.querySelector("#imagePreview");
-		const uploadImageBtn =
-			profileImageSelector.querySelector("#uploadImageBtn");
-		const cancelImageBtn =
-			profileImageSelector.querySelector("#cancelImageBtn");
+		const imagePreview = profileImageSelector.querySelector("#imagePreview");
+		const uploadImageBtn = profileImageSelector.querySelector("#uploadImageBtn");
+		const cancelImageBtn = profileImageSelector.querySelector("#cancelImageBtn");
 
 		// Preview the selected image
 		imageUpload.addEventListener("change", function (event) {
@@ -320,109 +407,72 @@ function renderProfile() {
 				reader.readAsDataURL(file);
 			}
 		});
-					//TODO se carichi l'immagine poi fa get a https://https//minio.trascendence.42firenze.it/user-media/avatars/Avatar_for_marco24 perche' data.avatar e' sbagliato
-
-		// Upload the selected image
+		
 		uploadImageBtn.addEventListener("click", async function () {
 			const file = imageUpload.files[0];
 			if (!file) {
-				console.error("Nessun file selezionato");
+				showAlertForXSeconds("No file selected", "error", 3, { asToast: true });
 				return;
 			}
 
-			// Check if file is an image png or jpeg
 			if (!file.type.startsWith("image/")) {
-				console.error("Il file selezionato non è un'immagine");
+				showAlertForXSeconds("Selected file is not an image", "error", 3, { asToast: true });
 				return;
 			}
-			// Check if file size is greater than 10MB (10 * 1024 * 1024 bytes)
-			const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+
+			const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 			if (file.size > MAX_FILE_SIZE) {
-				console.error("File troppo grande, massimo 10MB");
+				showAlertForXSeconds("File too large, maximum 10MB", "error", 3, { asToast: true });
 				return;
 			}
 
 			try {
 				const formData = new FormData();
 				formData.append("image", file);
-				//add https to url al posto di http
 
-				const { userId, token, url_api } = getVariables();
+				const { token, url_api } = getVariables();
 
-				const response = await fetch(
-					`${url_api}/user/user/avatar`,
-					{
-						method: "POST",
-						headers: {
-							Authorization: `Bearer ${token}`,
-							// Don't set Content-Type here, it will be set automatically for FormData
-						},
-						body: formData,
-					}
-				);
+				const response = await fetch(`${url_api}/user/user/avatar`, {
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token}`,
+					},
+					body: formData,
+				});
 
 				if (response.ok) {
 					const data = await response.json();
-					console.log("Immagine caricata con successo:", data);
-
-					let avatarPost = data.avatar;
-
-					// Rimuovi doppi protocolli (se presenti)
-					if (avatarPost && avatarPost.match(/^https?:\/\/https?:\/\//)) {
-						avatarPost = avatarPost.replace(/^(https?:\/\/)https?:\/\//, "$1");
-					}
 					
-					// Forza HTTPS se necessario
-					if (avatarPost && avatarPost.startsWith("http://")) {
-						avatarPost = avatarPost.replace("http://", "https://");
-					}
+					// Update avatar URL
+					const avatarUrl = url_api + '/user' + data.avatar;
+					setVariables({
+						profileImageUrl: avatarUrl
+					});
 					
-					// Estrai il nome del file per consistenza con il resto del codice
-					if (avatarPost) {
-						const filename = avatarPost.split('/').pop();
-						// Usa lo stesso formato usato nella funzione GetProfile
-						avatarPost = `https://minio.trascendence.42firenze.it/jwt-validator/minio-proxy/avatars/${encodeURIComponent(filename)}`;
-					}
-					
-					console.log("URL normalizzato:", avatarPost);
+					// Update the image in the UI
+					document.querySelector(".profile-card-image").src = avatarUrl;
+					showAlertForXSeconds("Avatar uploaded successfully", "success", 3, { asToast: true });
 
-					// Scarica l'immagine come blob
-					const localImageUrl = await downloadImageAsBlob(avatarPost, token);
-					if (localImageUrl) {
-						setVariables({
-							profileImageUrl: localImageUrl
-						});
-						
-						// Aggiorna l'immagine nell'UI
-						document.querySelector(".profile-card-image").src = localImageUrl;
-					} else {
-						// Fallback all'anteprima locale
-						document.querySelector(".profile-card-image").src = imagePreview.src;
-					}
-
-					// Close the modal
 					closeProfileImageSelector();
 				} else {
 					const errorData = await response.json();
-					console.error(
-						"Errore nel caricamento dell'immagine:",
-						errorData
-					);
+					console.error("Error uploading image:", errorData);
+					showAlertForXSeconds("Error uploading image", "error", 3, { asToast: true });
 				}
 			} catch (error) {
-				console.error("Errore durante il caricamento:", error);
+				console.error("Upload error:", error);
+				showAlertForXSeconds("Upload failed", "error", 3, { asToast: true });
 			}
 		});
 
 		// Cancel button
-		cancelImageBtn.addEventListener("click", function () {
-			closeProfileImageSelector();
-		});
+		cancelImageBtn.addEventListener("click", closeProfileImageSelector);
 
 		function closeProfileImageSelector() {
 			document.body.removeChild(profileImageSelector);
 		}
 
+		// Close modal when clicking outside
 		window.addEventListener("click", function (event) {
 			if (event.target === profileImageSelector) {
 				closeProfileImageSelector();
@@ -430,7 +480,5 @@ function renderProfile() {
 		});
 	});
 }
-
-// initializeProfile();
 
 export { renderProfile, initializeProfile };

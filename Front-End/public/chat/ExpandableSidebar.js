@@ -2,14 +2,17 @@ import { getVariables } from '../var.js';
 import { renderAddChat } from './AddChat.js';
 import { renderChatBubble } from './ChatBubble.js';
 import { getCookie } from '../cookie.js';
+import { getBlockedUsersList, showBlockedUsersModal } from './blockUser.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
-link.href = '/public/chat/chat.css';
+link.href = '/chat/chat.css';
 document.head.appendChild(link);
 
 const displayedDates = new Set();
 let addChatContainer = null;
+let blockedUserListModal = null;
+let blockedUsers = []; // Cache degli utenti bloccati
 
 function isFirstMessageOfDay(date) {
 	const dateString = date.toLocaleDateString('it-IT');
@@ -20,16 +23,22 @@ function isFirstMessageOfDay(date) {
 	return false;
 }
 
+async function getBlockedUsers() {
+    blockedUsers = await getBlockedUsersList();
+    console.log("Utenti bloccati caricati:", blockedUsers);
+    return blockedUsers;
+}
+
 async function getChatRooms() {
 	const { userId, token, url_api } = getVariables();
 	console.log("/-----ExpandableSidebar.js-----\\");
 	console.log("user_id in sidechat: ", userId);
 	console.log("Token getChatRooms:", token);
-	console.log(`${url_api}/chat/chat_rooms/getchat/?users=${userId}`);
+	console.log(`${url_api}/chat/chat_rooms/getchat/`);
 	console.log("\\_____ExpandableSidebar.js_____/");
 	try {
 		const response = await fetch(
-			`${url_api}/chat/chat/chat_rooms/getchat/?user_id=${userId}`,
+			`${url_api}/chat/chat/chat_rooms/getchat/`,
 			{
 				method: "GET",
 				headers: {
@@ -42,55 +51,56 @@ async function getChatRooms() {
 
 		if (response.ok) {
 			const data = await response.json();
-			console.log("Risposta dal server:", data);
+			console.log("Risposta di getChatRooms:", data);
 			return data;
 		} else {
 			const errorData = await response.json();
-			console.error("Errore nella risposta del server:", errorData);
+			console.error("Errore nella risposta di getChatRooms:", errorData);
 			return null;
 		}
 	} catch (error) {
-		console.error("Errore nella richiesta:", error);
+		console.error("Errore nella richiesta di getChatRooms:", error);
 		return null;
 	}
 }
 
-function renderExpandableSidebar() {
-	const sidebarContainer = document.querySelector('.expandable-sidebar-container');
-	sidebarContainer.innerHTML = `
-		<div class="sidebar">
-			<button id="toggleChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-chevron-right"></i>
-			</button>
-			<button id="createChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-plus"></i>
-			</button>
-			<button id="singleChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-chat-dots"></i>
-			</button>
-			<button id="groupChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-people"></i>
-			</button>
-			<button id="randomChatButton" class="btn btn-light mb-2">
-				<i class="bi bi-shuffle"></i>
-			</button>
-		</div>
-		<div id="chatContainer" class="chat-container"></div>
-	`;
+async function renderExpandableSidebar() {
+    const sidebarContainer = document.querySelector('.expandable-sidebar-container');
+    sidebarContainer.innerHTML = `
+        <div class="sidebar">
+            <button id="toggleChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <button id="createChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-plus"></i>
+            </button>
+            <button id="blockUsers" class="btn btn-light mb-2">
+                <i class="bi bi-chat-dots"></i>
+            </button>
+            <button id="groupChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-people"></i>
+            </button>
+            <button id="randomChatButton" class="btn btn-light mb-2">
+                <i class="bi bi-shuffle"></i>
+            </button>
+        </div>
+        <div id="chatContainer" class="chat-container"></div>
+    `;
 
-	const toggleChatButton = document.getElementById('toggleChatButton');
-	const chatContainer = document.getElementById('chatContainer');
-	let chatContainerOpen = false; // Variabile per gestire lo stato di apertura
+    const toggleChatButton = document.getElementById('toggleChatButton');
+    const chatContainer = document.getElementById('chatContainer');
+    let chatContainerOpen = false;
 
-	toggleChatButton.addEventListener('click', function () {
-		chatContainerOpen = !chatContainerOpen;
-		chatContainer.classList.toggle('open', chatContainerOpen);
-		toggleChatButton.innerHTML = chatContainerOpen ? `
-			<i class="bi bi-chevron-left"></i>
-		` : `
-			<i class="bi bi-chevron-right"></i>
-		`;
-	});
+    toggleChatButton.addEventListener('click', function () {
+        chatContainerOpen = !chatContainerOpen;
+        chatContainer.classList.toggle('open', chatContainerOpen);
+        
+        toggleChatButton.innerHTML = chatContainerOpen ? `
+            <i class="bi bi-chevron-left"></i>
+        ` : `
+            <i class="bi bi-chevron-right"></i>
+        `;
+    });
 
 	document.getElementById('createChatButton').addEventListener('click', function () {
 		if (addChatContainer) {
@@ -102,7 +112,17 @@ function renderExpandableSidebar() {
 		}
 	});
 
-	document.getElementById('singleChatButton').addEventListener('click', function () {
+	document.getElementById('blockUsers').addEventListener('click', function () {
+		if (blockedUserListModal) {
+			chatContainer.removeChild(blockedUserListModal);
+			blockedUserListModal = null;
+		} else {
+			blockedUserListModal = showBlockedUsersModal();
+			chatContainer.insertBefore(blockedUserListModal, chatContainer.firstChild);
+		}
+	});
+
+	document.getElementById('groupChatButton').addEventListener('click', function () {
 		renderChatItem({
 			id: '5',
 			name: 'Eve',
@@ -111,28 +131,35 @@ function renderExpandableSidebar() {
 		});
 	});
 
-	document.getElementById('groupChatButton').addEventListener('click', function () {
-		alert('error');
-	});
-
 	document.getElementById('randomChatButton').addEventListener('click', function () {
 		alert('Random Chat clicked');
 	});
 
 	// Fetch chat rooms and render them
 	updateChatList();
+	
+	// Carica la lista degli utenti bloccati
+	await getBlockedUsers();
+	
+	console.log("Chat rooms fetched and rendered.");
 }
 
 async function updateChatList() {
 	const chats = await getChatRooms();
 	if (chats) {
-		const chatContainer = document.querySelector('.chat-container');
+		const chatContainer = document.getElementById('chatContainer');
 		if (addChatContainer && chatContainer.contains(addChatContainer)) {
 			chatContainer.removeChild(addChatContainer);
 			addChatContainer = null;
 		}
+		if (blockedUserListModal && chatContainer.contains(blockedUserListModal)) {
+            chatContainer.removeChild(blockedUserListModal);
+            blockedUserListModal = null;
+        }
 		
-		chatContainer.innerHTML = ''; // Pulisce il contenitore delle chat
+		const chatItems = chatContainer.querySelectorAll('.chat-item'); // Pulisce il contenitore delle chat
+		chatItems.forEach(item => item.remove());
+		
 		chats.forEach(chat => {
 			if (!chat.room_id) {
 				console.error("Chat ID non trovato:", chat);
@@ -158,7 +185,7 @@ function renderChatItem(chat) {
 	const chatContainer = document.querySelector('.chat-container');
 	const chatItem = document.createElement('div');
 	chatItem.className = 'chat-item';
-	chatItem.dataset.id = chat.id; // Aggiungi l'attributo data-id
+	chatItem.dataset.id = chat.id;
 
 	chatItem.innerHTML = `
 		<div class="chat-item-header">
@@ -202,8 +229,7 @@ function renderChatItem(chat) {
 		if (!isOpen) {
 			// Apri il WebSocket per la chat room
 			const { token } = getVariables();
-			socket = new WebSocket(`${wss_api}/chat/ws/chat/${chat.id}/?token=${token}`);
-
+			socket = new WebSocket(`${wss_api}/chat/chat?room_id=${chat.id}&token=${token}`);
 			socket.onopen = () => {
 				console.log(`WebSocket connection opened for chat room ${chat.id}`);
 			};
@@ -211,6 +237,12 @@ function renderChatItem(chat) {
 			socket.onmessage = (event) => {
 				const data = JSON.parse(event.data);
 				console.log(`Messaggio ricevuto per chat room ${chat.id}:`, data);
+
+				// Verifica se il sender è bloccato
+				if (isUserBlocked(data.sender)) {
+					console.log(`Messaggio da utente bloccato ${data.sender} ignorato`);
+					return; // Non visualizzare il messaggio
+				}
 
 				const messageDate = new Date(data.timestamp);
 				const chatContent = chatItem.querySelector('.scrollable-content');
@@ -261,6 +293,12 @@ function renderChatItem(chat) {
 					const data = await response.json();
 					const chatContent = chatItem.querySelector('.scrollable-content');
 					data.forEach(msg => {
+						// Filtra i messaggi degli utenti bloccati anche dai messaggi storici
+						if (isUserBlocked(msg.sender)) {
+							console.log(`Messaggio storico da utente bloccato ${msg.sender} ignorato`);
+							return; // Non visualizzare il messaggio
+						}
+
 						const messageDate = new Date(msg.timestamp);
 
 						if (isFirstMessageOfDay(messageDate)) {
@@ -281,7 +319,8 @@ function renderChatItem(chat) {
 
 					scrollToBottom(chatContent);
 				} else {
-					console.error("Errore nella risposta del server:", response.statusText);
+					const text = await response.text();
+        			console.error("Server error in get_message:", response.status, text);
 				}
 			} catch (error) {
 				console.error("Errore nella richiesta:", error);
@@ -299,20 +338,25 @@ function renderChatItem(chat) {
 	const inputField = chatsInput.querySelector('input');
 	const sendButton = chatsInput.querySelector('button');
 
+	// Modifica da apportare nel file ExpandableSidebar.js
+	// Nella funzione renderChatItem dove invii il messaggio
+	
 	chatsInput.addEventListener('submit', function (e) {
 		e.preventDefault();
 		const message = inputField.value;
 		if (message.trim() !== "" && socket && socket.readyState === WebSocket.OPEN) {
+			// Usa userUsername per identificare l'utente
+			const userVariables = getVariables();
 			const messageData = {
 				type: "chat_message",
 				room_id: chat.id,
 				message: message,
 				timestamp: new Date().toISOString(),
-				sender: getVariables().userUsername,
+				sender: userVariables.userUsername,
 			};
 			socket.send(JSON.stringify(messageData));
 			inputField.value = '';
-
+			
 			scrollToBottom(chatItem.querySelector('.scrollable-content'));
 		} else {
 			alert("Connessione WebSocket non attiva");
@@ -320,4 +364,14 @@ function renderChatItem(chat) {
 	});
 }
 
-export { renderExpandableSidebar, updateChatList };
+function isUserBlocked(username) {
+    return blockedUsers.some(user => user.username === username);
+}
+
+// Funzione per aggiornare la lista degli utenti bloccati (da chiamare quando si blocca/sblocca un utente)
+async function updateBlockedUsers() {
+	await getBlockedUsers();
+	console.log("Lista utenti bloccati aggiornata");
+}
+
+export { renderExpandableSidebar, updateChatList, updateBlockedUsers, isUserBlocked };

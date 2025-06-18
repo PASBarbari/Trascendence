@@ -1,0 +1,45 @@
+<div class="friend-list-container">
+    <div class="friend-list-header">
+        <h3 class="friend-list-title">
+            <i class="fas fa-gamepad me-2"></i>
+            Select a Friend to Play
+        </h3>
+    </div>
+    
+    <div class="friend-list-body">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner-border loading-spinner text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mb-0">Loading your friends...</p>
+        </div>
+        
+        <!-- Friends List -->
+        <div id="friendListContainer" style="display: none;">
+            <!-- Friends will be dynamically added here -->
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">👥</div>
+            <h5>No friends found</h5>
+            <p class="mb-0">Add some friends to play together!</p>
+        </div>
+        
+        <!-- Error State -->
+        <div id="errorState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">❌</div>
+            <h5>Error loading friends</h5>
+            <p class="mb-0">Please try again later.</p>
+        </div>
+    </div>
+    
+    <div class="p-3 border-top">
+        <div class="d-grid">
+            <button id="closeFriendListBtn" class="btn btn-close-custom">
+                <i class="fas fa-times me-2"></i>Close
+            </button>
+        </div>
+    </div>
+</div>

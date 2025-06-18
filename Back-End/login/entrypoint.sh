@@ -2,8 +2,11 @@
 
 set -e
 
+# collect static files
+python manage.py collectstatic --noinput
+
 # migrations at startup
-python manage.py makemigrations
+python manage.py makemigrations 
 python manage.py makemigrations my_login
 python manage.py migrate
 

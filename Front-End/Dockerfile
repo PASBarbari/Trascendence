@@ -1,16 +1,37 @@
-FROM node:hydrogen-alpine
-
+FROM node:lts-alpine
 WORKDIR /app
 
+# Copy package files and install dependencies
 COPY package*.json ./
-COPY public ./public
-COPY index.html ./
-COPY .serve.json ./
+RUN npm install
 
-RUN npm install --only=production
+# Copy source files
+COPY . .
 
-RUN npm install -g serve
+# Fix permissions for node user
+RUN mkdir -p /app/.vite && \
+	chmod -R 777 /app
 
+# Expose Vite dev server port
 EXPOSE 3000
 
-CMD ["npm", "start"]
+# Run as non-root user
+
+USER node
+
+# Dev command with proper arguments and force new fs instance
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000", "--force"]
+
+# Production build stage
+# FROM node:lts-alpine AS build
+# WORKDIR /app
+# COPY package*.json ./
+# RUN npm install
+# COPY . .
+# RUN npm run build
+
+# Production runtime
+# FROM nginx:alpine AS prod
+# COPY --from=build /app/dist /usr/share/nginx/html
+# EXPOSE 80
+# CMD ["nginx", "-g", "daemon off;"]

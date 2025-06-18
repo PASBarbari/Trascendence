@@ -1,4 +1,63 @@
 import { toggleProfile } from "../home/home.js";
+import { getVariables, setVariables } from '../var.js';
+import { cleanupPong } from "../pong/locale/settings.js";
+
+function Logout() {
+    try {
+        cleanupPong();
+        console.log("Cleanup Pong completato");
+    } catch (error) {
+        console.log("Cleanup Pong non necessario o già eseguito");
+    }
+
+    // Chiude tutti i WebSocket attivi
+    const webSocketInstances = window.activeWebSockets || [];
+    if (webSocketInstances.length > 0) {
+        webSocketInstances.forEach(socket => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+        });
+        window.activeWebSockets = [];
+    }
+    
+    // Rimuove contenuto di chatContainer
+    const chatContainer = document.querySelector('#chatContainer');
+    if (chatContainer) {
+        chatContainer.innerHTML = '';
+    }
+    if (window.displayedDates) {
+        window.displayedDates.clear();
+    }
+
+    // rimuove dati e token
+    localStorage.removeItem('variables');
+    sessionStorage.clear();
+
+    document.cookie.split(";").forEach(cookie => {
+        const [name] = cookie.trim().split("=");
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+    });
+
+    setVariables({
+        token: null,
+        refreshToken: null,
+        userEmail: null,
+        userUsername: null,
+        userId: null,
+        name: null,
+        surname: null,
+        birthdate: null,
+        bio: null,
+        level: 0,
+        exp: 0,
+        profileImageUrl: null,
+        has_two_factor_auth: false,
+        multiplayer_username: null,
+        multiplayer_id: null
+    });
+    navigateTo('#login');
+}
 
 function settingsPopup(event) {
     // Ferma la propagazione dell'evento click
@@ -28,6 +87,7 @@ function settingsPopup(event) {
     dropdown.innerHTML = `
         <div class="dropdown-header fw-bold">Settings</div>
         <button class="dropdown-item" id="toggleProfileButton">Profile</button>
+        <button class="dropdown-item" id="toggleLogoutButton">logout</button>
         <div class="dropdown-divider"></div>
         <button class="dropdown-item" id="closeSettingsButton">Close</button>
     `;
@@ -58,6 +118,10 @@ function settingsPopup(event) {
         closePopup();
         toggleProfile();
     });
+    document.getElementById('toggleLogoutButton').addEventListener('click', () => {
+        closePopup();
+        Logout();
+    });
     
     // Funzione per gestire click esterni
     function handleOutsideClick(e) {
@@ -84,4 +148,4 @@ function closePopup() {
     }
 }
 
-export { settingsPopup };
+export { settingsPopup, Logout };

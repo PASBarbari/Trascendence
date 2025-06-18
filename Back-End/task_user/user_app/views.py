@@ -11,7 +11,6 @@ from django.db.models import Q
 import asyncio
 from .middleware import ServiceAuthentication , JWTAuth
 from django_filters.rest_framework import DjangoFilterBackend
-from .minio_client import MinioService
 from rest_framework.parsers import MultiPartParser, FormParser
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
@@ -70,6 +69,7 @@ class MultipleFieldLookupMixin:
 # 	serializer_class = AvatarsSerializer
 # 	lookup_url_kwarg = 'id'
 # 	queryset = Avatars.objects.all()
+# cazzo
 
 class UserGen(generics.ListCreateAPIView):
 	serializer_class = UsersSerializer
@@ -79,7 +79,6 @@ class UserGen(generics.ListCreateAPIView):
 
 	def get_permissions(self):
 		if self.request.method == 'POST':
-			print("POST here")
 			self.permission_classes = []
 			self.authentication_classes = [ServiceAuthentication]
 		else:
@@ -91,31 +90,42 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
 	serializer_class = UsersSerializer
+	queryset = UserProfile.objects.all()
+    
 	def get_object(self):
-		return get_object_or_404(UserProfile, user_id=self.request.user.user_id)
+		return self.request.user
 
-class FriendList(generics.ListAPIView):
+class UserSearch(generics.ListAPIView):
+	"""Search for users by username or email."""
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
-	serializer_class = FriendshipsSerializer
-		
-	def get_queryset(self):
-		user_id = self.request.user.user_id
-		
-		status_filter = self.request.query_params.get('status')
-		
-		# Base query - all relationships involving current user
-		queryset = Friendships.objects.filter(
-			Q(user_1__user_id=user_id) | Q(user_2__user_id=user_id)
-		)
-		
-		# Filter by acceptance status if requested
-		if status_filter == 'accepted':
-			queryset = queryset.filter(accepted=True)
-		elif status_filter == 'pending':
-			queryset = queryset.filter(accepted=False)
-			
-		return queryset
+	serializer_class = UsersSerializer
+	filter_backends = [DjangoFilterBackend]
+	filterset_fields = ['username', 'email']
+
+
+class FriendList(generics.ListAPIView):
+    permission_classes = (IsAuthenticatedUserProfile,)
+    authentication_classes = [JWTAuth]
+    serializer_class = FriendshipsSerializer
+        
+    def get_queryset(self):
+        user = self.request.user
+        
+        status_filter = self.request.query_params.get('status')
+        
+        # Base query - all relationships involving current user
+        queryset = Friendships.objects.filter(
+            Q(user_1=user) | Q(user_2=user)
+        )
+        
+        # Filter by acceptance status if requested
+        if status_filter == 'accepted':
+            queryset = queryset.filter(accepted=True)
+        elif status_filter == 'pending':
+            queryset = queryset.filter(accepted=False)
+            
+        return queryset
 
 class LevelUp(APIView):
 	""" Use this endpoint to add exp to a user.
@@ -138,60 +148,68 @@ class LevelUp(APIView):
 			user.exp = 0
 		user.save()
 		return Response({'message': 'user level up'}, status=status.HTTP_200_OK)
-		
 
-from .notification import Microservices
 
 class AddFriend(APIView):
 	""" Use this endpoint to send a friend request, accept a friend request or delete a friendship.
 
+		methods:
+		- POST: Send a friend request to another user.
+		- PATCH: Accept a friend request from another user.
+		- DELETE: Delete a friendship with another user.
+
 		Args:
-			user_1 (int): The id of the user sending the request.
-			user_2 (int): The id of the user receiving the request.
+			receiver (int): The id of the user receiving the request.
 	"""
 	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
 
 	def post(self, request):
-		serializer = FriendshipsSerializer(data=request.data)
-		serializer.is_valid(raise_exception=True)
-		u1 = UserProfile.objects.get(user_id=serializer.data['user_1'])
-		u2 = UserProfile.objects.get(user_id=serializer.data['user_2'])
-		if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
-			if Friendships.objects.get(user_1=u1, user_2=u2).accepted:
+		try:
+			u1 = request.user
+			u2 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
+			if Friendships.objects.filter(user_1=u1, user_2=u2) or Friendships.objects.filter(user_1=u2, user_2=u1):
+				# Check if already friends
+				friendship = Friendships.objects.filter(user_1=u1, user_2=u2).first() or Friendships.objects.filter(user_1=u2, user_2=u1).first()
+				if friendship and friendship.accepted:
+					return Response({
+						'info': 'users are already friends'
+					}, status=status.HTTP_200_OK)
 				return Response({
-					'info': 'users are already friends'
+					'info': 'friend request is pending'
 				}, status=status.HTTP_200_OK)
+			if u1.user_id == u2.user_id:
+				return Response({
+					'error': 'You cannot send a friend request to yourself, lmao!'
+				}, status=status.HTTP_400_BAD_REQUEST)
+			fs = Friendships.objects.create(
+				user_1=u1,
+				user_2=u2,
+				accepted=False,
+			)
+			fs.save()
+			notifi = ImmediateNotification.objects.create(
+				Sender="Users",
+				message={
+					'type': 'friend_request',
+					'data': UserNotificationSerializer(u1).data
+				},
+				user_id=u2.user_id,
+				group_id=None,
+			)
+			SendNotificationSync(notifi)
 			return Response({
-				'info': 'friend request is pending'
+				'info': 'friend request sent'
 			}, status=status.HTTP_200_OK)
-		fs = Friendships.objects.create(
-			user_1=u1,
-			user_2=u2
-		)
-		fs.save()
-		notifi = ImmediateNotification.objects.create(
-			Sender="Users",
-			message=f'Friend request from {u1.first_name} {u1.last_name}',
-			user_id=u2.user_id,
-			group_id=None,
-		)
-		SendNotificationSync(notifi)
-		return Response({
-			'info': 'friend request sent'
-		}, status=status.HTTP_200_OK)
+		except Exception as e:
+			return Response({
+				'error': str(e)
+			}, status=status.HTTP_400_BAD_REQUEST)
 
 	def patch(self, request):
 		try:
-			serializer = FriendshipsSerializer(data=request.data)
-			serializer.is_valid(raise_exception=True)
-		
-			# Make sure current user is the recipient
-			if self.request.user.user_id != serializer.data['user_2']:
-				return Response({
-					'error': 'You can only accept requests sent to you'
-				}, status=status.HTTP_403_FORBIDDEN)
-			u1 = UserProfile.objects.get(user_id=serializer.data['user_1'])
-			u2 = UserProfile.objects.get(user_id=serializer.data['user_2'])
+			u1 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
+			u2 = request.user
 			# Find the friendship in either direction
 			friendship = Friendships.objects.filter(
 				user_1=u1, user_2=u2
@@ -202,7 +220,7 @@ class AddFriend(APIView):
 				# Send notification
 				notifi = ImmediateNotification.objects.create(
 					Sender="Users",
-					message=f'{u2.first_name} {u2.last_name} accepted your friend request',
+					message={ 'type': 'friend_request_accepted', 'data': UserNotificationSerializer(u2).data },
 					user_id=u1.user_id,
 					group_id=None,
 				)
@@ -221,10 +239,14 @@ class AddFriend(APIView):
 
 	def delete(self, request):
 		try:
-			serializer = FriendshipsSerializer(data=request.data)
-			serializer.is_valid(raise_exception=True)
-			u1 = UserProfile.objects.get(user_id=serializer.data['user_1'])
-			u2 = UserProfile.objects.get(user_id=serializer.data['user_2'])
+			u1 = request.user
+			u2 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
+			if u1.user_id == u2.user_id:
+				return Response({
+					'error': 'You cannot delete a friendship with yourself, lmao!'
+				}, status=status.HTTP_400_BAD_REQUEST)
+			# Find the friendship in either direction
+			# This will find the friendship regardless of who is user_1 or user_2
 			friendship = Friendships.objects.filter(
 					(Q(user_1=u1) & Q(user_2=u2)) | (Q(user_1=u2) & Q(user_2=u1))
 			).first()
@@ -232,14 +254,10 @@ class AddFriend(APIView):
 					friendship.delete()
 					notifi = ImmediateNotification.objects.create(
 							Sender="Users",
-							message=f'deleted friendship with {u2.user_id}',
-							user_id=u1.user_id,
-							group_id=None,
-					)
-					SendNotificationSync(notifi)
-					notifi = ImmediateNotification.objects.create(
-							Sender="Users",
-							message=f'deleted friendship with {u1.user_id}',
+							message={
+									'type': 'friendship_deleted',
+									'data': UserNotificationSerializer(u2).data
+							},
 							user_id=u2.user_id,
 							group_id=None,
 					)
@@ -317,6 +335,7 @@ class AvatarManager(APIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
 	parser_classes = (MultiPartParser, FormParser)
+	
 	def post(self, request):
 		try:
 			if 'image' not in request.FILES:
@@ -332,24 +351,118 @@ class AvatarManager(APIView):
 			if image.size > 10 * 1024 * 1024:
 				return Response({'error': 'Image size too large (max 10MB)'}, status=status.HTTP_400_BAD_REQUEST)
 
-			minio_serv = MinioService.get_instance()
-			success, url = minio_serv.upload_avatar(user.user_id, image, filename=avatar_name)
-			if success:
-				# Update user's avatar
-				avatar = Avatars.objects.create(
-                	user=user, 
-                	name=avatar_name, 
-                	image=url,
-                	is_current=True
-            	)
-				return Response({'message': 'Avatar uploaded successfully', 'avatar': avatar.image}, status=status.HTTP_200_OK)
-			else:
-				return Response({'error': 'Error uploading avatar'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			# Create the avatar object first to use the upload_to function
+			avatar = Avatars(
+				user=user, 
+				name=avatar_name,
+				is_current=True
+			)
+			
+			# Save the image using Django's ImageField
+			avatar.image = image
+			avatar.save()
+			
+			return Response({
+				'message': 'Avatar uploaded successfully', 
+				'avatar': avatar.get_image_url(),
+				'avatar_id': avatar.id
+			}, status=status.HTTP_200_OK)
+			
 		except Exception as e:
 			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		
 	def get(self, request):
 		avatar_id = request.query_params.get('avatar_id')
-		avatar = get_object_or_404(Avatars, id=avatar_id)
-		serializer = AvatarsSerializer(avatar)
-		return Response(serializer.data, status=status.HTTP_200_OK)
+		if avatar_id:
+			avatar = get_object_or_404(Avatars, id=avatar_id)
+			serializer = AvatarsSerializer(avatar)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		else:
+			# Return all avatars for the user
+			avatars = Avatars.objects.filter(user=request.user)
+			serializer = AvatarsSerializer(avatars, many=True)
+			return Response(serializer.data, status=status.HTTP_200_OK)
+	
+	def delete(self, request):
+		"""Delete an avatar"""
+		try:
+			avatar_id = request.data.get('avatar_id')
+			if not avatar_id:
+				return Response({'error': 'avatar_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+			
+			avatar = get_object_or_404(Avatars, id=avatar_id, user=request.user)
+			
+			# If this was the current avatar, we need to handle that
+			was_current = avatar.is_current
+			
+			# Delete the avatar (this will also delete the file due to our model's delete method)
+			avatar.delete()
+			
+			# If this was the current avatar, set a default or another avatar as current
+			if was_current:
+				# Try to find another avatar to set as current
+				other_avatar = Avatars.objects.filter(user=request.user).first()
+				if other_avatar:
+					other_avatar.is_current = True
+					other_avatar.save()
+				else:
+					# Reset to default avatar URL
+					request.user.current_avatar_url = 'https://drive.google.com/file/d/1MDi_OPO_HtWyKTmI_35GQ4KjA7uh0Z9U/view?usp=drive_link'
+					request.user.save(update_fields=['current_avatar_url'])
+			
+			return Response({'message': 'Avatar deleted successfully'}, status=status.HTTP_200_OK)
+			
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class Update2FAStatus(APIView):
+	"""
+	View to enable/disable two-factor authentication flag for a user.
+	Used by the login microservice to update the 2FA status after verification.
+		
+	POST:
+		Enable/disable 2FA for a specific user
+		
+	Parameters:
+		user_id (int): The ID of the user to update
+		enabled (bool): Whether 2FA should be enabled or disabled
+		
+	Returns:
+		200 OK: Status updated successfully
+		400 Bad Request: Invalid parameters
+		404 Not Found: User not found
+	"""
+	# Allow both service authentication and JWT authentication
+	authentication_classes = [ServiceAuthentication]
+	permission_classes = []
+		
+	def post(self, request):
+		user_id = request.data.get('user_id')
+		enabled = request.data.get('enabled')
+		
+		if user_id is None or enabled is None:
+			return Response(
+				{'error': 'Both user_id and enabled fields are required'}, 
+				status=status.HTTP_400_BAD_REQUEST
+			)
+			
+		try:
+			# Convert enabled to boolean if it comes as string
+			if isinstance(enabled, str):
+				enabled = enabled.lower() == 'true'
+				
+			user = get_object_or_404(UserProfile, user_id=user_id)
+			user.has_two_factor_auth = enabled
+			user.save(update_fields=['has_two_factor_auth'])
+			
+			return Response(
+				{
+					'message': f'2FA {"enabled" if enabled else "disabled"} for user {user_id}',
+					'user_id': user_id,
+					'has_two_factor_auth': enabled
+				}, 
+				status=status.HTTP_200_OK
+			)
+			
+		except Exception as e:
+			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

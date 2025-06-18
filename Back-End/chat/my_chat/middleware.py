@@ -5,6 +5,8 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import AnonymousUser
 from channels.auth import AuthMiddlewareStack
 from django.core.cache import cache
+from django.db import OperationalError, connections
+from django.http import JsonResponse
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import BasePermission
@@ -13,6 +15,37 @@ import logging
 from rest_framework import authentication, exceptions
 from django.conf import settings
 logger = logging.getLogger('django')
+
+class HealthCheckMiddleware:
+	def __init__(self, get_response):
+		self.get_response = get_response
+		
+	def __call__(self, request):
+		# Allow health check endpoint regardless of host
+		if request.path.endswith('/health'): # Liveness probe
+			return JsonResponse({'status': 'ok'})
+		elif request.path.endswith('/ready'): # Readiness probe
+			db_ready = False
+			try:
+				# Check the default database connection
+				db_conn = connections['default']
+				db_conn.cursor() # Attempt to get a cursor to check connectivity
+				# Optionally, you could execute a very simple query:
+				# with db_conn.cursor() as cursor:
+				#     cursor.execute("SELECT 1")
+				#     cursor.fetchone()
+				db_ready = True
+			except OperationalError:
+				logger.error("Readiness probe: Database connection failed.")
+				# db_ready remains False
+
+			if db_ready:
+				return JsonResponse({'status': 'ready', 'database': 'ok'})
+			else:
+				return JsonResponse({'status': 'unready', 'database': 'unavailable'}, status=503)
+			
+		return self.get_response(request)
+
 
 class ServiceAuthentication(authentication.BaseAuthentication):
 	"""
@@ -79,59 +112,77 @@ class JWTAuth(JWTAuthentication):
 	Enhanced JWT authentication class with caching support and improved error handling.
 	"""
 	user_id_claim = 'user_id'
+		
 	def authenticate(self, request):
 		# Skip authentication for specific paths if needed
 		if request.path.endswith('/chat/new_user/') and request.method == 'POST':
 			logger.debug(f"Skipping JWT auth for {request.path}")
 			return (AnonymousUser(), None)
-			
+		logger.debug(f"Headers in request: {request.META}")  
 		# Check for cached authentication result first
 		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-		if auth_header and auth_header.startswith('Bearer '):
-			token = auth_header.replace('Bearer ', '')
+		if not auth_header or not auth_header.startswith('Bearer '):
+			return None
 			
-			# Try to get from cache first
-			cache_key = f"jwt_auth_{token}"
-			cached_result = cache.get(cache_key)
+		token = auth_header.replace('Bearer ', '')
+		if not token:
+			return None
 			
-			if cached_result is not None:
-				logger.debug("Using cached JWT authentication result")
-				if cached_result == "anonymous":
-					return None
-				return cached_result
-				
-			try:
-				# Call parent class to validate token
-				auth_result = super().authenticate(request)
-				
-				# Cache the result (None results don't need caching)
-				if auth_result:
-					# Cache successful authentications for 5 minutes (adjust as needed)
-					cache.set(cache_key, auth_result, timeout=300)
-					logger.debug(f"JWT auth successful for user {auth_result[0]}")
-					return auth_result
-				else:
-					# Cache negative results for a shorter time (1 minute)
-					cache.set(cache_key, "anonymous", timeout=60)
-					return None
-					
-			except Exception as e:
-				# Log the error but don't cache exceptions
-				logger.warning(f"JWT authentication failed: {str(e)}")
-				logger.warning(f"Token details: {token[:10]}...{token[-10:]}")
-				try:
-					decoded = AccessToken(token)
-					user_id = decoded.get('user_id')
-					logger.warning(f"User ID from token: {user_id}, exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
-				except Exception as inner_e:
-							logger.warning(f"Token decode failed: {str(inner_e)}")
-				return None
+		# Try to get from cache first
+		cache_key = f"jwt_auth_{token}"
+		cached_result = cache.get(cache_key)
 		
-		# No auth header or not a Bearer token
-		return super().authenticate(request)
+		if cached_result is not None:
+			logger.debug("Using cached JWT authentication result")
+			if cached_result == "anonymous":
+				return None
+			return cached_result
+			
+		# If not in cache, validate the token using the more robust method from WebSocket middleware
+		try:
+			# Directly try to decode the JWT token first (like in WebSocket middleware)
+			access_token = AccessToken(token)
+			user_id = access_token.get('user_id')
+			
+			if not user_id:
+				logger.warning("No user_id claim found in token")
+				cache.set(cache_key, "anonymous", timeout=60)
+				return None
+				
+			# Check if user exists in database
+			try:
+				user = UserProfile.objects.get(user_id=user_id)
+				# Successfully authenticated
+				auth_result = (user, token)
+				cache.set(cache_key, auth_result, timeout=300)
+				logger.debug(f"JWT auth successful for user {user}")
+				return auth_result
+			except UserProfile.DoesNotExist:
+				logger.warning(f"User ID {user_id} from token not found in UserProfile")
+				cache.set(cache_key, "anonymous", timeout=60)
+				return None
+
+		except Exception as e:
+			# Log the error but don't cache exceptions
+			logger.warning(f"JWT authentication failed: {str(e)}")
+			logger.warning(f"Token details: {token[:10]}...{token[-10:] if len(token) > 20 else ''}")
+			try:
+				# Try to extract some debug info without validation
+				decoded = AccessToken(token, verify=False)
+				user_id = decoded.get('user_id')
+				exp = decoded.get('exp', 'unknown')
+				iat = decoded.get('iat', 'unknown')
+				logger.warning(f"Token debug info - User ID: {user_id}, Expires: {exp}, Issued: {iat}")
+				if user_id:
+					logger.warning(f"User exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
+			except Exception as inner_e:
+				logger.warning(f"Token decode failed: {str(inner_e)}")
+				
+			return None
+		
 	def get_user(self, validated_token):
 		"""
-		Sovrascrive il metodo get_user per utilizzare UserProfile invece del modello User standard
+		Returns user from validated token for DRF compatibility
 		"""
 		try:
 			user_id = validated_token[self.user_id_claim]
@@ -172,7 +223,7 @@ class JWTAuthMiddleware(BaseMiddleware):
 			if auth_header:
 				token_str = auth_header.decode()
 				if token_str.startswith('Bearer '):
-					token = token_str[7:]  # Remove 'Bearer ' prefix
+					token = token_str[7:]
 		
 		if token:
 			# Get user from token
@@ -216,6 +267,37 @@ def JWTAuthMiddlewareStack(inner):
 	Helper function that returns a JWT auth middleware wrapped with AuthMiddlewareStack.
 	"""
 	return JWTAuthMiddleware(AuthMiddlewareStack(inner))
+
+
+import logging
+from channels.middleware import BaseMiddleware
+
+logger = logging.getLogger('django')
+
+class DebugMiddleware(BaseMiddleware):
+    async def __call__(self, scope, receive, send):
+        # Log dettagli della richiesta
+        if scope['type'] == 'websocket':
+            logger.info(f"⭐ WEBSOCKET REQUEST ⭐")
+            logger.info(f"PATH: {scope['path']}")
+            logger.info(f"HEADERS: {scope.get('headers', [])}")
+            logger.info(f"QUERY_STRING: {scope.get('query_string', b'').decode()}")
+            
+        # Passa al middleware successivo
+        return await super().__call__(scope, receive, send)
+
+class ErrorLoggingMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            response = self.get_response(request)
+            return response
+        except Exception as e:
+            import traceback
+            logger.error(f"Uncaught exception: {str(e)}\n{traceback.format_exc()}")
+            raise
 
 # class TokenAuthMiddleware(BaseMiddleware):
 # 	async def __call__(self, scope, receive, send):

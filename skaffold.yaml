@@ -1,16 +1,47 @@
+# apiVersion: skaffold/v4beta12
+# kind: Config
+# metadata:
+#     name: trascendence-frontend
+# build:
+#     artifacts:
+#         - image: marcor42/frontend
+#           context: Front-End
+#           docker:
+#               dockerfile: Dockerfile
+#     local:
+#         push: true
+#         useDockerCLI: true
+# manifests:
+#     rawYaml:
+#         - Manifests/front-end-deployment.yaml
+
 apiVersion: skaffold/v4beta12
 kind: Config
 metadata:
-    name: trascendence-frontend
+  name: trascendence-frontend
 build:
-    artifacts:
-        - image: marcor42/frontend
-          context: Front-End
-          docker:
-              dockerfile: Dockerfile
-    local:
-        push: true
-        useDockerCLI: true
+  artifacts:
+    - image: marcor42/frontend
+      context: Front-End
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          # Sync all files except node_modules
+          - src: '**/*'
+            dest: /app
+  tagPolicy:
+    sha256: {}
+deploy:
+  kubectl:
+    defaultNamespace: front-end-namespace 
 manifests:
-    rawYaml:
-        - Manifests/front-end-deployment.yaml
+  rawYaml:
+    - Manifests/front-end-deployment.yaml
+profiles:
+  - name: prod
+    build:
+      artifacts:
+        - image: marcor42/frontend
+          docker:
+            target: prod

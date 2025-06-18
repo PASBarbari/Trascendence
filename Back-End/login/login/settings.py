@@ -25,6 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c')
+FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY', 'Hog-t3arjmkEOl49iagysJdpmvu9eJLkbSgDn-TNNLU=')
 #'django-insecure-kp7qs)0l1ie$%muo93+829po%pe9*gz8z8ah6dy0)cskj-5l*c'
 API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -281,9 +282,13 @@ client = {
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Changed from '/static/'
 
-STATIC_URL = 'static/'
-STATIC_ROOT = '/home/lollo/Documents/challenge_fides/Back-End/login/staticfiles'
+# Add this to define where Django should look for static files
+#STATICFILES_DIRS = [
+#    os.path.join(BASE_DIR, "static"),
+#]
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
@@ -302,7 +307,7 @@ OAUTH2_PROVIDERS = {
 		'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/google/',
 		'authorization_url': "https://accounts.google.com/o/oauth2/v2/auth",
 		'token_url': "https://oauth2.googleapis.com/token",
-		'scope': "https://www.googleapis.com/auth/userinfo.profile email&",
+		'scope': "openid email profile",
 		'user_info_url': "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
 		'client_id': os.getenv('GOOGLE_CLIENT_ID', 'pippo'),
 		'client_secret': os.getenv('GOOGLE_CLIENT_SECRET', 'moltosegreto'),

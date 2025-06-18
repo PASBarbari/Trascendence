@@ -1,7 +1,7 @@
 from django.db import models
 import os
 import asyncio
-import aiohttp
+# import aiohttp
 from chat.settings import Microservices
 
 Types = {
@@ -14,7 +14,7 @@ Types = {
 class BaseNotification(models.Model):
 	id = models.AutoField(primary_key=True)
 	Sender = models.CharField(max_length=200, choices=[(key, key) for key in Microservices.keys()])
-	message = models.TextField()
+	message = models.JSONField()
 
 	class Meta:
 		abstract = True
@@ -37,11 +37,11 @@ class ImmediateNotification(UserNotification, GroupNotification):
 class ScheduledNotification(UserNotification, GroupNotification):
 	pass
 
-async def SendNotification(Notification):
-	noification_url = Microservices['Notifications']
-	async with aiohttp.ClientSession() as session:
-		async with session.post(noification_url, data=Notification) as response:
-			return response.status
+# async def SendNotification(Notification):
+# 	noification_url = Microservices['Notifications']
+# 	async with aiohttp.ClientSession() as session:
+# 		async with session.post(noification_url, data=Notification) as response:
+# 			return response.status
 		
 import requests
 from rest_framework import serializers

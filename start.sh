@@ -5,18 +5,27 @@ sudo apt upgrade -y
 sudo apt install gnome-terminal kubectl docker.io -y
 sudo apt install curl git -y
 
+
+# Create the necessary directories
+sudo mkdir -p /mnt/data/postgres/chat
+sudo mkdir -p /mnt/data/postgres/notifications
+sudo mkdir -p /mnt/data/postgres/pong
+sudo mkdir -p /mnt/data/postgres/user
+sudo mkdir -p /mnt/data/postgres/login
+
 # Exit immediately if a command exits with a non-zero status
 set -eux
-
-sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get update
-sudo apt-get install -y kubectl
-sudo apt install kubecolor kubelet -y
-echo "Starting project setup..."
+if ! command -v kubecolor &> /dev/null; then
+	sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
+	curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+	sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg # allow unprivileged APT programs to read this keyring
+	echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+	sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list
+	sudo apt-get update
+	sudo apt-get install -y kubectl
+	sudo apt install kubecolor kubelet -y
+	echo "Starting project setup..."
+fi
 
 # Step 1: Install Minikube if not already installed
 if ! command -v minikube &> /dev/null; then
@@ -45,8 +54,9 @@ kubecolor apply -f configmaps/namespaces.yaml
 echo "Creating configmaps"
 kubecolor apply -f configmaps/Configmap.yaml
 kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.crds.yaml
-#kubectl create namespace cert-manager
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
+
+ kubectl create namespace cert-manager
+ kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.11.0/cert-manager.yaml
 
 # Step 5: Apply pre-created secrets from USB drive
 echo "Applying secrets"
@@ -88,7 +98,7 @@ kubecolor apply -f Ingresses/
 
 # Step 8: Setup microservices
 echo "Setting up microservices..."
-dir=("Certs" "Chat" "Login" "Redis" "Notifications" "Pong" "User")
+dir=("Chat" "Login" "Redis" "Notifications" "Pong" "User")
 for service in $(dir):
 do
   kubecolor apply -f $service/

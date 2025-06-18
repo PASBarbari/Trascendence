@@ -6,7 +6,7 @@ from .consumers import UserNotificationConsumer
 class BaseNotification(models.Model):
 	id = models.AutoField(primary_key=True)
 	Sender = models.CharField(max_length=200, choices=[(key, key) for key in Microservices.keys()])
-	message = models.TextField()
+	message = models.JSONField()
 	is_sent = models.BooleanField(default=False)
 	class Meta:
 		abstract = True
