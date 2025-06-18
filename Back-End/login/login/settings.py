@@ -77,6 +77,11 @@ K8S_SERVICE_HOSTS = [
 	extract_hostname(Microservices['Pong']),
 ]
 
+# Add additional service hosts from environment if provided
+# if os.environ.get('K8S_SERVICE_HOSTS'):
+# 	additional_hosts = os.environ.get('K8S_SERVICE_HOSTS').split(',')
+# 	K8S_SERVICE_HOSTS.extend([host.strip() for host in additional_hosts if host.strip()])
+
 ALLOWED_HOSTS = [
 	'localhost',
 	'localhost:3000',

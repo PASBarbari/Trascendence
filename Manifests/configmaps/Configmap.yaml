@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
     name: login-configmap
-    namespace: login
+    namespace: {{ .Values.namespace | default "login" }}
 data:
     login_url: http://login-service.login.svc.cluster.local:8000
     chat_url: http://chat-service.chat.svc.cluster.local:8000
@@ -23,7 +23,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
     name: chat-configmap
-    namespace: chat
+    namespace: {{ .Values.namespace | default "chat" }}
 data:
     login_url: http://login-service.login.svc.cluster.local:8000
     chat_url: http://chat-service.chat.svc.cluster.local:8000

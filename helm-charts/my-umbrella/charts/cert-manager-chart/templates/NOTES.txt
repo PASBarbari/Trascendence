@@ -1,0 +1,23 @@
+Certificate Management has been configured!
+
+{{- if .Values.clusterIssuers.selfsigned.enabled }}
+✅ Self-signed ClusterIssuer: {{ .Values.clusterIssuers.selfsigned.name }}
+{{- end }}
+
+{{- if .Values.clusterIssuers.letsencrypt.enabled }}
+✅ Let's Encrypt ClusterIssuer: {{ .Values.clusterIssuers.letsencrypt.name }}
+{{- end }}
+
+To view issuers:
+  kubectl get clusterissuers
+
+To check certificate status:
+  kubectl get certificates -A
+  kubectl get certificaterequests -A
+
+To debug certificate issues:
+  kubectl describe certificate <certificate-name> -n <namespace>
+  kubectl get challenges -A
+
+For more information about cert-manager:
+  https://cert-manager.io/docs/

@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "login-service-chart.fullname" . }}
+  namespace: {{ include "login-service-chart.namespace" . }}
+  labels:
+    {{- include "login-service-chart.labels" . | nindent 4 }}
+    app: {{ include "login-service-chart.name" . }} # For selector matching
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "login-service-chart.selectorLabels" . | nindent 6 }}
+      app: {{ include "login-service-chart.name" . }} # Ensure this matches the pod template label
+  template:
+    metadata:
+      labels:
+        {{- include "login-service-chart.selectorLabels" . | nindent 8 }}
+        app: {{ include "login-service-chart.name" . }} # Consistent app label
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "login-service-chart.serviceAccountName" . }}
+      {{- end }}
+      initContainers:
+      - name: init-{{ include "login-service-chart.name" . }}
+        image: busybox # Consider making image configurable
+        imagePullPolicy: IfNotPresent # Consider making image configurable
+        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Release.Name }}-login-db-service on port 5432"; while ! nc -z {{ .Release.Name }}-login-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
+      containers:
+      - name: {{ include "login-service-chart.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health # Placeholder - Adjust to actual health endpoint
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health # Placeholder - Adjust to actual health endpoint
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "login-service-chart.fullname" . }}-config
+        - secretRef:
+            name: {{ include "login-service-chart.fullname" . }}-secrets # Assuming secret is named using fullname

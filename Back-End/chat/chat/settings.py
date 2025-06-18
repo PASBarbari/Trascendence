@@ -207,7 +207,7 @@ DATABASES = {
 	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
 	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
 	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5436'),
+	'PORT': os.getenv('POSTGRES_PORT', '5432'),
 	},
 	'backup': {
 	'ENGINE': 'django.db.backends.sqlite3',

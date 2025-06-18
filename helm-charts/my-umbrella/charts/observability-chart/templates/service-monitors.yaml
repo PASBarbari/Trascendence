@@ -1,0 +1,52 @@
+{{- if .Values.serviceMonitors.enabled }}
+{{- if .Values.serviceMonitors.loginService.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: login-service-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: login-service
+    monitoring: "true"
+spec:
+  selector:
+    {{- toYaml .Values.serviceMonitors.loginService.selector | nindent 4 }}
+  endpoints:
+    {{- toYaml .Values.serviceMonitors.loginService.endpoints | nindent 4 }}
+{{- end }}
+
+{{- if .Values.serviceMonitors.chatService.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: chat-service-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: chat-service
+    monitoring: "true"
+spec:
+  selector:
+    {{- toYaml .Values.serviceMonitors.chatService.selector | nindent 4 }}
+  endpoints:
+    {{- toYaml .Values.serviceMonitors.chatService.endpoints | nindent 4 }}
+{{- end }}
+
+{{- if .Values.serviceMonitors.frontend.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: frontend-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: frontend
+    monitoring: "true"
+spec:
+  selector:
+    {{- toYaml .Values.serviceMonitors.frontend.selector | nindent 4 }}
+  endpoints:
+    {{- toYaml .Values.serviceMonitors.frontend.endpoints | nindent 4 }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "user-service-chart.fullname" . }}
+  namespace: {{ include "user-service-chart.namespace" . }}
+  labels:
+    {{- include "user-service-chart.labels" . | nindent 4 }}
+    app: {{ include "user-service-chart.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "user-service-chart.selectorLabels" . | nindent 6 }}
+      app: {{ include "user-service-chart.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "user-service-chart.selectorLabels" . | nindent 8 }}
+        app: {{ include "user-service-chart.name" . }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "user-service-chart.serviceAccountName" . }}
+      {{- end }}
+      initContainers:
+      - name: init-{{ include "user-service-chart.name" . }}
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Release.Name }}-user-db-service on port 5432"; while ! nc -z {{ .Release.Name }}-user-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
+      containers:
+      - name: {{ include "user-service-chart.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health # Placeholder - Adjust to actual health endpoint
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health # Placeholder - Adjust to actual health endpoint
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "user-service-chart.fullname" . }}-config
+        - secretRef:
+            name: {{ include "user-service-chart.fullname" . }}-secrets
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: avatars-storage
+          mountPath: {{ .Values.persistence.mountPath }}
+        {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: avatars-storage
+        persistentVolumeClaim:
+          claimName: {{ include "user-service-chart.fullname" . }}-avatars-pvc
+      {{- end }}

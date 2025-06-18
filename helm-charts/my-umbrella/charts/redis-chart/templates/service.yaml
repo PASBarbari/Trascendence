@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "redis-chart.fullname" . }}-service
+  namespace: {{ .Values.namespace.name }}
+  labels:
+    app: redis
+    {{- include "redis-chart.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: redis
+      protocol: TCP
+      name: redis
+    {{- if .Values.exporter.enabled }}
+    - port: 9121
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
+  selector:
+    app: redis
+    {{- include "redis-chart.selectorLabels" . | nindent 4 }}

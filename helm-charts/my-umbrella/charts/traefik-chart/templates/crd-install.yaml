@@ -1,0 +1,35 @@
+{{- if and .Values.enabled .Values.installCRDs }}
+# This will ensure Traefik CRDs are installed
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-traefik-crd-install
+  namespace: {{ include "traefik-chart.namespace" . }}
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}-traefik-crd-install
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:latest
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "Installing Traefik CRDs..."
+          kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.3/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml || true
+          echo "Traefik CRDs installed successfully"
+{{- end }}

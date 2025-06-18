@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Release.Name }}-pong-db-service"
+  namespace: {{ include "pong-service-chart.namespace" . }}
+  labels:
+    app: {{ .Release.Name }}-pong-db
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432
+      protocol: TCP
+      name: postgres
+    {{- if .Values.db.exporter.enabled }}
+    - port: 9187
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+    {{- end }}
+  selector:
+    app: {{ include "pong-service-chart.name" . }}-db
+    app.kubernetes.io/instance: {{ .Release.Name }}

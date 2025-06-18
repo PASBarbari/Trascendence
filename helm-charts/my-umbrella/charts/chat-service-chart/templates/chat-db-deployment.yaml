@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "chat-service.fullname" . }}-db
+  namespace: {{ include "chat-service-chart.namespace" . }}
+  labels:
+    {{- include "chat-service.labels" . | nindent 4 }}
+    app.kubernetes.io/component: database
+spec:
+  serviceName: {{ include "chat-service.fullname" . }}-db
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "chat-service.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: database
+      app: {{ include "chat-service.name" . }}-db
+  template:
+    metadata:
+      labels:
+        {{- include "chat-service.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: database
+        app: {{ include "chat-service.name" . }}-db
+    spec:
+        serviceAccountName: {{ .Values.serviceAccount.dbName | default (include "chat-service.serviceAccountName" .) }}
+        containers:
+          - name: postgres
+            image: "{{ .Values.db.image.repository | default "postgres" }}:{{ .Values.db.image.tag | default "13" }}"
+            imagePullPolicy: IfNotPresent
+            ports:
+            - containerPort: 5432
+              name: db
+            env:
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_PASSWORD
+            volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          {{- if .Values.db.exporter.enabled }}
+          - name: postgres-exporter
+            image: "{{ .Values.db.exporter.image.repository }}:{{ .Values.db.exporter.image.tag }}"
+            imagePullPolicy: {{ .Values.db.exporter.image.pullPolicy | default "IfNotPresent" }}
+            ports:
+            - name: metrics
+              containerPort: 9187
+              protocol: TCP
+            env:
+            - name: DATA_SOURCE_NAME
+              value: "postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@localhost:5432/$(POSTGRES_DB)?sslmode=disable"
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "chat-service.fullname" . }}-secrets
+                  key: POSTGRES_DB
+            volumeMounts: []
+            resources:
+              {{- toYaml .Values.db.exporter.resources | nindent 14 }}
+          {{- end }}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: {{ .Values.persistence.storageClass | default "standard" }}
+      resources:
+        requests:
+          storage: {{ .Values.persistence.size | default "512Mi" }}

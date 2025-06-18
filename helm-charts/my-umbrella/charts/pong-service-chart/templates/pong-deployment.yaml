@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "pong-service-chart.fullname" . }}
+  namespace: {{ include "pong-service-chart.namespace" . }}
+  labels:
+    {{- include "pong-service-chart.labels" . | nindent 4 }}
+    app: {{ include "pong-service-chart.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "pong-service-chart.selectorLabels" . | nindent 6 }}
+      app: {{ include "pong-service-chart.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "pong-service-chart.selectorLabels" . | nindent 8 }}
+        app: {{ include "pong-service-chart.name" . }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "pong-service-chart.serviceAccountName" . }}
+      {{- end }}
+      initContainers:
+      - name: init-{{ include "pong-service-chart.name" . }}
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'echo "Waiting for the database service {{ .Release.Name }}-pong-db-service on port 5432"; while ! nc -z {{ .Release.Name }}-pong-db-service 5432; do sleep 1; done; echo "Database service is up and running"']
+      containers:
+      - name: {{ include "pong-service-chart.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "pong-service-chart.fullname" . }}-config
+        - secretRef:
+            name: {{ include "pong-service-chart.fullname" . }}-secrets
