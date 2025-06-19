@@ -1,4 +1,46 @@
 {{- if .Values.ingress.enabled }}
+# ServersTransport for Kibana HTTPS backend (must be created first)
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: kibana-tls-transport
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+spec:
+  serverName: "eck-kibana-kb-http"
+  insecureSkipVerify: true
+---
+# Middleware for HTTPS redirect
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "observability-chart.fullname" . }}-redirect-https
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+# Middleware for Kibana headers
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "observability-chart.fullname" . }}-kibana-headers
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+spec:
+  headers:
+    customRequestHeaders:
+      X-Forwarded-Proto: "https"
+      X-Forwarded-Port: "443"
+    customResponseHeaders:
+      X-Frame-Options: "SAMEORIGIN"
+      X-Content-Type-Options: "nosniff"
+---
 # Grafana IngressRoute
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
@@ -90,46 +132,4 @@ spec:
       services:
         - name: eck-kibana-kb-http
           port: 5601
----
-# Middleware for HTTPS redirect
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: {{ include "observability-chart.fullname" . }}-redirect-https
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "observability-chart.labels" . | nindent 4 }}
-spec:
-  redirectScheme:
-    scheme: https
-    permanent: true
----
-# Middleware for Kibana headers
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: {{ include "observability-chart.fullname" . }}-kibana-headers
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "observability-chart.labels" . | nindent 4 }}
-spec:
-  headers:
-    customRequestHeaders:
-      X-Forwarded-Proto: "https"
-      X-Forwarded-Port: "443"
-    customResponseHeaders:
-      X-Frame-Options: "SAMEORIGIN"
-      X-Content-Type-Options: "nosniff"
----
-# ServersTransport for Kibana HTTPS backend
-apiVersion: traefik.io/v1alpha1
-kind: ServersTransport
-metadata:
-  name: kibana-tls-transport
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "observability-chart.labels" . | nindent 4 }}
-spec:
-  serverName: "eck-kibana-kb-http"
-  insecureSkipVerify: true
 {{- end }}
