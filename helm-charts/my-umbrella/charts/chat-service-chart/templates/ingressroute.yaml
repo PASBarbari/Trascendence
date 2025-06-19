@@ -22,6 +22,8 @@ spec:
             cookie:
               name: chat_sticky
       middlewares:
+        - name: {{ .Release.Name }}-strip-prefix
+          namespace: {{ include "chat-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "chat-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
@@ -44,6 +46,8 @@ spec:
     - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/chat`)
       kind: Rule
       middlewares:
+        - name: {{ .Release.Name }}-strip-prefix
+          namespace: {{ include "chat-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
           namespace: {{ include "chat-service-chart.namespace" . }}
       services:

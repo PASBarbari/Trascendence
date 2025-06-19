@@ -22,6 +22,8 @@ spec:
             cookie:
               name: notifications_sticky
       middlewares:
+        - name: {{ .Release.Name }}-strip-prefix
+          namespace: {{ include "notifications-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "notifications-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
@@ -44,6 +46,8 @@ spec:
     - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/notifications`)
       kind: Rule
       middlewares:
+        - name: {{ .Release.Name }}-strip-prefix
+          namespace: {{ include "notifications-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
           namespace: {{ include "notifications-service-chart.namespace" . }}
       services:

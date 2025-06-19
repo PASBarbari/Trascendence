@@ -19,6 +19,8 @@ spec:
         - name: {{ .Release.Name }}-login-service
           port: {{ .Values.service.port }}
       middlewares:
+        - name: {{ .Release.Name }}-strip-prefix
+          namespace: {{ include "login-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "login-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
@@ -41,6 +43,8 @@ spec:
     - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/login`)
       kind: Rule
       middlewares:
+        - name: {{ .Release.Name }}-strip-prefix
+          namespace: {{ include "login-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
           namespace: {{ include "login-service-chart.namespace" . }}
       services:

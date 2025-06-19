@@ -1,36 +1,7 @@
-# apiVersion: skaffold/v4beta12
-# kind: Config
-# metadata:
-#   name: my-umbrella-frontend
-# build:
-#   artifacts:
-#     - image: marcor42/frontend
-#       context: Front-End
-#       docker:
-#         dockerfile: Dockerfile
-#       sync:
-#         manual:
-#           - src: '**/*'
-#             dest: /app
-#   tagPolicy:
-#     sha256: {}
-# deploy:
-#   helm:
-#     releases:
-#       - name: frontend-dev
-#         chartPath: helm-charts/my-umbrella/charts/front-end-chart
-#         namespace: front-end
-#         createNamespace: true
-#         wait: true
-#         valuesFiles:
-#           - helm-charts/my-umbrella/charts/front-end-chart/values.yaml
-#         setValues:
-#           image.repository: marcor42/frontend
-#           image.tag: latest
 apiVersion: skaffold/v4beta12
 kind: Config
 metadata:
-  name: my-umbrella
+  name: my-umbrella-frontend
 build:
   artifacts:
     - image: marcor42/frontend
@@ -41,41 +12,18 @@ build:
         manual:
           - src: '**/*'
             dest: /app
-    - image: bombatomica/chat
-      context: Back-End/chat
-      docker:
-        dockerfile: Dockerfile
-    - image: bombatomica/login
-      context: Back-End/login
-      docker:
-        dockerfile: Dockerfile
-    - image: bombatomica/user
-      context: Back-End/task_user
-      docker:
-        dockerfile: Dockerfile
-    - image: bombatomica/notifications
-      context: Back-End/Notifications
-      docker:
-        dockerfile: Dockerfile
-    - image: bombatomica/pong
-      context: Back-End/pongProject
-      docker:
-        dockerfile: Dockerfile
   tagPolicy:
     sha256: {}
 deploy:
   helm:
     releases:
-      - name: my-umbrella
-        chartPath: helm-charts/my-umbrella
-        namespace: default
+      - name: frontend-dev
+        chartPath: helm-charts/my-umbrella/charts/front-end-chart
+        namespace: front-end
+        createNamespace: true
         wait: true
         valuesFiles:
-          - helm-charts/my-umbrella/values.yaml
+          - helm-charts/my-umbrella/charts/front-end-chart/values.yaml
         setValues:
-          frontend.image.tag: latest
-          chat-service-chart.image.tag: latest
-          login-service-chart.image.tag: latest
-          user-service-chart.image.tag: latest
-          notifications-service-chart.image.tag: latest
-          pong-service-chart.image.tag: latest
+          image.repository: marcor42/frontend
+          image.tag: latest

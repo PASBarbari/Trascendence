@@ -1,7 +1,7 @@
 apiVersion: skaffold/v4beta12
 kind: Config
 metadata:
-  name: trascendence-dev
+  name: my-umbrella
 build:
   artifacts:
     - image: marcor42/frontend
@@ -37,14 +37,14 @@ build:
 deploy:
   helm:
     releases:
-      - name: trascendence-dev
+      - name: my-umbrella
         chartPath: helm-charts/my-umbrella
         namespace: default
-        wait: true
+        wait: false
         valuesFiles:
           - helm-charts/my-umbrella/values.yaml
         setValues:
-          frontend.image.tag: latest
+          front-end-chart.image.tag: latest
           chat-service-chart.image.tag: latest
           login-service-chart.image.tag: latest
           user-service-chart.image.tag: latest
