@@ -9,9 +9,9 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.middlewares: >-
-      {{ include "front-end-chart.namespace" . }}-{{ .Release.Name }}-redirect-https@kubernetescrd,
-      {{ include "front-end-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers@kubernetescrd,
-      {{ include "front-end-chart.namespace" . }}-{{ .Release.Name }}-vite-hmr@kubernetescrd
+      {{ include "front-end-chart.namespace" . }}-{{ .Release.Name }}-redirect-https@kubernetes,
+      {{ include "front-end-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers@kubernetes,
+      {{ include "front-end-chart.namespace" . }}-{{ .Release.Name }}-vite-hmr@kubernetes
     traefik.ingress.kubernetes.io/router.priority: "1" # Lower priority so API routes take precedence
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}

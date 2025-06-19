@@ -1,0 +1,49 @@
+{{- if .Values.ingress.enabled }}
+# HTTPS IngressRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-login-ingressroute
+  namespace: {{ include "login-service-chart.namespace" . }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/login`)
+      kind: Rule
+      priority: 1000
+      services:
+        - name: {{ .Release.Name }}-login-service
+          port: {{ .Values.service.port }}
+      middlewares:
+        - name: {{ .Release.Name }}-websocket-headers
+          namespace: {{ include "login-service-chart.namespace" . }}
+        - name: {{ .Release.Name }}-redirect-https
+          namespace: {{ include "login-service-chart.namespace" . }}
+  tls:
+    {{- if .Values.ingress.tls.enabled }}
+    secretName: {{ .Values.ingress.tls.secretName }}
+    {{- end }}
+---
+# HTTP to HTTPS redirect IngressRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-login-ingressroute-http
+  namespace: {{ include "login-service-chart.namespace" . }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/login`)
+      kind: Rule
+      middlewares:
+        - name: {{ .Release.Name }}-redirect-https
+          namespace: {{ include "login-service-chart.namespace" . }}
+      services:
+        - name: {{ .Release.Name }}-login-service
+          port: {{ .Values.service.port }}
+{{- end }}

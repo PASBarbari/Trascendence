@@ -45,7 +45,7 @@ EOF
 echo "🔒 Creating global HTTPS transport configuration..."
 
 kubectl apply -f - <<EOF
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: ServersTransport
 metadata:
   name: default-https-transport
@@ -54,7 +54,7 @@ spec:
   insecureSkipVerify: true
   maxIdleConnsPerHost: 10
 ---
-apiVersion: traefik.containo.us/v1alpha1
+apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
   name: secure-headers

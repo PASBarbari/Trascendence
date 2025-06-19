@@ -1,0 +1,52 @@
+{{- if .Values.ingress.enabled }}
+# HTTPS IngressRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-notifications-ingressroute
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/notifications`)
+      kind: Rule
+      priority: 1000
+      services:
+        - name: {{ .Release.Name }}-notifications-service
+          port: {{ .Values.service.port }}
+          sticky:
+            cookie:
+              name: notifications_sticky
+      middlewares:
+        - name: {{ .Release.Name }}-websocket-headers
+          namespace: {{ include "notifications-service-chart.namespace" . }}
+        - name: {{ .Release.Name }}-redirect-https
+          namespace: {{ include "notifications-service-chart.namespace" . }}
+  tls:
+    {{- if .Values.ingress.tls.enabled }}
+    secretName: {{ .Values.ingress.tls.secretName }}
+    {{- end }}
+---
+# HTTP to HTTPS redirect IngressRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-notifications-ingressroute-http
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/notifications`)
+      kind: Rule
+      middlewares:
+        - name: {{ .Release.Name }}-redirect-https
+          namespace: {{ include "notifications-service-chart.namespace" . }}
+      services:
+        - name: {{ .Release.Name }}-notifications-service
+          port: {{ .Values.service.port }}
+{{- end }}

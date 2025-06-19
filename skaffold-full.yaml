@@ -1,36 +1,7 @@
-# apiVersion: skaffold/v4beta12
-# kind: Config
-# metadata:
-#   name: my-umbrella-frontend
-# build:
-#   artifacts:
-#     - image: marcor42/frontend
-#       context: Front-End
-#       docker:
-#         dockerfile: Dockerfile
-#       sync:
-#         manual:
-#           - src: '**/*'
-#             dest: /app
-#   tagPolicy:
-#     sha256: {}
-# deploy:
-#   helm:
-#     releases:
-#       - name: frontend-dev
-#         chartPath: helm-charts/my-umbrella/charts/front-end-chart
-#         namespace: front-end
-#         createNamespace: true
-#         wait: true
-#         valuesFiles:
-#           - helm-charts/my-umbrella/charts/front-end-chart/values.yaml
-#         setValues:
-#           image.repository: marcor42/frontend
-#           image.tag: latest
 apiVersion: skaffold/v4beta12
 kind: Config
 metadata:
-  name: my-umbrella
+  name: trascendence-dev
 build:
   artifacts:
     - image: marcor42/frontend
@@ -66,7 +37,7 @@ build:
 deploy:
   helm:
     releases:
-      - name: my-umbrella
+      - name: trascendence-dev
         chartPath: helm-charts/my-umbrella
         namespace: default
         wait: true

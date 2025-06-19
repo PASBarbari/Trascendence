@@ -1,19 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ .Release.Name }}-chat-ingress
-  namespace: {{ include "chat-service-chart.namespace" . }}
+  name: {{ include "notifications-service-chart.fullname" . }}-ingress
+  namespace: {{ include "notifications-service-chart.namespace" . }}
+  labels:
+    {{- include "notifications-service-chart.labels" . | nindent 4 }}
   annotations:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
     # Traefik specific annotations
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.priority: "1000"
+    # WebSocket and HTTPS redirect middlewares
+    traefik.ingress.kubernetes.io/router.middlewares: {{ include "notifications-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers@kubernetes,{{ include "notifications-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https@kubernetes
     # Redirect HTTP to HTTPS
-    traefik.ingress.kubernetes.io/router.middlewares: {{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers,{{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https
-    # WebSocket configurations
-    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
-    traefik.ingress.kubernetes.io/service.sticky.cookie.name: chat_sticky
     {{- with .Values.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -27,12 +27,12 @@ spec:
         pathType: {{ .Values.ingress.pathType }}
         backend:
           service:
-            name: {{ .Release.Name }}-chat-service
+            name: "{{ .Release.Name }}-notifications-service"
             port:
               number: {{ .Values.service.port }}
   {{- if .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Values.ingress.host }}
-    secretName: {{ .Values.ingress.tls.secretName }}
+    secretName: {{ .Values.ingress.tls.secretName }} # This should align with cert-manager or manual cert creation
   {{- end }}

@@ -107,7 +107,6 @@ CORS_ALLOWED_ORIGINS = [
 	Microservices['Notifications'],
 	Microservices['Pong'],
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
-]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
@@ -123,6 +122,7 @@ CSRF_TRUSTED_ORIGINS = [
 	Microservices['Notifications'],
 	Microservices['Pong'],
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
+
 CORS_ALLOW_HEADERS = [
 	'accept',
 	'accept-encoding',

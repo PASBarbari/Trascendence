@@ -10,7 +10,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
     traefik.ingress.kubernetes.io/router.priority: "1000"
     # Redirect HTTP to HTTPS
-    traefik.ingress.kubernetes.io/router.middlewares: {{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers,{{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https
+    traefik.ingress.kubernetes.io/router.middlewares: {{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers@kubernetes,{{ include "chat-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https@kubernetes
     # WebSocket configurations
     traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
     traefik.ingress.kubernetes.io/service.sticky.cookie.name: chat_sticky

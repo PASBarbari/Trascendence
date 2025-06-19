@@ -27,8 +27,7 @@ data:
       insecure: true
     
     providers:
-      kubernetesIngress:
-        allowCrossNamespace: true
+      kubernetesIngress: {}
       kubernetesCRD:
         allowCrossNamespace: true
     

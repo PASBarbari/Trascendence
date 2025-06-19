@@ -1,0 +1,52 @@
+{{- if .Values.ingress.enabled }}
+# HTTPS IngressRoute for Frontend
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-frontend-ingressroute
+  namespace: {{ include "front-end-chart.namespace" . }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`)
+      kind: Rule
+      priority: 500  # Lower priority than API routes
+      services:
+        - name: {{ .Release.Name }}-frontend-service
+          port: {{ .Values.service.port }}
+          sticky:
+            cookie:
+              name: frontend_sticky
+      middlewares:
+        - name: {{ .Release.Name }}-vite-hmr
+          namespace: {{ include "front-end-chart.namespace" . }}
+        - name: {{ .Release.Name }}-websocket-headers
+          namespace: {{ include "front-end-chart.namespace" . }}
+  tls:
+    {{- if .Values.ingress.tls.enabled }}
+    secretName: {{ .Values.ingress.tls.secretName }}
+    {{- end }}
+---
+# HTTP to HTTPS redirect IngressRoute for Frontend
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-frontend-ingressroute-http
+  namespace: {{ include "front-end-chart.namespace" . }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`{{ .Values.ingress.host }}`)
+      kind: Rule
+      middlewares:
+        - name: {{ .Release.Name }}-redirect-https
+          namespace: {{ include "front-end-chart.namespace" . }}
+      services:
+        - name: {{ .Release.Name }}-frontend-service
+          port: {{ .Values.service.port }}
+{{- end }}

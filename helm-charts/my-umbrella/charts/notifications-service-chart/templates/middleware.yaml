@@ -2,23 +2,25 @@
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: {{ include "notifications-service-chart.namespace" . }}-{{ .Release.Name }}-websocket-headers
+  name: {{ .Release.Name }}-websocket-headers
   namespace: {{ include "notifications-service-chart.namespace" . }}
   labels:
     {{- include "notifications-service-chart.labels" . | nindent 4 }}
 spec:
   headers:
     customRequestHeaders:
-      Connection: "upgrade"
+      X-Forwarded-Proto: "https"
+      X-Forwarded-Port: "443"
+      Connection: "Upgrade"
       Upgrade: "websocket"
     customResponseHeaders:
-      Connection: "upgrade"
-      Upgrade: "websocket"
+      X-Frame-Options: "SAMEORIGIN"
+      X-Content-Type-Options: "nosniff"
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
-  name: {{ include "notifications-service-chart.namespace" . }}-{{ .Release.Name }}-redirect-https
+  name: {{ .Release.Name }}-redirect-https
   namespace: {{ include "notifications-service-chart.namespace" . }}
   labels:
     {{- include "notifications-service-chart.labels" . | nindent 4 }}
