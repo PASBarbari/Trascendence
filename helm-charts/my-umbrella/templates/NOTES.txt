@@ -31,8 +31,8 @@ Chat Service:
 
 {{- if index .Values "observability-chart" "grafana" "enabled" }}
 Grafana Dashboard:
-  {{- if index .Values "observability-chart" "grafana" "ingress" "enabled" }}
-  URL: https://grafana.trascendence.local
+  {{- if index .Values "observability-chart" "ingressroutes" "enabled" }}
+  URL: https://grafana.{{ index .Values "observability-chart" "ingressroutes" "domain" }}
   {{- else }}
   To access Grafana using port-forward:
   kubectl port-forward svc/{{ .Release.Name }}-grafana 3000:80
@@ -49,12 +49,12 @@ Grafana Dashboard:
 {{- end }}
 
 {{- if index .Values "observability-chart" "eck-kibana" "enabled" }}
-Kibana (observability Stack):
-  {{- if index .Values "observability-chart" "ingress" "enabled" }}
-  URL: https://kibana.trascendence.local
+Kibana (Observability Stack):
+  {{- if index .Values "observability-chart" "ingressroutes" "enabled" }}
+  URL: https://kibana.{{ index .Values "observability-chart" "ingressroutes" "domain" }}
   {{- else }}
   To access Kibana using port-forward:
-  kubectl port-forward svc/{{ .Release.Name }}-kibana-kb-http 5601:5601
+  kubectl port-forward svc/eck-kibana-kb-http 5601:5601
   Then visit: http://localhost:5601
   {{- end }}
   Username: elastic

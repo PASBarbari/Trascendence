@@ -1,56 +1,232 @@
-{{- if .Values.kibana.enabled }}
+{{- if (index .Values "eck-kibana").enabled }}
 ---
+# Kibana Index Templates for Django Applications
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-index-templates
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kibana-config
+data:
+  # Index template for Django application logs
+  django-logs-template.json: |
+    {
+      "index_patterns": ["trascendence-*"],
+      "template": {
+        "settings": {
+          "number_of_shards": 1,
+          "number_of_replicas": 0,
+          "index.refresh_interval": "5s"
+        },
+        "mappings": {
+          "properties": {
+            "time": {
+              "type": "date",
+              "format": "yyyy-MM-dd HH:mm:ss,SSS"
+            },
+            "level": {
+              "type": "keyword"
+            },
+            "module": {
+              "type": "keyword"
+            },
+            "message": {
+              "type": "text",
+              "analyzer": "standard"
+            },
+            "path": {
+              "type": "keyword"
+            },
+            "lineno": {
+              "type": "integer"
+            },
+            "service": {
+              "type": "keyword"
+            },
+            "kubernetes": {
+              "properties": {
+                "namespace": {"type": "keyword"},
+                "pod": {"type": "keyword"},
+                "container": {"type": "keyword"}
+              }
+            }
+          }
+        }
+      }
+    }
+
+---
+# Kibana Index Patterns
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-index-patterns
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kibana-config
+data:
+  # Main application logs index pattern
+  trascendence-logs.json: |
+    {
+      "version": "8.6.0",
+      "objects": [
+        {
+          "id": "trascendence-logs-*",
+          "type": "index-pattern",
+          "attributes": {
+            "title": "trascendence-logs-*",
+            "timeFieldName": "time",
+            "fields": "[{\"name\":\"time\",\"type\":\"date\",\"searchable\":true,\"aggregatable\":true},{\"name\":\"level\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":true},{\"name\":\"module\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":true},{\"name\":\"message\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":false},{\"name\":\"service\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":true},{\"name\":\"kubernetes.namespace\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":true},{\"name\":\"kubernetes.pod\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":true},{\"name\":\"kubernetes.container\",\"type\":\"string\",\"searchable\":true,\"aggregatable\":true}]"
+          }
+        }
+      ]
+    }
+
+---
+# Kibana Dashboards
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: kibana-dashboards
   namespace: {{ .Release.Namespace }}
+  labels:
+    app: kibana-config
 data:
-  # Kubernetes Overview Dashboard
-  kubernetes-overview.json: |
+  # Error Monitoring Dashboard
+  error-monitoring.json: |
     {
-      "version": "8.5.1",
+      "version": "8.6.0",
       "objects": [
         {
-          "id": "kubernetes-overview",
+          "id": "error-monitoring-dashboard",
           "type": "dashboard",
           "attributes": {
-            "title": "Kubernetes Overview",
+            "title": "🚨 Trascendence Error Monitoring",
             "type": "dashboard",
-            "description": "Overview of Kubernetes cluster metrics",
-            "panelsJSON": "[{\"version\":\"8.5.1\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":15,\"i\":\"1\"},\"panelIndex\":\"1\",\"embeddableConfig\":{},\"panelRefName\":\"panel_1\"}]",
+            "description": "Real-time error monitoring for all Trascendence services",
+            "panelsJSON": "[{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":15,\"i\":\"error-timeline\"},\"panelIndex\":\"error-timeline\",\"embeddableConfig\":{\"title\":\"Errors Over Time\",\"vis\":{\"type\":\"histogram\",\"params\":{\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Count\"}}]}}},\"panelRefName\":\"panel_error-timeline\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":24,\"y\":0,\"w\":24,\"h\":15,\"i\":\"error-by-service\"},\"panelIndex\":\"error-by-service\",\"embeddableConfig\":{\"title\":\"Errors by Service\"},\"panelRefName\":\"panel_error-by-service\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":15,\"w\":48,\"h\":20,\"i\":\"recent-errors\"},\"panelIndex\":\"recent-errors\",\"embeddableConfig\":{\"title\":\"Recent Error Messages\"},\"panelRefName\":\"panel_recent-errors\"}]",
             "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"hidePanelTitles\":false}",
             "version": 1,
-            "timeRestore": false,
+            "timeRestore": true,
+            "timeTo": "now",
+            "timeFrom": "now-24h",
             "kibanaSavedObjectMeta": {
-              "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+              "searchSourceJSON": "{\"query\":{\"query\":\"level:ERROR\",\"language\":\"kuery\"},\"filter\":[]}"
             }
           }
         }
       ]
     }
-  
-  # Trascendence Services Dashboard
-  trascendence-services.json: |
+
+  # Login Analytics Dashboard  
+  login-analytics.json: |
     {
-      "version": "8.5.1",
+      "version": "8.6.0",
       "objects": [
         {
-          "id": "trascendence-services",
+          "id": "login-analytics-dashboard",
           "type": "dashboard",
           "attributes": {
-            "title": "Trascendence Services",
-            "type": "dashboard",
-            "description": "Monitoring dashboard for Trascendence microservices",
-            "panelsJSON": "[{\"version\":\"8.5.1\",\"gridData\":{\"x\":0,\"y\":0,\"w\":48,\"h\":15,\"i\":\"1\"},\"panelIndex\":\"1\",\"embeddableConfig\":{\"title\":\"Service Logs\"},\"panelRefName\":\"panel_1\"}]",
+            "title": "🔐 Login Analytics",
+            "type": "dashboard", 
+            "description": "User login patterns and authentication monitoring",
+            "panelsJSON": "[{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":15,\"i\":\"logins-per-minute\"},\"panelIndex\":\"logins-per-minute\",\"embeddableConfig\":{\"title\":\"Logins per Minute\"},\"panelRefName\":\"panel_logins-per-minute\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":24,\"y\":0,\"w\":24,\"h\":15,\"i\":\"failed-logins\"},\"panelIndex\":\"failed-logins\",\"embeddableConfig\":{\"title\":\"Failed Login Attempts\"},\"panelRefName\":\"panel_failed-logins\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":15,\"w\":48,\"h\":20,\"i\":\"login-events\"},\"panelIndex\":\"login-events\",\"embeddableConfig\":{\"title\":\"Recent Login Events\"},\"panelRefName\":\"panel_login-events\"}]",
             "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"hidePanelTitles\":false}",
             "version": 1,
-            "timeRestore": false,
+            "timeRestore": true,
+            "timeTo": "now",
+            "timeFrom": "now-4h",
             "kibanaSavedObjectMeta": {
-              "searchSourceJSON": "{\"query\":{\"query\":\"kubernetes.container.name:(\\\"login-service\\\" OR \\\"chat-service\\\" OR \\\"frontend\\\")\",\"language\":\"kuery\"},\"filter\":[]}"
+              "searchSourceJSON": "{\"query\":{\"query\":\"module:login OR message:*login* OR message:*authentication*\",\"language\":\"kuery\"},\"filter\":[]}"
             }
           }
         }
       ]
     }
+
+  # Service Overview Dashboard
+  service-overview.json: |
+    {
+      "version": "8.6.0",
+      "objects": [
+        {
+          "id": "service-overview-dashboard",
+          "type": "dashboard",
+          "attributes": {
+            "title": "📊 Trascendence Services Overview",
+            "type": "dashboard",
+            "description": "Comprehensive overview of all Trascendence microservices",
+            "panelsJSON": "[{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":0,\"w\":12,\"h\":10,\"i\":\"log-levels\"},\"panelIndex\":\"log-levels\",\"embeddableConfig\":{\"title\":\"Log Levels Distribution\"},\"panelRefName\":\"panel_log-levels\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":12,\"y\":0,\"w\":12,\"h\":10,\"i\":\"services-activity\"},\"panelIndex\":\"services-activity\",\"embeddableConfig\":{\"title\":\"Service Activity\"},\"panelRefName\":\"panel_services-activity\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":24,\"y\":0,\"w\":12,\"h\":10,\"i\":\"top-modules\"},\"panelIndex\":\"top-modules\",\"embeddableConfig\":{\"title\":\"Most Active Modules\"},\"panelRefName\":\"panel_top-modules\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":36,\"y\":0,\"w\":12,\"h\":10,\"i\":\"response-times\"},\"panelIndex\":\"response-times\",\"embeddableConfig\":{\"title\":\"Response Times\"},\"panelRefName\":\"panel_response-times\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":10,\"w\":48,\"h\":25,\"i\":\"recent-logs\"},\"panelIndex\":\"recent-logs\",\"embeddableConfig\":{\"title\":\"Recent Application Logs\"},\"panelRefName\":\"panel_recent-logs\"}]",
+            "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"hidePanelTitles\":false}",
+            "version": 1,
+            "timeRestore": true,
+            "timeTo": "now",
+            "timeFrom": "now-1h",
+            "kibanaSavedObjectMeta": {
+              "searchSourceJSON": "{\"query\":{\"query\":\"kubernetes.container.name:(\\\"login-service\\\" OR \\\"chat-service\\\" OR \\\"frontend\\\" OR \\\"pong-service\\\" OR \\\"notifications-service\\\" OR \\\"user-service\\\")\",\"language\":\"kuery\"},\"filter\":[]}"
+            }
+          }
+        }
+      ]
+    }
+
+  # Chat Service Specific Dashboard
+  chat-monitoring.json: |
+    {
+      "version": "8.6.0",
+      "objects": [
+        {
+          "id": "chat-monitoring-dashboard",
+          "type": "dashboard",
+          "attributes": {
+            "title": "💬 Chat Service Monitoring",
+            "type": "dashboard",
+            "description": "Real-time monitoring of chat service, WebSocket connections, and message flows",
+            "panelsJSON": "[{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":0,\"w\":24,\"h\":15,\"i\":\"websocket-connections\"},\"panelIndex\":\"websocket-connections\",\"embeddableConfig\":{\"title\":\"WebSocket Connections\"},\"panelRefName\":\"panel_websocket-connections\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":24,\"y\":0,\"w\":24,\"h\":15,\"i\":\"message-volume\"},\"panelIndex\":\"message-volume\",\"embeddableConfig\":{\"title\":\"Message Volume\"},\"panelRefName\":\"panel_message-volume\"},{\"version\":\"8.6.0\",\"gridData\":{\"x\":0,\"y\":15,\"w\":48,\"h\":20,\"i\":\"chat-errors\"},\"panelIndex\":\"chat-errors\",\"embeddableConfig\":{\"title\":\"Chat Service Errors\"},\"panelRefName\":\"panel_chat-errors\"}]",
+            "optionsJSON": "{\"useMargins\":true,\"syncColors\":false,\"hidePanelTitles\":false}",
+            "version": 1,
+            "timeRestore": true,
+            "timeTo": "now",
+            "timeFrom": "now-2h",
+            "kibanaSavedObjectMeta": {
+              "searchSourceJSON": "{\"query\":{\"query\":\"kubernetes.container.name:\\\"chat-service\\\" OR module:my_chat OR module:channels OR module:websockets\",\"language\":\"kuery\"},\"filter\":[]}"
+            }
+          }
+        }
+      ]
+    }
+
+---
+# Kibana Visualization Saved Objects
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-visualizations
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kibana-config
+data:
+  # Error timeline visualization
+  error-timeline.json: |
+    {
+      "version": "8.6.0",
+      "objects": [
+        {
+          "id": "error-timeline-viz",
+          "type": "visualization",
+          "attributes": {
+            "title": "Error Timeline",
+            "visState": "{\"title\":\"Error Timeline\",\"type\":\"histogram\",\"params\":{\"grid\":{\"categoryLines\":false,\"style\":{\"color\":\"#eee\"}},\"categoryAxes\":[{\"id\":\"CategoryAxis-1\",\"type\":\"category\",\"position\":\"bottom\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\"},\"labels\":{\"show\":true,\"truncate\":100},\"title\":{}}],\"valueAxes\":[{\"id\":\"ValueAxis-1\",\"name\":\"LeftAxis-1\",\"type\":\"value\",\"position\":\"left\",\"show\":true,\"style\":{},\"scale\":{\"type\":\"linear\",\"mode\":\"normal\"},\"labels\":{\"show\":true,\"rotate\":0,\"filter\":false,\"truncate\":100},\"title\":{\"text\":\"Count\"}}],\"seriesParams\":[{\"show\":\"true\",\"type\":\"histogram\",\"mode\":\"stacked\",\"data\":{\"label\":\"Count\",\"id\":\"1\"},\"valueAxis\":\"ValueAxis-1\",\"drawLinesBetweenPoints\":true,\"showCircles\":true}],\"addTooltip\":true,\"addLegend\":true,\"legendPosition\":\"right\",\"times\":[],\"addTimeMarker\":false},\"aggs\":[{\"id\":\"1\",\"enabled\":true,\"type\":\"count\",\"schema\":\"metric\",\"params\":{}},{\"id\":\"2\",\"enabled\":true,\"type\":\"date_histogram\",\"schema\":\"segment\",\"params\":{\"field\":\"time\",\"interval\":\"auto\",\"customInterval\":\"2h\",\"min_doc_count\":1,\"extended_bounds\":{}}}]}",
+            "uiStateJSON": "{}",
+            "description": "",
+            "version": 1,
+            "kibanaSavedObjectMeta": {
+              "searchSourceJSON": "{\"index\":\"trascendence-logs-*\",\"query\":{\"match\":{\"level\":\"ERROR\"}},\"filter\":[]}"
+            }
+          }
+        }
+      ]
+    }
+
 {{- end }}

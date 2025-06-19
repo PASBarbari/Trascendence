@@ -1,4 +1,4 @@
-{{- if .Values.ingress.enabled }}
+{{- if .Values.ingressroutes.enabled }}
 # Middleware for HTTPS redirect
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -43,10 +43,10 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`grafana.trascendence.local`)
+    - match: Host(`grafana.{{ .Values.ingressroutes.domain }}`)
       kind: Rule
       services:
-        - name: {{ include "observability-chart.fullname" . }}-grafana
+        - name: {{ .Release.Name }}-grafana
           port: 80
   tls:
     secretName: grafana-tls
@@ -64,13 +64,13 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`grafana.trascendence.local`)
+    - match: Host(`grafana.{{ .Values.ingressroutes.domain }}`)
       kind: Rule
       middlewares:
         - name: {{ include "observability-chart.fullname" . }}-redirect-https
           namespace: {{ .Release.Namespace }}
       services:
-        - name: {{ include "observability-chart.fullname" . }}-grafana
+        - name: {{ .Release.Name }}-grafana
           port: 80
 ---
 # Kibana IngressRoute
@@ -87,7 +87,7 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`kibana.trascendence.local`)
+    - match: Host(`kibana.{{ .Values.ingressroutes.domain }}`)
       kind: Rule
       services:
         - name: eck-kibana-kb-http
@@ -112,7 +112,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`kibana.trascendence.local`)
+    - match: Host(`kibana.{{ .Values.ingressroutes.domain }}`)
       kind: Rule
       middlewares:
         - name: {{ include "observability-chart.fullname" . }}-redirect-https
