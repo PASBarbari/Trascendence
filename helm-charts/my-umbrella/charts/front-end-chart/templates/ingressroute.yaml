@@ -12,20 +12,28 @@ spec:
     - web
     - websecure
   routes:
+    # WebSocket route for Vite HMR (higher priority)
+    - match: Host(`{{ .Values.ingress.host }}`) && (PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`))
+      kind: Rule
+      priority: 600  # Higher priority for WebSocket routes
+      services:
+        - name: {{ .Release.Name }}-frontend-service
+          port: {{ .Values.service.port }}
+      middlewares:
+        - name: {{ .Release.Name }}-vite-hmr
+          namespace: {{ include "front-end-chart.namespace" . }}
+        - name: {{ .Release.Name }}-websocket-headers
+          namespace: {{ include "front-end-chart.namespace" . }}
+    # Regular HTTP route (lower priority)
     - match: Host(`{{ .Values.ingress.host }}`)
       kind: Rule
-      priority: 500  # Lower priority than API routes
+      priority: 500  # Lower priority than WebSocket routes
       services:
         - name: {{ .Release.Name }}-frontend-service
           port: {{ .Values.service.port }}
           sticky:
             cookie:
               name: frontend_sticky
-      middlewares:
-        - name: {{ .Release.Name }}-vite-hmr
-          namespace: {{ include "front-end-chart.namespace" . }}
-        - name: {{ .Release.Name }}-websocket-headers
-          namespace: {{ include "front-end-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}
