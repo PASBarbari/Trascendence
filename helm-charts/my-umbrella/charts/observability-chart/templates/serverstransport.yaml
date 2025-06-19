@@ -1,0 +1,16 @@
+{{- if .Values.ingress.enabled }}
+# ServersTransport for Kibana HTTPS backend (must be created first)
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: kibana-tls-transport
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+  annotations:
+  "helm.sh/hook": pre-install,pre-upgrade
+  "helm.sh/hook-weight": "-10"
+spec:
+  serverName: "eck-kibana-kb-http"
+  insecureSkipVerify: true
+{{- end }}
