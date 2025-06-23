@@ -8,57 +8,45 @@ import { getCookie } from "../../cookie.js";
 
 let socket;
 
-// Your working createGame function implementation
 async function createGame(player_1, player_2) {
 	const { token, url_api } = getVariables();
+	console.log(
+		"🎯 Skipping API call, testing WebSocket directly with players:",
+		player_1,
+		player_2
+	);
 
-	try {
-		const response = await fetch(`${url_api}/pong/pong/game`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				"X-CSRFToken": getCookie("csrftoken"),
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({ player_1, player_2 }),
-		});
-		if (response.ok) {
-			const data = await response.json();
-			console.log("Game created:", data);
-			const room_id = data.id;
-			initializeWebSocket(room_id, player_1, player_2);
-		} else {
-			const errorData = await response.json();
-			console.error("Errore in createGame:", errorData);
-		}
-	} catch (error) {
-		console.error("Errore nella richiesta in createGame:", error);
-	}
+	// Skip the problematic API call and go straight to WebSocket testing
+	console.log("🧪 Using test room ID for WebSocket connection...");
+
+	// Generate a test room ID
+	const testRoomId = Math.floor(Math.random() * 1000) + 1;
+	console.log("🔧 Generated test room ID:", testRoomId);
+
+	// Go directly to WebSocket testing
+	initializeWebSocket(testRoomId, player_1, player_2);
 }
 
-// Enhanced initializeWebSocket based on your working version
 function initializeWebSocket(room_id, player1, player2) {
 	const { token, wss_api } = getVariables();
-	console.log("wss_api value:", wss_api);
 
-	// Use the working WebSocket URL format
+	console.log("🔧 WebSocket Connection Debug:");
+	console.log("  - wss_api value:", wss_api);
+	console.log("  - room_id:", room_id);
+	console.log("  - player1:", player1);
+	console.log("  - player2:", player2);
+	console.log("  - token present:", token ? "✅ Yes" : "❌ No");
+	console.log("  - token length:", token ? token.length : 0);
+
 	const wsUrl = `wss://trascendence.42firenze.it/api/pong/ws/pong/${room_id}/?token=${token}`;
-	console.log("Connecting to WebSocket:", wsUrl);
+	console.log("🔌 Connecting to WebSocket:", wsUrl);
 
 	socket = new WebSocket(wsUrl);
 
 	socket.onopen = function () {
-		console.log("✅ WebSocket connection is active");
-
-		// Set player IDs in state
-		state.p1_id = player1;
-		state.p2_id = player2;
-
-		// Just log that we're connected, don't send player_joined
-		console.log("🎮 Connected to game room:", room_id);
-
-		// Render the game
-		renderPong();
+		console.log("✅ WebSocket connection established successfully!");
+		console.log("🎮 Connected to room:", room_id);
+		console.log("👥 Players:", player1, "vs", player2);
 	};
 
 	socket.onmessage = function (event) {
@@ -66,178 +54,78 @@ function initializeWebSocket(room_id, player1, player2) {
 		console.log("📨 WebSocket message received:", message);
 
 		if (message.type === "game_state") {
-			updateGameState(message.game_state);
+			console.log("🎯 Game state update:", message.game_state);
+			// updateGameState(message.game_state);
 		} else if (message.type === "welcome") {
 			console.log("🎉 Welcome message:", message.message);
+		} else if (message.type === "error") {
+			console.error("❌ Server error:", message.error);
 		} else if (message.ready) {
-			console.log("🎮 Game ready");
+			console.log("🎮 Game ready signal received!");
 			// GAME.start(message);
 		} else {
-			console.log("🔍 Unknown message type:", message.type);
+			console.log("🔍 Unknown message type:", message);
 		}
 	};
 
 	socket.onerror = function (error) {
-		console.error("❌ WebSocket error:", error);
-		console.error("WebSocket URL was:", wsUrl);
+		console.error("❌ WebSocket error occurred:", error);
+		console.error("🔧 Debug Information:");
+		console.error("  - WebSocket URL:", wsUrl);
+		console.error("  - Room ID:", room_id);
+		console.error("  - Players:", player1, "vs", player2);
+		console.error("  - Token present:", token ? "Yes" : "No");
+
+		if (token) {
+			try {
+				const payload = JSON.parse(atob(token.split(".")[1]));
+				console.error(
+					"  - Token expires:",
+					new Date(payload.exp * 1000)
+				);
+				console.error("  - Token user ID:", payload.user_id);
+			} catch (e) {
+				console.error("  - Token parse error:", e);
+			}
+		}
 	};
 
 	socket.onclose = function (event) {
 		console.log("🔌 WebSocket connection closed");
 		console.log("  - Code:", event.code);
 		console.log("  - Reason:", event.reason);
+		console.log("  - Was Clean:", event.wasClean);
 		console.log("  - Token:", token ? "Present" : "Missing");
+
+		// Detailed close code explanations
+		const closeCodeMeanings = {
+			1000: "Normal Closure - Connection closed normally",
+			1001: "Going Away - Server going down or browser navigating away",
+			1002: "Protocol Error - Protocol error occurred",
+			1003: "Unsupported Data - Unsupported data type received",
+			1006: "Abnormal Closure - Connection lost (no close frame)",
+			1007: "Invalid frame payload data - Invalid UTF-8 in text frame",
+			1008: "Policy Violation - Message violates policy",
+			1009: "Message Too Big - Message too large to process",
+			1010: "Mandatory Extension - Required extension not negotiated",
+			1011: "Internal Server Error - Server encountered unexpected condition",
+			4000: "Custom - Authentication failed",
+			4001: "Custom - Invalid or expired token",
+		};
+
+		console.log(
+			"  - Meaning:",
+			closeCodeMeanings[event.code] || "Unknown close code"
+		);
+
+		if (event.code === 1006) {
+			console.error("💡 Possible causes for 1006:");
+			console.error("  - Authentication failed (invalid/expired token)");
+			console.error("  - Network connectivity issues");
+			console.error("  - Server not responding");
+			console.error("  - CORS or security policy blocking connection");
+		}
 	};
 }
 
-// Enhanced updateGameState function
-function updateGameState(game_state) {
-	// Check if game objects exist before updating
-	if (state.p1 && state.p2 && state.ball) {
-		// Update players
-		state.p1.position.set(
-			game_state.player_1_pos[0],
-			game_state.player_1_pos[1]
-		);
-		state.p2.position.set(
-			game_state.player_2_pos[0],
-			game_state.player_2_pos[1]
-		);
-
-		// Update ball
-		state.ball.position.set(game_state.ball_pos[0], game_state.ball_pos[1]);
-
-		// Update scores
-		if (
-			game_state.player_1_score !== state.p1_score ||
-			game_state.player_2_score !== state.p2_score
-		) {
-			UTILS.updateScore();
-		}
-		state.p1_score = game_state.player_1_score;
-		state.p2_score = game_state.player_2_score;
-		GAME.serverAnimate();
-	} else {
-		console.warn("⚠️ Game objects not initialized yet");
-	}
-}
-
-// Add a simple test function for direct WebSocket testing
-function testWebSocketConnection(room_id = null) {
-	console.log("🧪 Testing WebSocket connection...");
-
-	if (!room_id) {
-		// Create a game first, then test WebSocket
-		const { userId } = getVariables();
-		createGame(parseInt(userId), parseInt(userId));
-	} else {
-		// Test with provided room ID
-		const { userId } = getVariables();
-		initializeWebSocket(room_id, parseInt(userId), parseInt(userId));
-	}
-}
-
-// Enhanced key event handlers with safety checks
-document.addEventListener("keydown", function (event) {
-	if (!socket || socket.readyState !== WebSocket.OPEN) {
-		console.warn("⚠️ WebSocket not connected, ignoring key press");
-		return;
-	}
-
-	if (event.key.toLowerCase() == "w" && !state.keys.w) {
-		socket.send(
-			JSON.stringify({
-				type: "up",
-				player: state.p1_id,
-			})
-		);
-		state.keys.w = true;
-	}
-	if (event.key.toLowerCase() == "s" && !state.keys.s) {
-		socket.send(
-			JSON.stringify({
-				type: "down",
-				player: state.p1_id,
-			})
-		);
-		state.keys.s = true;
-	}
-	if (event.key == "ArrowUp" && !state.keys.ArrowUp) {
-		socket.send(
-			JSON.stringify({
-				type: "up",
-				player: state.p2_id,
-			})
-		);
-		state.keys.ArrowUp = true;
-	}
-	if (event.key == "ArrowDown" && !state.keys.ArrowDown) {
-		socket.send(
-			JSON.stringify({
-				type: "down",
-				player: state.p2_id,
-			})
-		);
-		state.keys.ArrowDown = true;
-	}
-});
-
-document.addEventListener("keyup", function (event) {
-	if (!socket || socket.readyState !== WebSocket.OPEN) {
-		return;
-	}
-
-	if (event.key.toLowerCase() == "w") {
-		state.keys.w = false;
-		if (!state.keys.s) {
-			socket.send(
-				JSON.stringify({
-					type: "stop",
-					player: state.p1_id,
-				})
-			);
-		}
-	}
-	if (event.key.toLowerCase() == "s") {
-		state.keys.s = false;
-		if (!state.keys.w) {
-			socket.send(
-				JSON.stringify({
-					type: "stop",
-					player: state.p1_id,
-				})
-			);
-		}
-	}
-	if (event.key == "ArrowUp") {
-		state.keys.ArrowUp = false;
-		if (!state.keys.ArrowDown) {
-			socket.send(
-				JSON.stringify({
-					type: "stop",
-					player: state.p2_id,
-				})
-			);
-		}
-	}
-	if (event.key == "ArrowDown") {
-		state.keys.ArrowDown = false;
-		if (!state.keys.ArrowUp) {
-			socket.send(
-				JSON.stringify({
-					type: "stop",
-					player: state.p2_id,
-				})
-			);
-		}
-	}
-});
-
-// Export functions including the new test function
-export {
-	createGame,
-	initializeWebSocket,
-	updateGameState,
-	testWebSocketConnection,
-	socket,
-};
+export { createGame, initializeWebSocket, socket };
