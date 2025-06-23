@@ -7,7 +7,6 @@ class MyChatConfig(AppConfig):
 	def ready(self):
 		try:
 			# from .authentications import register_self
-			from .admin import create_superuser
 			from .signals import chat_room_created
 			#user_register_self()
 			#print("User login successful")

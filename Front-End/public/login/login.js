@@ -69,119 +69,152 @@ function renderLogin() {
  * @param {string} provider - Il provider OAuth ("google" o "42")
  */
 async function handleOAuthLogin(provider) {
-    const csrftoken = getCookie("csrftoken");
-    const { url_api } = getVariables();
-    
-    let popup = null;
-    let storageCheckInterval;
-    
-    try {
-        const response = await fetch(`${url_api}/login/login/oauth/${provider}/`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrftoken,
-            },
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            
-            // PULISCI localStorage prima di iniziare
-            localStorage.removeItem('oauth_result');
-            
-            // Apri il popup OAuth
-            popup = window.open(
-                data.redirect_url,
-                'oauth-popup',
-                'width=500,height=600,scrollbars=yes,resizable=yes,left=' + 
-                (window.screen.width / 2 - 250) + ',top=' + 
-                (window.screen.height / 2 - 300)
-            );
-            
-            if (!popup) {
-                showAlertForXSeconds('Popup blocked by browser. Please allow popups for this site.', 'error', 5, { asToast: true });
-                return;
-            }
-            
-            // controllo localStorage ogni secondo
-            storageCheckInterval = setInterval(() => {
-                try {
-                    const resultString = localStorage.getItem('oauth_result');
-                    
-                    if (resultString) {
-                        const result = JSON.parse(resultString);
-                        
-                        // Pulisci localStorage
-                        localStorage.removeItem('oauth_result');
-                        
-                        // Pulisci interval
-                        clearInterval(storageCheckInterval);
-                        storageCheckInterval = null;
-                        
-                        // Chiudi popup se ancora aperto
-                        if (popup && !popup.closed) {
-                            popup.close();
-                        }
-                        
-                        // Processa il risultato
-                        if (result.type === 'OAUTH_SUCCESS') {
-                            // Verifica che i dati ci siano
-                            if (!result.access_token || !result.refresh_token) {
-                                console.error('Token mancanti nel risultato:', result);
-                                showAlertForXSeconds('OAuth authentication failed: missing tokens', 'error', 5, { asToast: true });
-                                return;
-                            }
-                            
-                            // Salva i token
-                            setVariables({
-                                token: result.access_token,
-                                refreshToken: result.refresh_token,
-                                userId: result.user_id,
-                                userUsername: result.username,
-                                userEmail: result.email
-                            });
-                            
-                            // Reindirizza alla home
-                            window.navigateTo("#home");
-                            
-                            // Mostra messaggio di successo
-                            showAlertForXSeconds("OAuth login successful!", "success", 3, { asToast: true });
-                            
-                        } else if (result.type === 'OAUTH_ERROR') {
-                            showAlertForXSeconds(`OAuth login failed: ${result.error}`, "error", 5, { asToast: true });
-                        }
-                    }
-                    
+	const csrftoken = getCookie("csrftoken");
+	const { url_api } = getVariables();
 
-                } catch (e) {
-                    console.error('Errore controllo localStorage:', e);
-                }
-            }, 1000);
-            
-            // Timeout di sicurezza (5 minuti)
-            setTimeout(() => {
-                if (storageCheckInterval) {
-                    clearInterval(storageCheckInterval);
-                    storageCheckInterval = null;
-                }
-                try {
-                    if (popup) {
-                        popup.close();
-                    }
-                } catch (e) {
-                    console.log('Popup già chiuso o non accessibile');
-                }
-                localStorage.removeItem('oauth_result');
-            }, 300000); // 5 minuti
-            
-        } else {
-            const errorData = await response.json();
-            showAlertForXSeconds('Authentication error. Please try again.', 'error', 3, { asToast: true });
-        }
-    } catch (error) {
-        showAlertForXSeconds('Connection error during authentication.', 'error', 3, { asToast: true });
-    }
+	let popup = null;
+	let storageCheckInterval;
+
+	try {
+		const response = await fetch(
+			`${url_api}/login/login/oauth/${provider}/`,
+			{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"X-CSRFToken": csrftoken,
+				},
+			}
+		);
+
+		if (response.ok) {
+			const data = await response.json();
+
+			// PULISCI localStorage prima di iniziare
+			localStorage.removeItem("oauth_result");
+
+			// Apri il popup OAuth
+			popup = window.open(
+				data.redirect_url,
+				"oauth-popup",
+				"width=500,height=600,scrollbars=yes,resizable=yes,left=" +
+					(window.screen.width / 2 - 250) +
+					",top=" +
+					(window.screen.height / 2 - 300)
+			);
+
+			if (!popup) {
+				showAlertForXSeconds(
+					"Popup blocked by browser. Please allow popups for this site.",
+					"error",
+					5,
+					{ asToast: true }
+				);
+				return;
+			}
+
+			// controllo localStorage ogni secondo
+			storageCheckInterval = setInterval(() => {
+				try {
+					const resultString = localStorage.getItem("oauth_result");
+
+					if (resultString) {
+						const result = JSON.parse(resultString);
+
+						// Pulisci localStorage
+						localStorage.removeItem("oauth_result");
+
+						// Pulisci interval
+						clearInterval(storageCheckInterval);
+						storageCheckInterval = null;
+
+						// Chiudi popup se ancora aperto
+						if (popup && !popup.closed) {
+							popup.close();
+						}
+
+						// Processa il risultato
+						if (result.type === "OAUTH_SUCCESS") {
+							// Verifica che i dati ci siano
+							if (!result.access_token || !result.refresh_token) {
+								console.error(
+									"Token mancanti nel risultato:",
+									result
+								);
+								showAlertForXSeconds(
+									"OAuth authentication failed: missing tokens",
+									"error",
+									5,
+									{ asToast: true }
+								);
+								return;
+							}
+
+							// Salva i token
+							setVariables({
+								token: result.access_token,
+								refreshToken: result.refresh_token,
+								userId: result.user_id,
+								userUsername: result.username,
+								userEmail: result.email,
+							});
+
+							// Reindirizza alla home
+							window.navigateTo("#home");
+
+							// Mostra messaggio di successo
+							showAlertForXSeconds(
+								"OAuth login successful!",
+								"success",
+								3,
+								{ asToast: true }
+							);
+						} else if (result.type === "OAUTH_ERROR") {
+							showAlertForXSeconds(
+								`OAuth login failed: ${result.error}`,
+								"error",
+								5,
+								{ asToast: true }
+							);
+						}
+					}
+				} catch (e) {
+					console.error("Errore controllo localStorage:", e);
+				}
+			}, 1000);
+
+			// Timeout di sicurezza (5 minuti)
+			setTimeout(() => {
+				if (storageCheckInterval) {
+					clearInterval(storageCheckInterval);
+					storageCheckInterval = null;
+				}
+				try {
+					if (popup) {
+						popup.close();
+					}
+				} catch (e) {
+					console.log("Popup già chiuso o non accessibile");
+				}
+				localStorage.removeItem("oauth_result");
+			}, 300000); // 5 minuti
+		} else {
+			const errorData = await response.json();
+			showAlertForXSeconds(
+				"Authentication error. Please try again.",
+				"error",
+				3,
+				{ asToast: true }
+			);
+		}
+	} catch (error) {
+		showAlertForXSeconds(
+			"Connection error during authentication.",
+			"error",
+			3,
+			{ asToast: true }
+		);
+	}
 }
 
 async function onHandleSubmit(e, email, password) {
@@ -193,7 +226,12 @@ async function onHandleSubmit(e, email, password) {
 			window.navigateTo("#home");
 		}
 	} else {
-		showAlertForXSeconds("Please enter both email and password.", "error", 3, { asToast: true });
+		showAlertForXSeconds(
+			"Please enter both email and password.",
+			"error",
+			3,
+			{ asToast: true }
+		);
 	}
 }
 
@@ -249,12 +287,12 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 			} else {
 				const errorData = await response.json();
 				console.error("Login error:", errorData);
-				
+
 				// Handle different error formats
 				let errorMessage = "Invalid credentials";
-				
+
 				if (errorData.error) {
-					if (typeof errorData.error === 'string') {
+					if (typeof errorData.error === "string") {
 						// Handle Django REST Framework validation errors in string format
 						if (errorData.error.includes("ErrorDetail")) {
 							errorMessage = "Please enter a valid email address";
@@ -263,7 +301,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 						}
 					}
 				}
-				
+
 				showAlertForXSeconds(
 					`Login failed: ${errorMessage}`,
 					"error",
@@ -338,37 +376,37 @@ function showOTPVerificationForm(tempToken, email) {
 			}
 		});
 
-// Handle cancel button
-document
-	.getElementById("cancelButton")
-	.addEventListener("click", function () {
-		// Restore original login form
-		contentDiv.innerHTML = originalContent;
+	// Handle cancel button
+	document
+		.getElementById("cancelButton")
+		.addEventListener("click", function () {
+			// Restore original login form
+			contentDiv.innerHTML = originalContent;
 
-		// Re-attach event listeners to the restored content
-		document
-			.getElementById("loginForm")
-			.addEventListener("submit", async function (e) {
-				e.preventDefault();
-				const email = document.getElementById("email").value;
-				const password = document.getElementById("password").value;
-				await onHandleSubmit(e, email, password);
-			});
+			// Re-attach event listeners to the restored content
+			document
+				.getElementById("loginForm")
+				.addEventListener("submit", async function (e) {
+					e.preventDefault();
+					const email = document.getElementById("email").value;
+					const password = document.getElementById("password").value;
+					await onHandleSubmit(e, email, password);
+				});
 
-		document
-			.getElementById("registerButton")
-			.addEventListener("click", function () {
-				window.navigateTo("#register");
-			});
+			document
+				.getElementById("registerButton")
+				.addEventListener("click", function () {
+					window.navigateTo("#register");
+				});
 
-		document
-			.getElementById("loginGoogle")
-			.addEventListener("click", () => handleOAuthLogin("google"));
+			document
+				.getElementById("loginGoogle")
+				.addEventListener("click", () => handleOAuthLogin("google"));
 
-		document
-			.getElementById("login42")
-			.addEventListener("click", () => handleOAuthLogin("42"));
-	});
+			document
+				.getElementById("login42")
+				.addEventListener("click", () => handleOAuthLogin("42"));
+		});
 }
 
 async function verifyOTP(tempToken, otpCode, email) {
@@ -412,6 +450,5 @@ async function verifyOTP(tempToken, otpCode, email) {
 		return false;
 	}
 }
-
 
 export { renderLogin, loginUser };

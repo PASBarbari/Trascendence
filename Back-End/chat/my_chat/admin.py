@@ -5,10 +5,3 @@ from django.dispatch import receiver
 from chat.settings import ADMIN
 # Register your models here.
 
-User = get_user_model()
-
-@receiver(post_migrate)
-def create_superuser(sender, **kwargs):
-    if not User.objects.filter(email=ADMIN['email']).exists():
-        User.objects.create_superuser(email=ADMIN['email'], password=ADMIN['password'], username=ADMIN['username'])
-        print('Superuser created successfully.')

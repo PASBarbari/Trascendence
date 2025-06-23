@@ -1,0 +1,18 @@
+apiVersion: skaffold/v2beta28
+kind: Config
+metadata:
+  name: frontend-k8s-simple
+build:
+  artifacts:
+    - image: marcor42/frontend
+      context: Front-End
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: '**/*'
+            dest: /app
+deploy:
+  kubectl:
+    manifests:
+      - k8s-manifests/frontend/*.yaml
