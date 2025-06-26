@@ -139,6 +139,7 @@ CORS_ALLOW_HEADERS = [
 # Application definition
 
 INSTALLED_APPS = [
+	'django_prometheus',  # Add prometheus monitoring
 	'daphne',
 	'django.contrib.admin',
 	'django.contrib.auth',
@@ -159,6 +160,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+	'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
 	'my_chat.middleware.HealthCheckMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
 	'django.middleware.security.SecurityMiddleware',
@@ -169,6 +171,7 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'my_chat.middleware.ErrorLoggingMiddleware',
+	'django_prometheus.middleware.PrometheusAfterMiddleware',  # Add at the end
 ]
 	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
