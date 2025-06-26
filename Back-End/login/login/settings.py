@@ -122,6 +122,7 @@ CORS_ALLOW_HEADERS = [
 # Application definition
 
 INSTALLED_APPS = [
+	'django_prometheus',  # Add prometheus monitoring
 	'django.contrib.admin',
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
@@ -136,6 +137,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+	'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
 	'my_login.middleware.HealthCheckMiddleware',
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
@@ -146,6 +148,9 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Add at the end of middleware list
+MIDDLEWARE.append('django_prometheus.middleware.PrometheusAfterMiddleware')
 
 ROOT_URLCONF = 'login.urls'
 

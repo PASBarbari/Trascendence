@@ -8,6 +8,7 @@ urlpatterns = [
 	path('admin/', admin.site.urls),
 	path('login/', include('my_login.urls')),
 	path('o/', include(oauth2_urls)),
+	path('', include('django_prometheus.urls')),  # Add metrics endpoint
 ]
 
 oauth2_urls = [

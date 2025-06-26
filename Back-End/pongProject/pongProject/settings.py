@@ -115,6 +115,7 @@ CORS_ALLOW_HEADERS = [
 # Application definition
 
 INSTALLED_APPS = [
+	'django_prometheus',  # Add prometheus monitoring
 	'daphne',
 	'django.contrib.admin',
 	'django.contrib.auth',
@@ -132,6 +133,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+	'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
 	'pong_app.middleware.ExceptionMiddleware',
 	'pong_app.middleware.HealthCheckMiddleware',
 	'django.middleware.security.SecurityMiddleware',
@@ -142,6 +144,7 @@ MIDDLEWARE = [
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'corsheaders.middleware.CorsMiddleware',
+	'django_prometheus.middleware.PrometheusAfterMiddleware',  # Add at the end
 ]
 
 ROOT_URLCONF = 'pongProject.urls'

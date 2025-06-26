@@ -102,4 +102,5 @@ urlpatterns = [
     path('swagger/', custom_swagger_view, name='schema-swagger-ui'),  # Use custom view
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    path('', include('django_prometheus.urls')),  # Add metrics endpoint
 ]
