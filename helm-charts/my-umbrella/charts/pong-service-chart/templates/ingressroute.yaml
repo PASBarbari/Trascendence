@@ -24,8 +24,6 @@ spec:
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix
           namespace: {{ include "pong-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-websocket-headers
-          namespace: {{ include "pong-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-redirect-https
           namespace: {{ include "pong-service-chart.namespace" . }}
   tls:

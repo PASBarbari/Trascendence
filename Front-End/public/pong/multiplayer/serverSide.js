@@ -10,21 +10,37 @@ let socket;
 
 async function createGame(player_1, player_2) {
 	const { token, url_api } = getVariables();
-	console.log(
-		"🎯 Skipping API call, testing WebSocket directly with players:",
-		player_1,
-		player_2
-	);
+	if (!token) {
+		console.error("❌ No token found. Please log in first.");
+		return;
+	}
 
-	// Skip the problematic API call and go straight to WebSocket testing
-	console.log("🧪 Using test room ID for WebSocket connection...");
-
-	// Generate a test room ID
-	const testRoomId = Math.floor(Math.random() * 1000) + 1;
-	console.log("🔧 Generated test room ID:", testRoomId);
-
-	// Go directly to WebSocket testing
-	initializeWebSocket(testRoomId, player_1, player_2);
+	const response = await fetch(`${url_api}/pong/game`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${token}`,
+			"X-CSRFToken": getCookie("csrftoken") || "",
+		},
+		body: JSON.stringify({
+			player_1: player_1,
+			player_2: player_2,
+			tournament_id: null,
+		}),
+	});
+	if (!response.ok) {
+		const errorData = await response.json();
+		console.error("❌ Error creating game:", errorData);
+		return;
+	}
+	const data = await response.json();
+	console.log("✅ Game created successfully:", data);
+	if (!data.id) {
+		console.error("❌ No room_id returned from server.");
+		return;
+	}
+	state.room_id = data.id;
+	initializeWebSocket(state.room_id, player_1, player_2);
 }
 
 function initializeWebSocket(room_id, player1, player2) {

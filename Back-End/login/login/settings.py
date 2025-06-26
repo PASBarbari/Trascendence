@@ -122,7 +122,7 @@ CORS_ALLOW_HEADERS = [
 # Application definition
 
 INSTALLED_APPS = [
-	'django_prometheus',  # Add prometheus monitoring
+	'django_prometheus', 
 	'django.contrib.admin',
 	'django.contrib.auth',
 	'django.contrib.contenttypes',
@@ -193,6 +193,46 @@ DATABASES = {
 
 #user model
 AUTH_USER_MODEL = 'my_login.AppUser'
+
+# Redis Configuration for centralized HA Redis
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
+
+# Redis Cache Configuration (login service uses DB 4)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/4',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PASSWORD': REDIS_PASSWORD,
+            'KEY_PREFIX': 'login:cache:',
+            'VERSION': 1,
+        },
+        'TIMEOUT': 300,  # 5 minutes default
+    }
+}
+
+# Session Configuration - use Redis for sessions (login service uses DB 5 for sessions)
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'
+SESSION_COOKIE_AGE = 1800  # 30 minutes for OAuth flow
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Add a separate cache for sessions
+CACHES['sessions'] = {
+    'BACKEND': 'django_redis.cache.RedisCache',
+    'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/5',
+    'OPTIONS': {
+        'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        'PASSWORD': REDIS_PASSWORD,
+        'KEY_PREFIX': 'login:session:',
+        'VERSION': 1,
+    },
+    'TIMEOUT': 1800,  # 30 minutes for sessions
+}
 
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': (

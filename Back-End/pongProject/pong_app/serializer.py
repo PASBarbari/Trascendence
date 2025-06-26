@@ -14,13 +14,6 @@ class PlayerSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class GamesSerializer(serializers.ModelSerializer):
-    # player_1 = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all())
-    # player_2 = serializers.PrimaryKeyRelatedField(queryset=Player.objects.all(), required=False)
-    # player_1_score = serializers.IntegerField(min_value=0, default=0)
-    # player_2_score = serializers.IntegerField(min_value=0, default=0)
-    # begin_date = serializers.DateTimeField(read_only=True, default=datetime.datetime.now)
-    # tournament_id = serializers.PrimaryKeyRelatedField(queryset=Tournament.objects.all(), required=False)
-    
     def validate(self, data):
         if data['player_1'] == data['player_2']:
             raise serializers.ValidationError('player_1 and player_2 cannot be the same')
@@ -28,6 +21,19 @@ class GamesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Game
         fields = '__all__'
+
+class gamesCreateSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        if data['player_1'] == data['player_2']:
+            raise serializers.ValidationError('player_1 and player_2 cannot be the same')
+        return data
+    class Meta:
+        model = Game
+        fields = [
+			'player_1',
+			'player_2',
+			'tournament_id'
+		]
 
 class TournamentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=255)

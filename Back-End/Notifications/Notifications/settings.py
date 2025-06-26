@@ -112,7 +112,7 @@ CORS_ALLOW_HEADERS = [
 # Application definition
 
 INSTALLED_APPS = [
-	'django_prometheus',  # Add prometheus monitoring
+	'django_prometheus', 
 	'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -214,10 +214,10 @@ REST_FRAMEWORK = {
 }
 
 
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = os.getenv('REDIS_PORT', '6700')
-REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '3')
-REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '4')
+REDIS_HOST = os.getenv('REDIS_HOST', 'my-umbrella-redis-chart-service.redis-namespace.svc.cluster.local')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '2')  # Notifications: DB 2
+REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '9')  # Notifications: Channel DB 9
 
 CACHES = {
 	'default': {
@@ -225,18 +225,17 @@ CACHES = {
 		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+			'KEY_PREFIX': 'notifications:',  # Service prefix for data isolation
 		}
 	}
 }
-
-
 
 CHANNEL_LAYERS = {
 	'default': {
 		'BACKEND': 'channels_redis.core.RedisChannelLayer',
 		'CONFIG': {
 			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
-			'prefix': 'notifications',
+			'prefix': 'notifications',  # Channel prefix
 		},
 	}
 }

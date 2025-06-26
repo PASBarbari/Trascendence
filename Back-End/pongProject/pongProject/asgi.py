@@ -7,20 +7,20 @@ For more information on this file, see
 https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 """
 
-import os , django
+import os, django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pongProject.settings')
 from django.core.asgi import get_asgi_application
 #DO NOT REMOVE THIS LINE
 django.setup()
 
-from pong_app.middleware import JWTAuthMiddlewareStack, UnhandledExceptionMiddleware
+from pong_app.middleware import JWTAuthMiddlewareStack
 from pongProject.routing import websocket_urlpatterns
 from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.security.websocket import AllowedHostsOriginValidator
 
-
-application = ProtocolTypeRouter ({
+application = ProtocolTypeRouter({
 	"http": get_asgi_application(),
-	"websocket": UnhandledExceptionMiddleware(
+	"websocket": AllowedHostsOriginValidator(
 		JWTAuthMiddlewareStack(
 			URLRouter(websocket_urlpatterns)
 		)

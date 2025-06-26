@@ -3,9 +3,8 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import permissions, status, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .models import *
 from .serializer import *
-from .models import UserProfile
+from .models import UserProfile , Game, Tournament
 from .middleware import ServiceAuthentication , JWTAuth
 from django.contrib.auth.models import AnonymousUser
 from django_filters.rest_framework import DjangoFilterBackend

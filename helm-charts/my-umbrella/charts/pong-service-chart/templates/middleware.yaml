@@ -11,8 +11,6 @@ spec:
     customRequestHeaders:
       X-Forwarded-Proto: "https"
       X-Forwarded-Port: "443"
-      Connection: "Upgrade"
-      Upgrade: "websocket"
     customResponseHeaders:
       X-Frame-Options: "SAMEORIGIN"
       X-Content-Type-Options: "nosniff"
@@ -39,5 +37,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - "/api/pong"
+      - "/api"
 {{- end }}

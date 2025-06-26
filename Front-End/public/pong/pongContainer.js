@@ -156,30 +156,6 @@ async function inviteToGame(friendId, friendName) {
 			// window.navigateTo("#pong");
 		} catch (gameError) {
 			console.error("❌ Failed to create game:", gameError);
-
-			// Try direct WebSocket connection for testing
-			console.log(
-				"🧪 Trying direct WebSocket connection for debugging..."
-			);
-
-			const { initializeWebSocket } = await import(
-				"./multiplayer/serverSide.js"
-			);
-
-			// Use a test room ID for debugging
-			const testRoomId = Math.floor(Math.random() * 1000) + 1;
-			console.log("🔧 Using test room ID:", testRoomId);
-
-			initializeWebSocket(
-				testRoomId,
-				parseInt(userId),
-				parseInt(friendId)
-			);
-
-			showNotification(
-				`🧪 Testing WebSocket connection with ${friendName}...`,
-				"info"
-			);
 		}
 	} catch (error) {
 		console.error("💥 Complete failure in inviteToGame:", error);

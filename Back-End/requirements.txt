@@ -277,7 +277,7 @@ propcache==0.3.0
     #   -r requirements.in
     #   aiohttp
     #   yarl
-psycopg==3.2.5
+psycopg==3.2.9
     # via -r requirements.in
 psycopg2-binary==2.9.10
     # via -r requirements.in

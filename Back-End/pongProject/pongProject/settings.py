@@ -129,7 +129,7 @@ INSTALLED_APPS = [
 	'pong_app',
 	'channels',
 	'django_redis',
-	'rest_framework_simplejwt',
+	# 'rest_framework_simplejwt',  # Removed to avoid cross-service app dependencies
 ]
 
 MIDDLEWARE = [
@@ -188,10 +188,10 @@ DATABASES = {
 
 import secrets
 
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = os.getenv('REDIS_PORT', '6700')
-REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '3')
-REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '4')
+REDIS_HOST = os.getenv('REDIS_HOST', 'my-umbrella-redis-chart-service.redis-namespace.svc.cluster.local')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '1')  # Pong: DB 1
+REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '8')  # Pong: Channel DB 8
 
 CACHES = {
 	'default': {
@@ -199,18 +199,17 @@ CACHES = {
 		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
 		'OPTIONS': {
 			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+			'KEY_PREFIX': 'pong:',  # Service prefix for data isolation
 		}
 	}
 }
-
-
 
 CHANNEL_LAYERS = {
 	'default': {
 		'BACKEND': 'channels_redis.core.RedisChannelLayer',
 		'CONFIG': {
 			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
-			'prefix': 'pong',
+			'prefix': 'pong',  # Channel prefix
 		},
 	}
 }
@@ -245,7 +244,7 @@ SIMPLE_JWT = {
 	'AUTH_HEADER_TYPES': ('Bearer',),
 	'USER_ID_FIELD': 'user_id',
 	'USER_ID_CLAIM': 'user_id',
-	'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+	# 'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),  # Removed to avoid simplejwt dependency
 	'TOKEN_TYPE_CLAIM': 'token_type',
 }
 

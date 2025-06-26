@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: "{{ .Release.Name }}-pong-service"
   namespace: {{ include "pong-service-chart.namespace" . }}
+  annotations:
+    traefik.ingress.kubernetes.io/service.sticky.cookie: "true"
   labels:
     app: {{ .Release.Name }}-pong
     chart: {{ .Chart.Name }}-{{ .Chart.Version }}
