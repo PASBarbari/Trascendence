@@ -114,7 +114,11 @@ def CreateOnOtherServices(user, **kwargs):
 		if user_response.status_code != 201:
 			logging.error(f"User service error: {user_response.status_code} - {user_response.text}")
 			raise ValueError('User service failed to create user')
-			
+		logger.debug(f"User {user.email} created in all microservices successfully")
+		logger.debug(f"Chat response: {chat_response.json()}")
+		logger.debug(f"Notification response: {notification_response.json()}")
+		logger.debug(f"Pong response: {pong_response.json()}")
+		logger.debug(f"User service response: {user_response.json()}")
 		return True
 		
 	except Exception as e:

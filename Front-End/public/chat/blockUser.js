@@ -18,7 +18,7 @@ async function blockUser(userId, username) {
     
     try {
         const response = await fetch(
-            `${url_api}/chat/chat/block_user/${userId}/`,
+            `${url_api}/chat/chat/block_user/${userId}`,
             {
                 method: "POST",
                 headers: {
@@ -74,7 +74,7 @@ async function unblockUser(userId, username) {
     
     try {
         const response = await fetch(
-            `${url_api}/chat/chat/block_user/${userId}/`,
+            `${url_api}/chat/chat/block_user/${userId}`,
             {
                 method: "DELETE",
                 headers: {
@@ -128,7 +128,7 @@ async function getBlockedUsersList() {
     
     try {
         const response = await fetch(
-            `${url_api}/chat/chat/block_user/`,
+            `${url_api}/chat/chat/blocked_users/`,
             {
                 method: "GET",
                 headers: {

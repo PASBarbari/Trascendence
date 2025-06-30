@@ -24,8 +24,7 @@ spec:
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix
           namespace: {{ include "pong-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-redirect-https
-          namespace: {{ include "pong-service-chart.namespace" . }}
+
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}

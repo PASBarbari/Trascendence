@@ -23,8 +23,6 @@ spec:
           namespace: {{ include "login-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "login-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-redirect-https
-          namespace: {{ include "login-service-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}

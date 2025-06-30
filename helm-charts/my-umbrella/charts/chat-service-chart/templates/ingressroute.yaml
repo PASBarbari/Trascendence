@@ -26,8 +26,6 @@ spec:
           namespace: {{ include "chat-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "chat-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-redirect-https
-          namespace: {{ include "chat-service-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}

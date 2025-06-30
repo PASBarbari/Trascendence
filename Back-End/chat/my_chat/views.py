@@ -389,3 +389,23 @@ class BlockUser(APIView):
 		blocked_users = userBlockedSerializer(blocked_users, many=True).data
 		# Return the list of blocked users
 		return Response({'blocked_users': blocked_users}, status=status.HTTP_200_OK)
+
+
+class allBlockedUsers(generics.ListAPIView):
+	"""
+	API endpoint to get all blocked users
+
+	get:
+		Retrieves a list of all blocked users for the authenticated user
+
+	Response:
+	- 200 OK: if the request is successful
+	- 401 Unauthorized: if the user is not authenticated
+	"""
+	authentication_classes = [JWTAuth]
+	permission_classes = (IsAuthenticatedUserProfile,)
+	serializer_class = userBlockedSerializer
+
+	def get_queryset(self):
+		user = self.request.user
+		return user.blockedUsers.all() if user.is_authenticated else UserProfile.objects.none()

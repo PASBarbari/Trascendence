@@ -12,10 +12,10 @@ spec:
     - web
     - websecure
   routes:
-    # WebSocket route for Vite HMR (higher priority)
+    # WebSocket route for Vite HMR (higher priority than frontend, lower than APIs)
     - match: PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`)
       kind: Rule
-      priority: 600  # Higher priority for WebSocket routes
+      priority: 200  # Higher than frontend, lower than APIs
       services:
         - name: {{ .Release.Name }}-frontend-service
           port: {{ .Values.service.port }}
@@ -24,10 +24,10 @@ spec:
           namespace: {{ include "front-end-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "front-end-chart.namespace" . }}
-    # Catch-all route for any path and any host
+    # Catch-all route for any path and any host - LOWEST priority
     - match: PathPrefix(`/`)
       kind: Rule
-      priority: 500  # Lower priority than WebSocket routes
+      priority: 100  # LOWEST priority - deve essere l'ultima regola
       services:
         - name: {{ .Release.Name }}-frontend-service
           port: {{ .Values.service.port }}

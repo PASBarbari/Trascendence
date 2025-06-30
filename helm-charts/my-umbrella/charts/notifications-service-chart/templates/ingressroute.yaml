@@ -26,8 +26,6 @@ spec:
           namespace: {{ include "notifications-service-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "notifications-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-redirect-https
-          namespace: {{ include "notifications-service-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}

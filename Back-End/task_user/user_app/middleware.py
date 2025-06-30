@@ -69,68 +69,81 @@ class JWTAuth(JWTAuthentication):
 			logger.debug(f"Skipping JWT auth for {request.path}")
 			return None
 			
+		logger.debug(f"Headers in request: {request.META}")  
 		# Check for cached authentication result first
 		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-		if auth_header and auth_header.startswith('Bearer '):
-			token = auth_header.replace('Bearer ', '')
-
-			# Try to get from cache first
-			cache_key = f"taskuser_jwt_auth_{token[:16]}"  # Use taskuser prefix and token prefix for unique key
-			cached_result = cache.get(cache_key)
+		if not auth_header or not auth_header.startswith('Bearer '):
+			return None
 			
-			if cached_result is not None:
-				logger.debug("Using cached JWT authentication result")
-				if cached_result == "anonymous":
-					return None
-				return cached_result
-				
-			try:
-				# Call parent class to validate token
-				auth_result = super().authenticate(request)
-				
-				# Cache the result (None results don't need caching)
-				if auth_result:
-					user, validated_token = auth_result
-					# Cache successful authentications for 5 minutes (adjust as needed)
-					cache.set(cache_key, auth_result, timeout=300)
-					logger.debug(f"JWT auth successful for user {user}")
-					return auth_result
-				else:
-					# Cache negative results for a shorter time (1 minute)
-					cache.set(cache_key, "anonymous", timeout=60)
-					return None
-					
-			except Exception as e:
-				# Log the error but don't cache exceptions
-				logger.warning(f"JWT authentication failed: {str(e)}")
-				logger.warning(f"Token details: {token[:10]}...{token[-10:]}")
-				try:
-					decoded = AccessToken(token)
-					user_id = decoded.get('user_id')
-					logger.warning(f"User ID from token: {user_id}, exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
-				except Exception as inner_e:
-					logger.warning(f"Token decode failed: {str(inner_e)}")
-				return None
+		token = auth_header.replace('Bearer ', '')
+		if not token:
+			return None
+			
+		# Try to get from cache first
+		cache_key = f"jwt_auth_{token}"
+		cached_result = cache.get(cache_key)
 		
-		# No auth header or not a Bearer token
-		return None
+		if cached_result is not None:
+			logger.debug("Using cached JWT authentication result")
+			if cached_result == "anonymous":
+				return None
+			return cached_result
+			
+		# If not in cache, validate the token using the more robust method from WebSocket middleware
+		try:
+			# Directly try to decode the JWT token first (like in WebSocket middleware)
+			access_token = AccessToken(token)
+			user_id = access_token.get('user_id')
+			
+			if not user_id:
+				logger.warning("No user_id claim found in token")
+				cache.set(cache_key, "anonymous", timeout=60)
+				return None
+				
+			# Check if user exists in database
+			try:
+				user = UserProfile.objects.get(user_id=user_id)
+				# Successfully authenticated
+				auth_result = (user, token)
+				cache.set(cache_key, auth_result, timeout=300)
+				logger.debug(f"JWT auth successful for user {user}")
+				return auth_result
+			except UserProfile.DoesNotExist:
+				logger.warning(f"User ID {user_id} from token not found in UserProfile")
+				cache.set(cache_key, "anonymous", timeout=60)
+				return None
+
+		except Exception as e:
+			# Log the error but don't cache exceptions
+			logger.warning(f"JWT authentication failed: {str(e)}")
+			logger.warning(f"Token details: {token[:10]}...{token[-10:] if len(token) > 20 else ''}")
+			try:
+				# Try to extract some debug info without validation
+				decoded = AccessToken(token, verify=False)
+				user_id = decoded.get('user_id')
+				exp = decoded.get('exp', 'unknown')
+				iat = decoded.get('iat', 'unknown')
+				logger.warning(f"Token debug info - User ID: {user_id}, Expires: {exp}, Issued: {iat}")
+				if user_id:
+					logger.warning(f"User exists: {UserProfile.objects.filter(user_id=user_id).exists()}")
+			except Exception as inner_e:
+				logger.warning(f"Token decode failed: {str(inner_e)}")
+				
+			return None
 
 	def get_user(self, validated_token):
 		"""
-		Override to use UserProfile instead of standard User model
+		Returns user from validated token for DRF compatibility
 		"""
 		try:
 			user_id = validated_token[self.user_id_claim]
 			
-			# Get user from UserProfile model
+			# Cerca l'utente nel modello UserProfile
 			user = UserProfile.objects.get(user_id=user_id)
 			
 			return user
 		except UserProfile.DoesNotExist:
 			logger.warning(f"User ID {user_id} from token not found in UserProfile")
-			return None
-		except KeyError:
-			logger.warning(f"Token missing {self.user_id_claim} claim")
 			return None
 		except Exception as e:
 			logger.error(f"Error getting user from token: {str(e)}")

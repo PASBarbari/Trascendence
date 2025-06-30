@@ -95,7 +95,7 @@ spec:
      # Route per WebSocket e HMR - priorità alta
     - match: PathPrefix(`/`) && (PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`))
       kind: Rule
-      priority: 600
+      priority: 101
       services:
         - name: frontend-service
           port: 3000
@@ -107,7 +107,7 @@ spec:
     # Route principale - priorità normale
     - match: PathPrefix(`/`)
       kind: Rule
-      priority: 500
+      priority: 100
       services:
         - name: frontend-service
           port: 3000

@@ -228,8 +228,9 @@ function renderChatItem(chat) {
 
 		if (!isOpen) {
 			// Apri il WebSocket per la chat room
-			const { token } = getVariables();
+			const { token, wss_api } = getVariables();
 			socket = new WebSocket(`${wss_api}/chat/chat?room_id=${chat.id}&token=${token}`);
+			console.log(socket);
 			socket.onopen = () => {
 				console.log(`WebSocket connection opened for chat room ${chat.id}`);
 			};
@@ -360,6 +361,7 @@ function renderChatItem(chat) {
 			scrollToBottom(chatItem.querySelector('.scrollable-content'));
 		} else {
 			alert("Connessione WebSocket non attiva");
+			console.error("WebSocket non aperto o messaggio vuoto");
 		}
 	});
 }

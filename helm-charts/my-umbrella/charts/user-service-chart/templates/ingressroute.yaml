@@ -21,10 +21,6 @@ spec:
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix
           namespace: {{ include "user-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-websocket-headers
-          namespace: {{ include "user-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-redirect-https
-          namespace: {{ include "user-service-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}
