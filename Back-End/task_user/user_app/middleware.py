@@ -75,7 +75,7 @@ class JWTAuth(JWTAuthentication):
 			token = auth_header.replace('Bearer ', '')
 
 			# Try to get from cache first
-			cache_key = f"jwt_auth_{token}"
+			cache_key = f"taskuser_jwt_auth_{token[:16]}"  # Use taskuser prefix and token prefix for unique key
 			cached_result = cache.get(cache_key)
 			
 			if cached_result is not None:

@@ -1,0 +1,30 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: frontend-ingressroute-any-host
+  namespace: front-end
+spec:
+  entryPoints:
+    - web
+    - websecure
+  routes:
+    # Route per WebSocket e HMR - priorità alta
+    - match: PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`)
+      kind: Rule
+      priority: 600
+      services:
+        - name: frontend-service
+          port: 3000
+      middlewares:
+        - name: vite-hmr
+          namespace: front-end
+        - name: websocket-headers
+          namespace: front-end
+    # Route principale - priorità normale
+    - match: HostRegexp(`{host:.+}`)
+      kind: Rule
+      priority: 500
+      services:
+        - name: frontend-service
+          port: 3000
+  tls: {}

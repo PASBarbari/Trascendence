@@ -12,7 +12,7 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/pong`)
+    - match: PathPrefix(`/api/pong`)
       kind: Rule
       priority: 1000
       services:
@@ -41,7 +41,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/pong`)
+    - match: PathPrefix(`/api/pong`)
       kind: Rule
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix

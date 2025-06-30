@@ -135,6 +135,15 @@ const initializeApp = async () => {
     console.log("Hash:", window.location.hash);
     console.log("Search:", window.location.search);
 
+		if (getVariables().url_api === null || getVariables().url_api === "") {
+			const apiUrl = window.location.origin + "/api";
+			const wssUrl = window.location.origin.replace("https://", "wss://").replace("http://", "ws://") + "/api";
+			setVariables({ 
+				url_api: apiUrl,
+				wss_api: wssUrl 
+			});
+		}
+
     if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
         const currentHash = window.location.hash;
         window.location.href = '/' + currentHash;

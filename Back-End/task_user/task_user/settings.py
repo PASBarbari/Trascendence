@@ -271,6 +271,22 @@ ADMIN = {
 	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
+# Redis Configuration
+REDIS_HOST = os.getenv('REDIS_HOST', 'my-umbrella-redis-chart-service.redis-namespace.svc.cluster.local')
+REDIS_PORT = os.getenv('REDIS_PORT', '6379')
+REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '3')  # Task_user: DB 3
+
+CACHES = {
+	'default': {
+		'BACKEND': 'django_redis.cache.RedisCache',
+		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
+		'OPTIONS': {
+			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+			'KEY_PREFIX': 'taskuser:',  # Service prefix for data isolation
+		}
+	}
+}
+
 SIMPLE_JWT = {
 	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
 	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),

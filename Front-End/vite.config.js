@@ -14,7 +14,7 @@ export default {
 			timeout: 5000, // Longer timeout
 			overlay: true, // Show errors as overlay
 		},
-		allowedHosts: ["localhost", "127.0.0.1", "trascendence.42firenze.it"],
+		allowedHosts: ["all"], // Allow all hosts for development
 	},
 	publicDir: "public",
 	cacheDir: ".vite",

@@ -23,7 +23,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		
 		# Check authentication - reject AnonymousUser
 		user = self.scope.get('user')
-		if not user or not user.is_authenticated or not hasattr(user, 'user_id'):
+		if not user or not hasattr(user, 'user_id'):
 			websocket_logger.warning(f"Unauthenticated WebSocket connection attempt for game {self.room_id}")
 			await self.close(code=4001)  # Custom close code for authentication failure
 			return

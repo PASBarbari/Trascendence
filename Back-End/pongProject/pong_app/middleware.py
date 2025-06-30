@@ -117,7 +117,7 @@ class JWTAuth(authentication.BaseAuthentication):
 		token = auth_header.replace('Bearer ', '')
 		
 		# Try to get from cache first
-		cache_key = f"jwt_auth_{token}"
+		cache_key = f"pong_jwt_auth_{token[:16]}"  # Use pong prefix and token prefix for unique key
 		cached_result = cache.get(cache_key)
 		
 		if cached_result is not None:
@@ -253,19 +253,18 @@ class JWTAuthMiddleware(BaseMiddleware):
 				return AnonymousUser()
 			
 			websocket_logger.debug(f"Looking for user with user_id: {user_id}")
-			
-			# Check if the user is already cached
-			cache_key = f"jwt_ws_user_{token}"
+				# Check if the user is already cached
+			cache_key = f"pong_jwt_ws_user_{user_id}_{token[:8]}"  # Use user_id and token prefix for unique key
 			user = cache.get(cache_key)
 			if user:
 				websocket_logger.debug(f"WebSocket user {user_id} found in cache")
 				return user
-			
+
 			websocket_logger.debug("User not in cache, querying database")
 			# Retrieve the user from the database
 			try:
 				user = UserProfile.objects.get(user_id=user_id)
-				# Cache the user
+				# Cache the user with specific pong prefix
 				cache.set(cache_key, user, timeout=300)
 				websocket_logger.debug(f"WebSocket user {user_id} loaded from database and cached")
 				return user

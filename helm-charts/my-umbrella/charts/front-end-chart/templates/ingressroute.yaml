@@ -13,7 +13,7 @@ spec:
     - websecure
   routes:
     # WebSocket route for Vite HMR (higher priority)
-    - match: Host(`{{ .Values.ingress.host }}`) && (PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`))
+    - match: PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`)
       kind: Rule
       priority: 600  # Higher priority for WebSocket routes
       services:
@@ -24,8 +24,8 @@ spec:
           namespace: {{ include "front-end-chart.namespace" . }}
         - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "front-end-chart.namespace" . }}
-    # Regular HTTP route (lower priority)
-    - match: Host(`{{ .Values.ingress.host }}`)
+    # Catch-all route for any path and any host
+    - match: PathPrefix(`/`)
       kind: Rule
       priority: 500  # Lower priority than WebSocket routes
       services:
@@ -49,7 +49,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`{{ .Values.ingress.host }}`)
+    - match: PathPrefix(`/`)
       kind: Rule
       middlewares:
         - name: {{ .Release.Name }}-redirect-https

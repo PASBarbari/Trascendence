@@ -12,7 +12,7 @@ spec:
     - web
     - websecure
   routes:
-    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/user`)
+    - match: PathPrefix(`/api/user`)
       kind: Rule
       priority: 1000
       services:
@@ -40,7 +40,7 @@ spec:
   entryPoints:
     - web
   routes:
-    - match: Host(`{{ .Values.ingress.host }}`) && PathPrefix(`/api/user`)
+    - match: PathPrefix(`/api/user`)
       kind: Rule
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix

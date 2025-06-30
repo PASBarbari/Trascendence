@@ -92,23 +92,23 @@ spec:
     - web
     - websecure
   routes:
-  # WebSocket route for Vite HMR (higher priority)
-  - match: Host(`trascendence.42firenze.it`) && (PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`))
-    kind: Rule
-    priority: 600  # Higher priority for WebSocket routes
-    services:
-    - name: frontend-service
-      port: 3000
-    middlewares:
-    - name: vite-hmr
-      namespace: front-end
-    - name: websocket-headers
-      namespace: front-end
-  # Regular HTTP route (lower priority)
-  - match: Host(`trascendence.42firenze.it`)
-    kind: Rule
-    priority: 500  # Lower priority than WebSocket routes
-    services:
-    - name: frontend-service
-      port: 3000
+     # Route per WebSocket e HMR - priorità alta
+    - match: PathPrefix(`/`) && (PathPrefix(`/@vite/client`) || PathPrefix(`/ws`) || Headers(`Connection`, `Upgrade`))
+      kind: Rule
+      priority: 600
+      services:
+        - name: frontend-service
+          port: 3000
+      middlewares:
+        - name: vite-hmr
+          namespace: front-end
+        - name: websocket-headers
+          namespace: front-end
+    # Route principale - priorità normale
+    - match: PathPrefix(`/`)
+      kind: Rule
+      priority: 500
+      services:
+        - name: frontend-service
+          port: 3000
   tls: {}

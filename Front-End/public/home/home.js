@@ -8,13 +8,13 @@ import { renderPongInfo } from "../pong/pongContainer.js";
 import { initializeProfile, renderProfile } from "../profile/profile.js";
 
 const stylesheets = [
-	"https://trascendence.42firenze.it/home/home.css",
-	"https://trascendence.42firenze.it/task/taskAvaiable.css",
-	"https://trascendence.42firenze.it/task/taskActive.css",
-	"https://trascendence.42firenze.it/notification/notification.css",
-	"https://trascendence.42firenze.it/profile/profile.css",
-	"https://trascendence.42firenze.it/chat/ExpandableSidebar.css",
-	"https://trascendence.42firenze.it/pong/pongContainer.css",
+	"home/home.css",
+	"task/taskAvaiable.css",
+	"task/taskActive.css",
+	"notification/notification.css",
+	"profile/profile.css",
+	"chat/ExpandableSidebar.css",
+	"pong/pongContainer.css",
 ];
 
 stylesheets.forEach((href) => {

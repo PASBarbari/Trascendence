@@ -54,7 +54,7 @@ function initializeWebSocket(room_id, player1, player2) {
 	console.log("  - token present:", token ? "✅ Yes" : "❌ No");
 	console.log("  - token length:", token ? token.length : 0);
 
-	const wsUrl = `wss://trascendence.42firenze.it/api/pong/ws/pong/${room_id}/?token=${token}`;
+	const wsUrl = `${wss_api}/pong/ws/pong/${room_id}/?token=${token}`;
 	console.log("🔌 Connecting to WebSocket:", wsUrl);
 
 	socket = new WebSocket(wsUrl);

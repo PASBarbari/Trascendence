@@ -60,14 +60,14 @@ dependencies:
     version: 0.1.0
     tags:
       - pong
-  - name: observability-chart
-    repository: file://charts/observability-chart
-    version: 0.1.0
-    condition: observability.enabled
-    tags:
-      - observability
-      - monitoring
-      - logging
+  # - name: observability-chart
+  #   repository: file://charts/observability-chart
+  #   version: 0.1.0
+  #   condition: observability.enabled
+  #   tags:
+  #     - observability
+  #     - monitoring
+  #     - logging
   - name: redis-chart
     repository: file://charts/redis-chart
     version: 0.1.0
