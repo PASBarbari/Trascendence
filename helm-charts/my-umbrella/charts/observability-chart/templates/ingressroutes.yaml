@@ -91,6 +91,7 @@ spec:
       kind: Rule
       services:
         - name: eck-kibana-kb-http
+          namespace: {{ .Values.global.namespace.name }}
           port: 5601
           serversTransport: kibana-tls-transport
       middlewares:
@@ -119,5 +120,6 @@ spec:
           namespace: {{ .Release.Namespace }}
       services:
         - name: eck-kibana-kb-http
+          namespace: {{ .Values.global.namespace.name }}
           port: 5601
 {{- end }}

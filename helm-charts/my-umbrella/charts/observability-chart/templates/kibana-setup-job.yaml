@@ -5,7 +5,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "observability-chart.fullname" . }}-kibana-setup
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ .Values.global.namespace.name }}
   labels:
     {{- include "observability-chart.labels" . | nindent 4 }}
     app.kubernetes.io/component: kibana-setup
@@ -32,7 +32,7 @@ spec:
           echo "Waiting for Kibana to be ready..."
           
           # Wait for Kibana to be available
-          until curl -s -k "https://eck-kibana-kb-http.default.svc.cluster.local:5601/api/status" \
+          until curl -s -k "https://{{ index .Values "eck-kibana" "fullnameOverride" }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/status" \
             -u "elastic:${ELASTICSEARCH_PASSWORD}" \
             -H "Content-Type: application/json" | grep -q '"overall":{"level":"available"'; do
             echo "Kibana not ready yet, waiting..."
@@ -41,26 +41,40 @@ spec:
           
           echo "Kibana is ready, setting up index patterns and dashboards..."
           
-          # Create index pattern
-          curl -s -k -X POST "https://eck-kibana-kb-http.default.svc.cluster.local:5601/api/saved_objects/index-pattern/trascendence-logs-*" \
+          # Create index pattern for all logs
+          curl -s -k -X POST "https://{{ index .Values "eck-kibana" "fullnameOverride" }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/index-pattern/logstash-*" \
             -u "elastic:${ELASTICSEARCH_PASSWORD}" \
             -H "Content-Type: application/json" \
             -H "kbn-xsrf: true" \
             -d '{
               "attributes": {
-                "title": "trascendence-logs-*",
+                "title": "logstash-*",
                 "timeFieldName": "@timestamp"
               }
             }' || echo "Index pattern may already exist"
           
+          # Create namespace-specific index patterns
+          for namespace in login chat task-user pong notifications; do
+            curl -s -k -X POST "https://{{ index .Values "eck-kibana" "fullnameOverride" }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/index-pattern/logstash-${namespace}-*" \
+              -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+              -H "Content-Type: application/json" \
+              -H "kbn-xsrf: true" \
+              -d "{
+                \"attributes\": {
+                  \"title\": \"logstash-${namespace}-*\",
+                  \"timeFieldName\": \"@timestamp\"
+                }
+              }" || echo "Index pattern for ${namespace} may already exist"
+          done
+          
           # Set as default index pattern
-          curl -s -k -X POST "https://eck-kibana-kb-http.default.svc.cluster.local:5601/api/kibana/settings" \
+          curl -s -k -X POST "https://{{ index .Values "eck-kibana" "fullnameOverride" }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/kibana/settings" \
             -u "elastic:${ELASTICSEARCH_PASSWORD}" \
             -H "Content-Type: application/json" \
             -H "kbn-xsrf: true" \
             -d '{
               "changes": {
-                "defaultIndex": "trascendence-logs-*"
+                "defaultIndex": "logstash-*"
               }
             }' || echo "Default index already set"
           

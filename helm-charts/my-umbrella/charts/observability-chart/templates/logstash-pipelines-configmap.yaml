@@ -1,0 +1,39 @@
+{{- if index .Values "eck-logstash" "enabled" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: {{ .Values.global.namespace.name }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: logstash
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    xpack.monitoring.enabled: true
+    xpack.monitoring.elasticsearch.hosts: ["https://eck-elasticsearch-es-http.{{ .Values.global.namespace.name }}.svc.cluster.local:9200"]
+    xpack.monitoring.elasticsearch.username: "elastic"
+    xpack.monitoring.elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
+    xpack.monitoring.elasticsearch.ssl.certificate_authority: "/usr/share/logstash/config/certs/ca.crt"
+    pipeline.workers: 1
+    pipeline.batch.size: 125
+    pipeline.batch.delay: 50
+    path.config: "/usr/share/logstash/pipeline/*.conf"
+    path.logs: "/usr/share/logstash/logs"
+    
+  jvm.options: |
+    -Xms512m
+    -Xmx512m
+    -XX:+UseG1GC
+    -XX:MaxGCPauseMillis=200
+    -XX:G1HeapRegionSize=16m
+    -XX:+UnlockExperimentalVMOptions
+    -XX:+UseCGroupMemoryLimitForHeap
+    -XX:+UseGCOverheadLimit
+    -Djava.awt.headless=true
+    -Dfile.encoding=UTF-8
+    -Djruby.compile.invokedynamic=true
+    -Djruby.jit.threshold=0
+    -XX:+HeapDumpOnOutOfMemoryError
+    -Djava.security.egd=file:/dev/urandom
+{{- end }}

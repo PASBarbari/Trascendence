@@ -11,9 +11,12 @@ metadata:
     monitoring: "true"
 spec:
   selector:
-    {{- toYaml .Values.serviceMonitors.loginService.selector | nindent 4 }}
+    matchLabels:
+      app: login-service
   endpoints:
-    {{- toYaml .Values.serviceMonitors.loginService.endpoints | nindent 4 }}
+  - port: "{{ .Values.serviceMonitors.loginService.port }}"
+    path: {{ .Values.serviceMonitors.loginService.path }}
+    interval: {{ .Values.serviceMonitors.loginService.interval }}
 {{- end }}
 
 {{- if .Values.serviceMonitors.chatService.enabled }}
@@ -28,25 +31,71 @@ metadata:
     monitoring: "true"
 spec:
   selector:
-    {{- toYaml .Values.serviceMonitors.chatService.selector | nindent 4 }}
+    matchLabels:
+      app: chat-service
   endpoints:
-    {{- toYaml .Values.serviceMonitors.chatService.endpoints | nindent 4 }}
+  - port: "{{ .Values.serviceMonitors.chatService.port }}"
+    path: {{ .Values.serviceMonitors.chatService.path }}
+    interval: {{ .Values.serviceMonitors.chatService.interval }}
 {{- end }}
 
-{{- if .Values.serviceMonitors.frontend.enabled }}
+{{- if .Values.serviceMonitors.taskService.enabled }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: frontend-monitor
+  name: task-service-monitor
   namespace: {{ .Release.Namespace }}
   labels:
-    app: frontend
+    app: task-service
     monitoring: "true"
 spec:
   selector:
-    {{- toYaml .Values.serviceMonitors.frontend.selector | nindent 4 }}
+    matchLabels:
+      app: task-service
   endpoints:
-    {{- toYaml .Values.serviceMonitors.frontend.endpoints | nindent 4 }}
+  - port: "{{ .Values.serviceMonitors.taskService.port }}"
+    path: {{ .Values.serviceMonitors.taskService.path }}
+    interval: {{ .Values.serviceMonitors.taskService.interval }}
+{{- end }}
+
+{{- if .Values.serviceMonitors.pongService.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: pong-service-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: pong-service
+    monitoring: "true"
+spec:
+  selector:
+    matchLabels:
+      app: pong-service
+  endpoints:
+  - port: "{{ .Values.serviceMonitors.pongService.port }}"
+    path: {{ .Values.serviceMonitors.pongService.path }}
+    interval: {{ .Values.serviceMonitors.pongService.interval }}
+{{- end }}
+
+{{- if .Values.serviceMonitors.notificationService.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: notification-service-monitor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: notification-service
+    monitoring: "true"
+spec:
+  selector:
+    matchLabels:
+      app: notification-service
+  endpoints:
+  - port: "{{ .Values.serviceMonitors.notificationService.port }}"
+    path: {{ .Values.serviceMonitors.notificationService.path }}
+    interval: {{ .Values.serviceMonitors.notificationService.interval }}
 {{- end }}
 {{- end }}

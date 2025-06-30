@@ -1,0 +1,31 @@
+{{- if index .Values "eck-logstash" "enabled" }}
+apiVersion: logstash.k8s.elastic.co/v1alpha1
+kind: Logstash
+metadata:
+  name: {{ index .Values "eck-logstash" "fullnameOverride" }}
+  namespace: {{ .Values.global.namespace.name }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: logstash
+spec:
+  version: {{ index .Values "eck-logstash" "version" }}
+  count: {{ index .Values "eck-logstash" "count" }}
+  elasticsearchRefs:
+  {{- range (index .Values "eck-logstash" "elasticsearchRefs") }}
+  - name: {{ .name }}
+    namespace: {{ $.Values.global.namespace.name }}
+    clusterName: {{ .name }}  # Add required clusterName field
+  {{- end }}
+  {{- if (index .Values "eck-logstash" "config") }}
+  config:
+    {{- toYaml (index .Values "eck-logstash" "config") | nindent 4 }}
+  {{- end }}
+  {{- if (index .Values "eck-logstash" "pipelinesRef") }}
+  pipelinesRef:
+    configMapName: logstash-pipelines-config
+  {{- end }}
+  {{- if (index .Values "eck-logstash" "podTemplate") }}
+  podTemplate:
+    {{- toYaml (index .Values "eck-logstash" "podTemplate") | nindent 4 }}
+  {{- end }}
+{{- end }}
