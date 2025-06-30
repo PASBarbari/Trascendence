@@ -5,13 +5,12 @@ from django.contrib.auth.models import AnonymousUser
 from channels.auth import AuthMiddlewareStack
 from django.core.cache import cache
 from django.db import OperationalError, connections
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import BasePermission
 from .models import UserProfile
 import logging
 from rest_framework import authentication, exceptions
 from django.conf import settings
+import jwt
 
 # Get dedicated loggers for different components
 logger = logging.getLogger('pong_app')
@@ -39,9 +38,17 @@ class ServiceAuthentication(authentication.BaseAuthentication):
 		if auth_header and auth_header.startswith('Bearer '):
 			token = auth_header.replace('Bearer ', '')
 			try:
-				# Validate the token
-				decoded_token = AccessToken(token)
+				# Validate the token manually
+				decoded_payload = jwt.decode(
+					token, 
+					settings.SECRET_KEY, 
+					algorithms=['HS256']
+				)
 				auth_logger.info(f"Request from authenticated service: {request.path}")
+			except jwt.ExpiredSignatureError:
+				auth_logger.warning("Service JWT token has expired")
+			except jwt.InvalidTokenError as e:
+				auth_logger.warning(f"Service JWT token validation failed: {str(e)}")
 			except Exception as e:
 				# Log but don't fail since API key was valid
 				auth_logger.warning(f"JWT token validation failed in service auth: {str(e)}")
@@ -52,10 +59,18 @@ class ServiceAuthentication(authentication.BaseAuthentication):
 @database_sync_to_async
 def get_user_from_token(token):
 	try:
-		# Decode the token
-		access_token = AccessToken(token)
-		user_id = access_token['user_id']
+		# Decode the token manually without Django apps validation
+		decoded_payload = jwt.decode(
+			token, 
+			settings.SECRET_KEY, 
+			algorithms=['HS256']
+		)
 		
+		user_id = decoded_payload.get('user_id')
+		if not user_id:
+			websocket_logger.warning("No user_id found in token payload")
+			return AnonymousUser()
+
 		# Check if the user is already cached
 		user = cache.get(token)
 		if user:
@@ -77,66 +92,83 @@ def get_user_from_token(token):
 		return AnonymousUser()
 
 
-class JWTAuth(JWTAuthentication):
+class JWTAuth(authentication.BaseAuthentication):
 	"""
-	Enhanced JWT authentication class with caching support and improved error handling.
+	Enhanced JWT authentication class with cross-microservice support.
+	Uses manual JWT decoding to avoid Django app dependencies.
 	"""
 	user_id_claim = 'user_id'
 	
 	def authenticate(self, request):
 		# Skip authentication for specific paths if needed
-		if request.path.endswith('/pong/health/') and request.method == 'GET':
-			logger.debug(f"Skipping JWT auth for health check: {request.path}")
-			return (AnonymousUser(), None)
+		if request.path.endswith('/health') and request.method == 'GET':
+			auth_logger.debug(f"Skipping JWT auth for health check: {request.path}")
+			return None
 			
 		# Log the auth attempt
 		auth_logger.debug(f"JWT auth attempt: {request.path}")
 		
-		# Check for cached authentication result first
+		# Get Authorization header
 		auth_header = request.META.get('HTTP_AUTHORIZATION', '')
-		if auth_header and auth_header.startswith('Bearer '):
-			token = auth_header.replace('Bearer ', '')
+		if not auth_header or not auth_header.startswith('Bearer '):
+			auth_logger.debug("No Bearer token found in request")
+			return None
 			
-			# Try to get from cache first
-			cache_key = f"jwt_auth_{token}"
-			cached_result = cache.get(cache_key)
-			
-			if cached_result is not None:
-				auth_logger.debug("Using cached JWT authentication result")
-				if cached_result == "anonymous":
-					return None
-				return cached_result
-				
-			try:
-				# Call parent class to validate token
-				auth_result = super().authenticate(request)
-				
-				# Cache the result (None results don't need caching)
-				if auth_result:
-					# Cache successful authentications for 5 minutes
-					cache.set(cache_key, auth_result, timeout=300)
-					auth_logger.info(f"JWT auth successful for user {auth_result[0]}")
-					return auth_result
-				else:
-					# Cache negative results for a shorter time
-					cache.set(cache_key, "anonymous", timeout=60)
-					auth_logger.info("JWT auth failed - no valid user")
-					return None
-					
-			except Exception as e:
-				# Log the error but don't cache exceptions
-				auth_logger.warning(f"JWT authentication failed: {str(e)}")
-				try:
-					# Additional debug information
-					decoded = AccessToken(token)
-					user_id = decoded.get('user_id')
-					auth_logger.info(f"Token user_id={user_id}, exists={UserProfile.objects.filter(user_id=user_id).exists()}")
-				except Exception as inner_e:
-					auth_logger.warning(f"Token decode failed: {str(inner_e)}")
-				return None
+		token = auth_header.replace('Bearer ', '')
 		
+		# Try to get from cache first
+		cache_key = f"jwt_auth_{token}"
+		cached_result = cache.get(cache_key)
+		
+		if cached_result is not None:
+			auth_logger.debug("Using cached JWT authentication result")
+			if cached_result == "anonymous":
+				return None
+			return cached_result
+			
+		try:
+			# Decode the JWT token manually
+			decoded_payload = jwt.decode(
+				token, 
+				settings.SECRET_KEY, 
+				algorithms=['HS256']
+			)
+			
+			user_id = decoded_payload.get('user_id')
+			if not user_id:
+				auth_logger.warning("No user_id found in token payload")
+				cache.set(cache_key, "anonymous", timeout=60)
+				return None
+			
+			# Try to get user from database
+			try:
+				user = UserProfile.objects.get(user_id=user_id)
+				auth_result = (user, token)
+				
+				# Cache successful authentications for 5 minutes
+				cache.set(cache_key, auth_result, timeout=300)
+				auth_logger.info(f"JWT auth successful for user {user_id}")
+				return auth_result
+				
+			except UserProfile.DoesNotExist:
+				auth_logger.warning(f"User {user_id} from token not found in database")
+				cache.set(cache_key, "anonymous", timeout=60)
+				return None
+				
+		except jwt.ExpiredSignatureError:
+			auth_logger.warning("JWT token has expired")
+			cache.set(cache_key, "anonymous", timeout=60)
+			return None
+		except jwt.InvalidTokenError as e:
+			auth_logger.warning(f"Invalid JWT token: {str(e)}")
+			cache.set(cache_key, "anonymous", timeout=60)
+			return None
+		except Exception as e:
+			auth_logger.error(f"JWT authentication error: {str(e)}")
+			return None
+
 		# No auth header or not a Bearer token
-		return super().authenticate(request)
+		return None
 		
 	def get_user(self, validated_token):
 		"""
@@ -206,28 +238,50 @@ class JWTAuthMiddleware(BaseMiddleware):
 	@database_sync_to_async
 	def get_user_from_jwt(self, token):
 		try:
-			# Decode the JWT token
-			access_token = AccessToken(token)
-			user_id = access_token['user_id']
+			websocket_logger.debug("Starting JWT token decode")
+			# Decode the JWT token manually
+			decoded_payload = jwt.decode(
+				token, 
+				settings.SECRET_KEY, 
+				algorithms=['HS256']
+			)
+			websocket_logger.debug("JWT token decoded successfully")
+			
+			user_id = decoded_payload.get('user_id')
+			if not user_id:
+				websocket_logger.warning("No user_id found in token payload")
+				return AnonymousUser()
+			
+			websocket_logger.debug(f"Looking for user with user_id: {user_id}")
 			
 			# Check if the user is already cached
-			user = cache.get(f"jwt_ws_user_{token}")
+			cache_key = f"jwt_ws_user_{token}"
+			user = cache.get(cache_key)
 			if user:
 				websocket_logger.debug(f"WebSocket user {user_id} found in cache")
 				return user
-				
+			
+			websocket_logger.debug("User not in cache, querying database")
 			# Retrieve the user from the database
 			try:
 				user = UserProfile.objects.get(user_id=user_id)
 				# Cache the user
-				cache.set(f"jwt_ws_user_{token}", user, timeout=300)
+				cache.set(cache_key, user, timeout=300)
 				websocket_logger.debug(f"WebSocket user {user_id} loaded from database and cached")
 				return user
 			except UserProfile.DoesNotExist:
 				websocket_logger.warning(f"WebSocket user {user_id} not found in database")
 				return AnonymousUser()
+		except jwt.ExpiredSignatureError:
+			websocket_logger.warning("WebSocket JWT token has expired")
+			return AnonymousUser()
+		except jwt.InvalidTokenError as e:
+			websocket_logger.warning(f"WebSocket JWT token is invalid: {str(e)}")
+			return AnonymousUser()
 		except Exception as e:
 			websocket_logger.error(f"WebSocket JWT validation failed: {str(e)}")
+			import traceback
+			websocket_logger.error(f"WebSocket JWT validation traceback: {traceback.format_exc()}")
 			return AnonymousUser()
 
 def JWTAuthMiddlewareStack(inner):

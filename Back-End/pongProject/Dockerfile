@@ -1,5 +1,5 @@
 # Use a stable Python version
-FROM python:3.11-alpine AS base
+FROM python:3.13-alpine AS base
 
 RUN apk add --no-cache postgresql-libs bash
 

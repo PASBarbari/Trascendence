@@ -21,26 +21,32 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		self.room_name = f'game_{self.room_id}'
 		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
 		
+		# Check authentication - reject AnonymousUser
+		user = self.scope.get('user')
+		if not user or not user.is_authenticated or not hasattr(user, 'user_id'):
+			websocket_logger.warning(f"Unauthenticated WebSocket connection attempt for game {self.room_id}")
+			await self.close(code=4001)  # Custom close code for authentication failure
+			return
+		
+		# Store authenticated user info
+		self.player_id = user.user_id
+		websocket_logger.info(f"Authenticated user {self.player_id} connected to game {self.room_id}")
+		
 		# Join room group
 		await self.channel_layer.group_add(
 			self.room_name,
 			self.channel_name
 		)
 		
-		# Store player identification
-		user = self.scope.get('user', None)
-		if user:
-			self.player_id = user.user_id
-			websocket_logger.info(f"Authenticated user {self.player_id} connected to game {self.room_id}")
-		else:
-			# Get from query parameters or other source
-			query_string = self.scope.get('query_string', b'').decode()
-			query_params = dict(qp.split('=') for qp in query_string.split('&') if '=' in qp)
-			self.player_id = query_params.get('player_id')
-			websocket_logger.info(f"Player {self.player_id} connected to game {self.room_id} via query param")
-			
 		await self.accept()
 		logger.info(f"WebSocket connection accepted for game {self.room_id}")
+		
+		# Send welcome message to confirm successful connection
+		await self.send(text_data=json.dumps({
+			'type': 'connection_success',
+			'message': f'Welcome to game {self.room_id}!',
+			'player_id': self.player_id
+		}))
 
 	async def disconnect(self, close_code):
 		websocket_logger.info(f"WebSocket disconnected: game={self.room_id}, code={close_code}")
@@ -283,13 +289,24 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 	async def join(self, data):
 		logger.info(f"Join request for tournament {self.tournament_id}")
+		
+		# Use the authenticated user from WebSocket scope
+		user = self.scope.get('user')
+		if not user or not user.is_authenticated:
+			logger.warning("Unauthenticated user attempted to join tournament")
+			await self.send(text_data=json.dumps({
+				'type': 'error',
+				'error': 'Authentication required'
+			}))
+			return
+		
+		player_id = user.user_id
+		
 		if not self.tournament_id in active_tournaments:
 			try:
 				name = data.get('name')
 				max_p = data.get('max_p')
 				req_lvl = data.get('req_lvl')
-				player = data.get('player')
-				player_id = player.user_id
 				logger.info(f"Creating new tournament: {name}, max_players={max_p}, min_level={req_lvl}, creator={player_id}")
 				active_tournaments[self.tournament_id] = TournamentState(self.tournament_id, name, max_p, req_lvl, player_id)
 			except Exception as e:
@@ -305,10 +322,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					'success': f'Tournament {name} created'
 				}))
 		else:
-			player = data.get('player')
-			logger.info(f"Player {player} joining existing tournament {self.tournament_id}")
+			logger.info(f"Player {player_id} joining existing tournament {self.tournament_id}")
 			try:
-				ret = active_tournaments[self.tournament_id].add_player(player)
+				ret = active_tournaments[self.tournament_id].add_player(user)
 				if ret != "Player added to the tournament":
 					logger.warning(f"Player join failed: {ret}")
 					await self.send(text_data=json.dumps({
@@ -316,7 +332,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 						'error': ret
 					}))
 				else:
-					logger.info(f"Player {player} successfully joined tournament {self.tournament_id}")
+					logger.info(f"Player {player_id} successfully joined tournament {self.tournament_id}")
 					await self.send(text_data=json.dumps({
 						'type': 'success',
 						'success': ret

@@ -22,59 +22,6 @@ fontAwesome.href =
 	"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css";
 document.head.appendChild(fontAwesome);
 
-async function testBackendHealth() {
-	console.log("🏥 Testing backend health...");
-
-	const { url_api } = getVariables();
-
-	try {
-		const response = await fetch(`${url_api}/pong/ready`);
-		console.log("Pong service status:", response.status);
-
-		if (response.ok) {
-			const data = await response.json();
-			console.log("✅ Pong service healthy:", data);
-			return true;
-		} else {
-			const text = await response.text();
-			console.error("❌ Pong service unhealthy:", text.substring(0, 200));
-			return false;
-		}
-	} catch (error) {
-		console.error("❌ Cannot reach pong service:", error);
-		return false;
-	}
-}
-
-async function testServerSideWebSocket() {
-	console.log("🧪 Testing serverSide WebSocket...");
-
-	try {
-		// First check if backend is healthy
-		const isHealthy = await testBackendHealth();
-
-		if (!isHealthy) {
-			throw new Error(
-				"Backend service is not healthy. Please restart services."
-			);
-		}
-
-		// Import the serverSide module
-		const { createGame } = await import("./multiplayer/serverSide.js");
-
-		// Get user data
-		const { userId } = getVariables();
-		console.log("User ID:", userId);
-
-		// Create game and connect WebSocket
-		await createGame(parseInt(userId), parseInt(userId));
-
-		console.log("✅ WebSocket test initiated");
-	} catch (error) {
-		console.error("❌ WebSocket test failed:", error);
-	}
-}
-
 // Update your existing renderPongInfo function
 function renderPongInfo() {
 	const pongInfoContainer = document.getElementById("pongContainer");
@@ -90,9 +37,6 @@ function renderPongInfo() {
                 </button>
                 <button class="btn btn-secondary" onclick="handleMultiPong()">
                     <i class="fas fa-users me-2"></i>Online
-                </button>
-                <button class="btn btn-warning" onclick="testServerSideWebSocket()">
-                    <i class="fas fa-flask me-2"></i>Test ServerSide WS
                 </button>
             </div>
         </div>
@@ -164,69 +108,78 @@ function createFriendItemHTML(friendship) {
 }
 
 // Send game invitation
-// async function inviteToGame(friendId, friendName) {
-// 	try {
-// 		console.log(
-// 			`Sending game invitation to ${friendName} (ID: ${friendId})`
-// 		);
+// // Uncomment and update the inviteToGame function
+async function inviteToGame(friendId, friendName) {
+	try {
+		console.log(
+			`🎮 Starting game invitation to ${friendName} (ID: ${friendId})`
+		);
 
-// 		// Show loading state on button
-// 		const inviteBtn = document.querySelector(
-// 			`[data-friend-id="${friendId}"] .btn-game-invite`
-// 		);
-// 		if (inviteBtn) {
-// 			const originalHTML = inviteBtn.innerHTML;
-// 			inviteBtn.innerHTML =
-// 				'<i class="fas fa-spinner fa-spin me-1"></i>Sending...';
-// 			inviteBtn.disabled = true;
-// 		}
+		// Show loading state on button
+		const inviteBtn = document.querySelector(
+			`[data-friend-id="${friendId}"] .btn-game-invite`
+		);
+		if (inviteBtn) {
+			const originalHTML = inviteBtn.innerHTML;
+			inviteBtn.innerHTML =
+				'<i class="fas fa-spinner fa-spin me-1"></i>Connecting...';
+			inviteBtn.disabled = true;
+		}
 
-// 		const { token, url_api } = getVariables();
+		// Get current user info for debugging
+		const { token, url_api, userId } = getVariables();
+		console.log("🔍 Debug Info:");
+		console.log("  - Current User ID:", userId);
+		console.log("  - Friend ID:", friendId);
+		console.log("  - Token present:", token ? "✅ Yes" : "❌ No");
+		console.log("  - API URL:", url_api);
 
-// 		// TODO: Replace with your actual game invitation API endpoint
-// 		const response = await fetch(`${url_api}/pong/api/invite/`, {
-// 			method: "POST",
-// 			headers: {
-// 				"Content-Type": "application/json",
-// 				Authorization: `Bearer ${token}`,
-// 				"X-CSRFToken": getCookie("csrftoken"),
-// 			},
-// 			body: JSON.stringify({
-// 				invited_user_id: friendId,
-// 				game_type: "pong",
-// 				message: `${friendName}, let's play Pong!`,
-// 			}),
-// 		});
+		// Import the WebSocket functions
+		const { createGame } = await import("./multiplayer/serverSide.js");
 
-// 		if (response.ok) {
-// 			showNotification(
-// 				`🎮 Game invitation sent to ${friendName}!`,
-// 				"success"
-// 			);
-// 			closeFriendList();
+		// Try to create a game and establish WebSocket connection
+		console.log("🎯 Attempting to create game and establish WebSocket...");
 
-// 			// TODO: Navigate to waiting room or game lobby
-// 			// window.navigateTo("#game-lobby");
-// 		} else {
-// 			throw new Error("Failed to send invitation");
-// 		}
-// 	} catch (error) {
-// 		console.error("Error sending game invitation:", error);
-// 		showNotification(
-// 			"❌ Failed to send game invitation. Please try again.",
-// 			"error"
-// 		);
+		try {
+			// Create game between current user and friend
+			await createGame(parseInt(userId), parseInt(friendId));
 
-// 		// Reset button state
-// 		const inviteBtn = document.querySelector(
-// 			`[data-friend-id="${friendId}"] .btn-game-invite`
-// 		);
-// 		if (inviteBtn) {
-// 			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
-// 			inviteBtn.disabled = false;
-// 		}
-// 	}
-// }
+			// Show success notification
+			showNotification(
+				`🎮 Game started with ${friendName}! WebSocket connection established.`,
+				"success"
+			);
+
+			// Close friend list and navigate to game
+			closeFriendList();
+			// Optional: Navigate to game view
+			// window.navigateTo("#pong");
+		} catch (gameError) {
+			console.error("❌ Failed to create game:", gameError);
+		}
+	} catch (error) {
+		console.error("💥 Complete failure in inviteToGame:", error);
+		console.error("Error details:", {
+			message: error.message,
+			stack: error.stack,
+			name: error.name,
+		});
+
+		showNotification(
+			"❌ Failed to start game. Check console for details.",
+			"error"
+		);
+
+		// Reset button state
+		const inviteBtn = document.querySelector(
+			`[data-friend-id="${friendId}"] .btn-game-invite`
+		);
+		if (inviteBtn) {
+			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
+			inviteBtn.disabled = false;
+		}
+	}
+}
 
 // Show Bootstrap toast notification
 function showNotification(message, type = "info") {
@@ -501,9 +454,8 @@ function closeRegisterBox() {
 window.closeFriendList = closeFriendList;
 window.handleLocalePong = handleLocalePong;
 window.handleMultiPong = handleMultiPong;
-window.testServerSideWebSocket = testServerSideWebSocket;
-window.testBackendHealth = testBackendHealth;
 window.closeLoginBox = closeLoginBox;
 window.closeRegisterBox = closeRegisterBox;
+window.inviteToGame = inviteToGame;
 
 export { renderPongInfo };
