@@ -57,46 +57,61 @@ K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_
 
 K8S_SERVICE_HOSTS = K8S_SERVICE_HOSTS_CLEAN
 
-ALLOWED_HOSTS = [
-	'localhost',
-	'localhost:3000',
-	'127.0.0.1',
-	'[::1]',
-	'trascendence.42firenze.it',
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
-]  + K8S_SERVICE_HOSTS
+ALLOWED_HOSTS = ['*']
+# 	'localhost',
+# 	'localhost:3000',
+# 	'127.0.0.1',
+# 	'[::1]',
+# 	'trascendence.42firenze.it',
+# 	Microservices['Login'],
+# 	Microservices['Chat'],
+# 	Microservices['Users'],
+# 	Microservices['Notifications'],
+# 	Microservices['Pong'],
+# ]  + K8S_SERVICE_HOSTS
 
-CORS_ALLOWED_ORIGINS = [
-	'http://localhost:3000',
-	'http://localhost',
-	'http://127.0.0.1',
-	'http://[::1]',
-	'https://trascendence.42firenze.it',
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
-]  + K8S_SERVICE_HOSTS_WITH_SCHEME
-# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = [
+# 	'http://localhost:3000',
+# 	'http://localhost',
+# 	'http://127.0.0.1',
+# 	'http://[::1]',
+# 	'https://trascendence.42firenze.it',
+# 	Microservices['Login'],
+# 	Microservices['Chat'],
+# 	Microservices['Users'],
+# 	Microservices['Notifications'],
+# 	Microservices['Pong'],
+# ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-	'http://localhost:3000',
-	'http://localhost',
-	'http://127.0.0.1',
-	'http://[::1]',
-	'https://trascendence.42firenze.it',
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
+    'http://localhost:3000',
+    'http://localhost',
+    'http://127.0.0.1',
+    'http://[::1]',
+    'https://trascendence.42firenze.it',
+    # Aggiungi IP privati per HTTPS
+    'https://10.0.2.15',  # L'IP specifico della tua VM
+    # O meglio ancora, patterns per tutti gli IP privati:
+    'http://10.*',
+    'https://10.*',
+    'http://192.168.*',
+    'https://192.168.*',
+    'http://172.16.*',
+    'https://172.16.*',
+    'http://172.17.*',
+    'https://172.17.*',
+    'http://172.18.*',
+    'https://172.18.*',
+    # Continua per tutti i range 172.16.x.x fino a 172.31.x.x
+    Microservices['Login'],
+    Microservices['Chat'],
+    Microservices['Users'],
+    Microservices['Notifications'],
+    Microservices['Pong'],
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
+
 CORS_ALLOW_HEADERS = [
 	'accept',
 	'accept-encoding',
@@ -114,12 +129,12 @@ CORS_ALLOW_HEADERS = [
 INSTALLED_APPS = [
 	'django_prometheus', 
 	'daphne',
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
+  'django.contrib.admin',
+  'django.contrib.auth',
+  'django.contrib.contenttypes',
+  'django.contrib.sessions',
+  'django.contrib.messages',
+  'django.contrib.staticfiles',
 	'oauth2_provider',
 	'corsheaders',
 	'channels',

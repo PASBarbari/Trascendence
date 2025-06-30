@@ -66,45 +66,59 @@ K8S_SERVICE_HOSTS = K8S_SERVICE_HOSTS_CLEAN
 # 	additional_hosts = os.environ.get('K8S_SERVICE_HOSTS').split(',')
 # 	K8S_SERVICE_HOSTS.extend([host.strip() for host in additional_hosts if host.strip()])
 
-ALLOWED_HOSTS = [
-	'localhost',
-	'localhost:3000',
-	'127.0.0.1',
-	'[::1]',
-	'trascendence.42firenze.it',
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
-]  + K8S_SERVICE_HOSTS
+ALLOWED_HOSTS = ['*']
+# 	'localhost',
+# 	'localhost:3000',
+# 	'127.0.0.1',
+# 	'[::1]',
+# 	'trascendence.42firenze.it',
+# 	Microservices['Login'],
+# 	Microservices['Chat'],
+# 	Microservices['Users'],
+# 	Microservices['Notifications'],
+# 	Microservices['Pong'],
+# ]  + K8S_SERVICE_HOSTS
 
-CORS_ALLOWED_ORIGINS = [
-	'http://localhost:3000',
-	'http://localhost',
-	'http://127.0.0.1',
-	'http://[::1]',
-	'https://trascendence.42firenze.it',
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
-]  + K8S_SERVICE_HOSTS_WITH_SCHEME
-# CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS = [
+# 	'http://localhost:3000',
+# 	'http://localhost',
+# 	'http://127.0.0.1',
+# 	'http://[::1]',
+# 	'https://trascendence.42firenze.it',
+# 	Microservices['Login'],
+# 	Microservices['Chat'],
+# 	Microservices['Users'],
+# 	Microservices['Notifications'],
+# 	Microservices['Pong'],
+# ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 CSRF_TRUSTED_ORIGINS = [
-	'http://localhost:3000',
-	'http://localhost',
-	'http://127.0.0.1',
-	'http://[::1]',
-	'https://trascendence.42firenze.it',
-	Microservices['Login'],
-	Microservices['Chat'],
-	Microservices['Users'],
-	Microservices['Notifications'],
-	Microservices['Pong'],
+    'http://localhost:3000',
+    'http://localhost',
+    'http://127.0.0.1',
+    'http://[::1]',
+    'https://trascendence.42firenze.it',
+    # Aggiungi IP privati per HTTPS
+    'https://10.0.2.15',  # L'IP specifico della tua VM
+    # O meglio ancora, patterns per tutti gli IP privati:
+    'http://10.*',
+    'https://10.*',
+    'http://192.168.*',
+    'https://192.168.*',
+    'http://172.16.*',
+    'https://172.16.*',
+    'http://172.17.*',
+    'https://172.17.*',
+    'http://172.18.*',
+    'https://172.18.*',
+    # Continua per tutti i range 172.16.x.x fino a 172.31.x.x
+    Microservices['Login'],
+    Microservices['Chat'],
+    Microservices['Users'],
+    Microservices['Notifications'],
+    Microservices['Pong'],
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 
 CORS_ALLOW_HEADERS = [
@@ -194,45 +208,6 @@ DATABASES = {
 #user model
 AUTH_USER_MODEL = 'my_login.AppUser'
 
-# Redis Configuration for centralized HA Redis
-REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
-REDIS_PASSWORD = os.getenv('REDIS_PASSWORD', None)
-
-# Redis Cache Configuration (login service uses DB 4)
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/4',
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PASSWORD': REDIS_PASSWORD,
-            'KEY_PREFIX': 'login:cache:',
-            'VERSION': 1,
-        },
-        'TIMEOUT': 300,  # 5 minutes default
-    }
-}
-
-# Session Configuration - use Redis for sessions (login service uses DB 5 for sessions)
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'sessions'
-SESSION_COOKIE_AGE = 1800  # 30 minutes for OAuth flow
-SESSION_SAVE_EVERY_REQUEST = True
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-
-# Add a separate cache for sessions
-CACHES['sessions'] = {
-    'BACKEND': 'django_redis.cache.RedisCache',
-    'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/5',
-    'OPTIONS': {
-        'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-        'PASSWORD': REDIS_PASSWORD,
-        'KEY_PREFIX': 'login:session:',
-        'VERSION': 1,
-    },
-    'TIMEOUT': 1800,  # 30 minutes for sessions
-}
 
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': (
