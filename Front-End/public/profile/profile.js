@@ -149,12 +149,12 @@ function renderProfile() {
 						</div>
 
 						<div class="profile-form-group level">
-							<label for="level" id="level">Level: ${level}, Exp: ${exp}</label>
-							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="form-range readonly-input custom-range">
+							<label for="exp" >Level: ${level}, Exp: ${exp}</label>
+							<input type="range" id="exp" name="exp" min="0" max="100" value="${exp}" readonly class="readonly-input custom-range">
 						</div>
 
 						<div class="profile-form-group">
-							<label for="2fAuth" style="height:21px"></label>
+							<label for="toggle2FAButton" style="height:21px"></label>
 							<button id="toggle2FAButton" type="button" class="btn btn-outline-danger">
 								${has_two_factor_auth ? "Disable" : "Enable"} 2FA
 							</button>

@@ -204,12 +204,14 @@ function renderChatItem(chat) {
 		</div>
 		<div class="chat-item-content" style="display: none;">
 			<div class="scrollable-content"></div>
-			<form class="chats-input">
-				<input type="text" placeholder="Type a message" />
-				<button type="submit">
+			
+			<form class="input-group chat-input">
+				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048"/>
+				<button class="btn btn-outline-primary" type="submit">
 					<i class="bi bi-send"></i>
 				</button>
 			</form>
+
 		</div>
 	`;
 
@@ -335,7 +337,7 @@ function renderChatItem(chat) {
 		}
 	});
 
-	const chatsInput = chatItem.querySelector('.chats-input');
+	const chatsInput = chatItem.querySelector('.chat-input');
 	const inputField = chatsInput.querySelector('input');
 	const sendButton = chatsInput.querySelector('button');
 

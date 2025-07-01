@@ -173,10 +173,12 @@ function showBlockedUsersModal() {
 
     blockedUserListModal.innerHTML += `
     <div class="input-group mb-3">
-		<input type="text" class="form-control" id="userID" placeholder="User ID" style="width: 32%;">
-		<button class="btn btn-outline-primary" type="button" 
-			onclick="blockUser(Number(document.getElementById('userID').value), 'gino')">x</button>
-	</div>
+			<input type="text" class="form-control" id="userID" placeholder="User ID" style="width: 32%;">
+			<button class="btn btn-outline-primary" type="button" 
+				onclick="blockUser(Number(document.getElementById('userID').value), 'gino')">
+				<i class="bi bi-lock"></i>
+			</button>
+		</div>
     `;
 
     return blockedUserListModal;
