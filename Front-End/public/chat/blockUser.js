@@ -141,7 +141,8 @@ async function getBlockedUsersList() {
 
         if (response.ok) {
             const data = await response.json();
-            return data.blocked_users || [];
+						console.log("Blocked users data:", data);
+            return data || [];
         } else if (response.status === 404) {
             // Nessun utente bloccato
             return [];

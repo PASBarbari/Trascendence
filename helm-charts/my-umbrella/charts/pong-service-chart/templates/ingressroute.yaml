@@ -9,7 +9,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
     - match: PathPrefix(`/api/pong`)
@@ -24,7 +23,6 @@ spec:
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix
           namespace: {{ include "pong-service-chart.namespace" . }}
-
   tls:
     {{- if .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName }}

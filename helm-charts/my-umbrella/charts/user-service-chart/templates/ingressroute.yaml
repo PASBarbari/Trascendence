@@ -9,7 +9,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
     - match: PathPrefix(`/api/user`)

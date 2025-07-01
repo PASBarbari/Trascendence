@@ -9,7 +9,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
     - match: PathPrefix(`/api/notifications`)
@@ -23,8 +22,6 @@ spec:
               name: notifications_sticky
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix
-          namespace: {{ include "notifications-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "notifications-service-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}

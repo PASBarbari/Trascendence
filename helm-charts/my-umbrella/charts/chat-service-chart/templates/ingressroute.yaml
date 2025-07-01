@@ -9,7 +9,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
     - match: PathPrefix(`/api/chat`)
@@ -23,8 +22,6 @@ spec:
               name: chat_sticky
       middlewares:
         - name: {{ .Release.Name }}-strip-prefix
-          namespace: {{ include "chat-service-chart.namespace" . }}
-        - name: {{ .Release.Name }}-websocket-headers
           namespace: {{ include "chat-service-chart.namespace" . }}
   tls:
     {{- if .Values.ingress.tls.enabled }}
