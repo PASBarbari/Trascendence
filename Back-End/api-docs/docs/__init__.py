@@ -1,0 +1,3 @@
+"""
+Documentation aggregator app
+"""

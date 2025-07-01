@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-docs-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-docs
+  template:
+    metadata:
+      labels:
+        app: api-docs
+    spec:
+      containers:
+      - name: api-docs
+        image: api-docs:latest
+        ports:
+        - containerPort: 8005
+        env:
+        - name: DEBUG
+          value: "False"
+        - name: MICROSERVICES_LOGIN
+          value: "http://login-service:8000"
+        - name: MICROSERVICES_CHAT
+          value: "http://chat-service:8001"
+        - name: MICROSERVICES_USER
+          value: "http://user-service:8002"
+        - name: MICROSERVICES_NOTIFICATIONS
+          value: "http://notifications-service:8003"
+        - name: MICROSERVICES_PONG
+          value: "http://pong-service:8004"
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /status/
+            port: 8005
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /status/
+            port: 8005
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-docs-service
+  namespace: default
+spec:
+  selector:
+    app: api-docs
+  ports:
+  - protocol: TCP
+    port: 8005
+    targetPort: 8005
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-docs-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: docs.trascendence.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: api-docs-service
+            port:
+              number: 8005

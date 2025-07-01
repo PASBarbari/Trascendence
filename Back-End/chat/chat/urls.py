@@ -16,10 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include, re_path
+from django.http import HttpResponse, JsonResponse
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from django.http import HttpResponse
 
 # Schema view for JSON
 schema_view = get_schema_view(
@@ -103,4 +103,5 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     path('', include('django_prometheus.urls')),  # Add metrics endpoint
+    path('health/', lambda request: JsonResponse({'status': 'healthy'}), name='health'),
 ]

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trascendence API Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .service-card {
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        .service-card h3 {
+            color: #34495e;
+            margin-top: 0;
+            text-transform: capitalize;
+        }
+        .service-card a {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .service-card a:hover {
+            background: #2980b9;
+        }
+        .combined-docs {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e1e8ed;
+        }
+        .combined-docs a {
+            background: #27ae60;
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .combined-docs a:hover {
+            background: #229954;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-healthy { background-color: #27ae60; }
+        .status-unhealthy { background-color: #e74c3c; }
+        .status-unreachable { background-color: #95a5a6; }
+        .status-loading { background-color: #f39c12; animation: pulse 1.5s infinite; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .service-status {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Trascendence API Documentation</h1>
+        
+        <div class="services-grid">
+            {% for service in services %}
+            <div class="service-card">
+                <h3>{{ service|title }} Service</h3>
+                <div class="service-status">
+                    <span class="status-indicator status-loading" id="status-{{ service }}"></span>
+                    <span id="status-text-{{ service }}">Checking...</span>
+                </div>
+                <p>API documentation for the {{ service }} microservice</p>
+                <a href="{% url 'service_docs' service %}">View Documentation</a>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="combined-docs">
+            <h3>📚 Combined Documentation</h3>
+            <p>View all microservices APIs in a single unified documentation</p>
+            <a href="{% url 'combined_docs_ui' %}">View Combined Docs</a>
+        </div>
+    </div>
+    
+    <script>
+        // Check service status
+        fetch('/status/')
+            .then(response => response.json())
+            .then(data => {
+                Object.entries(data.services).forEach(([serviceName, serviceInfo]) => {
+                    const indicator = document.getElementById(`status-${serviceName}`);
+                    const text = document.getElementById(`status-text-${serviceName}`);
+                    
+                    indicator.className = `status-indicator status-${serviceInfo.status}`;
+                    
+                    if (serviceInfo.status === 'healthy') {
+                        text.textContent = `Online (${Math.round(serviceInfo.response_time * 1000)}ms)`;
+                    } else if (serviceInfo.status === 'unhealthy') {
+                        text.textContent = 'Unhealthy';
+                    } else {
+                        text.textContent = 'Offline';
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error checking service status:', error);
+                // Set all indicators to unknown status
+                document.querySelectorAll('.status-indicator').forEach(indicator => {
+                    indicator.className = 'status-indicator status-unreachable';
+                });
+                document.querySelectorAll('[id^="status-text-"]').forEach(text => {
+                    text.textContent = 'Status unknown';
+                });
+            });
+    </script>
+</body>
+</html>

@@ -60,6 +60,13 @@ dependencies:
     version: 0.1.0
     tags:
       - pong
+  - name: api-docs-service-chart
+    repository: file://charts/api-docs-service-chart
+    version: 0.1.0
+    condition: api-docs.enabled
+    tags:
+      - api-docs
+      - documentation
   # - name: observability-chart
   #   repository: file://charts/observability-chart
   #   version: 0.1.0

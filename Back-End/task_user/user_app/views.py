@@ -12,6 +12,8 @@ import asyncio
 from .middleware import ServiceAuthentication , JWTAuth
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.filters import SearchFilter
+from rest_framework.pagination import PageNumberPagination
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
 	"""
@@ -95,14 +97,83 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	def get_object(self):
 		return self.request.user
 
+class UserSearchPagination(PageNumberPagination):
+	"""Custom pagination for user search results."""
+	page_size = 10  # Number of users per page
+	page_size_query_param = 'page_size'  # Allow client to override page size
+	max_page_size = 50  # Maximum allowed page size
+	page_query_param = 'page'  # URL parameter name for page number
+
 class UserSearch(generics.ListAPIView):
-	"""Search for users by username or email."""
+	"""
+	Search for users by username or email with partial matching.
+	
+	This endpoint allows authenticated users to search for other users in the system.
+	The search is performed on both username and email fields using partial matching.
+	Current user and blocked users are automatically excluded from search results.
+	
+	Query Parameters:
+		search (str): Search term to match against username or email. 
+					 Supports partial matching (case-insensitive).
+					 Example: ?search=john will match "john_doe" and "john@example.com"
+		page (int): Page number for pagination (default: 1)
+		page_size (int): Number of results per page (default: 10, max: 50)
+	
+	Returns:
+		200 OK: Paginated list of users matching the search criteria
+		{
+			"count": 45,
+			"next": "http://localhost:8000/api/users/search/?search=john&page=2",
+			"previous": null,
+			"results": [
+				{
+					"user_id": 1,
+					"username": "john_doe",
+					"email": "john@example.com",
+					"level": 5,
+					"exp": 250,
+					...
+				}
+			]
+		}
+		
+		401 Unauthorized: User is not authenticated
+		
+	Examples:
+		GET /api/users/search/?search=john
+		GET /api/users/search/?search=admin&page=2&page_size=20
+		GET /api/users/search/?search=@gmail.com&page_size=5
+	
+	Notes:
+		- Search is case-insensitive
+		- Minimum search term length: 1 character
+		- Current user is excluded from results
+		- Blocked users are excluded from results
+		- Results are ordered by username for consistent pagination
+	"""
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
 	serializer_class = UsersSerializer
-	filter_backends = [DjangoFilterBackend]
-	filterset_fields = ['username', 'email']
-
+	filter_backends = [SearchFilter]
+	search_fields = ['username', 'email']
+	queryset = UserProfile.objects.all()
+	pagination_class = UserSearchPagination
+	
+	def get_queryset(self):
+		"""Exclude current user and blocked users from search results."""
+		queryset = super().get_queryset()
+		
+		# Exclude current user from search results
+		if self.request.user:
+			queryset = queryset.exclude(user_id=self.request.user.user_id)
+			
+			# Exclude blocked users if the relationship exists
+			if hasattr(self.request.user, 'blocked_users'):
+				blocked_user_ids = self.request.user.blocked_users.values_list('user_id', flat=True)
+				queryset = queryset.exclude(user_id__in=blocked_user_ids)
+		
+		# Order by username for consistent pagination
+		return queryset.order_by('username')
 
 class FriendList(generics.ListAPIView):
     permission_classes = (IsAuthenticatedUserProfile,)

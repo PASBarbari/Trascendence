@@ -144,7 +144,7 @@ INSTALLED_APPS = [
 	'rest_framework_simplejwt',
 	'django_filters',
 	'oauth2_provider',
-	# 'task_app',
+	'drf_yasg',
 	'user_app',
 	'corsheaders',
 ]

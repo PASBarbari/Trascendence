@@ -141,6 +141,7 @@ INSTALLED_APPS = [
 	'celery',
 	'django_redis',
 	'django_filters',
+	'drf_yasg',
 	'my_notifications',
 	'rest_framework',
 	'redis',
