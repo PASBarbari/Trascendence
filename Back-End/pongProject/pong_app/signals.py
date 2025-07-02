@@ -324,6 +324,7 @@ class TournamentState:
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
 	from .notification import SendNotificationSync, ImmediateNotification
+	from .serializer import PlayerSerializer
 	logger = logging.getLogger(__name__)
 
 	if created:
@@ -333,8 +334,8 @@ def start_game(sender, instance, created, **kwargs):
 		notification_data = {
 			'type': 'game_created',
 			'game_id': instance.id,
-			'player_1': instance.player_1.user_id,
-			'player_2': instance.player_2.user_id,
+			'player_1': PlayerSerializer(instance.player_1).data,
+			'player_2': PlayerSerializer(instance.player_2).data,
 			'tournament_id': getattr(instance, 'tournament_id', None)
 		}
 

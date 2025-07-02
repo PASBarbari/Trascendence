@@ -493,9 +493,9 @@ function handleChatInviteMessage(message) {
 function handleGameCreatedMessage(message) {
 	console.log("Processing game created message:", message);
 
-	const gameData = message.message?.data || {};
+	const gameData = message?.message || {};
 	const gameId = gameData.game_id;
-	const creatorName = gameData.creator_name || "Someone";
+	const creatorName = gameData.player_1.username || "Someone";
 
 	// Show toast notification
 	showAlertForXSeconds(
