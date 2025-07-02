@@ -443,6 +443,7 @@ const MESSAGE_HANDLERS = {
 	game_invitation: handleGameInvitationMessage,
 	game_started: handleGameStartedMessage,
 	game_ended: handleGameEndedMessage,
+	game_created: handleGameCreatedMessage,
 	tournament_started: handleTournamentStartedMessage,
 	tournament_ended: handleTournamentEndedMessage,
 
@@ -487,6 +488,23 @@ function handleChatInviteMessage(message) {
     }
 }
 
+
+//pong
+function handleGameCreatedMessage(message) {
+	console.log("Processing game created message:", message);
+
+	const gameData = message.message?.data || {};
+	const gameId = gameData.game_id;
+	const creatorName = gameData.creator_name || "Someone";
+
+	// Show toast notification
+	showAlertForXSeconds(
+		`Game created by ${creatorName}. Game ID: ${gameId}`,
+		"success",
+		5,
+		{ asToast: true }
+	);
+}
 
 
 
@@ -658,8 +676,7 @@ function initializeWebSocket() {
 
 			// Determine message type and route to appropriate handler
 			const messageType = getMessageType(message);
-			const handler =
-				MESSAGE_HANDLERS[messageType](message) || MESSAGE_HANDLERS["default"];
+			const handler = MESSAGE_HANDLERS[messageType] || MESSAGE_HANDLERS["default"];
 
 			console.log(`Routing to handler: ${messageType}`);
 			handler(message);
