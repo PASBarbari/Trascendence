@@ -320,3 +320,34 @@ class TournamentState:
 				'tournament_id': self.id
 			}
 		)
+
+@receiver(post_save, sender=Game)
+def start_game(sender, instance, created, **kwargs):
+	from .notification import SendNotificationSync, ImmediateNotification
+	if created:
+		game_state = GameState(
+			player_1=instance.player_1,
+			player_2=instance.player_2,
+			game_id=instance.id,
+			player_length=instance.p_length,
+			tournament_id=instance.tournament_id
+		)
+		notification = ImmediateNotification(
+			Sender='Game',
+			message={
+				'type': 'game_created',
+				'game_id': instance.id,
+				'player_1': instance.player_1.user_id,
+				'player_2': instance.player_2.user_id
+			},
+			user_id=instance.player_1.user_id
+		)
+		SendNotificationSync(notification)
+
+		instance.game_state = game_state
+		instance.save()
+		logger = logging.getLogger(__name__)
+		logger.info(f'Game started: {instance}')
+	else:
+		logger = logging.getLogger(__name__)
+		logger.info(f'Game already started: {instance}')
