@@ -1,101 +1,22 @@
 {{- if .Values.serviceMonitors.enabled }}
-{{- if .Values.serviceMonitors.loginService.enabled }}
+{{- range .Values.serviceMonitors.services }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: login-service-monitor
-  namespace: {{ .Release.Namespace }}
+  name: {{ .name }}-monitor
+  namespace: {{ $.Release.Namespace }}
   labels:
-    app: login-service
+    app: {{ .name }}
     monitoring: "true"
+    {{- include "observability-chart.labels" $ | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      app: login-service
+      app: {{ .name }}
   endpoints:
-  - port: "{{ .Values.serviceMonitors.loginService.port }}"
-    path: {{ .Values.serviceMonitors.loginService.path }}
-    interval: {{ .Values.serviceMonitors.loginService.interval }}
-{{- end }}
-
-{{- if .Values.serviceMonitors.chatService.enabled }}
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: chat-service-monitor
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: chat-service
-    monitoring: "true"
-spec:
-  selector:
-    matchLabels:
-      app: chat-service
-  endpoints:
-  - port: "{{ .Values.serviceMonitors.chatService.port }}"
-    path: {{ .Values.serviceMonitors.chatService.path }}
-    interval: {{ .Values.serviceMonitors.chatService.interval }}
-{{- end }}
-
-{{- if .Values.serviceMonitors.taskService.enabled }}
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: task-service-monitor
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: task-service
-    monitoring: "true"
-spec:
-  selector:
-    matchLabels:
-      app: task-service
-  endpoints:
-  - port: "{{ .Values.serviceMonitors.taskService.port }}"
-    path: {{ .Values.serviceMonitors.taskService.path }}
-    interval: {{ .Values.serviceMonitors.taskService.interval }}
-{{- end }}
-
-{{- if .Values.serviceMonitors.pongService.enabled }}
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: pong-service-monitor
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: pong-service
-    monitoring: "true"
-spec:
-  selector:
-    matchLabels:
-      app: pong-service
-  endpoints:
-  - port: "{{ .Values.serviceMonitors.pongService.port }}"
-    path: {{ .Values.serviceMonitors.pongService.path }}
-    interval: {{ .Values.serviceMonitors.pongService.interval }}
-{{- end }}
-
-{{- if .Values.serviceMonitors.notificationService.enabled }}
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: notification-service-monitor
-  namespace: {{ .Release.Namespace }}
-  labels:
-    app: notification-service
-    monitoring: "true"
-spec:
-  selector:
-    matchLabels:
-      app: notification-service
-  endpoints:
-  - port: "{{ .Values.serviceMonitors.notificationService.port }}"
-    path: {{ .Values.serviceMonitors.notificationService.path }}
-    interval: {{ .Values.serviceMonitors.notificationService.interval }}
+  - port: "{{ .port }}"
+    path: {{ .path | default "/metrics" }}
+    interval: {{ .interval | default "30s" }}
 {{- end }}
 {{- end }}

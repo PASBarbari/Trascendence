@@ -34,7 +34,7 @@ spec:
           
           # Wait for Kibana to be available with a timeout
           ATTEMPTS=0
-          MAX_ATTEMPTS=30
+          MAX_ATTEMPTS=30 # 30 attempts * 20s sleep = 10 minutes timeout
           until curl --connect-timeout 5 -s -k "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/status" \
             -u "elastic:${ELASTICSEARCH_PASSWORD}" \
             -H "Content-Type: application/json" | grep -q '"level":"available"'; do
@@ -47,7 +47,7 @@ spec:
             sleep 20
           done
           
-          echo "Kibana is ready, setting up index patterns..."
+          echo "Kibana is ready, setting up index patterns and dashboards..."
           
           # Create main index pattern for Trascendence logs
           echo "Creating main index pattern: trascendence-logs-*"
@@ -65,6 +65,7 @@ spec:
           # Create service-specific saved searches
           for service in login chat user notifications pong frontend; do
             echo "Creating service-specific view for: ${service}"
+            # Capitalize first letter of service for the title
             SERVICE_TITLE=$(echo "$service" | sed 's/./\u&/')
             curl -s -k -X POST "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/search/trascendence-${service}-logs" \
               -u "elastic:${ELASTICSEARCH_PASSWORD}" \
@@ -95,7 +96,27 @@ spec:
               }
             }' || echo "Could not set default index, it may already be set."
 
-          echo "Kibana setup completed!"
+          # Create a basic dashboard for Trascendence overview
+          echo "Creating Trascendence Overview Dashboard..."
+          curl -s -k -X POST "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/dashboard/trascendence-overview" \
+            -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+            -H "Content-Type: application/json" \
+            -H "kbn-xsrf: true" \
+            -d '{
+              "attributes": {
+                "title": "Trascendence Services Overview",
+                "description": "Overview of all Trascendence microservices logs and metrics",
+                "version": 1,
+                "timeRestore": false,
+                "kibanaSavedObjectMeta": {
+                  "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+                }
+              }
+            }' || echo "Dashboard may already exist"
+
+          echo "🎉 Kibana setup completed!"
+          echo "   📍 Index Pattern: trascendence-logs-*"
+          echo "   🔍 Default time field: @timestamp"
           
         env:
         - name: ELASTICSEARCH_PASSWORD

@@ -1,0 +1,62 @@
+{{- if .Values.ingress.enabled }}
+# HTTPS IngressRoute for API Docs
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-api-docs-ingressroute
+  namespace: {{ include "api-docs-service-chart.namespace" . }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.certManager.clusterIssuer }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: PathPrefix(`/api/docs`)
+      kind: Rule
+      priority: 1000
+      services:
+        - name: {{ include "api-docs-service.fullname" . }}
+          port: {{ .Values.service.port }}
+      middlewares:
+        - name: {{ .Release.Name }}-api-docs-strip-prefix
+          namespace: {{ include "api-docs-service-chart.namespace" . }}
+    - match: PathPrefix(`/docs`)
+      kind: Rule
+      priority: 900
+      services:
+        - name: {{ include "api-docs-service.fullname" . }}
+          port: {{ .Values.service.port }}
+  tls:
+    {{- if .Values.ingress.tls.enabled }}
+    secretName: {{ .Values.ingress.tls.secretName }}
+    {{- end }}
+---
+# HTTP to HTTPS redirect IngressRoute for API Docs
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Release.Name }}-api-docs-ingressroute-http
+  namespace: {{ include "api-docs-service-chart.namespace" . }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/api/docs`)
+      kind: Rule
+      middlewares:
+        - name: {{ .Release.Name }}-api-docs-strip-prefix
+          namespace: {{ include "api-docs-service-chart.namespace" . }}
+        - name: {{ .Release.Name }}-api-docs-redirect-https
+          namespace: {{ include "api-docs-service-chart.namespace" . }}
+      services:
+        - name: {{ include "api-docs-service.fullname" . }}
+          port: {{ .Values.service.port }}
+    - match: PathPrefix(`/docs`)
+      kind: Rule
+      middlewares:
+        - name: {{ .Release.Name }}-api-docs-redirect-https
+          namespace: {{ include "api-docs-service-chart.namespace" . }}
+      services:
+        - name: {{ include "api-docs-service.fullname" . }}
+          port: {{ .Values.service.port }}
+{{- end }}
