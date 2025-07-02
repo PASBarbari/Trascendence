@@ -433,8 +433,8 @@ const MESSAGE_HANDLERS = {
 	friend_unblocked: handleFriendUnblockedMessage,
 
 	// Chat-related messages
-	chat_room_created: handleChatRoomCreatedMessage,
-	chat_room_joined: handleChatRoomJoinedMessage,
+	chat_room_created: handleChatInviteMessage("created"),
+	chat_room_joined: handleChatInviteMessage("joined"),
 	chat_room_left: handleChatRoomLeftMessage,
 	chat_message: handleChatMessage,
 
@@ -456,6 +456,53 @@ const MESSAGE_HANDLERS = {
 	// Fallback handler
 	default: handleDefaultMessage,
 };
+
+
+
+
+//chat
+function handleChatInviteMessage(message) {
+    console.log("Processing chat invite message:", message);
+    
+    const chatData = message.message?.data || {};
+    const roomName = chatData.room_name || "a chat room";
+    const creatorName = chatData.creator_name || "Someone";
+    const roomId = chatData.room_id;
+    
+    // Mostra notifica toast
+    showNotificationToast(
+        `${creatorName} added you to "${roomName}"`,
+        "info"
+    );
+    
+    // Aggiorna la lista delle chat
+    if (typeof updateChatList === 'function') {
+        updateChatList();
+    }
+    
+    // Potresti anche aggiungere una notifica persistente nell'area notifiche
+    addChatInviteToNotifications(chatData);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Enhanced message type detection with support for multiple message formats
@@ -674,6 +721,7 @@ export {
 	getRegisteredMessageTypes,
 	testMessageHandler,
 	MESSAGE_HANDLERS,
+	handleChatInviteMessage,
 };
 
 // ==================== DYNAMIC HANDLER REGISTRATION ====================
