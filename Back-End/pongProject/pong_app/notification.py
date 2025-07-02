@@ -2,7 +2,7 @@ from django.db import models
 import os
 import asyncio
 # import aiohttp
-from chat.settings import Microservices
+from pongProject.settings import Microservices
 
 Types = {
 	'IM' : 'Immediate',
@@ -42,7 +42,7 @@ class ScheduledNotification(UserNotification, GroupNotification):
 # 	async with aiohttp.ClientSession() as session:
 # 		async with session.post(noification_url, data=Notification) as response:
 # 			return response.status
-		
+
 import requests
 from rest_framework import serializers
 

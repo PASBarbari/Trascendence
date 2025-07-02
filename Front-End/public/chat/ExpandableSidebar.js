@@ -148,6 +148,9 @@ async function updateChatList() {
 	const chats = await getChatRooms();
 	if (chats) {
 		const chatContainer = document.getElementById('chatContainer');
+		if (!chatContainer) {
+      return;
+    }
 		if (addChatContainer && chatContainer.contains(addChatContainer)) {
 			chatContainer.removeChild(addChatContainer);
 			addChatContainer = null;

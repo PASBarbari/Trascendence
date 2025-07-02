@@ -7,7 +7,7 @@ class MyChatConfig(AppConfig):
 	def ready(self):
 		try:
 			# from .authentications import register_self
-			from .signals import chat_room_users_changed
+			import my_chat.signals  # Import signals to ensure they are registered
 			#user_register_self()
 			#print("User login successful")
 			# register_self()

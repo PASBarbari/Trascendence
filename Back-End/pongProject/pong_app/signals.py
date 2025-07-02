@@ -64,7 +64,7 @@ class GameState:
 			self.movement()
 
 			await self.update()
-			
+
 			if self.player_1_score == 5 or self.player_2_score == 5: #TODO add different games scores
 				self.running = False
 				break
@@ -80,7 +80,7 @@ class GameState:
 				player_2_score = self.player_2_score,
 				tournament_id = self.tournament_id
 			)
-		
+
 
 	def p1_is_hit(self):
 		if (
@@ -121,13 +121,13 @@ class GameState:
 				self.ball_speed += ball_acc
 		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= self.ring_height / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -self.ring_height / 2):
 			self.wall_hit_pos = self.ball_pos[1]
-			self.angle = -self.angle 
+			self.angle = -self.angle
 		self.check_score()
 		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
 			self.player_1_pos[1] += self.player_1_move
 		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
 			self.player_2_pos[1] += self.player_2_move
-	
+
 	async def update(self):
 		channel_layer = get_channel_layer()
 		try:
@@ -150,7 +150,7 @@ class GameState:
 		elif self.ball_pos[0] + self.ball_radius >= self.ring_length / 2 + self.ring_thickness:
 			self.player_1_score += 1
 			self.reset_ball(random.uniform(110, 250))
-   
+
 	def reset_ball(self, angle):
 		self.ball_pos = [0, 0]
 		self.angle = angle
@@ -174,19 +174,19 @@ class GameState:
 			self.player_1_move = 1
 		elif player == self.player_2.user_id:
 			self.player_2_move = 1
-	
+
 	def down(self, player):
 		if player == self.player_1.user_id:
 			self.player_1_move = -1
 		elif player == self.player_2.user_id:
 			self.player_2_move = -1
-   
+
 	def stop(self, player):
 		if player == self.player_1.user_id:
 			self.player_1_move = 0
 		elif player == self.player_2.user_id:
 			self.player_2_move = 0
-	
+
 	def to_dict(self):
 		return {
 			'player_1_score': self.player_1_score,
@@ -223,7 +223,7 @@ class GameState:
 # 	else:
 # 		logger = logging.getLogger(__name__)
 # 		logger.info(f'Game already started: {instance}')
- 
+
 class TournamentState:
 	def __init__(self, *args, **kwargs):
 		self.id = kwargs['tournament_id']
@@ -235,7 +235,7 @@ class TournamentState:
 		self.next_round = []
 		self.players.append(kwargs['player_id'])
 		self.creator = kwargs['player_id']
-	
+
 	def add_player(self, player):
 		p = get_object_or_404(UserProfile, user_id=player['user_id'])
 		if player['user_id'] in self.players:
@@ -303,13 +303,13 @@ class TournamentState:
 				return 'Game registered successfully'
 		except Exception as e:
 			return f'Error registering game: {e}'
-			
+
 
 	def save_tournament(self):
 		t = get_object_or_404(Tournament, id=self.id)
 		t.winner = self.winner
 		t.save()
-		
+
 	def create_game(self, player_1, player_2):
 		get_channel_layer().group_send(
 			f'tournament_{self.id}',
@@ -324,30 +324,48 @@ class TournamentState:
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
 	from .notification import SendNotificationSync, ImmediateNotification
-	if created:
-		game_state = GameState(
-			player_1=instance.player_1,
-			player_2=instance.player_2,
-			game_id=instance.id,
-			player_length=instance.p_length,
-			tournament_id=instance.tournament_id
-		)
-		notification = ImmediateNotification(
-			Sender='Game',
-			message={
-				'type': 'game_created',
-				'game_id': instance.id,
-				'player_1': instance.player_1.user_id,
-				'player_2': instance.player_2.user_id
-			},
-			user_id=instance.player_1.user_id
-		)
-		SendNotificationSync(notification)
+	from .serializer import PlayerSerializer
+	logger = logging.getLogger(__name__)
 
-		instance.game_state = game_state
-		instance.save()
-		logger = logging.getLogger(__name__)
-		logger.info(f'Game started: {instance}')
+	if created:
+		logger.info(f'🎮 Creating new game {instance.id} between player {instance.player_1.user_id} and player {instance.player_2.user_id}')
+
+		# Prepare notification data
+		notification_data = {
+			'type': 'game_created',
+			'game_id': instance.id,
+			'player_1': PlayerSerializer(instance.player_1).data,
+			'player_2': PlayerSerializer(instance.player_2).data,
+			'tournament_id': getattr(instance, 'tournament_id', None)
+		}
+
+		# Send notification to player 1
+		try:
+			notification_p1 = ImmediateNotification(
+				Sender='Pong',
+				message=notification_data,
+				user_id=instance.player_1.user_id
+			)
+			SendNotificationSync(notification_p1)
+			logger.info(f'✅ Game notification sent to player 1 (ID: {instance.player_1.user_id}) for game {instance.id}')
+		except Exception as e:
+			logger.error(f'❌ Failed to send game notification to player 1 (ID: {instance.player_1.user_id}): {str(e)}')
+			print(f"❌ Error sending notification to player 1: {str(e)}")
+
+		# Send notification to player 2
+		try:
+			notification_p2 = ImmediateNotification(
+				Sender='Pong',
+				message=notification_data,
+				user_id=instance.player_2.user_id
+			)
+			SendNotificationSync(notification_p2)
+			logger.info(f'✅ Game notification sent to player 2 (ID: {instance.player_2.user_id}) for game {instance.id}')
+		except Exception as e:
+			logger.error(f'❌ Failed to send game notification to player 2 (ID: {instance.player_2.user_id}): {str(e)}')
+			print(f"❌ Error sending notification to player 2: {str(e)}")
+
+		logger.info(f'✅ Game {instance.id} created successfully')
+
 	else:
-		logger = logging.getLogger(__name__)
-		logger.info(f'Game already started: {instance}')
+		logger.debug(f'🔄 Game {instance.id} updated (not created)')

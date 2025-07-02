@@ -102,9 +102,12 @@ class GetChatMessage(generics.ListAPIView):
 	# 		return Response([], status=status.HTTP_200_OK)
 
 
-class GetChatInfo(generics.RetrieveAPIView):
+class GetChatInfo(generics.RetrieveUpdateDestroyAPIView):
 	serializer_class = chat_roomSerializer
 	lookup_url_kwarg = 'room_id'
+	lookup_field = 'room_id'
+	authentication_classes = [JWTAuth]
+	permission_classes = (IsAuthenticatedUserProfile,)
 
 	def get_queryset(self):
 		room_id = self.kwargs.get(self.lookup_url_kwarg)

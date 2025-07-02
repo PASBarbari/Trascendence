@@ -1,6 +1,7 @@
 import { setVariables, getVariables } from "../var.js";
 import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -87,9 +88,9 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 function renderSentFriendRequest(receiver_id, addToDOM = false) {
     console.log("/***********renderSentFriendRequest************/");
     console.log("Rendering sent friend request for ID:", receiver_id);
-    
+
     const notificationContent = document.getElementById("notificationContent");
-    
+
     // Create the HTML
     const htmlToAdd = `
         <div class="card mb-3" id="notification-card-${receiver_id}">
@@ -107,7 +108,7 @@ function renderSentFriendRequest(receiver_id, addToDOM = false) {
         const notificationContent = document.getElementById("notificationContent");
         notificationContent.innerHTML += htmlToAdd;
     }
-    
+
     return htmlToAdd;
 }
 
@@ -189,20 +190,20 @@ function renderFriendsList(friends) {
 			return `
                 <div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
                     <!-- Friend Avatar -->
-                    <div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle" 
+                    <div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
                          style="width: 45px; height: 45px; font-weight: 600;">
                         ${initials}
                     </div>
-                    
+
                     <!-- Friend Info -->
                     <div class="flex-grow-1">
                         <h6 class="mb-0 fw-semibold">${username}</h6>
                     </div>
-                    
+
                     <!-- Action Buttons -->
-                    <div 
+                    <div
                         <button class="btn btn-outline-danger btn-sm" type="button"
-                                onclick="handleFriendRequest('DELETE', ${friendId}, ${index})" 
+                                onclick="handleFriendRequest('DELETE', ${friendId}, ${index})"
                                 title="Remove friend">
                             <i class="bi bi-trash"></i>
                         </button>
@@ -357,9 +358,9 @@ function renderNotification() {
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
 			<div class="input-group mb-3">
 				<input type="text" class="form-control" id="friendID" placeholder="User ID" style="width: 32%;">
-				<button class="btn btn-outline-primary" type="button" 
+				<button class="btn btn-outline-primary" type="button"
 					onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))">Send Friend Request</button>
-				<!--<button class="btn btn-outline-secondary" type="button" 
+				<!--<button class="btn btn-outline-secondary" type="button"
 					onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>-->
 			</div>
 		</div>
@@ -433,8 +434,8 @@ const MESSAGE_HANDLERS = {
 	friend_unblocked: handleFriendUnblockedMessage,
 
 	// Chat-related messages
-	chat_room_created: handleChatRoomCreatedMessage,
-	chat_room_joined: handleChatRoomJoinedMessage,
+	chat_room_created: handleChatInviteMessage,
+	chat_room_joined: handleChatInviteMessage,
 	chat_room_left: handleChatRoomLeftMessage,
 	chat_message: handleChatMessage,
 
@@ -442,6 +443,7 @@ const MESSAGE_HANDLERS = {
 	game_invitation: handleGameInvitationMessage,
 	game_started: handleGameStartedMessage,
 	game_ended: handleGameEndedMessage,
+	game_created: handleGameCreatedMessage,
 	tournament_started: handleTournamentStartedMessage,
 	tournament_ended: handleTournamentEndedMessage,
 
@@ -456,6 +458,72 @@ const MESSAGE_HANDLERS = {
 	// Fallback handler
 	default: handleDefaultMessage,
 };
+
+
+
+
+//chat
+function handleChatInviteMessage(message) {
+    console.log("Processing chat invite message:", message);
+
+		console.log("test: ", message.message.data);
+    const chatData = message.message?.data || {};
+    const roomName = chatData.room_name || "a chat room";
+    const creatorName = chatData.creator_name || "Someone";
+    const roomId = chatData.room_id;
+
+    // Mostra notifica toast
+		if (creatorName != getVariables().userUsername) {
+			showAlertForXSeconds(
+					`You have been invited to join "${roomName}" by ${creatorName}`,
+					"success",
+					5,
+					{ asToast: true }
+			);
+		}
+
+    // Aggiorna la lista delle chat
+    if (typeof updateChatList === 'function') {
+        updateChatList();
+    }
+}
+
+
+//pong
+function handleGameCreatedMessage(message) {
+	console.log("Processing game created message:", message);
+
+	const gameData = message?.message || {};
+	const gameId = gameData.game_id;
+	const creatorName = gameData.player_1.username || "Someone";
+
+	// Show toast notification
+	showAlertForXSeconds(
+		`Game created by ${creatorName}. Game ID: ${gameId}`,
+		"success",
+		5,
+		{ asToast: true }
+	);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Enhanced message type detection with support for multiple message formats
@@ -608,8 +676,7 @@ function initializeWebSocket() {
 
 			// Determine message type and route to appropriate handler
 			const messageType = getMessageType(message);
-			const handler =
-				MESSAGE_HANDLERS[messageType] || MESSAGE_HANDLERS["default"];
+			const handler = MESSAGE_HANDLERS[messageType] || MESSAGE_HANDLERS["default"];
 
 			console.log(`Routing to handler: ${messageType}`);
 			handler(message);
