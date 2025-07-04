@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Input from "../Input/Input.jsx";
 import Button from "../Button/Button.jsx";
 import { getCookie } from "../Cookie.jsx";
+import { getBaseUrl } from '../../../../public/index.js';
 
 export default function AddChat() {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -26,7 +27,7 @@ export default function AddChat() {
     console.log('Utenti:', userIdsArray);
 
     try {
-			const response = await fetch('http://localhost:8001/chat/chat_rooms/create/', {
+			const response = await fetch(`${getBaseUrl().replace('8443', '8001')}/chat/chat_rooms/create/`, {
         method: 'POST',
         headers: {
 					'Content-Type': 'application/json',

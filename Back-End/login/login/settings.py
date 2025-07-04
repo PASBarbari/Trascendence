@@ -114,6 +114,11 @@ CSRF_TRUSTED_ORIGINS = [
     'http://172.18.*',
     'https://172.18.*',
     # Continua per tutti i range 172.16.x.x fino a 172.31.x.x
+	'http://localhost:8443',
+    'http://127.0.0.1:8443',
+    'http://10.0.2.15:8443',
+    'http://10.0.2.15.xip.io:8443',
+    'http://10.11.*.xip.io:8443',
     Microservices['Login'],
     Microservices['Chat'],
     Microservices['Users'],

@@ -1,9 +1,10 @@
 import { getCookie } from '../Cookie.jsx';
+import { getBaseUrl } from '../../../../public/index.js';
 
 // Funzione per ottenere i dati dell'utente
 const handleGetUser = async (csrftoken) => {
   try {
-    const response = await fetch('http://localhost:8000/login/user', {
+    const response = await fetch(`${getBaseUrl().replace('8443', '8000')}/login/user`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -35,7 +36,7 @@ const handleGetUser = async (csrftoken) => {
 // Funzione per eseguire la richiesta di login
 const loginUser = async (email, password, csrftoken, navigate) => {
   try {
-    const response = await fetch('http://localhost:8000/login/login', {
+    const response = await fetch(`${getBaseUrl().replace('8443', '8000')}/login/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

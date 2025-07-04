@@ -1,4 +1,5 @@
 import { getCookie } from "../Cookie.jsx";
+import { getBaseUrl } from '../../../../public/index.js';
 
 export const onHandleSubmit = async (e, username, email, password, navigate) => {
   e.preventDefault();
@@ -7,7 +8,7 @@ export const onHandleSubmit = async (e, username, email, password, navigate) => 
     console.log('Username:', email);
     console.log('Password:', password);
     try {
-      const response = await fetch('http://localhost:8000/login/register', {
+      const response = await fetch(`${getBaseUrl().replace('8443', '8000')}/login/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
