@@ -8,6 +8,7 @@ import * as SETUP from "./setup.js";
 import * as SETTINGS from "./settings.js";
 import * as GAME from "./gameLogic.js";
 import Stats from "three/addons/libs/stats.module.js";
+import { getVariables } from "../../var.js";
 
 export function renderPong() {
 	//add bootstrap css
@@ -35,7 +36,7 @@ export function renderPong() {
 	<div class="pong-app">
 		<div class="gamecontainer position-relative">
 			<div id="threejs-container" class="w-100 h-100"></div>
-			
+
 			<!-- Main Menu -->
 			<div id="menu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow">
 			<h1 class="text-light mb-4">PONG</h1>
@@ -45,7 +46,7 @@ export function renderPong() {
 				<button id="exitButton" class="btn btn-danger btn-lg">Exit</button>
 			</div>
 			</div>
-			
+
 			<!-- Player Selection Menu -->
 			<div id="nbrOfPlayerMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
 			<h2 class="text-light mb-4">Select Players</h2>
@@ -55,7 +56,7 @@ export function renderPong() {
 				<button id="backButton" class="btn btn-secondary btn-lg">Back</button>
 			</div>
 			</div>
-			
+
 			<!-- Settings Menu -->
 			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
 			<h2 class="text-light mb-4 text-center">Settings</h2>
@@ -65,21 +66,21 @@ export function renderPong() {
 				<input type="color" class="form-control form-control-color" id="player1Color" value="#4deeea" title="Choose player 1 color">
 				</div>
 			</div>
-			
+
 			<div class="mb-3">
 				<label for="player2Color" class="form-label text-light">Player 2 Color:</label>
 				<div class="d-flex gap-2">
 				<input type="color" class="form-control form-control-color" id="player2Color" value="#4deeea" title="Choose player 2 color">
 				</div>
 			</div>
-			
+
 			<div class="mb-3">
 				<label for="ballColor" class="form-label text-light">Ball Color:</label>
 				<div class="d-flex gap-2">
 				<input type="color" class="form-control form-control-color" id="ballColor" value="#8c5fb3" title="Choose ball color">
 				</div>
 			</div>
-			
+
 			<div class="mb-3">
 				<label for="ringColor" class="form-label text-light">Ring Color:</label>
 				<div class="d-flex gap-2">
@@ -93,19 +94,19 @@ export function renderPong() {
 				<input type="color" class="form-control form-control-color" id="planeColor" value="#089c00" title="Choose plane color">
 				</div>
 			</div>
-			
+
 			<div class="form-check mb-4">
 				<input class="form-check-input" type="checkbox" id="showStats">
 				<label class="form-check-label text-light" for="showStats">Show Stats</label>
 			</div>
-			
+
 			<div class="d-flex gap-2 justify-content-center">
 				<button id="saveSettingsButton" class="btn btn-success">Save</button>
 				<button id="resetSettingsButton" class="btn btn-warning">Reset</button>
 				<button id="backFromSettingsButton" class="btn btn-secondary">Back</button>
 			</div>
 			</div>
-			
+
 			<div id="pauseMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
 			<h2 class="text-light mb-4">Game Paused</h2>
 			<div class="d-grid gap-3">
@@ -128,7 +129,7 @@ export function renderPong() {
 
 	document.addEventListener("keydown", pongKeyDownHandler);
     document.addEventListener("keyup", pongKeyUpHandler);
-    
+
     window.pongKeyDownHandler = pongKeyDownHandler;
     window.pongKeyUpHandler = pongKeyUpHandler;
 
@@ -226,22 +227,53 @@ window.addEventListener("resize", () => {
 
 function pongKeyDownHandler(event) {
 	if (!event || !event.key) return;
-	if (event.key.toLowerCase() == "s") {
-		state.p1_move_y = state.player_speed;
-		state.keys.s = true;
+
+	// Import multiplayer functions if in multiplayer mode
+	if (state.isMultiplayer) {
+		import("../multiplayer/serverSide.js").then(({ sendPlayerInput }) => {
+			const { userId } = getVariables ? getVariables() : { userId: null };
+
+			if (event.key.toLowerCase() == "s") {
+				state.p1_move_y = state.player_speed;
+				state.keys.s = true;
+				sendPlayerInput('down', userId);
+			}
+			if (event.key.toLowerCase() == "w") {
+				state.p1_move_y = -state.player_speed;
+				state.keys.w = true;
+				sendPlayerInput('up', userId);
+			}
+			if (event.key == "ArrowDown" && !state.IAisActive) {
+				state.p2_move_y = state.player_speed;
+				state.keys.ArrowDown = true;
+				sendPlayerInput('down', userId);
+			}
+			if (event.key == "ArrowUp" && !state.IAisActive) {
+				state.p2_move_y = -state.player_speed;
+				state.keys.ArrowUp = true;
+				sendPlayerInput('up', userId);
+			}
+		}).catch(err => console.error("Failed to import multiplayer module:", err));
+	} else {
+		// Local game controls
+		if (event.key.toLowerCase() == "s") {
+			state.p1_move_y = state.player_speed;
+			state.keys.s = true;
+		}
+		if (event.key.toLowerCase() == "w") {
+			state.p1_move_y = -state.player_speed;
+			state.keys.w = true;
+		}
+		if (event.key == "ArrowDown" && !state.IAisActive) {
+			state.p2_move_y = state.player_speed;
+			state.keys.ArrowDown = true;
+		}
+		if (event.key == "ArrowUp" && !state.IAisActive) {
+			state.p2_move_y = -state.player_speed;
+			state.keys.ArrowUp = true;
+		}
 	}
-	if (event.key.toLowerCase() == "w") {
-		state.p1_move_y = -state.player_speed;
-		state.keys.w = true;
-	}
-	if (event.key == "ArrowDown" && !state.IAisActive) {
-		state.p2_move_y = state.player_speed;
-		state.keys.ArrowDown = true;
-	}
-	if (event.key == "ArrowUp" && !state.IAisActive) {
-		state.p2_move_y = -state.player_speed;
-		state.keys.ArrowUp = true;
-	}
+
 	if (event.key == "Escape" && state.isStarted) {
 		if (state.isPaused) {
 			SETTINGS.resumeGame();
@@ -254,36 +286,86 @@ function pongKeyDownHandler(event) {
 
 function pongKeyUpHandler(event) {
 	if (!event || !event.key) return;
-	if (event.key.toLowerCase() == "s") {
-		state.keys.s = false;
-		if (state.keys.w) {
-			state.p1_move_y = -state.player_speed;
-		} else {
-			state.p1_move_y = 0;
+
+	// Import multiplayer functions if in multiplayer mode
+	if (state.isMultiplayer) {
+		import("../multiplayer/serverSide.js").then(({ sendPlayerInput }) => {
+			const { userId } = getVariables ? getVariables() : { userId: null };
+
+			if (event.key.toLowerCase() == "s") {
+				state.keys.s = false;
+				if (state.keys.w) {
+					state.p1_move_y = -state.player_speed;
+					sendPlayerInput('up', userId);
+				} else {
+					state.p1_move_y = 0;
+					sendPlayerInput('stop', userId);
+				}
+			}
+			if (event.key.toLowerCase() == "w") {
+				state.keys.w = false;
+				if (state.keys.s) {
+					state.p1_move_y = state.player_speed;
+					sendPlayerInput('down', userId);
+				} else {
+					state.p1_move_y = 0;
+					sendPlayerInput('stop', userId);
+				}
+			}
+			if (event.key == "ArrowDown" && !state.IAisActive) {
+				state.keys.ArrowDown = false;
+				if (state.keys.ArrowUp) {
+					state.p2_move_y = -state.player_speed;
+					sendPlayerInput('up', userId);
+				} else {
+					state.p2_move_y = 0;
+					sendPlayerInput('stop', userId);
+				}
+			}
+			if (event.key == "ArrowUp" && !state.IAisActive) {
+				state.keys.ArrowUp = false;
+				if (state.keys.ArrowDown) {
+					state.p2_move_y = state.player_speed;
+					sendPlayerInput('down', userId);
+				} else {
+					state.p2_move_y = 0;
+					sendPlayerInput('stop', userId);
+				}
+			}
+		}).catch(err => console.error("Failed to import multiplayer module:", err));
+	} else {
+		// Local game controls
+		if (event.key.toLowerCase() == "s") {
+			state.keys.s = false;
+			if (state.keys.w) {
+				state.p1_move_y = -state.player_speed;
+			} else {
+				state.p1_move_y = 0;
+			}
 		}
-	}
-	if (event.key.toLowerCase() == "w") {
-		state.keys.w = false;
-		if (state.keys.s) {
-			state.p1_move_y = state.player_speed;
-		} else {
-			state.p1_move_y = 0;
+		if (event.key.toLowerCase() == "w") {
+			state.keys.w = false;
+			if (state.keys.s) {
+				state.p1_move_y = state.player_speed;
+			} else {
+				state.p1_move_y = 0;
+			}
 		}
-	}
-	if (event.key == "ArrowDown" && !state.IAisActive) {
-		state.keys.ArrowDown = false;
-		if (state.keys.ArrowUp) {
-			state.p2_move_y = -state.player_speed;
-		} else {
-			state.p2_move_y = 0;
+		if (event.key == "ArrowDown" && !state.IAisActive) {
+			state.keys.ArrowDown = false;
+			if (state.keys.ArrowUp) {
+				state.p2_move_y = -state.player_speed;
+			} else {
+				state.p2_move_y = 0;
+			}
 		}
-	}
-	if (event.key == "ArrowUp" && !state.IAisActive) {
-		state.keys.ArrowUp = false;
-		if (state.keys.ArrowDown) {
-			state.p2_move_y = state.player_speed;
-		} else {
-			state.p2_move_y = 0;
+		if (event.key == "ArrowUp" && !state.IAisActive) {
+			state.keys.ArrowUp = false;
+			if (state.keys.ArrowDown) {
+				state.p2_move_y = state.player_speed;
+			} else {
+				state.p2_move_y = 0;
+			}
 		}
 	}
 }

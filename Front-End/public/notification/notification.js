@@ -495,15 +495,80 @@ function handleGameCreatedMessage(message) {
 
 	const gameData = message?.message || {};
 	const gameId = gameData.game_id;
-	const creatorName = gameData.player_1.username || "Someone";
+	const player1Data = gameData.player_1 || {};
+	const player2Data = gameData.player_2 || {};
+	const player1Id = player1Data.user_id;
+	const player2Id = player2Data.user_id;
+	const tournamentId = gameData.tournament_id;
+
+	console.log("🎮 Game created notification:", {
+		gameId,
+		player1Id,
+		player2Id,
+		player1Data,
+		player2Data,
+		tournamentId
+	});
 
 	// Show toast notification
+	const player1Name = player1Data.username || `Player ${player1Id}`;
+	const player2Name = player2Data.username || `Player ${player2Id}`;
+
 	showAlertForXSeconds(
-		`Game created by ${creatorName}. Game ID: ${gameId}`,
+		`🎮 Game created! ${player1Name} vs ${player2Name} - Starting game...`,
 		"success",
-		5,
+		3,
 		{ asToast: true }
 	);
+
+	// Auto-start the game by connecting to the WebSocket
+	setTimeout(async () => {
+		try {
+			console.log("🚀 Auto-starting multiplayer game from notification...");
+
+			// Check if user is already in pong view
+			const currentHash = window.location.hash;
+			const isInPongView = currentHash === "#pong";
+
+			console.log("📍 Current view:", currentHash, "Is in pong view:", isInPongView);
+
+			// Import the multiplayer module
+			const { initializeWebSocket } = await import("../pong/multiplayer/serverSide.js");
+			const { state } = await import("../pong/locale/state.js");
+
+			// Set up game state
+			state.room_id = gameId;
+			state.isMultiplayer = true;
+			state.current_player_id = getVariables().userId;
+
+			if (!isInPongView) {
+				// If not in pong view, navigate first then initialize
+				console.log("🔄 Navigating to pong view...");
+				window.navigateTo("#pong");
+
+				// Wait for navigation to complete
+				setTimeout(() => {
+					console.log("🔌 Initializing WebSocket connection...");
+					initializeWebSocket(gameId, player1Id, player2Id);
+				}, 500);
+			} else {
+				// If already in pong view, initialize immediately
+				console.log("🔌 Already in pong view, initializing WebSocket connection...");
+				initializeWebSocket(gameId, player1Id, player2Id);
+			}
+
+			console.log("✅ Multiplayer game initialization started");
+
+		} catch (error) {
+			console.error("❌ Failed to auto-start game:", error);
+			showAlertForXSeconds(
+				"❌ Failed to start game automatically. Please try again.",
+				"error",
+				5,
+				{ asToast: true }
+			);
+		}
+	}, 1000); // Small delay to let the notification show
 }
 
 

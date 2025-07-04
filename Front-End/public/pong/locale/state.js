@@ -91,6 +91,10 @@ export let state = {
 	lights: [],
 	plane: null,
 	maxScore: 1,
+	// Multiplayer support
+	isMultiplayer: false,
+	room_id: null,
+	current_player_id: null,
 };
 
 state.ring.height = (9 / 16) * state.ring.length;

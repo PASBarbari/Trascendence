@@ -20,27 +20,27 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		self.room_id = self.scope['url_route']['kwargs']['room_id']
 		self.room_name = f'game_{self.room_id}'
 		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
-		
+
 		# Check authentication - reject AnonymousUser
 		user = self.scope.get('user')
 		if not user or not hasattr(user, 'user_id'):
 			websocket_logger.warning(f"Unauthenticated WebSocket connection attempt for game {self.room_id}")
 			await self.close(code=4001)  # Custom close code for authentication failure
 			return
-		
+
 		# Store authenticated user info
 		self.player_id = user.user_id
 		websocket_logger.info(f"Authenticated user {self.player_id} connected to game {self.room_id}")
-		
+
 		# Join room group
 		await self.channel_layer.group_add(
 			self.room_name,
 			self.channel_name
 		)
-		
+
 		await self.accept()
 		logger.info(f"WebSocket connection accepted for game {self.room_id}")
-		
+
 		# Send welcome message to confirm successful connection
 		await self.send(text_data=json.dumps({
 			'type': 'connection_success',
@@ -50,15 +50,15 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 	async def disconnect(self, close_code):
 		websocket_logger.info(f"WebSocket disconnected: game={self.room_id}, code={close_code}")
-		
+
 		# Handle unexpected disconnections
 		if self.room_id in active_games:
 			# Get the game state
 			game_state = active_games[self.room_id]
-			
+
 			# Identify disconnected player (you need to store this during connect)
 			player = getattr(self, 'player_id', None)
-			
+
 			# Send notification to other players
 			logger.info(f"Player {player} disconnected unexpectedly from game {self.room_id}")
 			await self.channel_layer.group_send(
@@ -70,7 +70,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 					'game_over': True
 				}
 			)
-			
+
 			# Clean up game resources
 			game_state.quit_game()
 			del active_games[self.room_id]
@@ -102,17 +102,17 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		player = data['player']
 		if self.room_id not in player_ready:
 			player_ready[self.room_id] = [False, False]
-		
+
 		player_ready[self.room_id][player] = True
 		logger.info(f"Player {player} ready in game {self.room_id}. Status: {player_ready[self.room_id]}")
-		
+
 		if all(player_ready[self.room_id]):
 			logger.info(f"All players ready in game {self.room_id}, starting game")
 			await self.send(text_data=json.dumps({
 				'message': 'All players are ready!',
 				'ready': True
 			}))
-			
+
 			try:
 				game = await sync_to_async(Game.objects.get)(id=self.room_id)
 				data['player1'] = await sync_to_async(lambda: game.player_1)()
@@ -130,15 +130,15 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		if self.room_id in active_games:
 			logger.info(f"Game {self.room_id} already started, ignoring start request")
 			return
-			
+
 		logger.info(f"Starting game {self.room_id} with players {data['player1']} and {data['player2']}")
 		try:
 			del player_ready[self.room_id]
 			active_games[self.room_id] = GameState(
-				data['player1'], 
-				data['player2'], 
-				self.room_id, 
-				data.get('player_length', 10), 
+				data['player1'],
+				data['player2'],
+				self.room_id,
+				data.get('player_length', 10),
 				self.tournament_id if self.tournament_id else None
 			)
 			asyncio.create_task(active_games[self.room_id].start())
@@ -176,6 +176,29 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			logger.error(f"Game {self.room_id} not found for STOP movement")
 		except Exception as e:
 			logger.error(f"Error in STOP movement: {str(e)}")
+
+	async def player_input(self, data):
+		"""Handle player input messages from frontend"""
+		try:
+			action = data.get('action')
+			player_id = data.get('player_id')
+
+			if not action or not player_id:
+				logger.error(f"Invalid player input: action={action}, player_id={player_id}")
+				return
+
+			# Map action to appropriate handler
+			if action == 'up':
+				await self.up({'player': player_id})
+			elif action == 'down':
+				await self.down({'player': player_id})
+			elif action == 'stop':
+				await self.stop({'player': player_id})
+			else:
+				logger.error(f"Unknown player action: {action}")
+
+		except Exception as e:
+			logger.error(f"Error handling player input: {str(e)}", exc_info=True)
 
 	async def game_init(self, data):
 		logger.info(f"Game initialization for {self.room_id}")
@@ -220,7 +243,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			logger.info(f"Game {self.room_id} resources cleaned up after game over")
 		except KeyError:
 			logger.warning(f"Game {self.room_id} already removed from active_games")
-		
+
 	async def quit_game(self, data):
 		player = data['player']
 		logger.info(f"Player {player} quit game {self.room_id}")
@@ -244,6 +267,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		'up': up,
 		'down': down,
 		'stop': stop,
+		'player_input': player_input,
 		'game_state': game_state,
 		'game_init': game_init,
 		'game_over': game_over,
@@ -255,7 +279,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
 		self.channel_name = f'tournament_{self.tournament_id}'
 		websocket_logger.info(f"New tournament connection: {self.tournament_id}")
-		
+
 		# Join room group
 		await self.channel_layer.group_add(
 			self.channel_name
@@ -289,7 +313,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 	async def join(self, data):
 		logger.info(f"Join request for tournament {self.tournament_id}")
-		
+
 		# Use the authenticated user from WebSocket scope
 		user = self.scope.get('user')
 		if not user or not user.is_authenticated:
@@ -299,9 +323,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 				'error': 'Authentication required'
 			}))
 			return
-		
+
 		player_id = user.user_id
-		
+
 		if not self.tournament_id in active_tournaments:
 			try:
 				name = data.get('name')
