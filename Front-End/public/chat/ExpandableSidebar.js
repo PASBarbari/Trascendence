@@ -94,7 +94,7 @@ async function renderExpandableSidebar() {
     toggleChatButton.addEventListener('click', function () {
         chatContainerOpen = !chatContainerOpen;
         chatContainer.classList.toggle('open', chatContainerOpen);
-        
+
         toggleChatButton.innerHTML = chatContainerOpen ? `
             <i class="bi bi-chevron-left"></i>
         ` : `
@@ -137,10 +137,10 @@ async function renderExpandableSidebar() {
 
 	// Fetch chat rooms and render them
 	updateChatList();
-	
+
 	// Carica la lista degli utenti bloccati
 	await getBlockedUsers();
-	
+
 	console.log("Chat rooms fetched and rendered.");
 }
 
@@ -159,10 +159,10 @@ async function updateChatList() {
             chatContainer.removeChild(blockedUserListModal);
             blockedUserListModal = null;
         }
-		
+
 		const chatItems = chatContainer.querySelectorAll('.chat-item'); // Pulisce il contenitore delle chat
 		chatItems.forEach(item => item.remove());
-		
+
 		chats.forEach(chat => {
 			if (!chat.room_id) {
 				console.error("Chat ID non trovato:", chat);
@@ -183,10 +183,23 @@ function scrollToBottom(element) {
 	element.scrollTop = element.scrollHeight;
 }
 
+function stringToNumber(str) {
+    if (!str || typeof str !== 'string') return 1;
+
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // Restituisce un numero da 1 a 14
+    return Math.abs(hash % 15) + 1;
+}
+
 function renderChatItem(chat) {
 	const { wss_api, url_api } = getVariables();
 	const chatContainer = document.querySelector('.chat-container');
 	const chatItem = document.createElement('div');
+	const imgNumber = stringToNumber(chat.name);
 	chatItem.className = 'chat-item';
 	chatItem.dataset.id = chat.id;
 
@@ -194,7 +207,7 @@ function renderChatItem(chat) {
 		<div class="chat-item-header">
 			<div class="chat-item-header-content">
 				<div class="avatar">
-					<div class="avatar-placeholder"></div>
+					<img class="avatar-placeholder" src="chat/${imgNumber}.jpg" alt="Avatar" />
 				</div>
 				<div class="chat-item-info">
 					<div class="chat-item-name">${chat.name}</div>
@@ -207,7 +220,7 @@ function renderChatItem(chat) {
 		</div>
 		<div class="chat-item-content" style="display: none;">
 			<div class="scrollable-content"></div>
-			
+
 			<form class="input-group chat-input">
 				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048"/>
 				<button class="btn btn-outline-primary" type="submit">
@@ -346,7 +359,7 @@ function renderChatItem(chat) {
 
 	// Modifica da apportare nel file ExpandableSidebar.js
 	// Nella funzione renderChatItem dove invii il messaggio
-	
+
 	chatsInput.addEventListener('submit', function (e) {
 		e.preventDefault();
 		const message = inputField.value;
@@ -362,7 +375,7 @@ function renderChatItem(chat) {
 			};
 			socket.send(JSON.stringify(messageData));
 			inputField.value = '';
-			
+
 			scrollToBottom(chatItem.querySelector('.scrollable-content'));
 		} else {
 			alert("Connessione WebSocket non attiva");
