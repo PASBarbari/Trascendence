@@ -1,4 +1,4 @@
-import { setVariables, getVariables } from "../var.js";
+import { setVariables, getVariables, calculateInitials } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 
@@ -150,6 +150,8 @@ async function handleOAuthLogin(provider) {
 								return;
 							}
 
+							const initials = calculateInitials(result.username);
+
 							// Salva i token
 							setVariables({
 								token: result.access_token,
@@ -157,6 +159,7 @@ async function handleOAuthLogin(provider) {
 								userId: result.user_id,
 								userUsername: result.username,
 								userEmail: result.email,
+								initials: initials,
 							});
 
 							// Reindirizza alla home
@@ -273,11 +276,13 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 					setVariables({ refreshToken: data.refresh_token });
 
 					const { user_id, email, username } = data;
+					const initials = calculateInitials(username);
 
 					setVariables({
 						userEmail: email,
 						userUsername: username,
 						userId: user_id,
+						initials: initials,
 					});
 				} else {
 					setVariables({ multiplayer_username: data.username });
@@ -432,11 +437,13 @@ async function verifyOTP(tempToken, otpCode, email) {
 			setVariables({ refreshToken: data.refresh_token });
 
 			const { user_id, username, email } = data;
+			const initials = calculateInitials(username);
 
 			setVariables({
 				userEmail: email,
 				userUsername: username,
 				userId: user_id,
+				initials: initials,
 			});
 
 			return true;

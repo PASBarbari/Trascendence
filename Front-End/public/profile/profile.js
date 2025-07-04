@@ -55,7 +55,7 @@ async function GetProfile() {
 			const data = await response.json();
 
 			let profileImageUrl = "";
-			
+
 			// Handle current_avatar object structure
 			if (data.current_avatar && data.current_avatar.image_url) {
 				profileImageUrl = url_api + '/user' + data.current_avatar.image_url;
@@ -110,6 +110,7 @@ function renderProfile() {
 		exp,
 		profileImageUrl,
 		has_two_factor_auth,
+		initials
 	} = getVariables();
 	let edit = false;
 
@@ -163,8 +164,16 @@ function renderProfile() {
 					</form>
 				</div>
 				<div class="profile-card-image-container">
-					<button class="profile-image-circle">
-						<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" />
+					<button class="profile-image-circle ">
+
+            ${profileImageUrl
+              ? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" />`
+              : `<div class="friend-avatar"
+                   style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
+                  ${initials || userUsername?.charAt(0).toUpperCase() || '?'}
+                 </div>`
+            }
+
 						<div class="edit-icon-overlay">
 							<i class="bi bi-pencil"></i>
 						</div>
@@ -372,13 +381,21 @@ function renderProfile() {
 		e.preventDefault();
 		e.stopPropagation();
 
+		const { profileImageUrl, initials, userUsername } = getVariables();
+
 		const profileImageSelector = document.createElement("div");
 		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
 		<div class="login_box">
 			<h1>Select an image</h1>
 			<div class="profile-image-preview">
-				<img src="${profileImageUrl || '/profile/placeholder.jpeg'}" alt="Profile" class="profile-card-image" id="imagePreview" />
+				${profileImageUrl
+          ? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" id="imagePreview" />`
+          : `<div class="friend-avatar"
+                   style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
+              ${initials || userUsername?.charAt(0).toUpperCase() || '?'}
+             </div>`
+        }
 			</div>
 			<div class="profile-image-controls">
 				<label for="imageUpload" class="upload-btn">Choose file</label>
@@ -398,16 +415,18 @@ function renderProfile() {
 
 		// Preview the selected image
 		imageUpload.addEventListener("change", function (event) {
-			const file = event.target.files[0];
-			if (file) {
-				const reader = new FileReader();
-				reader.onload = function (e) {
-					imagePreview.src = e.target.result;
-				};
-				reader.readAsDataURL(file);
-			}
+				const file = event.target.files[0];
+				if (file) {
+						const reader = new FileReader();
+						reader.onload = function (e) {
+								const previewContainer = profileImageSelector.querySelector(".profile-image-preview");
+
+								previewContainer.innerHTML = `<img src="${e.target.result}" alt="Profile" class="profile-card-image" id="imagePreview" />`;
+						};
+						reader.readAsDataURL(file);
+				}
 		});
-		
+
 		uploadImageBtn.addEventListener("click", async function () {
 			const file = imageUpload.files[0];
 			if (!file) {
@@ -442,15 +461,27 @@ function renderProfile() {
 
 				if (response.ok) {
 					const data = await response.json();
-					
+
 					// Update avatar URL
 					const avatarUrl = url_api + '/user' + data.avatar;
 					setVariables({
 						profileImageUrl: avatarUrl
 					});
-					
+
 					// Update the image in the UI
-					document.querySelector(".profile-card-image").src = avatarUrl;
+
+					const profileImageCircle = document.querySelector(".profile-image-circle");
+          const existingImage = profileImageCircle.querySelector(".profile-card-image");
+          const existingDiv = profileImageCircle.querySelector(".friend-avatar");
+
+          if (existingImage) {
+              // Se esiste già un'immagine, aggiorna solo il src
+              existingImage.src = avatarUrl;
+          } else if (existingDiv) {
+              // Se esiste il div con iniziali, sostituiscilo con un'immagine
+              existingDiv.outerHTML = `<img src="${avatarUrl}" alt="Profile" class="profile-card-image" />`;
+          }
+
 					showAlertForXSeconds("Avatar uploaded successfully", "success", 3, { asToast: true });
 
 					closeProfileImageSelector();

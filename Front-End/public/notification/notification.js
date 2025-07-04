@@ -1,4 +1,4 @@
-import { setVariables, getVariables } from "../var.js";
+import { setVariables, getVariables, calculateInitials } from "../var.js";
 import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
@@ -179,20 +179,14 @@ function renderFriendsList(friends) {
 			const username = friendInfo.username || "Unknown";
 			const email = friendInfo.email || "";
 
-			// Get user initials for avatar
-			const initials = username
-				.split(" ")
-				.map((word) => word.charAt(0))
-				.join("")
-				.toUpperCase()
-				.slice(0, 2);
+			const friend_initials = calculateInitials(username);
 
 			return `
                 <div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
                     <!-- Friend Avatar -->
                     <div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
                          style="width: 45px; height: 45px; font-weight: 600;">
-                        ${initials}
+                        ${friend_initials}
                     </div>
 
                     <!-- Friend Info -->

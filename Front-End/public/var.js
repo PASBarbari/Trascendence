@@ -3,6 +3,7 @@ let variables = {
 	refreshToken: null,
 	userEmail: null,
 	userUsername: null,
+	initials: null, // iniziali calcolate dal username
 	userId: null,
 	name: null,
 	surname: null,
@@ -60,4 +61,17 @@ export function processOAuthRedirect() {
 		return true;
 	}
 	return false;
+}
+
+export function calculateInitials(username) {
+    if (!username || typeof username !== 'string') {
+        return '';
+    }
+
+    return username
+        .split(" ")
+        .map((word) => word.charAt(0))
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
 }

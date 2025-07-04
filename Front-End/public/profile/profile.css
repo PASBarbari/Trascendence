@@ -6,6 +6,21 @@
   overflow: hidden;
 }
 
+.friend-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    position: relative;
+    flex-shrink: 0;
+}
+
 .profile-card-content {
   display: flex;
   flex-direction: row;
@@ -38,7 +53,7 @@
 }
 
 .profile-image-circle {
-	border: none; 
+	border: none;
 	outline: none;
 	box-shadow: none;
   border-radius: 50%;
@@ -47,7 +62,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-   position: relative;
+  position: relative;
+  padding: 0px;
 }
 
 .profile-image-circle:focus,
@@ -106,20 +122,31 @@
 	align-items: center;
 	z-index: 100;
   }
-  
+
   /* Image selector preview */
   .profile-image-preview {
-	margin-bottom: 20px;
-	text-align: center;
+		margin-bottom: 20px;
+		text-align: center;
+		border: none;
+		outline: none;
+		box-shadow: none;
+		border-radius: 50%;
+		width: 80px;
+		height: 80px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		padding: 0px;
   }
-  
+
   .profile-image-preview img {
 	max-width: 200px;
 	max-height: 200px;
 	border-radius: 50%;
 	object-fit: cover;
   }
-  
+
   .profile-image-controls {
 	display: flex;
 	flex-direction: column;
@@ -165,7 +192,7 @@
 	border-radius: 4px;
 	cursor: pointer;
 }
-  
+
 .btn-secondary {
 	background-color: #6c757d;
 	color: white;
@@ -174,7 +201,7 @@
 	border-radius: 4px;
 	cursor: pointer;
 }
-  
+
 .upload-btn {
 	display: inline-block;
 	padding: 8px 16px;
@@ -183,7 +210,7 @@
 	cursor: pointer;
 	border: 1px solid #ccc;
 }
-  
+
 .upload-btn:hover {
 	background-color: #e0e0e0;
 }
