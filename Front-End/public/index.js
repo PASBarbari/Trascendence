@@ -7,6 +7,7 @@ import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 import { settingsPopup, Logout } from "./settings/settings.js";
 import { cleanupPong } from "./pong/locale/settings.js";
 import { getVariables, setVariables } from "./var.js";
+import { renderServerPong } from "./pong/multiplayer/server.js"; // ← Nuovo import
 
 function preloadPongCSS() {
 	const link = document.createElement("link");
@@ -15,6 +16,19 @@ function preloadPongCSS() {
 	document.head.appendChild(link);
 	console.log("Pong CSS precaricato");
 }
+
+// function getBaseUrl() {
+//     const hostname = window.location.hostname;
+
+//     if (hostname === '10.11.6.4') {
+//         return `http://10.11.6.4.xip.io:3000`;  // ← Importante: usa xip.io
+//     }
+//     else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+//         return `http://localhost.xip.io:3000`;   // ← Importante: usa xip.io
+//     }
+
+//     return `http://${hostname}:3000`;
+// }
 
 const routes = {
 	404: {
@@ -54,6 +68,12 @@ const routes = {
 		description: "This is the pong game",
 		protected: true,
 	},
+	serverpong: {
+		render: renderServerPong,
+        title: "Server Pong",
+        description: "Multiplayer Pong Game",
+        protected: true,
+    },
 };
 
 const navigateTo = (path) => {
@@ -95,6 +115,11 @@ const locationHandler = async () => {
 		console.log("Navigando via da Pong, eseguo cleanup...");
 		cleanupPong();
 	}
+
+	if ((currentRoute === "pong" || currentRoute === "serverpong") && location !== "pong" && location !== "serverpong") {
+        console.log("Navigando via da Pong/ServerPong, eseguo cleanup...");
+        cleanupPong();
+    }
 
 	if (routes[location]?.protected && checkAuth()) {
         renderExpandableSidebar();
@@ -138,9 +163,9 @@ const initializeApp = async () => {
 		if (getVariables().url_api === null || getVariables().url_api === "") {
 			const apiUrl = window.location.origin + "/api";
 			const wssUrl = window.location.origin.replace("https://", "wss://").replace("http://", "ws://") + "/api";
-			setVariables({ 
+			setVariables({
 				url_api: apiUrl,
-				wss_api: wssUrl 
+				wss_api: wssUrl
 			});
 		}
 

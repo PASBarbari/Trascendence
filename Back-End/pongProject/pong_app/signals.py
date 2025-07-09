@@ -54,9 +54,14 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		print(f"Game {self.__dict__} started")
+		logger = logging.getLogger('pong_app')
+		logger.info(f"🎮 Game {self.game_id} loop started with config: ball_speed={self.ball_speed}, p_speed={self.p_speed}")
+
 		while self.ball_speed == 0:
 			await asyncio.sleep(0.1)
+
+		logger.info(f"🎮 Game {self.game_id} physics loop starting...")
+
 		while self.running:
 			start_time = time.monotonic()
 
@@ -66,11 +71,14 @@ class GameState:
 			await self.update()
 
 			if self.player_1_score == 5 or self.player_2_score == 5: #TODO add different games scores
+				logger.info(f"🏁 Game {self.game_id} ended! Final score: {self.player_1_score}-{self.player_2_score}")
 				self.running = False
 				break
+
 			elapsed = time.monotonic() - start_time
 			self.avg_frame_time += [elapsed, 1]
 			await asyncio.sleep(max(0, tick_interval - elapsed))
+
 		self.game_end()
 
 	def game_end(self):
@@ -168,23 +176,22 @@ class GameState:
 		elif (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness / 2):
 			self.player_2_pos[1] -= self.p_speed
 
-	def up(self, player):
-		print(f"Player {player} up")
-		if player == self.player_1.user_id:
-			self.player_1_move = 1
-		elif player == self.player_2.user_id:
-			self.player_2_move = 1
-
-	def down(self, player):
-		if player == self.player_1.user_id:
-			self.player_1_move = -1
-		elif player == self.player_2.user_id:
+	def up(self, player_id):
+		if player_id == self.player_1:
+			self.player_1_move = -1  # Negative for up
+		elif player_id == self.player_2:
 			self.player_2_move = -1
 
-	def stop(self, player):
-		if player == self.player_1.user_id:
+	def down(self, player_id):
+		if player_id == self.player_1:
+			self.player_1_move = 1  # Positive for down
+		elif player_id == self.player_2:
+			self.player_2_move = 1
+
+	def stop(self, player_id):
+		if player_id == self.player_1:
 			self.player_1_move = 0
-		elif player == self.player_2.user_id:
+		elif player_id == self.player_2:
 			self.player_2_move = 0
 
 	def to_dict(self):

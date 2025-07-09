@@ -3,13 +3,25 @@ import * as THREE from "three";
 import { state } from "../state.js";
 
 export function setupRing() {
+	console.log("🎯 Setting up ring with responsive dimensions:", {
+		length: state.ring.length,
+		height: state.ring.height,
+		thickness: state.ring.thickness,
+		depth: state.ring.depth
+	});
+
+	// Set boundaries based on responsive configuration
 	state.boundaries = new THREE.Vector2(
 		state.ring.length / 2,
 		state.ring.height / 2
 	);
+
+	console.log("🎯 Ring boundaries set to:", state.boundaries);
+
+	// Create plane with responsive dimensions
 	const planeGeometry = new THREE.PlaneGeometry(
-		state.boundaries.x * 2,
-		state.boundaries.y * 2
+		state.ring.length,
+		state.ring.height
 	);
 	planeGeometry.rotateX(-Math.PI / 2);
 	state.plane = new THREE.Mesh(planeGeometry, state.mat.plane);
@@ -17,11 +29,12 @@ export function setupRing() {
 	state.plane.receiveShadow = true;
 	state.game.add(state.plane);
 
+	// Create ring walls with responsive dimensions
 	state.r_bottom = new THREE.Mesh(
 		new THREE.BoxGeometry(
 			state.ring.length + state.ring.thickness * 2,
 			state.ring.thickness,
-			state.ring.depth
+			state.ring.width
 		),
 		state.mat.ring
 	);
@@ -29,7 +42,7 @@ export function setupRing() {
 		new THREE.BoxGeometry(
 			state.ring.length + state.ring.thickness * 2,
 			state.ring.thickness,
-			state.ring.depth
+			state.ring.width
 		),
 		state.mat.ring
 	);
@@ -37,7 +50,7 @@ export function setupRing() {
 		new THREE.BoxGeometry(
 			state.ring.thickness,
 			state.ring.height,
-			state.ring.depth
+			state.ring.width
 		),
 		state.mat.ring
 	);
@@ -45,7 +58,7 @@ export function setupRing() {
 		new THREE.BoxGeometry(
 			state.ring.thickness,
 			state.ring.height,
-			state.ring.depth
+			state.ring.width
 		),
 		state.mat.ring
 	);
@@ -84,4 +97,8 @@ export function setupRing() {
 
 	state.ring3D.rotateX(-Math.PI / 2);
 	state.game.add(state.ring3D);
+
+	console.log("✅ Ring setup complete with responsive dimensions");
+	console.log("📏 Ring size:", state.ring.length, "x", state.ring.height);
+	console.log("🎯 Boundaries:", state.boundaries);
 }

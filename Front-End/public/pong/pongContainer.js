@@ -96,7 +96,7 @@ function createFriendItemHTML(friendship) {
                     <div class="friend-name">${username}</div>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-game-invite btn-sm" 
+                    <button class="btn btn-game-invite btn-sm"
                             onclick="inviteToGame('${userId}', '${username}')">
                         <i class="fas fa-gamepad me-1"></i>
                         Invite
@@ -107,78 +107,45 @@ function createFriendItemHTML(friendship) {
     `;
 }
 
-// Send game invitation
-// // Uncomment and update the inviteToGame function
+// Nel pongContainer.js
 async function inviteToGame(friendId, friendName) {
-	try {
-		console.log(
-			`🎮 Starting game invitation to ${friendName} (ID: ${friendId})`
-		);
+    try {
+        console.log(`🎮 Starting multiplayer game invitation to ${friendName} (ID: ${friendId})`);
 
-		// Show loading state on button
-		const inviteBtn = document.querySelector(
-			`[data-friend-id="${friendId}"] .btn-game-invite`
-		);
-		if (inviteBtn) {
-			const originalHTML = inviteBtn.innerHTML;
-			inviteBtn.innerHTML =
-				'<i class="fas fa-spinner fa-spin me-1"></i>Connecting...';
-			inviteBtn.disabled = true;
-		}
+        const { userId, userUsername } = getVariables();
 
-		// Get current user info for debugging
-		const { token, url_api, userId } = getVariables();
-		console.log("🔍 Debug Info:");
-		console.log("  - Current User ID:", userId);
-		console.log("  - Friend ID:", friendId);
-		console.log("  - Token present:", token ? "✅ Yes" : "❌ No");
-		console.log("  - API URL:", url_api);
+        // ✅ IMPOSTA I DATI MULTIPLAYER PRIMA DI CREARE IL GIOCO
+        const { setVariables } = await import("../var.js");
+        setVariables({
+            multiplayer_username: friendName,
+            multiplayer_id: friendId,
+            multiplayer_player1: userUsername,    // Tu (creatore)
+            multiplayer_player2: friendName,      // L'amico invitato
+            multiplayer_player1_id: userId,
+            multiplayer_player2_id: friendId,
+            multiplayer_invited: false,           // Tu NON sei invitato, hai creato
+            multiplayer_role: "player1"           // Tu sei player1 (creatore)
+        });
 
-		// Import the WebSocket functions
-		const { createGame } = await import("./multiplayer/serverSide.js");
+        // ✅ IMPORT CORRETTO - DEVE ESSERE "./multiplayer/serverSide.js" NON "./multiplayer/serverSide.js"
+        const { createGame } = await import("./multiplayer/serverSide.js");
 
-		// Try to create a game and establish WebSocket connection
-		console.log("🎯 Attempting to create game and establish WebSocket...");
+        // Create game and establish WebSocket connection
+        await createGame(parseInt(userId), parseInt(friendId));
 
-		try {
-			// Create game between current user and friend
-			await createGame(parseInt(userId), parseInt(friendId));
+        // Show success notification
+        showNotification(`🎮 Multiplayer game started with ${friendName}!`, "success");
 
-			// Show success notification
-			showNotification(
-				`🎮 Game started with ${friendName}! WebSocket connection established.`,
-				"success"
-			);
+        // Close friend list
+        closeFriendList();
 
-			// Close friend list and navigate to game
-			closeFriendList();
-			// Optional: Navigate to game view
-			// window.navigateTo("#pong");
-		} catch (gameError) {
-			console.error("❌ Failed to create game:", gameError);
-		}
-	} catch (error) {
-		console.error("💥 Complete failure in inviteToGame:", error);
-		console.error("Error details:", {
-			message: error.message,
-			stack: error.stack,
-			name: error.name,
-		});
+        // Navigate to serverpong
+        window.navigateTo("#serverpong");
 
-		showNotification(
-			"❌ Failed to start game. Check console for details.",
-			"error"
-		);
-
-		// Reset button state
-		const inviteBtn = document.querySelector(
-			`[data-friend-id="${friendId}"] .btn-game-invite`
-		);
-		if (inviteBtn) {
-			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
-			inviteBtn.disabled = false;
-		}
-	}
+    } catch (error) {
+        console.error("💥 Failed to start multiplayer game:", error);
+        showNotification("❌ Failed to start multiplayer game. Please try again.", "error");
+    }
 }
 
 // Show Bootstrap toast notification

@@ -7,11 +7,17 @@ export function createScore() {
 	const fontLoader = new FontLoader();
 	const fontUrl =
 		"https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
+
+	// Calculate responsive text size based on ring dimensions
+	const textSize = state.ring.length * 0.02; // 2% of ring length
+
+	console.log("🏆 Creating score with responsive text size:", textSize);
+
 	fontLoader.load(fontUrl, function (font) {
 		const textGeometry = new TextGeometry("0", {
 			font: font,
-			size: 20,
-			depth: 0.5,
+			size: textSize,
+			depth: state.ring.thickness * 0.1,
 			curveSegments: 12,
 			bevelEnabled: false,
 			bevelThickness: 0.1,
@@ -23,14 +29,18 @@ export function createScore() {
 
 		state.scoreMesh.p1 = new THREE.Mesh(textGeometry, state.mat.score);
 		state.scoreMesh.p2 = new THREE.Mesh(textGeometry, state.mat.score);
-		state.scoreMesh.p1.position.x = -state.boundaries.x * 0.6;
-		state.scoreMesh.p2.position.x = state.boundaries.x * 0.6;
-		state.scoreMesh.p1.position.y = state.boundaries.y * 1.3;
-		state.scoreMesh.p2.position.y = state.boundaries.y * 1.3;
-		// state.scoreMesh.p1.rotateX(-Math.PI / 2);
-		// state.scoreMesh.p2.rotateX(-Math.PI / 2);
-		// state.game.add(state.scoreMesh.p1, state.scoreMesh.p2);
+
+		// Position scores responsively
+		state.scoreMesh.p1.position.x = -state.ring.length * 0.3; // 30% left of center
+		state.scoreMesh.p2.position.x = state.ring.length * 0.3;  // 30% right of center
+		state.scoreMesh.p1.position.y = state.ring.height * 0.6;  // 60% above center
+		state.scoreMesh.p2.position.y = state.ring.height * 0.6;  // 60% above center
+
 		state.scene.add(state.scoreMesh.p1, state.scoreMesh.p2);
+
+		console.log("🏆 Scores positioned at:",
+			state.scoreMesh.p1.position,
+			state.scoreMesh.p2.position);
 	});
 }
 
@@ -48,12 +58,15 @@ export function updateScore(player) {
 	const fontUrl =
 		"https://threejs.org/examples/fonts/helvetiker_regular.typeface.json";
 
+	// Calculate responsive text size based on ring dimensions
+	const textSize = state.ring.length * 0.02; // 2% of ring length
+
 	fontLoader.load(fontUrl, function (font) {
 		// Create new text geometry with current score
 		const textGeometry = new TextGeometry(scoreValue.toString(), {
 			font: font,
-			size: 20,
-			depth: 0.5,
+			size: textSize,
+			depth: state.ring.thickness * 0.1,
 			curveSegments: 12,
 			bevelEnabled: false,
 			bevelThickness: 0.1,
@@ -75,5 +88,7 @@ export function updateScore(player) {
 		// Restore original position and rotation
 		scoreMesh.position.copy(originalPosition);
 		scoreMesh.rotation.copy(originalRotation);
+
+		console.log("🏆 Score updated:", player, "=", scoreValue);
 	});
 }

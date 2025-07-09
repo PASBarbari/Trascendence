@@ -208,46 +208,6 @@ function renderFriendsList(friends) {
 		.join("");
 }
 
-// Add these functions after the renderFriendsList function
-
-/**
- * Invite a friend to play a game
- */
-async function inviteToGame(friendId, friendName) {
-	try {
-		console.log(`Inviting ${friendName} (ID: ${friendId}) to play`);
-
-		const { token, url_api } = getVariables();
-
-		// TODO: Replace with your actual game invitation API endpoint
-		const response = await fetch(`${url_api}/pong/api/invite/`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-				"X-CSRFToken": getCookie("csrftoken"),
-			},
-			body: JSON.stringify({
-				invited_user_id: friendId,
-				game_type: "pong",
-				message: `${friendName}, let's play Pong!`,
-			}),
-		});
-
-		if (response.ok) {
-			showNotificationToast(
-				`🎮 Game invitation sent to ${friendName}!`,
-				"success"
-			);
-		} else {
-			throw new Error("Failed to send invitation");
-		}
-	} catch (error) {
-		console.error("Error sending game invitation:", error);
-		showNotificationToast("❌ Failed to send game invitation", "error");
-	}
-}
-
 /**
  * Open chat with a friend
  */
@@ -485,23 +445,52 @@ function handleChatInviteMessage(message) {
 
 //pong
 function handleGameCreatedMessage(message) {
-	console.log("Processing game created message:", message);
+    console.log("Processing game created message:", message);
 
-	const gameData = message?.message || {};
-	const gameId = gameData.game_id;
-	const creatorName = gameData.player_1.username || "Someone";
+    const gameData = message?.message || {};
+    const gameId = gameData.game_id;
+    const creatorName = gameData.player_1.username || "Someone";
+    const creatorId = gameData.player_1.user_id || gameData.player_1_id;
 
-	// Show toast notification
-	showAlertForXSeconds(
-		`Game created by ${creatorName}. Game ID: ${gameId}`,
-		"success",
-		5,
-		{ asToast: true }
-	);
+    // ✅ OTTIENI IL NOME DEL PLAYER 2 DAL MESSAGGIO
+    const invitedPlayerName = gameData.player_2?.username || gameData.player_2_name;
+
+    // Show toast notification
+    showAlertForXSeconds(
+        `Game created by ${creatorName}. Game ID: ${gameId}`,
+        "success",
+        5,
+        { asToast: true }
+    );
+
+    console.log("🎮 Game notification received, auto-redirecting to serverpong...");
+
+    import("../var.js").then(({ setVariables, getVariables }) => {
+        const { userUsername, userId } = getVariables();
+
+        setVariables({
+            room_id: gameId,
+            multiplayer_invited: true,
+            multiplayer_player1: creatorName,                    // Il creatore è sempre player1
+            multiplayer_player2: invitedPlayerName || userUsername, // ✅ Usa il nome dal messaggio
+            multiplayer_player1_id: creatorId,
+            multiplayer_player2_id: userId,
+            multiplayer_role: "player2"                          // Tu sei player2
+        });
+
+        console.log("🔍 Variables after setting:", getVariables());
+        console.log("🎮 Set game data for connection:", {
+            room_id: gameId,
+            player1: creatorName,
+            player2: invitedPlayerName || userUsername
+        });
+    });
+
+    // 🚀 REDIRECT AUTOMATICO!
+    setTimeout(() => {
+        window.navigateTo("#serverpong");
+    }, 1000);
 }
-
-
-
 
 
 

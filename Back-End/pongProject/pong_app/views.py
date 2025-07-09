@@ -9,7 +9,9 @@ from .middleware import ServiceAuthentication , JWTAuth
 from django.contrib.auth.models import AnonymousUser
 from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
+from .game_config import calculate_responsive_config, DEFAULT_GAME_CONFIG
 import logging
+import json
 
 
 
@@ -30,17 +32,17 @@ class IsOwnUserProfile(permissions.BasePermission):
         # Verifica prima se l'utente è autenticato
         if not IsAuthenticatedUserProfile().has_permission(request, view):
             return False
-            
+
         # Per le viste che usano l'ID utente nell'URL
         user_id = view.kwargs.get('user_id')
         if user_id and str(request.user.user_id) == str(user_id):
             return True
-            
+
         # Per le richieste che usano l'ID utente nei parametri query
         user_id_param = request.query_params.get('user_id')
         if user_id_param and str(request.user.user_id) == str(user_id_param):
             return True
-            
+
         return False
 
 
@@ -81,7 +83,7 @@ class GameGen(generics.ListCreateAPIView):
 	filterset_fields = ['player_1__user_id', 'player_2__user_id', 'tournament_id']
 	lookup_fields = ['id', 'player_1__user_id', 'player_2__user_id', 'tournament_id']
 	queryset = Game.objects.all()
- 
+
 class GameManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
@@ -106,7 +108,7 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 
 class JoinTournament(APIView):
 	""" Use this endpoint to join a tournament.
-	
+
 		Args:
 			tournament_id (int): The id of the tournament.
 			user_id (int): The id of the player.
@@ -126,11 +128,11 @@ class JoinTournament(APIView):
 		player.tournaments.add(tournament)
 		tournament.partecipants += 1
 		tournament.save()
-		return Response({'message': 'user joined tournament'}, status=status.HTTP_200_OK)	
+		return Response({'message': 'user joined tournament'}, status=status.HTTP_200_OK)
 
 class EndTournament(APIView):
 	""" Use this endpoint to end a tournament.
-	
+
 		Args:
 			tournament_id (int): The id of the tournament.
 			winner_id (int): The id of the player who won the tournament.
@@ -168,3 +170,51 @@ class PlayerMatchHistory(APIView):
 @csrf_exempt
 def health_check(request):
 	return JsonResponse({'status': 'ok'})
+
+class GameConfigView(APIView):
+    """
+    Vista per servire la configurazione del gioco.
+    Accessibile senza autenticazione per permettere al frontend di ottenere la configurazione.
+    """
+    permission_classes = []  # Nessuna autenticazione richiesta
+
+    def get(self, request):
+        """
+        Restituisce la configurazione del gioco.
+        Accetta dimensioni finestra tramite parametri query.
+        """
+        window_width = int(request.GET.get('width', 1920))
+        window_height = int(request.GET.get('height', 1080))
+
+        # Calcola configurazione responsiva
+        config = calculate_responsive_config(window_width, window_height)
+
+        return Response({
+            'success': True,
+            'config': config,
+            'message': f'Configuration calculated for {window_width}x{window_height}'
+        }, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """
+        Restituisce la configurazione del gioco.
+        Accetta dimensioni finestra tramite body POST.
+        """
+        window_width = 1920
+        window_height = 1080
+
+        try:
+            data = request.data
+            window_width = data.get('width', 1920)
+            window_height = data.get('height', 1080)
+        except:
+            pass
+
+        # Calcola configurazione responsiva
+        config = calculate_responsive_config(window_width, window_height)
+
+        return Response({
+            'success': True,
+            'config': config,
+            'message': f'Configuration calculated for {window_width}x{window_height}'
+        }, status=status.HTTP_200_OK)

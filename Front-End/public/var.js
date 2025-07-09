@@ -18,6 +18,16 @@ let variables = {
 	multiplayer_id: null,
 	url_api: "", // Sarà impostato dinamicamente in base all'origine
 	wss_api: "", // Sarà impostato dinamicamente in base all'origine
+
+  multiplayer_username: null,
+  multiplayer_id: null,
+  multiplayer_player1: null,           // Nome Player 1 (creatore)
+  multiplayer_player2: null,           // Nome Player 2 (invitato)
+  multiplayer_player1_id: null,        // ID Player 1
+  multiplayer_player2_id: null,        // ID Player 2
+  multiplayer_invited: false,          // Flag per sapere se è stato invitato
+  multiplayer_role: null,              // "player1" o "player2"
+  room_id: null,                       // ID della room del gioco
 };
 
 // Carica le variabili da localStorage se esistono

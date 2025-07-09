@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { state } from "../state.js";
 export default class Ball extends THREE.EventDispatcher {
 	speed = 25;
-	velocity = new THREE.Vector3(1, 0, 0);
+	velocity = new THREE.Vector3(1, 0, 0.5);
 
 	constructor(scene, radius, boundaries, players) {
 		super();
