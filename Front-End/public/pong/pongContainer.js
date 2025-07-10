@@ -67,7 +67,6 @@ async function loadFriendListTemplate() {
 		if (!response.ok) throw new Error("Template not found");
 		return await response.text();
 	} catch (error) {
-		console.error("Error loading friend list template:", error);
 		showNotification(
 			"Failed to load friend list. Please try again.",
 			"error"
@@ -137,11 +136,6 @@ async function inviteToGame(friendId, friendName) {
 
 		// Get current user info for debugging
 		const { token, url_api, userId } = getVariables();
-		console.log("🔍 Debug Info:");
-		console.log("  - Current User ID:", userId);
-		console.log("  - Friend ID:", friendId);
-		console.log("  - Token present:", token ? "✅ Yes" : "❌ No");
-		console.log("  - API URL:", url_api);
 
 		// Import the WebSocket functions and state
 		const { createGame } = await import("./multiplayer/serverSide.js");
@@ -153,7 +147,7 @@ async function inviteToGame(friendId, friendName) {
 		state.remotePlayerId = parseInt(friendId);
 
 		// Try to create a game and establish WebSocket connection
-		console.log("🎯 Attempting to create game and establish WebSocket...");		try {
+		try {
 			// Create game between current user and friend
 			await createGame(parseInt(userId), parseInt(friendId));
 		// Send notification using the notification system
@@ -171,7 +165,6 @@ async function inviteToGame(friendId, friendName) {
 			// Navigate to game view
 			window.navigateTo("#pong");
 		} catch (gameError) {
-			console.error("❌ Failed to create game:", gameError);
 			// Reset multiplayer state on error
 			state.isMultiplayer = false;
 			state.localPlayerId = null;
@@ -183,18 +176,6 @@ async function inviteToGame(friendId, friendName) {
 			);
 		}
 	} catch (error) {
-		console.error("💥 Complete failure in inviteToGame:", error);
-		console.error("Error details:", {
-			message: error.message,
-			stack: error.stack,
-			name: error.name,
-		});
-
-		showNotification(
-			"❌ Failed to start game. Check console for details.",
-			"error"
-		);
-
 		// Reset button state
 		const inviteBtn = document.querySelector(
 			`[data-friend-id="${friendId}"] .btn-game-invite`
@@ -220,8 +201,6 @@ async function sendPongInviteNotification(friendId, friendName) {
 			action: "join_pong_game"
 		});
 
-		console.log("✅ Game invitation sent via notification system");
-
 		// Show a message that the friend should open Pong
 		showNotification(
 			`🎮 Game invitation sent to ${friendName}! They should open Pong to join the game.`,
@@ -229,8 +208,6 @@ async function sendPongInviteNotification(friendId, friendName) {
 			8000
 		);
 	} catch (error) {
-		console.error("❌ Failed to send game invitation:", error);
-
 		// Fallback: show local notification
 		showNotification(
 			`🎮 Game created with ${friendName}! Tell them to open Pong to join the game.`,
@@ -346,7 +323,6 @@ async function loadFriendsData() {
 
 		if (response.ok) {
 			const friendsData = await response.json();
-			console.log("Friends data:", friendsData);
 
 			if (friendsData.length === 0) {
 				emptyState.style.display = "block";
@@ -362,7 +338,6 @@ async function loadFriendsData() {
 			throw new Error(`HTTP ${response.status}`);
 		}
 	} catch (error) {
-		console.error("Error fetching friends:", error);
 		loadingState.style.display = "none";
 		errorState.style.display = "block";
 	}

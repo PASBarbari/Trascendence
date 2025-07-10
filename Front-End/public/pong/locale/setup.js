@@ -11,8 +11,6 @@ import { initLights } from "./src/Light.js";
 import { game_over } from "./utils.js";
 
 export function setupGame() {
-	console.log("🔧 Starting game setup...");
-
 	state.scene = new THREE.Scene();
 	state.scene.background = new THREE.Color(0x222233);
 
@@ -41,9 +39,6 @@ export function setupGame() {
 		const width = rect.width;
 		const height = rect.height;
 
-		console.log(`🔧 Initial setup - Container dimensions: ${width}x${height}`);
-		console.log(`🔧 Container found:`, container);
-
 		// Set renderer size based on container
 		state.renderer.setSize(width, height);
 
@@ -53,9 +48,7 @@ export function setupGame() {
 
 		// Attach renderer to container, not body
 		container.appendChild(state.renderer.domElement);
-		console.log(`✅ Renderer attached to container`);
 	} else {
-		console.error("❌ Three.js container not found");
 		// Only as fallback
 		state.renderer.setSize(window.innerWidth, window.innerHeight);
 	}
@@ -65,27 +58,22 @@ export function setupGame() {
 	// state.stats = new Stats();
 	// document.body.appendChild(state.stats.dom);
 
-	console.log("🔧 Setting up ring...");
 	setupRing();
 
-	console.log("🔧 Creating players...");
 	new Player(new THREE.Vector3(-((state.ring.length * 2) / 5), 0, 0), 0);
 
 	new Player(new THREE.Vector3((state.ring.length * 2) / 5, 0, 0), 1);
 	// //Ball setup
 
-	console.log("🔧 Creating ball with radius:", state.ball_radius);
 	new Ball(state.scene, state.ball_radius, state.boundaries, [
 		state.players[0],
 		state.players[1],
 	]);
 
 	// Score
-	console.log("🔧 Creating score...");
 	createScore();
 
 	state.ball.addEventListener("score", (event) => {
-		console.log("Score event:", event);
 
 		// Only process score changes if we're not in multiplayer OR we're the master
 		if (!state.isMultiplayer || state.isMaster) {
@@ -105,7 +93,6 @@ export function setupGame() {
 					timestamp: Date.now()
 				};
 				state.socket.send(JSON.stringify(scoreMessage));
-				console.log("📊 Score update sent to slave:", scoreMessage);
 			}
 
 			if (state.p1_score >= state.maxScore) {
@@ -139,32 +126,18 @@ export function setupGame() {
 
 	state.renderer.render(state.scene, state.camera);
 
-	console.log("✅ Game setup complete");
-	console.log("📊 Scene contains:", state.scene.children.length, "objects");
-	console.log("📊 Camera position:", state.camera.position);
-	console.log("📊 Game state:", {
-		scene: !!state.scene,
-		camera: !!state.camera,
-		renderer: !!state.renderer,
-		ball: !!state.ball,
-		players: state.players ? state.players.length : 0
-	});
 }
 
 export function updatePlayerBoundaries() {
-	console.log("📏 Updating player boundaries...");
-
 	// Recalculate boundaries based on updated ring dimensions
 	if (state.boundaries) {
 		state.boundaries.x = state.ring.length / 2;
 		state.boundaries.y = state.ring.height / 2;
-		console.log("📏 Updated boundaries:", state.boundaries);
 	}
 
 	// Update ball boundaries reference if ball exists
 	if (state.ball && state.ball.boundaries) {
 		state.ball.boundaries = state.boundaries;
-		console.log("📏 Updated ball boundaries reference");
 	}
 
 	// Update score positions if they exist
@@ -173,16 +146,12 @@ export function updatePlayerBoundaries() {
 		state.scoreMesh.p2.position.x = state.boundaries.x * 0.6;
 		state.scoreMesh.p1.position.y = state.boundaries.y * 1.3;
 		state.scoreMesh.p2.position.y = state.boundaries.y * 1.3;
-		console.log("📏 Updated score positions");
 	}
 }
 
 export function updateGameGeometries() {
-	console.log("📏 Updating all game geometries with new dimensions...");
-
 	// Update plane geometry
 	if (state.plane && state.plane.geometry) {
-		console.log("📏 Updating plane geometry...");
 		state.plane.geometry.dispose();
 		const newPlaneGeometry = new THREE.PlaneGeometry(
 			state.ring.length,
@@ -194,7 +163,6 @@ export function updateGameGeometries() {
 
 	// Update ring geometries (walls)
 	if (state.r_bottom && state.r_bottom.geometry) {
-		console.log("📏 Updating bottom ring geometry...");
 		state.r_bottom.geometry.dispose();
 		const bottomGeometry = new THREE.BoxGeometry(
 			state.ring.length + state.ring.thickness * 2,
@@ -210,7 +178,6 @@ export function updateGameGeometries() {
 	}
 
 	if (state.r_top && state.r_top.geometry) {
-		console.log("📏 Updating top ring geometry...");
 		state.r_top.geometry.dispose();
 		const topGeometry = new THREE.BoxGeometry(
 			state.ring.length + state.ring.thickness * 2,
@@ -226,7 +193,6 @@ export function updateGameGeometries() {
 	}
 
 	if (state.r_left && state.r_left.geometry) {
-		console.log("📏 Updating left ring geometry...");
 		state.r_left.geometry.dispose();
 		const leftGeometry = new THREE.BoxGeometry(
 			state.ring.thickness,
@@ -242,7 +208,6 @@ export function updateGameGeometries() {
 	}
 
 	if (state.r_right && state.r_right.geometry) {
-		console.log("📏 Updating right ring geometry...");
 		state.r_right.geometry.dispose();
 		const rightGeometry = new THREE.BoxGeometry(
 			state.ring.thickness,
@@ -259,7 +224,6 @@ export function updateGameGeometries() {
 
 	// Update player geometries
 	if (state.players && state.players.length > 0) {
-		console.log("📏 Updating player geometries...");
 		for (let i = 0; i < state.players.length; i++) {
 			const player = state.players[i];
 			if (player && player.mesh && player.mesh.geometry) {
@@ -297,12 +261,9 @@ export function updateGameGeometries() {
 
 	// Update ball geometry if it exists
 	if (state.ball && state.ball.mesh && state.ball.mesh.geometry) {
-		console.log("📏 Updating ball geometry...");
 		state.ball.mesh.geometry.dispose();
 		const newBallGeometry = new THREE.SphereGeometry(state.ball_radius, 32, 32);
 		state.ball.mesh.geometry = newBallGeometry;
 		state.ball.radius = state.ball_radius;
 	}
-
-	console.log("📏 All game geometries updated successfully");
 }

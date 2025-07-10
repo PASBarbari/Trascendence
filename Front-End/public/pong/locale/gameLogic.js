@@ -72,7 +72,6 @@ export function animate() {
 
 		// In multiplayer mode, check if we should start the game automatically
 		if (state.isMultiplayer && !state.isStarted && state.socket && state.socket.readyState === WebSocket.OPEN) {
-			console.log("🎮 Multiplayer detected, force starting game...");
 			state.isStarted = true;
 			state.isPaused = false;
 		}
@@ -89,20 +88,8 @@ export function animate() {
 						// The rendered position will come from WebSocket for consistency
 						state.ball.update(deltaTime);
 						sendBallStateToSlave();
-
-						// Debug: Log local ball position for master (this is the "source of truth")
-						if (state.debugFrameCount === undefined) state.debugFrameCount = 0;
-						state.debugFrameCount++;
-						if (state.debugFrameCount % 60 === 0) {
-							console.log(`🏀 MASTER Local Ball Physics: Position(${state.ball.mesh.position.x.toFixed(2)}, ${state.ball.mesh.position.y.toFixed(2)}, ${state.ball.mesh.position.z.toFixed(2)})`);
-						}
 					} else {
 						// Slave: NO local ball physics, only WebSocket updates
-						if (state.debugFrameCount === undefined) state.debugFrameCount = 0;
-						state.debugFrameCount++;
-						if (state.debugFrameCount % 60 === 0) {
-							console.log(`🏀 SLAVE Waiting for WebSocket: Position(${state.ball.mesh.position.x.toFixed(2)}, ${state.ball.mesh.position.y.toFixed(2)}, ${state.ball.mesh.position.z.toFixed(2)})`);
-						}
 					}
 				} else {
 					// Single player mode: always simulate ball locally
@@ -127,19 +114,12 @@ export function animate() {
 							import("../multiplayer/serverSide.js").then(({ sendPlayerPosition }) => {
 								sendPlayerPosition(state.localPlayerId);
 							}).catch(() => {
-								console.warn("⚠️ Could not send P1 position");
+								// Could not send P1 position
 							});
 						}
 					}
 				} else {
 					// Single player: apply local movement directly
-					if (state.p1_move_y !== 0) {
-						if (state.debugPaddleMovement === undefined) state.debugPaddleMovement = 0;
-						state.debugPaddleMovement++;
-						if (state.debugPaddleMovement % 30 === 0) {
-							console.log(`🏓 P1 Single-player Movement: ${state.p1_move_y}, Position: ${state.players[0].mesh.position.y.toFixed(2)}`);
-						}
-					}
 					state.players[0].move(state.p1_move_y);
 				}
 			}
@@ -164,19 +144,12 @@ export function animate() {
 							import("../multiplayer/serverSide.js").then(({ sendPlayerPosition }) => {
 								sendPlayerPosition(state.localPlayerId);
 							}).catch(() => {
-								console.warn("⚠️ Could not send P2 position");
+								// Could not send P2 position
 							});
 						}
 					}
 				} else {
 					// Single player: apply local movement directly
-					if (state.p2_move_y !== 0) {
-						if (state.debugPaddleMovement2 === undefined) state.debugPaddleMovement2 = 0;
-						state.debugPaddleMovement2++;
-						if (state.debugPaddleMovement2 % 30 === 0) {
-							console.log(`🏓 P2 Single-player Movement: ${state.p2_move_y}, Position: ${state.players[1].mesh.position.y.toFixed(2)}`);
-						}
-					}
 					state.players[1].move(state.p2_move_y);
 				}
 			}
@@ -187,20 +160,6 @@ export function animate() {
 		}
 	}
 	if (state.renderer && state.scene && state.camera) {
-		// Debug: Log rendering info for multiplayer slave
-		if (state.isMultiplayer && !state.isMaster && state.debugRenderCount === undefined) {
-			state.debugRenderCount = 0;
-		}
-		if (state.isMultiplayer && !state.isMaster) {
-			state.debugRenderCount++;
-			if (state.debugRenderCount % 120 === 0) { // Every 120 frames (~2 seconds)
-				console.log(`🎬 SLAVE Rendering: Ball visible=${state.ball ? 'YES' : 'NO'}, Scene children=${state.scene.children.length}`);
-				if (state.ball && state.ball.mesh) {
-					console.log(`🎬 SLAVE Ball in scene: ${state.scene.children.includes(state.ball.mesh) ? 'YES' : 'NO'}`);
-				}
-			}
-		}
-
 		state.renderer.render(state.scene, state.camera);
 	}
 	state.animationFrameId = requestAnimationFrame(animate);

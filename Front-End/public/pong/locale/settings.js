@@ -95,15 +95,10 @@ function resumeGame() {
 }
 
 export function cleanupPong() {
-	console.log("Starting complete cleanup...");
-
 	resetPongMenuState();
 
 	// 1. Dispose all meshes in the game group
 	if (state.game) {
-		console.log(
-			`Cleaning game group with ${state.game.children.length} objects`
-		);
 		while (state.game.children.length > 0) {
 			const obj = state.game.children[0];
 			state.game.remove(obj);
@@ -122,9 +117,6 @@ export function cleanupPong() {
 
 	// 2. Dispose all scene objects
 	if (state.scene) {
-		console.log(
-			`Cleaning scene with ${state.scene.children.length} objects`
-		);
 		while (state.scene.children.length > 0) {
 			const obj = state.scene.children[0];
 			state.scene.remove(obj);
@@ -192,8 +184,6 @@ export function cleanupPong() {
 	state.p2_score = 0;
 	state.isStarted = false;
 	state.game = new THREE.Group(); // Create fresh game group
-
-	console.log("Cleanup complete");
 }
 
 function exitGame() {

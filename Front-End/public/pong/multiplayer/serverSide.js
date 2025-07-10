@@ -38,13 +38,11 @@ function updateLocalGameState(gameState) {
 }
 
 function handlePlayerReady(message) {
-	console.log("🎮 Player ready:", message);
 	// Handle player ready state
 
 	// Force start the game after both players are ready (backup mechanism)
 	setTimeout(() => {
 		if (!state.isStarted && state.isMultiplayer && state.socket && state.socket.readyState === WebSocket.OPEN) {
-			console.log("🎯 Force starting multiplayer game (backup)");
 			startMultiplayerGame({ message: "Force start" });
 		}
 	}, 2000);
@@ -87,7 +85,6 @@ function handleBallState(message) {
     state.ballMessageStats.lastRenderTime = now;
 
     if (!state.ball || !state.ball.mesh) {
-        console.warn("⚠️ Ball not available to update state");
         return;
     }
 
@@ -102,7 +99,7 @@ function handleBallState(message) {
 
     // Log occasionally for both clients
     if (state.ballMessageStats.received % 120 === 0) {
-        console.log(`🏀 [${state.isMaster ? 'MASTER' : 'SLAVE'}] Ball rendered from WebSocket: pos(${latestState.position[0].toFixed(2)}, ${latestState.position[1].toFixed(2)}) | Stats: ${state.ballMessageStats.applied}/${state.ballMessageStats.received}`);
+        // Ball state sync log removed
     }
 }
 
@@ -119,19 +116,8 @@ function handleScoreUpdate(message) {
 	state.p1_score = p1_score;
 	state.p2_score = p2_score;
 
-	// Update score display
-	import("../locale/src/Score.js").then(({ updateScore }) => {
-		updateScore("p1");
-		updateScore("p2");
-	}).catch((error) => {
-		console.warn("⚠️ Could not update score display:", error);
-	});
-
-	console.log(`📊 Score updated: P1=${p1_score}, P2=${p2_score}`);
-
 	// Check for game over
 	if (p1_score >= state.maxScore || p2_score >= state.maxScore) {
-		console.log("🏁 Game over received from master");
 		state.isStarted = false;
 		state.isPaused = true;
 
@@ -139,14 +125,12 @@ function handleScoreUpdate(message) {
 		import("../locale/utils.js").then(({ game_over }) => {
 			game_over();
 		}).catch((error) => {
-			console.warn("⚠️ Could not trigger game over:", error);
+			// Could not trigger game over
 		});
 	}
 }
 
 function startMultiplayerGame(message) {
-    console.log("🚀 Starting multiplayer game:", message);
-
     // Update role assignment based on server information
     if (message.player_1_id && message.player_2_id && message.your_player_id) {
         const yourPlayerId = parseInt(message.your_player_id);
@@ -166,26 +150,21 @@ function startMultiplayerGame(message) {
         state.localPlayerId = yourPlayerId;
         state.remotePlayerId = (yourPlayerId === player1Id) ? player2Id : player1Id;
 
-        console.log(`🎮 Role assignment from server: You (${yourPlayerId}) = ${state.isMaster ? 'MASTER (LEFT PADDLE)' : 'SLAVE (RIGHT PADDLE)'}`);
-        console.log(`🏓 Paddle control: Master always controls P1 (left), Slave always controls P2 (right)`);
-        console.log(`🔍 Debug: player1=${player1Id}, player2=${player2Id}, you=${yourPlayerId}`);
-
         // Update role indicator
         import("../locale/pong.js").then(({ updateRoleIndicator }) => {
             updateRoleIndicator(state.isMaster);
         }).catch(() => {
-            console.log("🔧 Role indicator not available during initial setup");
+            // Role indicator not available during initial setup
         });
     }
 
 	// Setup the game if not already done
 	if (!state.scene || !state.renderer) {
-		console.log("🔧 Setting up game for multiplayer...");
 		import("../locale/setup.js").then(({ setupGame }) => {
 			setupGame();
 			startGameAfterSetup();
 		}).catch(error => {
-			console.error("❌ Failed to setup game:", error);
+			// Failed to setup game
 		});
 	} else {
 		startGameAfterSetup();
@@ -205,15 +184,6 @@ function startGameAfterSetup() {
 	// Disable AI in multiplayer
 	state.IAisActive = false;
 
-	console.log("✅ Multiplayer game started!");
-	console.log("📊 Game state:", {
-		isStarted: state.isStarted,
-		isPaused: state.isPaused,
-		isMultiplayer: state.isMultiplayer,
-		localPlayerId: state.localPlayerId,
-		isMaster: state.isMaster
-	});
-
 	// Master synchronizes field dimensions with all clients
 	if (state.isMaster) {
 		setTimeout(() => {
@@ -225,9 +195,8 @@ function startGameAfterSetup() {
 	if (!state.animationFrameId) {
 		import("../locale/gameLogic.js").then(({ animate }) => {
 			animate();
-			console.log("🎮 Animation loop started");
 		}).catch(error => {
-			console.error("❌ Failed to start animation:", error);
+			// Failed to start animation
 		});
 	}
 }
@@ -236,7 +205,6 @@ function ensurePlayerSpeedIsValid() {
 	// Ensure player_speed has a valid value, minimum 1.5
 	if (!state.player_speed || state.player_speed <= 0) {
 		state.player_speed = Math.max(1.5, state.ring.length / 80);
-		console.log(`🔧 ServerSide - Fixed player_speed: ${state.player_speed} (ring.length: ${state.ring.length})`);
 	}
 }
 
@@ -249,8 +217,6 @@ function handleRemotePaddleMovement(message) {
 	// Ensure player speed is valid
 	ensurePlayerSpeedIsValid();
 
-	console.log(`🏓 Remote paddle movement: Player ${remotePlayerId} ${input} (Local: ${state.localPlayerId}), Speed: ${state.player_speed}`);
-
 	// Determine which paddle to move based on the player ID and their role
 	// We need to determine if the remotePlayerId is the master or slave
 	// If this is our own movement echoed back, apply it for consistency
@@ -262,12 +228,10 @@ function handleRemotePaddleMovement(message) {
 	if (isOwnMovement) {
 		// This is our own movement echoed back from server - apply for consistency
 		paddleNumber = state.isMaster ? 1 : 2;
-		console.log(`🏓 Own movement echo: ${state.isMaster ? 'MASTER' : 'SLAVE'} controls P${paddleNumber}`);
 	} else {
 		// This is the remote player's movement
 		// If we are master, remote is slave (P2). If we are slave, remote is master (P1)
 		paddleNumber = state.isMaster ? 2 : 1;
-		console.log(`🏓 Remote player movement: ${state.isMaster ? 'SLAVE' : 'MASTER'} controls P${paddleNumber}`);
 	}
 
 	// Apply the movement to the correct paddle
@@ -278,14 +242,11 @@ function handleRemotePaddleMovement(message) {
 	} else if (input === "stop") {
 		state[`p${paddleNumber}_move_y`] = 0;
 	}
-
-	console.log(`🏓 Applied movement: P${paddleNumber} ${input}, move_y = ${state[`p${paddleNumber}_move_y`]}`);
 }
 
 function sendPlayerInput(inputType, player) {
 	// LEGACY FUNCTION - DEPRECATED
 	// This function is no longer used. All paddle movement is now handled via position sync system.
-	console.warn("⚠️ DEPRECATED: sendPlayerInput called but this function is no longer used. Use position sync instead.");
 	return;
 
 	// LEGACY CODE - DEPRECATED - These lines should never execute
@@ -297,17 +258,14 @@ function sendPlayerInput(inputType, player) {
 	};
 
 	// socket.send(JSON.stringify(inputMessage));  // DISABLED
-	console.warn("⚠️ DEPRECATED: Would have sent legacy paddle_movement message, but this is now disabled.");
 }
 
 function attemptReconnection() {
 	if (state.reconnectAttempts >= state.maxReconnectAttempts) {
-		console.error("❌ Max reconnection attempts reached");
 		return;
 	}
 
 	state.reconnectAttempts++;
-	console.log(`🔄 Reconnection attempt ${state.reconnectAttempts}/${state.maxReconnectAttempts}`);
 
 	setTimeout(() => {
 		if (state.room_id) {
@@ -326,7 +284,6 @@ function attemptReconnection() {
 async function createGame(player_1, player_2) {
 	const { token, url_api } = getVariables();
 	if (!token) {
-		console.error("❌ No token found. Please log in first.");
 		return;
 	}
 
@@ -345,13 +302,10 @@ async function createGame(player_1, player_2) {
 	});
 	if (!response.ok) {
 		const errorData = await response.json();
-		console.error("❌ Error creating game:", errorData);
 		return;
 	}
 	const data = await response.json();
-	console.log("✅ Game created successfully:", data);
 	if (!data.id) {
-		console.error("❌ No room_id returned from server.");
 		return;
 	}
 	state.room_id = data.id;
@@ -380,21 +334,11 @@ async function createGame(player_1, player_2) {
 function initializeWebSocket(room_id, player1, player2) {
 	const { token, wss_api } = getVariables();
 
-	console.log("🔧 WebSocket Connection Debug:");
-	console.log("  - wss_api value:", wss_api);
-	console.log("  - room_id:", room_id);
-	console.log("  - player1:", player1);
-	console.log("  - player2:", player2);
-	console.log("  - token present:", token ? "✅ Yes" : "❌ No");
-	console.log("  - token length:", token ? token.length : 0);
-
 	const wsUrl = `${wss_api}/pong/ws/pong/${room_id}/?token=${token}`;
-	console.log("🔌 Connecting to WebSocket:", wsUrl);
 
 	socket = new WebSocket(wsUrl);
 
 	socket.onopen = function () {
-		console.log("✅ WebSocket connection established successfully!");
 		state.connectionState = "connected";
 		state.reconnectAttempts = 0;
 		state.socket = socket;
@@ -414,7 +358,6 @@ function initializeWebSocket(room_id, player1, player2) {
 		};
 
 		socket.send(JSON.stringify(readyMessage));
-		console.log("📨 Sent player ready signal:", readyMessage);
 	};
 
 	socket.onmessage = function (event) {
@@ -422,7 +365,7 @@ function initializeWebSocket(room_id, player1, player2) {
 
 		// Reduce log verbosity - only log non-ball-state messages
 		if (message.type !== "ball_state") {
-			console.log(`📨 WebSocket message received [${state.isMaster ? 'MASTER' : 'SLAVE'}]:`, message.type, message);
+			// WebSocket message received
 		}
 
 		if (message.type === "game_state") {
@@ -433,12 +376,10 @@ function initializeWebSocket(room_id, player1, player2) {
 			// Don't log every ball state message to reduce console spam
 			handleBallState(message);
 		} else if (message.type === "score_update") {
-			console.log("📊 Score update received:", message);
 			handleScoreUpdate(message);
 		} else if (message.type === "welcome") {
-			console.log("🎉 Welcome message:", message.message);
+			// Welcome message
 		} else if (message.type === "connection_success") {
-			console.log("✅ Connection successful:", message.message);
 			// Update UI status
 			import("../locale/pong.js").then(({ updateMultiplayerStatus }) => {
 				updateMultiplayerStatus("connected", "Connected to game");
@@ -446,56 +387,29 @@ function initializeWebSocket(room_id, player1, player2) {
 				// Ignore if not available
 			});
 		} else if (message.type === "error") {
-			console.error("❌ Server error:", message.error);
+			// Server error
 		} else if (message.type === "player_ready") {
 			handlePlayerReady(message);
 		} else if (message.type === "player_ready_confirmed") {
-			console.log("✅ Player ready confirmed:", message);
 			handlePlayerReady(message);
 		} else if (message.type === "game_start") {
 			startMultiplayerGame(message);
 		} else if (message.ready) {
-			console.log("🎮 Game ready signal received!");
 			startMultiplayerGame(message);
 		} else if (message.type === "field_dimensions") {
 			handleFieldDimensions(message);
 		} else if (message.type === "paddle_movement") {
 			// Legacy paddle movement messages - ignore in new system
-			console.log("🔧 Ignoring legacy paddle_movement message:", message.input);
 		} else {
-			console.log("🔍 Unknown message type:", message);
+			// Unknown message type
 		}
 	};
 
 	socket.onerror = function (error) {
-		console.error("❌ WebSocket error occurred:", error);
-		console.error("🔧 Debug Information:");
-		console.error("  - WebSocket URL:", wsUrl);
-		console.error("  - Room ID:", room_id);
-		console.error("  - Players:", player1, "vs", player2);
-		console.error("  - Token present:", token ? "Yes" : "No");
-
-		if (token) {
-			try {
-				const payload = JSON.parse(atob(token.split(".")[1]));
-				console.error(
-					"  - Token expires:",
-					new Date(payload.exp * 1000)
-				);
-				console.error("  - Token user ID:", payload.user_id);
-			} catch (e) {
-				console.error("  - Token parse error:", e);
-			}
-		}
+		// WebSocket error occurred
 	};
 
 	socket.onclose = function (event) {
-		console.log("🔌 WebSocket connection closed");
-		console.log("  - Code:", event.code);
-		console.log("  - Reason:", event.reason);
-		console.log("  - Was Clean:", event.wasClean);
-		console.log("  - Token:", token ? "Present" : "Missing");
-
 		// Detailed close code explanations
 		const closeCodeMeanings = {
 			1000: "Normal Closure - Connection closed normally",
@@ -512,41 +426,26 @@ function initializeWebSocket(room_id, player1, player2) {
 			4001: "Custom - Invalid or expired token",
 		};
 
-		console.log(
-			"  - Meaning:",
-			closeCodeMeanings[event.code] || "Unknown close code"
-		);
-
 		state.connectionState = "disconnected";
 		state.socket = null;
 
-
 		// Handle unexpected disconnections
 		if (event.code === 1006 || event.code === 1011) {
-			console.error("💡 Possible causes for 1006:");
-			console.error("  - Authentication failed (invalid/expired token)");
-			console.error("  - Network connectivity issues");
-			console.error("  - Server not responding");
-			console.error("  - CORS or security policy blocking connection");
-
 			showGameDisconnectedMessage();
 			if (state.isMultiplayer) {
 				attemptReconnection();
 			}
 		} else if (event.code === 4000 || event.code === 4001) {
-			console.error("❌ Authentication failed - redirecting to login");
 			showGameEndedMessage("Authentication failed");
 		}
 	};
 }
 
 function showGameDisconnectedMessage() {
-	console.log("🔌 Game disconnected - showing message to user");
 	// Add UI notification here if needed
 }
 
 function showGameEndedMessage(reason) {
-	console.log(`🎮 Game ended: ${reason}`);
 	// Add UI notification here if needed
 }
 
@@ -574,7 +473,6 @@ function syncFieldDimensions() {
 	};
 
 	state.socket.send(JSON.stringify(dimensionsMessage));
-	console.log("📏 Master sent field dimensions:", dimensionsMessage.dimensions);
 }
 
 function handleFieldDimensions(message) {
@@ -583,7 +481,6 @@ function handleFieldDimensions(message) {
 	}
 
 	const { dimensions } = message;
-	console.log("📏 Slave receiving field dimensions:", dimensions);
 
 	// Update all dimensions to match master
 	state.ring.length = dimensions.ring_length;
@@ -597,21 +494,17 @@ function handleFieldDimensions(message) {
 	state.ball_radius = dimensions.ball_radius;
 	state.ball_speed = dimensions.ball_speed;
 
-	console.log("📏 Slave updated field dimensions to match master");
-
 	// Update boundaries to match new ring dimensions
 	import("../locale/setup.js").then(({ updatePlayerBoundaries, updateGameGeometries }) => {
 		if (updatePlayerBoundaries) {
 			updatePlayerBoundaries();
-			console.log("📏 Updated player boundaries with new dimensions");
 		}
 
 		if (updateGameGeometries) {
 			updateGameGeometries();
-			console.log("📏 Updated all game geometries with new dimensions");
 		}
 	}).catch(() => {
-		console.log("⚠️ Update functions not available");
+		// Update functions not available
 	});
 }
 
@@ -657,7 +550,7 @@ function sendPlayerPosition(player) {
     if (!state.positionSendCount) state.positionSendCount = 0;
     state.positionSendCount++;
     if (state.positionSendCount % 60 === 0) { // Log every 60 sends
-        console.log(`📨 Sent position: Player ${player} (${state.isMaster ? 'MASTER' : 'SLAVE'}) P${paddleIndex + 1} at y=${position.y.toFixed(2)} [Send #${state.positionSendCount}]`);
+        // Send position update
     }
 }
 
@@ -685,15 +578,14 @@ function handlePlayerPosition(message) {
         paddleIndex = 0;
         paddleRole = "P1";
         isOwnPaddle = state.isMaster; // Master controls P1
-        console.log(`🏓 [${state.isMaster ? 'MASTER' : 'SLAVE'}] Received P1 position ${isOwnPaddle ? '(OWN)' : '(REMOTE)'}`);
+        // Handle P1 position update
     } else if (remotePlayerId === 2) {
         // Message is about P2 (right paddle)
         paddleIndex = 1;
         paddleRole = "P2";
         isOwnPaddle = !state.isMaster; // Slave controls P2
-        console.log(`🏓 [${state.isMaster ? 'MASTER' : 'SLAVE'}] Received P2 position ${isOwnPaddle ? '(OWN)' : '(REMOTE)'}`);
+        // Handle P2 position update
     } else {
-        console.warn(`⚠️ Unknown player number: ${remotePlayerId}`);
         return;
     }
 
@@ -725,10 +617,10 @@ function handlePlayerPosition(message) {
 
         // Log occasionally
         if (state.paddleRenderStats.received % 60 === 0) {
-            console.log(`🏓 [${state.isMaster ? 'MASTER' : 'SLAVE'}] Updated ${isOwnPaddle ? 'OWN' : 'REMOTE'} ${paddleRole} to y=${position[1].toFixed(2)} | Stats: ${state.paddleRenderStats.applied}/${state.paddleRenderStats.received}`);
+            // Apply paddle position update
         }
     } else {
-        console.warn(`⚠️ Cannot update P${paddleIndex + 1}: paddle not found`);
+        // Cannot update paddle: not found
     }
 }
 

@@ -40,7 +40,6 @@ export function updateScore(player) {
 
 	// Don't proceed if the score mesh isn't created yet
 	if (!scoreMesh) {
-		console.warn("Score mesh not initialized yet");
 		return;
 	}
 

@@ -128,8 +128,6 @@ export default class Ball extends THREE.EventDispatcher {
 				isWithinPaddleHeight &&
 				distFromInnerFace <= this.radius
 			) {
-				console.log("COLLISION DETECTED on inner face!");
-
 				// Visual feedback
 				const collisionPoint = target.mesh.position.clone();
 				collisionPoint.x += innerFaceX;
@@ -157,11 +155,8 @@ export default class Ball extends THREE.EventDispatcher {
 
 				// Slightly increase speed with each hit to prevent endless rallies
 				this.speed *= 1.1;
-				console.log("New speed after hit:", this.speed);
 				// this.speed = Math.min(this.speed, 90); // Cap max speed
 			}
-		} else {
-			console.warn("Target or target.mesh not found");
 		}
 
 		this.mesh.position.copy(tPos);

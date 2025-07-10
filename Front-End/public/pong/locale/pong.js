@@ -145,18 +145,15 @@ export function renderPong() {
 		// Ensure player_speed has a valid value, minimum 1.0
 		if (!state.player_speed || state.player_speed <= 0) {
 			state.player_speed = Math.max(1.5, state.ring.length / 80);
-			console.log(`🔧 Fixed player_speed: ${state.player_speed} (ring.length: ${state.ring.length})`);
 		}
 	}
 
 	function pongKeyDownHandler(event) {
 		if (state.isPaused || !state.isStarted) {
-			console.log(`🎮 Key ignored (game not started/paused): ${event.key}`);
 			return;
 		}
 
 		ensurePlayerSpeedIsValid();
-		console.log(`🎮 Key down: ${event.key} [${state.isMultiplayer ? (state.isMaster ? 'MASTER' : 'SLAVE') : 'LOCAL'}] Player: ${state.localPlayerId || 'N/A'} Speed: ${state.player_speed}`);
 
 		switch (event.key) {
 			case 'w':
@@ -166,15 +163,12 @@ export function renderPong() {
 					// Position sync will be handled by WebSocket messages only
 					if (state.isMaster) {
 						state.p1_move_y = -state.player_speed;
-						console.log(`🏓 MASTER Set P1 input move_y: ${state.p1_move_y} (for position calc only)`);
 					} else {
 						state.p2_move_y = -state.player_speed;
-						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
 					}
 				} else {
 					// In single player, W/S controls Player 1
 					state.p1_move_y = -state.player_speed;
-					console.log(`🏓 Set P1 move_y: ${state.p1_move_y}`);
 				}
 				break;
 			case 's':
@@ -184,15 +178,12 @@ export function renderPong() {
 					// Position sync will be handled by WebSocket messages only
 					if (state.isMaster) {
 						state.p1_move_y = state.player_speed;
-						console.log(`🏓 MASTER Set P1 input move_y: ${state.p1_move_y} (for position calc only)`);
 					} else {
 						state.p2_move_y = state.player_speed;
-						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
 					}
 				} else {
 					// In single player, W/S controls Player 1
 					state.p1_move_y = state.player_speed;
-					console.log(`🏓 Set P1 move_y: ${state.p1_move_y}`);
 				}
 				break;
 			case 'ArrowUp':
@@ -200,12 +191,10 @@ export function renderPong() {
 					// In multiplayer: only slave (player 2) uses arrow keys
 					if (!state.isMaster) {
 						state.p2_move_y = -state.player_speed;
-						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
 					}
 				} else {
 					// Arrow keys control Player 2 in local mode only
 					state.p2_move_y = -state.player_speed;
-					console.log(`🏓 Set P2 move_y: ${state.p2_move_y}`);
 				}
 				break;
 			case 'ArrowDown':
@@ -213,12 +202,10 @@ export function renderPong() {
 					// In multiplayer: only slave (player 2) uses arrow keys
 					if (!state.isMaster) {
 						state.p2_move_y = state.player_speed;
-						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
 					}
 				} else {
 					// Arrow keys control Player 2 in local mode only
 					state.p2_move_y = state.player_speed;
-					console.log(`🏓 Set P2 move_y: ${state.p2_move_y}`);
 				}
 				break;
 		}
@@ -226,8 +213,6 @@ export function renderPong() {
 
 	function pongKeyUpHandler(event) {
 		if (state.isPaused || !state.isStarted) return;
-
-		console.log(`🎮 Key up: ${event.key} [${state.isMultiplayer ? (state.isMaster ? 'MASTER' : 'SLAVE') : 'LOCAL'}] Player: ${state.localPlayerId || 'N/A'}`);
 
 		switch (event.key) {
 			case 'w':
@@ -238,15 +223,12 @@ export function renderPong() {
 					// In multiplayer: stop input calculation, positions will be synced via WebSocket
 					if (state.isMaster) {
 						state.p1_move_y = 0;
-						console.log(`🏓 MASTER Stop P1 input move_y: ${state.p1_move_y} (for position calc only)`);
 					} else {
 						state.p2_move_y = 0;
-						console.log(`🏓 SLAVE Stop P2 input move_y: ${state.p2_move_y} (for position calc only)`);
 					}
 				} else {
 					// In single player, W/S controls Player 1
 					state.p1_move_y = 0;
-					console.log(`🏓 Stop P1 move_y: ${state.p1_move_y}`);
 				}
 				break;
 			case 'ArrowUp':
@@ -255,12 +237,10 @@ export function renderPong() {
 					// In multiplayer: only slave (player 2) uses arrow keys
 					if (!state.isMaster) {
 						state.p2_move_y = 0;
-						console.log(`🏓 SLAVE Stop P2 input move_y: ${state.p2_move_y} (for position calc only)`);
 					}
 				} else {
 					// Arrow keys control Player 2 in local mode only
 					state.p2_move_y = 0;
-					console.log(`🏓 Stop P2 move_y: ${state.p2_move_y}`);
 				}
 				break;
 		}
@@ -278,7 +258,6 @@ export function renderPong() {
 	// Add timeout setup for testing (only if no multiplayer game is found)
 	setTimeout(() => {
 		if (!state.isMultiplayer) {
-			console.log("🔧 No multiplayer game found, setting up local game for testing...");
 			SETUP.setupGame();
 		}
 	}, 1000);
@@ -371,8 +350,6 @@ export function renderPong() {
 				state.camera.aspect = width / height;
 				state.camera.updateProjectionMatrix();
 				state.renderer.setSize(width, height);
-
-				console.log(`🔧 Pong resized: ${width}x${height}`);
 			}
 		}
 	};
@@ -396,7 +373,6 @@ export function renderPong() {
 						state.camera.aspect = width / height;
 						state.camera.updateProjectionMatrix();
 						state.renderer.setSize(width, height);
-						console.log(`🔧 Pong container resized: ${width}x${height}`);
 					}
 				}
 			});
@@ -445,8 +421,6 @@ export function renderPong() {
 			roleIndicator.className = isMaster
 				? 'position-absolute top-0 end-0 p-2 bg-warning bg-opacity-75 rounded-start text-dark'
 				: 'position-absolute top-0 end-0 p-2 bg-info bg-opacity-75 rounded-start text-light';
-
-			console.log(`🎭 Role indicator updated: ${isMaster ? 'MASTER' : 'SLAVE'}`);
 		} else {
 			roleIndicator.style.display = 'none';
 		}
@@ -467,10 +441,8 @@ export function renderPong() {
 
 			if (response.ok) {
 				const data = await response.json();
-				console.log("🎮 Checking for pending games:", data);
 
 				if (data.active_game) {
-					console.log("🎯 Found active game, connecting...");
 
 					// Set up multiplayer state
 					state.isMultiplayer = true;
@@ -484,10 +456,6 @@ export function renderPong() {
 					const isPlayer1 = parseInt(userId) === data.active_game.player_1_id;
 					state.isMaster = isPlayer1;
 
-					console.log(`🎮 Role assignment: Player ${userId} (you) = ${state.isMaster ? 'MASTER' : 'SLAVE'}, Player ${data.active_game.opponent_id} = ${state.isMaster ? 'SLAVE' : 'MASTER'}`);
-					console.log(`🔍 Debug: userId=${userId}, player_1_id=${data.active_game.player_1_id}, isPlayer1=${isPlayer1}`);
-					console.log(`🔍 Additional Debug: game data=`, data.active_game);
-
 					// Update role indicator
 					updateRoleIndicator(state.isMaster);
 
@@ -500,11 +468,10 @@ export function renderPong() {
 
 					// Don't auto-start the game, just prepare the multiplayer state
 					// The game will start when both players are ready
-					console.log("✅ Multiplayer game state prepared, waiting for players to be ready...");
 				}
 			}
 		} catch (error) {
-			console.error("❌ Error checking for multiplayer games:", error);
+			// Error checking for multiplayer games
 		}
 	}
 
