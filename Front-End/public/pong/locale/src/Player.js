@@ -36,24 +36,24 @@ export default class Player {
 	}
 
 	checkBoundaries(moveY) {
-		const nextPosition = this.mesh.position.z + moveY;
-		const halfHeight = state.p.height / 2;
-		const topBoundary = state.boundaries.y - halfHeight;
-		const bottomBoundary = -state.boundaries.y + halfHeight;
-
-		if (nextPosition <= bottomBoundary) {
-			this.mesh.position.z = bottomBoundary;
-			return false;
-		}
-		if (nextPosition >= topBoundary) {
-			this.mesh.position.z = topBoundary;
-			return false;
-		}
-
-		return true;
+			const nextPosition = this.mesh.position.z + moveY;  // Cambiato da Y a Z
+			const halfHeight = state.p.height / 2;
+			const topBoundary = state.boundaries.y - halfHeight;    // boundaries.y rappresenta la profondità del campo
+			const bottomBoundary = -state.boundaries.y + halfHeight;
+	
+			if (nextPosition <= bottomBoundary) {
+					this.mesh.position.z = bottomBoundary;  // Cambiato da Y a Z
+					return false;
+			}
+			if (nextPosition >= topBoundary) {
+					this.mesh.position.z = topBoundary;  // Cambiato da Y a Z
+					return false;
+			}
+	
+			return true;
 	}
 
-	// Add movement method
+	// Add movement method - CORRECTED: Move along Y axis (up/down) not Z axis (toward camera)
 	move(moveY) {
 		if (this.checkBoundaries(moveY)) {
 			this.mesh.position.z += moveY;

@@ -8,6 +8,8 @@ import * as SETUP from "./setup.js";
 import * as SETTINGS from "./settings.js";
 import * as GAME from "./gameLogic.js";
 import Stats from "three/addons/libs/stats.module.js";
+import { getVariables } from "../../var.js";
+// Legacy sendPlayerInput removed - now using position sync system
 
 export function renderPong() {
 	//add bootstrap css
@@ -35,7 +37,19 @@ export function renderPong() {
 	<div class="pong-app">
 		<div class="gamecontainer position-relative">
 			<div id="threejs-container" class="w-100 h-100"></div>
-			
+
+			<!-- Multiplayer Status Indicator -->
+			<div id="multiplayer-status" class="position-absolute top-0 start-0 p-2 bg-dark bg-opacity-75 rounded-end text-light" style="display: none;">
+				<i class="fas fa-wifi me-2"></i>
+				<span id="connection-status">Connecting...</span>
+			</div>
+
+			<!-- Master/Slave Role Indicator -->
+			<div id="role-indicator" class="position-absolute top-0 end-0 p-2 bg-primary bg-opacity-75 rounded-start text-light" style="display: none;">
+				<i class="fas fa-crown me-2"></i>
+				<span id="role-status">Master</span>
+			</div>
+
 			<!-- Main Menu -->
 			<div id="menu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow">
 			<h1 class="text-light mb-4">PONG</h1>
@@ -45,7 +59,7 @@ export function renderPong() {
 				<button id="exitButton" class="btn btn-danger btn-lg">Exit</button>
 			</div>
 			</div>
-			
+
 			<!-- Player Selection Menu -->
 			<div id="nbrOfPlayerMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
 			<h2 class="text-light mb-4">Select Players</h2>
@@ -55,7 +69,7 @@ export function renderPong() {
 				<button id="backButton" class="btn btn-secondary btn-lg">Back</button>
 			</div>
 			</div>
-			
+
 			<!-- Settings Menu -->
 			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
 			<h2 class="text-light mb-4 text-center">Settings</h2>
@@ -65,21 +79,21 @@ export function renderPong() {
 				<input type="color" class="form-control form-control-color" id="player1Color" value="#4deeea" title="Choose player 1 color">
 				</div>
 			</div>
-			
+
 			<div class="mb-3">
 				<label for="player2Color" class="form-label text-light">Player 2 Color:</label>
 				<div class="d-flex gap-2">
 				<input type="color" class="form-control form-control-color" id="player2Color" value="#4deeea" title="Choose player 2 color">
 				</div>
 			</div>
-			
+
 			<div class="mb-3">
 				<label for="ballColor" class="form-label text-light">Ball Color:</label>
 				<div class="d-flex gap-2">
 				<input type="color" class="form-control form-control-color" id="ballColor" value="#8c5fb3" title="Choose ball color">
 				</div>
 			</div>
-			
+
 			<div class="mb-3">
 				<label for="ringColor" class="form-label text-light">Ring Color:</label>
 				<div class="d-flex gap-2">
@@ -93,19 +107,19 @@ export function renderPong() {
 				<input type="color" class="form-control form-control-color" id="planeColor" value="#089c00" title="Choose plane color">
 				</div>
 			</div>
-			
+
 			<div class="form-check mb-4">
 				<input class="form-check-input" type="checkbox" id="showStats">
 				<label class="form-check-label text-light" for="showStats">Show Stats</label>
 			</div>
-			
+
 			<div class="d-flex gap-2 justify-content-center">
 				<button id="saveSettingsButton" class="btn btn-success">Save</button>
 				<button id="resetSettingsButton" class="btn btn-warning">Reset</button>
 				<button id="backFromSettingsButton" class="btn btn-secondary">Back</button>
 			</div>
 			</div>
-			
+
 			<div id="pauseMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
 			<h2 class="text-light mb-4">Game Paused</h2>
 			<div class="d-grid gap-3">
@@ -126,11 +140,148 @@ export function renderPong() {
 	</div>
 	`;
 
+	// Key handlers for player movement
+	function ensurePlayerSpeedIsValid() {
+		// Ensure player_speed has a valid value, minimum 1.0
+		if (!state.player_speed || state.player_speed <= 0) {
+			state.player_speed = Math.max(1.5, state.ring.length / 80);
+			console.log(`🔧 Fixed player_speed: ${state.player_speed} (ring.length: ${state.ring.length})`);
+		}
+	}
+
+	function pongKeyDownHandler(event) {
+		if (state.isPaused || !state.isStarted) {
+			console.log(`🎮 Key ignored (game not started/paused): ${event.key}`);
+			return;
+		}
+
+		ensurePlayerSpeedIsValid();
+		console.log(`🎮 Key down: ${event.key} [${state.isMultiplayer ? (state.isMaster ? 'MASTER' : 'SLAVE') : 'LOCAL'}] Player: ${state.localPlayerId || 'N/A'} Speed: ${state.player_speed}`);
+
+		switch (event.key) {
+			case 'w':
+			case 'W':
+				if (state.isMultiplayer) {
+					// In multiplayer: only set move_y for input calculation, DON'T apply position locally
+					// Position sync will be handled by WebSocket messages only
+					if (state.isMaster) {
+						state.p1_move_y = -state.player_speed;
+						console.log(`🏓 MASTER Set P1 input move_y: ${state.p1_move_y} (for position calc only)`);
+					} else {
+						state.p2_move_y = -state.player_speed;
+						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
+					}
+				} else {
+					// In single player, W/S controls Player 1
+					state.p1_move_y = -state.player_speed;
+					console.log(`🏓 Set P1 move_y: ${state.p1_move_y}`);
+				}
+				break;
+			case 's':
+			case 'S':
+				if (state.isMultiplayer) {
+					// In multiplayer: only set move_y for input calculation, DON'T apply position locally
+					// Position sync will be handled by WebSocket messages only
+					if (state.isMaster) {
+						state.p1_move_y = state.player_speed;
+						console.log(`🏓 MASTER Set P1 input move_y: ${state.p1_move_y} (for position calc only)`);
+					} else {
+						state.p2_move_y = state.player_speed;
+						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
+					}
+				} else {
+					// In single player, W/S controls Player 1
+					state.p1_move_y = state.player_speed;
+					console.log(`🏓 Set P1 move_y: ${state.p1_move_y}`);
+				}
+				break;
+			case 'ArrowUp':
+				if (state.isMultiplayer) {
+					// In multiplayer: only slave (player 2) uses arrow keys
+					if (!state.isMaster) {
+						state.p2_move_y = -state.player_speed;
+						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
+					}
+				} else {
+					// Arrow keys control Player 2 in local mode only
+					state.p2_move_y = -state.player_speed;
+					console.log(`🏓 Set P2 move_y: ${state.p2_move_y}`);
+				}
+				break;
+			case 'ArrowDown':
+				if (state.isMultiplayer) {
+					// In multiplayer: only slave (player 2) uses arrow keys
+					if (!state.isMaster) {
+						state.p2_move_y = state.player_speed;
+						console.log(`🏓 SLAVE Set P2 input move_y: ${state.p2_move_y} (for position calc only)`);
+					}
+				} else {
+					// Arrow keys control Player 2 in local mode only
+					state.p2_move_y = state.player_speed;
+					console.log(`🏓 Set P2 move_y: ${state.p2_move_y}`);
+				}
+				break;
+		}
+	}
+
+	function pongKeyUpHandler(event) {
+		if (state.isPaused || !state.isStarted) return;
+
+		console.log(`🎮 Key up: ${event.key} [${state.isMultiplayer ? (state.isMaster ? 'MASTER' : 'SLAVE') : 'LOCAL'}] Player: ${state.localPlayerId || 'N/A'}`);
+
+		switch (event.key) {
+			case 'w':
+			case 'W':
+			case 's':
+			case 'S':
+				if (state.isMultiplayer) {
+					// In multiplayer: stop input calculation, positions will be synced via WebSocket
+					if (state.isMaster) {
+						state.p1_move_y = 0;
+						console.log(`🏓 MASTER Stop P1 input move_y: ${state.p1_move_y} (for position calc only)`);
+					} else {
+						state.p2_move_y = 0;
+						console.log(`🏓 SLAVE Stop P2 input move_y: ${state.p2_move_y} (for position calc only)`);
+					}
+				} else {
+					// In single player, W/S controls Player 1
+					state.p1_move_y = 0;
+					console.log(`🏓 Stop P1 move_y: ${state.p1_move_y}`);
+				}
+				break;
+			case 'ArrowUp':
+			case 'ArrowDown':
+				if (state.isMultiplayer) {
+					// In multiplayer: only slave (player 2) uses arrow keys
+					if (!state.isMaster) {
+						state.p2_move_y = 0;
+						console.log(`🏓 SLAVE Stop P2 input move_y: ${state.p2_move_y} (for position calc only)`);
+					}
+				} else {
+					// Arrow keys control Player 2 in local mode only
+					state.p2_move_y = 0;
+					console.log(`🏓 Stop P2 move_y: ${state.p2_move_y}`);
+				}
+				break;
+		}
+	}
+
 	document.addEventListener("keydown", pongKeyDownHandler);
     document.addEventListener("keyup", pongKeyUpHandler);
-    
+
     window.pongKeyDownHandler = pongKeyDownHandler;
     window.pongKeyUpHandler = pongKeyUpHandler;
+
+	// Check if there's a multiplayer game waiting
+	checkForMultiplayerGame();
+
+	// Add timeout setup for testing (only if no multiplayer game is found)
+	setTimeout(() => {
+		if (!state.isMultiplayer) {
+			console.log("🔧 No multiplayer game found, setting up local game for testing...");
+			SETUP.setupGame();
+		}
+	}, 1000);
 
 	document
 		.getElementById("newGameButton")
@@ -206,147 +357,171 @@ export function renderPong() {
 		SETUP.setupGame();
 		GAME.animate();
 	}, 100);
+
+	//Resize handler
+	state.onWindowResize = () => {
+		const container = document.getElementById("threejs-container");
+		if (container && state.camera && state.renderer) {
+			const rect = container.getBoundingClientRect();
+			const width = rect.width;
+			const height = rect.height;
+
+			// Ensure minimum size
+			if (width > 0 && height > 0) {
+				state.camera.aspect = width / height;
+				state.camera.updateProjectionMatrix();
+				state.renderer.setSize(width, height);
+
+				console.log(`🔧 Pong resized: ${width}x${height}`);
+			}
+		}
+	};
+
+	// Remove any existing resize listeners to avoid duplicates
+	if (window.pongResizeHandler) {
+		window.removeEventListener("resize", window.pongResizeHandler);
+	}
+
+	window.addEventListener("resize", state.onWindowResize);
+	window.pongResizeHandler = state.onWindowResize;
+
+	// Add ResizeObserver for better container monitoring
+	if (window.ResizeObserver) {
+		const container = document.getElementById("threejs-container");
+		if (container && !state.resizeObserver) {
+			state.resizeObserver = new ResizeObserver((entries) => {
+				for (let entry of entries) {
+					const { width, height } = entry.contentRect;
+					if (width > 0 && height > 0 && state.camera && state.renderer) {
+						state.camera.aspect = width / height;
+						state.camera.updateProjectionMatrix();
+						state.renderer.setSize(width, height);
+						console.log(`🔧 Pong container resized: ${width}x${height}`);
+					}
+				}
+			});
+			state.resizeObserver.observe(container);
+		}
+	}
+
+	// Function to update multiplayer connection status
+	function updateMultiplayerStatus(status, message) {
+		const statusIndicator = document.getElementById('multiplayer-status');
+		const statusText = document.getElementById('connection-status');
+
+		if (!statusIndicator || !statusText) return;
+
+		statusIndicator.style.display = status === 'disconnected' ? 'none' : 'block';
+		statusText.textContent = message || status;
+
+		// Update icon based on status
+		const icon = statusIndicator.querySelector('i');
+		if (icon) {
+			icon.className = 'fas me-2 ' + (
+				status === 'connected' ? 'fa-wifi text-success' :
+				status === 'connecting' ? 'fa-spinner fa-spin text-warning' :
+				'fa-wifi-slash text-danger'
+			);
+		}
+	}
+
+	// Function to update role indicator (Master/Slave)
+	function updateRoleIndicator(isMaster) {
+		const roleIndicator = document.getElementById('role-indicator');
+		const roleText = document.getElementById('role-status');
+		const roleIcon = roleIndicator?.querySelector('i');
+
+		if (!roleIndicator || !roleText) return;
+
+		if (state.isMultiplayer) {
+			roleIndicator.style.display = 'block';
+			roleText.textContent = isMaster ? 'Master' : 'Slave';
+
+			if (roleIcon) {
+				roleIcon.className = isMaster ? 'fas fa-crown me-2 text-warning' : 'fas fa-user me-2 text-info';
+			}
+
+			// Update background color
+			roleIndicator.className = isMaster
+				? 'position-absolute top-0 end-0 p-2 bg-warning bg-opacity-75 rounded-start text-dark'
+				: 'position-absolute top-0 end-0 p-2 bg-info bg-opacity-75 rounded-start text-light';
+
+			console.log(`🎭 Role indicator updated: ${isMaster ? 'MASTER' : 'SLAVE'}`);
+		} else {
+			roleIndicator.style.display = 'none';
+		}
+	}
+
+	// Check if there's a multiplayer game waiting
+	async function checkForMultiplayerGame() {
+		try {
+			const { userId, token, url_api } = getVariables();
+
+			// Check if user has pending game invitations or active games
+			const response = await fetch(`${url_api}/pong/games/pending/${userId}/`, {
+				headers: {
+					"Authorization": `Bearer ${token}`,
+					"Content-Type": "application/json"
+				}
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("🎮 Checking for pending games:", data);
+
+				if (data.active_game) {
+					console.log("🎯 Found active game, connecting...");
+
+					// Set up multiplayer state
+					state.isMultiplayer = true;
+					state.room_id = data.active_game.id;
+					state.localPlayerId = parseInt(userId);
+					state.remotePlayerId = data.active_game.opponent_id;
+
+					// Determine master/slave roles based on who is player_1 (creator) vs player_2 (invitee)
+					// player_1 (game creator/inviter) = MASTER
+					// player_2 (game invitee) = SLAVE
+					const isPlayer1 = parseInt(userId) === data.active_game.player_1_id;
+					state.isMaster = isPlayer1;
+
+					console.log(`🎮 Role assignment: Player ${userId} (you) = ${state.isMaster ? 'MASTER' : 'SLAVE'}, Player ${data.active_game.opponent_id} = ${state.isMaster ? 'SLAVE' : 'MASTER'}`);
+					console.log(`🔍 Debug: userId=${userId}, player_1_id=${data.active_game.player_1_id}, isPlayer1=${isPlayer1}`);
+					console.log(`🔍 Additional Debug: game data=`, data.active_game);
+
+					// Update role indicator
+					updateRoleIndicator(state.isMaster);
+
+					// Import and initialize WebSocket
+					const { initializeWebSocket } = await import("../multiplayer/serverSide.js");
+					initializeWebSocket(data.active_game.id, userId, data.active_game.opponent_id);
+
+					// Show multiplayer status
+					updateMultiplayerStatus("connecting", "Connecting to multiplayer game...");
+
+					// Don't auto-start the game, just prepare the multiplayer state
+					// The game will start when both players are ready
+					console.log("✅ Multiplayer game state prepared, waiting for players to be ready...");
+				}
+			}
+		} catch (error) {
+			console.error("❌ Error checking for multiplayer games:", error);
+		}
+	}
+
+	// Export functions to make them available outside
+	window.updateMultiplayerStatus = updateMultiplayerStatus;
+	window.updateRoleIndicator = updateRoleIndicator;
 }
 
-//Resize handler
-
-window.addEventListener("resize", () => {
-	const container = document.getElementById("threejs-container");
-	if (container && state.camera && state.renderer) {
-		const rect = container.getBoundingClientRect();
-		const width = rect.width;
-		const height = rect.height;
-
-		state.camera.aspect = width / height;
-		state.camera.updateProjectionMatrix();
-		state.renderer.setSize(width, height);
-	}
-});
-
-
-function pongKeyDownHandler(event) {
-	if (!event || !event.key) return;
-	if (event.key.toLowerCase() == "s") {
-		state.p1_move_y = state.player_speed;
-		state.keys.s = true;
-	}
-	if (event.key.toLowerCase() == "w") {
-		state.p1_move_y = -state.player_speed;
-		state.keys.w = true;
-	}
-	if (event.key == "ArrowDown" && !state.IAisActive) {
-		state.p2_move_y = state.player_speed;
-		state.keys.ArrowDown = true;
-	}
-	if (event.key == "ArrowUp" && !state.IAisActive) {
-		state.p2_move_y = -state.player_speed;
-		state.keys.ArrowUp = true;
-	}
-	if (event.key == "Escape" && state.isStarted) {
-		if (state.isPaused) {
-			SETTINGS.resumeGame();
-		} else {
-			state.isPaused = true;
-			SETTINGS.showPauseMenu();
-		}
+// Export for external usage
+export function updateMultiplayerStatus(status, message) {
+	if (window.updateMultiplayerStatus) {
+		window.updateMultiplayerStatus(status, message);
 	}
 }
 
-function pongKeyUpHandler(event) {
-	if (!event || !event.key) return;
-	if (event.key.toLowerCase() == "s") {
-		state.keys.s = false;
-		if (state.keys.w) {
-			state.p1_move_y = -state.player_speed;
-		} else {
-			state.p1_move_y = 0;
-		}
-	}
-	if (event.key.toLowerCase() == "w") {
-		state.keys.w = false;
-		if (state.keys.s) {
-			state.p1_move_y = state.player_speed;
-		} else {
-			state.p1_move_y = 0;
-		}
-	}
-	if (event.key == "ArrowDown" && !state.IAisActive) {
-		state.keys.ArrowDown = false;
-		if (state.keys.ArrowUp) {
-			state.p2_move_y = -state.player_speed;
-		} else {
-			state.p2_move_y = 0;
-		}
-	}
-	if (event.key == "ArrowUp" && !state.IAisActive) {
-		state.keys.ArrowUp = false;
-		if (state.keys.ArrowDown) {
-			state.p2_move_y = state.player_speed;
-		} else {
-			state.p2_move_y = 0;
-		}
+export function updateRoleIndicator(isMaster) {
+	if (window.updateRoleIndicator) {
+		window.updateRoleIndicator(isMaster);
 	}
 }
-
-// Keyboard setup
-// document.addEventListener("keydown", function (event) {
-// 	if (event.key.toLowerCase() == "s") {
-// 		state.p1_move_y = state.player_speed;
-// 		state.keys.s = true;
-// 	}
-// 	if (event.key.toLowerCase() == "w") {
-// 		state.p1_move_y = -state.player_speed;
-// 		state.keys.w = true;
-// 	}
-	// if (event.key == "ArrowDown" && !state.IAisActive) {
-	// 	state.p2_move_y = state.player_speed;
-	// 	state.keys.ArrowDown = true;
-	// }
-	// if (event.key == "ArrowUp" && !state.IAisActive) {
-	// 	state.p2_move_y = -state.player_speed;
-	// 	state.keys.ArrowUp = true;
-	// }
-// 	if (event.key == "Escape" && state.isStarted) {
-// 		if (state.isPaused) {
-// 			SETTINGS.resumeGame();
-// 		} else {
-// 			state.isPaused = true;
-// 			SETTINGS.showPauseMenu();
-// 		}
-// 	}
-// });
-
-// document.addEventListener("keyup", function (event) {
-// 	if (event.key.toLowerCase() == "s") {
-// 		state.keys.s = false;
-// 		if (state.keys.w) {
-// 			state.p1_move_y = -state.player_speed;
-// 		} else {
-// 			state.p1_move_y = 0;
-// 		}
-// 	}
-// 	if (event.key.toLowerCase() == "w") {
-// 		state.keys.w = false;
-// 		if (state.keys.s) {
-// 			state.p1_move_y = state.player_speed;
-// 		} else {
-// 			state.p1_move_y = 0;
-// 		}
-// 	}
-// 	if (event.key == "ArrowDown" && !state.IAisActive) {
-// 		state.keys.ArrowDown = false;
-// 		if (state.keys.ArrowUp) {
-// 			state.p2_move_y = -state.player_speed;
-// 		} else {
-// 			state.p2_move_y = 0;
-// 		}
-// 	}
-// 	if (event.key == "ArrowUp" && !state.IAisActive) {
-// 		state.keys.ArrowUp = false;
-// 		if (state.keys.ArrowDown) {
-// 			state.p2_move_y = state.player_speed;
-// 		} else {
-// 			state.p2_move_y = 0;
-// 		}
-// 	}
-// });

@@ -163,7 +163,13 @@ export function cleanupPong() {
 
 	// 4. Remove event listeners
 	window.removeEventListener("resize", state.onWindowResize);
-	
+
+	// Remove ResizeObserver
+	if (state.resizeObserver) {
+		state.resizeObserver.disconnect();
+		state.resizeObserver = null;
+	}
+
 	if (window.pongKeydownHandler) {
 		document.removeEventListener("keydown", window.pongKeydownHandler);
 		window.pongKeydownHandler = null;
@@ -259,7 +265,7 @@ function resetPongMenuState() {
     state.isStarted = false;
     state.isPaused = true;
     state.IAisActive = false;
-    
+
     // DOM reset solo se siamo sicuri che esista
     if (document.getElementById("menu")) {
         showMainMenu();

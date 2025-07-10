@@ -91,6 +91,28 @@ export let state = {
 	lights: [],
 	plane: null,
 	maxScore: 1,
+	// Multiplayer variables
+	isMultiplayer: false,
+	room_id: null,
+	localPlayerId: null,
+	remotePlayerId: null,
+	socket: null,
+	lastSyncTime: 0,
+	interpolationDelay: 100, // ms
+	networkBuffer: [],
+	connectionState: "disconnected", // disconnected, connecting, connected
+	reconnectAttempts: 0,
+	maxReconnectAttempts: 3,
+	lastInputSent: 0,
+	inputThrottle: 16, // ~60fps
+	lastPositionSent: 0,
+	// Master-Slave architecture for multiplayer
+	isMaster: false, // Master simulates ball physics, slave receives ball state
+	lastBallStateSent: 0,
+	ballStateThrottle: 50, // ~20fps for ball state sync (reduced from 60fps)
+	lastBallStateTimestamp: 0, // Track last processed ball state timestamp
+	// Resize observer for container monitoring
+	resizeObserver: null,
 };
 
 state.ring.height = (9 / 16) * state.ring.length;
@@ -102,3 +124,14 @@ state.angle = Math.floor(Math.random() * 70);
 if (state.angle % 2) state.angle *= -1;
 if (state.angle % 3) state.angle += 180;
 state.stats = new Stats();
+
+state.latestBallState = null;
+state.latestPaddlePosition = null;
+state.paddleRenderStats = null;
+state.ballMessageStats = null;
+state.positionSendCount = 0;
+state.lastPositionSent = 0;
+state.lastP1PositionSent = 0;
+state.lastP2PositionSent = 0;
+state.player1Id = null;
+state.player2Id = null;

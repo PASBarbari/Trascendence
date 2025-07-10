@@ -3,6 +3,7 @@ import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
 import { renderPong } from "./locale/pong.js";
+import { sendGameInvitation } from "../notification/notification.js";
 
 // Load CSS files
 const pongContainerCSS = document.createElement("link");
@@ -44,6 +45,14 @@ function renderPongInfo() {
 }
 
 async function handleLocalePong() {
+	// Reset multiplayer state for local game
+	const { state } = await import("./locale/state.js");
+	state.isMultiplayer = false;
+	state.localPlayerId = null;
+	state.remotePlayerId = null;
+	state.socket = null;
+	state.connectionState = "disconnected";
+
 	window.navigateTo("#pong");
 }
 
@@ -96,7 +105,7 @@ function createFriendItemHTML(friendship) {
                     <div class="friend-name">${username}</div>
                 </div>
                 <div class="ms-2">
-                    <button class="btn btn-game-invite btn-sm" 
+                    <button class="btn btn-game-invite btn-sm"
                             onclick="inviteToGame('${userId}', '${username}')">
                         <i class="fas fa-gamepad me-1"></i>
                         Invite
@@ -134,28 +143,44 @@ async function inviteToGame(friendId, friendName) {
 		console.log("  - Token present:", token ? "✅ Yes" : "❌ No");
 		console.log("  - API URL:", url_api);
 
-		// Import the WebSocket functions
+		// Import the WebSocket functions and state
 		const { createGame } = await import("./multiplayer/serverSide.js");
+		const { state } = await import("./locale/state.js");
+
+		// Set up multiplayer state
+		state.isMultiplayer = true;
+		state.localPlayerId = parseInt(userId);
+		state.remotePlayerId = parseInt(friendId);
 
 		// Try to create a game and establish WebSocket connection
-		console.log("🎯 Attempting to create game and establish WebSocket...");
-
-		try {
+		console.log("🎯 Attempting to create game and establish WebSocket...");		try {
 			// Create game between current user and friend
 			await createGame(parseInt(userId), parseInt(friendId));
+		// Send notification using the notification system
+		await sendPongInviteNotification(friendId, friendName);
 
-			// Show success notification
-			showNotification(
-				`🎮 Game started with ${friendName}! WebSocket connection established.`,
-				"success"
-			);
+		// Show success notification
+		showNotification(
+			`🎮 Game created with ${friendName}! They will automatically join when they open Pong.`,
+			"success",
+			6000
+		);
 
 			// Close friend list and navigate to game
 			closeFriendList();
-			// Optional: Navigate to game view
-			// window.navigateTo("#pong");
+			// Navigate to game view
+			window.navigateTo("#pong");
 		} catch (gameError) {
 			console.error("❌ Failed to create game:", gameError);
+			// Reset multiplayer state on error
+			state.isMultiplayer = false;
+			state.localPlayerId = null;
+			state.remotePlayerId = null;
+
+			showNotification(
+				"❌ Failed to start game. Please try again.",
+				"error"
+			);
 		}
 	} catch (error) {
 		console.error("💥 Complete failure in inviteToGame:", error);
@@ -178,6 +203,40 @@ async function inviteToGame(friendId, friendName) {
 			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
 			inviteBtn.disabled = false;
 		}
+	}
+}
+
+// Send game invitation using existing notification system
+async function sendPongInviteNotification(friendId, friendName) {
+	try {
+		const { userUsername, userId } = getVariables();
+
+		await sendGameInvitation({
+			recipient_id: friendId,
+			recipient_name: friendName,
+			sender_name: userUsername,
+			sender_id: userId,
+			game_type: "Pong",
+			action: "join_pong_game"
+		});
+
+		console.log("✅ Game invitation sent via notification system");
+
+		// Show a message that the friend should open Pong
+		showNotification(
+			`🎮 Game invitation sent to ${friendName}! They should open Pong to join the game.`,
+			"info",
+			8000
+		);
+	} catch (error) {
+		console.error("❌ Failed to send game invitation:", error);
+
+		// Fallback: show local notification
+		showNotification(
+			`🎮 Game created with ${friendName}! Tell them to open Pong to join the game.`,
+			"success",
+			8000
+		);
 	}
 }
 

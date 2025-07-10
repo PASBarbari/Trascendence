@@ -489,15 +489,72 @@ function handleGameCreatedMessage(message) {
 
 	const gameData = message?.message || {};
 	const gameId = gameData.game_id;
-	const creatorName = gameData.player_1.username || "Someone";
+	const creatorName = gameData.player_1?.username || "Someone";
+	const currentUserId = getVariables().userId;
+	const currentUserName = getVariables().userUsername;
 
-	// Show toast notification
-	showAlertForXSeconds(
-		`Game created by ${creatorName}. Game ID: ${gameId}`,
-		"success",
-		5,
-		{ asToast: true }
-	);
+	// Check if this is a game invitation (current user is not the creator)
+	const isInvitation = creatorName !== currentUserName;
+
+	if (isInvitation) {
+		// This is a game invitation - show notification and redirect to Pong
+		showAlertForXSeconds(
+			`${creatorName} invited you to play Pong!`,
+			"info",
+			5,
+			{ asToast: true }
+		);
+
+		// Store invitation in message history for user action
+		messageHistory.push({
+			user_id: gameData.player_1?.user_id || 0,
+			type: "game_invitation",
+			userData: {
+				inviter_name: creatorName,
+				inviter_id: gameData.player_1?.user_id || 0,
+				game_type: "Pong",
+				action: "join_pong_game",
+				game_id: gameId
+			},
+			action: "join_pong_game"
+		});
+
+		// Auto-redirect to pong game after a short delay
+		setTimeout(() => {
+			console.log("🎯 Auto-redirecting to Pong game...");
+			window.navigateTo("#pong");
+		}, 3000);
+	} else {
+		// This is a confirmation that the user created a game
+		showAlertForXSeconds(
+			`Game created! Game ID: ${gameId}`,
+			"success",
+			5,
+			{ asToast: true }
+		);
+	}
+}
+
+/**
+ * Send a game invitation notification (simplified)
+ */
+async function sendGameInvitation(invitationData) {
+	try {
+		console.log("🎮 Game invitation (using backend automatic system):", invitationData);
+
+		// The backend automatically sends notifications when a game is created
+		// We just need to show a local confirmation that the invitation was sent
+		showNotificationToast(
+			`🎮 Game invitation sent to ${invitationData.recipient_name}!`,
+			"success"
+		);
+
+		console.log("✅ Game invitation sent successfully (backend handles notification)");
+		return { success: true, message: "Invitation sent via backend" };
+	} catch (error) {
+		console.error("❌ Error sending game invitation:", error);
+		return { success: false, message: "Error occurred" };
+	}
 }
 
 
@@ -735,6 +792,7 @@ export {
 	getRegisteredMessageTypes,
 	testMessageHandler,
 	MESSAGE_HANDLERS,
+	sendGameInvitation,
 };
 
 // ==================== DYNAMIC HANDLER REGISTRATION ====================
@@ -937,21 +995,47 @@ function handleGameInvitationMessage(message) {
 
 	const gameData = message.message?.data || {};
 	const inviterName = gameData.inviter_name || "Someone";
-	const gameType = gameData.game_type || "a game";
+	const gameType = gameData.game_type || "Pong";
 
-	// Store invitation in message history for user action
-	messageHistory.push({
-		user_id: gameData.inviter_id || 0,
-		type: "game_invitation",
-		userData: gameData,
-		invitation_id: gameData.invitation_id,
-	});
+	// Handle specific pong game invitation
+	if (gameData.action === "join_pong_game") {
+		console.log("🎮 Received Pong game invitation from", inviterName);
 
-	renderFriendRequest(); // Reuse existing notification rendering
-	showNotificationToast(
-		`${inviterName} invited you to play ${gameType}`,
-		"info"
-	);
+		// Store invitation in message history for user action
+		messageHistory.push({
+			user_id: gameData.inviter_id || 0,
+			type: "game_invitation",
+			userData: gameData,
+			invitation_id: gameData.invitation_id,
+			action: "join_pong_game"
+		});
+
+		renderFriendRequest(); // Reuse existing notification rendering
+		showNotificationToast(
+			`${inviterName} invited you to play Pong!`,
+			"info"
+		);
+
+		// Auto-redirect to pong game after a short delay
+		setTimeout(() => {
+			console.log("🎯 Auto-redirecting to Pong game...");
+			window.navigateTo("#pong");
+		}, 3000);
+	} else {
+		// Handle other game invitations
+		messageHistory.push({
+			user_id: gameData.inviter_id || 0,
+			type: "game_invitation",
+			userData: gameData,
+			invitation_id: gameData.invitation_id,
+		});
+
+		renderFriendRequest(); // Reuse existing notification rendering
+		showNotificationToast(
+			`${inviterName} invited you to play ${gameType}`,
+			"info"
+		);
+	}
 }
 
 function handleGameStartedMessage(message) {

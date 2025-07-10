@@ -1,7 +1,7 @@
 import asyncio
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
+from channels.db import database_sync_to_async
 from .signals import GameState, TournamentState
 from .models import Game
 import logging
@@ -20,27 +20,27 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		self.room_id = self.scope['url_route']['kwargs']['room_id']
 		self.room_name = f'game_{self.room_id}'
 		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
-		
+
 		# Check authentication - reject AnonymousUser
 		user = self.scope.get('user')
 		if not user or not hasattr(user, 'user_id'):
 			websocket_logger.warning(f"Unauthenticated WebSocket connection attempt for game {self.room_id}")
 			await self.close(code=4001)  # Custom close code for authentication failure
 			return
-		
+
 		# Store authenticated user info
 		self.player_id = user.user_id
 		websocket_logger.info(f"Authenticated user {self.player_id} connected to game {self.room_id}")
-		
+
 		# Join room group
 		await self.channel_layer.group_add(
 			self.room_name,
 			self.channel_name
 		)
-		
+
 		await self.accept()
 		logger.info(f"WebSocket connection accepted for game {self.room_id}")
-		
+
 		# Send welcome message to confirm successful connection
 		await self.send(text_data=json.dumps({
 			'type': 'connection_success',
@@ -50,15 +50,15 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 	async def disconnect(self, close_code):
 		websocket_logger.info(f"WebSocket disconnected: game={self.room_id}, code={close_code}")
-		
+
 		# Handle unexpected disconnections
 		if self.room_id in active_games:
 			# Get the game state
 			game_state = active_games[self.room_id]
-			
+
 			# Identify disconnected player (you need to store this during connect)
 			player = getattr(self, 'player_id', None)
-			
+
 			# Send notification to other players
 			logger.info(f"Player {player} disconnected unexpectedly from game {self.room_id}")
 			await self.channel_layer.group_send(
@@ -70,7 +70,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 					'game_over': True
 				}
 			)
-			
+
 			# Clean up game resources
 			game_state.quit_game()
 			del active_games[self.room_id]
@@ -99,83 +99,222 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		}))
 
 	async def player_ready(self, data):
-		player = data['player']
+		player = data.get('player', self.player_id)
+		websocket_logger.info(f"Player {player} ready for game {self.room_id}")
+
+		# Inizializza la struttura se non esiste
 		if self.room_id not in player_ready:
-			player_ready[self.room_id] = [False, False]
-		
-		player_ready[self.room_id][player] = True
-		logger.info(f"Player {player} ready in game {self.room_id}. Status: {player_ready[self.room_id]}")
-		
-		if all(player_ready[self.room_id]):
-			logger.info(f"All players ready in game {self.room_id}, starting game")
+			player_ready[self.room_id] = {}
+
+		# Marca il player come pronto
+		player_ready[self.room_id][str(player)] = True
+
+		# Invia conferma al player
+		await self.send(text_data=json.dumps({
+			'type': 'player_ready_confirmed',
+			'player': player,
+			'room_id': self.room_id
+		}))
+
+		try:
+			# Controlla se entrambi i player sono pronti usando database_sync_to_async
+			game = await database_sync_to_async(Game.objects.get)(id=self.room_id)
+
+			# Accesso ai campi del modello tramite database_sync_to_async
+			player_1_id = await database_sync_to_async(lambda: game.player_1.user_id)()
+			player_2_id = await database_sync_to_async(lambda: game.player_2.user_id)()
+
+			player_1_ready = player_ready[self.room_id].get(str(player_1_id), False)
+			player_2_ready = player_ready[self.room_id].get(str(player_2_id), False)
+
+			websocket_logger.info(f"Game {self.room_id} ready status - P1: {player_1_ready}, P2: {player_2_ready}")
+
+			if player_1_ready and player_2_ready:
+				# Avvia il gioco con informazioni sui ruoli
+				await self.channel_layer.group_send(
+					self.room_name,
+					{
+						'type': 'start_game',
+						'message': f'Game {self.room_id} started! Both players ready.',
+						'game_id': self.room_id,
+						'player_1_id': player_1_id,
+						'player_2_id': player_2_id
+					}
+				)
+		except Exception as e:
+			websocket_logger.error(f"Error in player_ready: {str(e)}")
 			await self.send(text_data=json.dumps({
-				'message': 'All players are ready!',
-				'ready': True
-			}))
-			
-			try:
-				game = await sync_to_async(Game.objects.get)(id=self.room_id)
-				data['player1'] = await sync_to_async(lambda: game.player_1)()
-				data['player2'] = await sync_to_async(lambda: game.player_2)()
-				await self.start_game(data)
-			except Exception as e:
-				logger.error(f"Error retrieving game data: {str(e)}", exc_info=True)
-		else:
-			await self.send(text_data=json.dumps({
-				'message': 'Waiting for players to be ready...',
-				'ready': False
+				'type': 'error',
+				'error': f'Failed to process player ready: {str(e)}'
 			}))
 
-	async def start_game(self, data):
+	async def start_game(self, event):
+		"""Handle start_game message from channel layer"""
+		await self.send(text_data=json.dumps({
+			'type': 'game_start',
+			'message': event['message'],
+			'game_id': event['game_id'],
+			'player_1_id': event.get('player_1_id'),
+			'player_2_id': event.get('player_2_id'),
+			'your_player_id': self.player_id
+		}))
+
+	async def game_state(self, data):
+		"""Handle game state updates"""
 		if self.room_id in active_games:
-			logger.info(f"Game {self.room_id} already started, ignoring start request")
-			return
-			
-		logger.info(f"Starting game {self.room_id} with players {data['player1']} and {data['player2']}")
-		try:
-			del player_ready[self.room_id]
-			active_games[self.room_id] = GameState(
-				data['player1'], 
-				data['player2'], 
-				self.room_id, 
-				data.get('player_length', 10), 
-				self.tournament_id if self.tournament_id else None
-			)
-			asyncio.create_task(active_games[self.room_id].start())
-			logger.info(f"Game {self.room_id} successfully started")
-		except Exception as e:
-			logger.error(f"Error starting game {self.room_id}: {str(e)}", exc_info=True)
+			game_state = active_games[self.room_id]
+			await self.send(text_data=json.dumps({
+				'type': 'game_state',
+				'game_state': {
+					'player_1_pos': game_state.player_1_pos,
+					'player_2_pos': game_state.player_2_pos,
+					'ball_pos': game_state.ball_pos,
+					'ball_velocity': game_state.ball_velocity,
+					'p1_score': game_state.p1_score,
+					'p2_score': game_state.p2_score
+				}
+			}))
 
-	# Continue updating the rest of the methods with logging...
-	async def up(self, data):
+	# Input handlers for paddle synchronization only
+	async def player_input(self, data):
+		"""Handle player input - only for paddle movement synchronization"""
 		try:
-			player = data['player']
-			active_games[self.room_id].up(player)
-			logger.debug(f"Player {player} moved up in game {self.room_id}")
-		except KeyError:
-			logger.error(f"Game {self.room_id} not found for UP movement")
+			input_type = data.get('input')
+			player = data.get('player')
+			timestamp = data.get('timestamp', 0)
+
+			# Instead of updating server-side game state, just broadcast the input to other players
+			await self.channel_layer.group_send(
+				self.room_name,
+				{
+					'type': 'paddle_movement',
+					'input': input_type,
+					'player': player,
+					'timestamp': timestamp,
+					'sender_channel': self.channel_name  # Don't send back to sender
+				}
+			)
+
+			logger.debug(f"Player {player} input '{input_type}' broadcasted in game {self.room_id}")
 		except Exception as e:
-			logger.error(f"Error in UP movement: {str(e)}")
+			websocket_logger.error(f"Error handling player input: {str(e)}")
+
+	async def paddle_movement(self, event):
+		"""Broadcast paddle movement to all players (including sender for better sync)"""
+		# Send to all players now, including the sender for better synchronization
+		await self.send(text_data=json.dumps({
+			'type': 'paddle_movement',
+			'input': event['input'],
+			'player': event['player'],
+			'timestamp': event['timestamp']
+		}))
+
+	async def ball_state(self, data):
+		"""Handle ball state updates"""
+		try:
+			position = data.get('position', [0, 0, 0])
+			velocity = data.get('velocity', [0, 0, 0])
+			timestamp = data.get('timestamp', 0)
+
+			websocket_logger.info(f"📨 Forwarding ball state to group {self.room_name}")
+
+			# Send to ALL clients in the room (including sender for full sync)
+			await self.channel_layer.group_send(
+				self.room_name,
+				{
+					'type': 'ball_state_update',
+					'position': position,
+					'velocity': velocity,
+					'timestamp': timestamp
+				}
+			)
+		except Exception as e:
+			websocket_logger.error(f"Error in ball_state: {str(e)}")
+
+	async def ball_state_update(self, event):
+		"""Send ball state update to client"""
+		await self.send(text_data=json.dumps({
+			'type': 'ball_state',
+			'position': event['position'],
+			'velocity': event['velocity'],
+			'timestamp': event['timestamp']
+		}))
+
+	async def score_update(self, data):
+		"""Handle score updates"""
+		try:
+			p1_score = data.get('p1_score')
+			p2_score = data.get('p2_score')
+			timestamp = data.get('timestamp', 0)
+
+			websocket_logger.info(f"📨 Forwarding score update to group {self.room_name}: P1={p1_score}, P2={p2_score}")
+
+			# Send to ALL clients in the room (including sender for full sync)
+			await self.channel_layer.group_send(
+				self.room_name,
+				{
+					'type': 'score_update_broadcast',
+					'p1_score': p1_score,
+					'p2_score': p2_score,
+					'timestamp': timestamp
+				}
+			)
+
+			logger.debug(f"Score update broadcasted in game {self.room_id}: P1={p1_score}, P2={p2_score}")
+		except Exception as e:
+			websocket_logger.error(f"Error handling score update: {str(e)}")
+
+	async def score_update_broadcast(self, event):
+		"""Send score update to all clients"""
+		await self.send(text_data=json.dumps({
+			'type': 'score_update',
+			'p1_score': event['p1_score'],
+			'p2_score': event['p2_score'],
+			'timestamp': event['timestamp']
+		}))
+
+	async def field_dimensions(self, data):
+		"""Handle field dimensions synchronization"""
+		try:
+			dimensions = data.get('dimensions')
+			timestamp = data.get('timestamp', 0)
+
+			websocket_logger.info(f"📨 Forwarding field dimensions to group {self.room_name}")
+
+			# Send to ALL clients in the room (including sender for full sync)
+			await self.channel_layer.group_send(
+				self.room_name,
+				{
+					'type': 'field_dimensions_update',
+					'dimensions': dimensions,
+					'timestamp': timestamp,
+				}
+			)
+
+			logger.debug(f"Field dimensions broadcasted in game {self.room_id}")
+		except Exception as e:
+			websocket_logger.error(f"Error handling field dimensions: {str(e)}")
+
+	async def field_dimensions_update(self, event):
+		"""Send field dimensions to all clients"""
+		await self.send(text_data=json.dumps({
+			'type': 'field_dimensions',
+			'dimensions': event['dimensions'],
+			'timestamp': event['timestamp']
+		}))
+
+	# Legacy handlers - keeping for backward compatibility but simplified
+	async def up(self, data):
+		player = data['player']
+		logger.debug(f"Player {player} moved up in game {self.room_id}")
 
 	async def down(self, data):
-		try:
-			player = data['player']
-			active_games[self.room_id].down(player)
-			logger.debug(f"Player {player} moved down in game {self.room_id}")
-		except KeyError:
-			logger.error(f"Game {self.room_id} not found for DOWN movement")
-		except Exception as e:
-			logger.error(f"Error in DOWN movement: {str(e)}")
+		player = data['player']
+		logger.debug(f"Player {player} moved down in game {self.room_id}")
 
 	async def stop(self, data):
-		try:
-			player = data['player']
-			active_games[self.room_id].stop(player)
-			logger.debug(f"Player {player} stopped in game {self.room_id}")
-		except KeyError:
-			logger.error(f"Game {self.room_id} not found for STOP movement")
-		except Exception as e:
-			logger.error(f"Error in STOP movement: {str(e)}")
+		player = data['player']
+		logger.debug(f"Player {player} stopped in game {self.room_id}")
 
 	async def game_init(self, data):
 		logger.info(f"Game initialization for {self.room_id}")
@@ -220,7 +359,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			logger.info(f"Game {self.room_id} resources cleaned up after game over")
 		except KeyError:
 			logger.warning(f"Game {self.room_id} already removed from active_games")
-		
+
 	async def quit_game(self, data):
 		player = data['player']
 		logger.info(f"Player {player} quit game {self.room_id}")
@@ -238,9 +377,47 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		except Exception as e:
 			logger.error(f"Error during game quit: {str(e)}", exc_info=True)
 
+	async def player_position(self, data):
+		"""Handle player position updates"""
+		try:
+			player = data.get('player')
+			position = data.get('position')
+			timestamp = data.get('timestamp', 0)
+
+			websocket_logger.info(f"📨 Forwarding player {player} position to group {self.room_name}")
+
+			# Send to ALL clients in the room (including sender for full sync)
+			await self.channel_layer.group_send(
+				self.room_name,
+				{
+					'type': 'player_position_update',
+					'player': player,
+					'position': position,
+					'timestamp': timestamp
+				}
+			)
+
+			logger.debug(f"Player {player} position broadcasted in game {self.room_id}")
+		except Exception as e:
+			websocket_logger.error(f"Error handling player position: {str(e)}")
+
+	async def player_position_update(self, event):
+		"""Broadcast player position update"""
+		await self.send(text_data=json.dumps({
+			'type': 'player_position',
+			'player': event['player'],
+			'position': event['position'],
+			'timestamp': event['timestamp']
+		}))
+
 	message_handlers = {
 		'chat_message': chat_message,
 		'player_ready': player_ready,
+		'player_input': player_input,  # Updated to use new paddle-only system
+		'player_position': player_position,  # New: Handle player positions
+		'ball_state': ball_state,      # New: Handle ball state from master
+		'score_update': score_update,  # New: Handle score updates from master
+		'field_dimensions': field_dimensions,  # New: Handle field dimensions sync
 		'up': up,
 		'down': down,
 		'stop': stop,
@@ -255,7 +432,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
 		self.channel_name = f'tournament_{self.tournament_id}'
 		websocket_logger.info(f"New tournament connection: {self.tournament_id}")
-		
+
 		# Join room group
 		await self.channel_layer.group_add(
 			self.channel_name
@@ -289,7 +466,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 	async def join(self, data):
 		logger.info(f"Join request for tournament {self.tournament_id}")
-		
+
 		# Use the authenticated user from WebSocket scope
 		user = self.scope.get('user')
 		if not user or not user.is_authenticated:
@@ -299,9 +476,9 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 				'error': 'Authentication required'
 			}))
 			return
-		
+
 		player_id = user.user_id
-		
+
 		if not self.tournament_id in active_tournaments:
 			try:
 				name = data.get('name')
