@@ -960,12 +960,21 @@ function handlePauseExit() {
 			});
 			console.log('📡 Player left event sent');
 		}
+
+		// Clean up WebRTC connection
+		console.log('🗑️ Cleaning up WebRTC connection');
+		if (typeof state.webrtcConnection.destroy === 'function') {
+			state.webrtcConnection.destroy();
+		}
+		state.webrtcConnection = null;
+		state.isWebRTC = false;
 	}
 
 	// Reset state and go to home
 	state.isStarted = false;
 	state.isPaused = false;
 	state.whoTriggeredPause = null;
+	state.isMultiplayer = false;
 
 	// Hide pause menu
 	const pauseMenu = document.getElementById('pauseMenu');
