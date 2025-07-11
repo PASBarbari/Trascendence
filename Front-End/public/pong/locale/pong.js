@@ -167,6 +167,12 @@ export function renderPong() {
 	}
 
 	function pongKeyDownHandler(event) {
+		// Handle ESC key for pause
+		if (event.key === 'Escape') {
+			handlePause();
+			return;
+		}
+
 		if (state.isPaused || !state.isStarted) {
 			return;
 		}
@@ -310,10 +316,10 @@ export function renderPong() {
 		.addEventListener("click", SETTINGS.showMainMenu);
 	document
 		.getElementById("resumeButton")
-		.addEventListener("click", SETTINGS.resumeGame);
+		.addEventListener("click", handleResume);
 	document
 		.getElementById("exitButtonPause")
-		.addEventListener("click", SETTINGS.exitGame);
+		.addEventListener("click", handlePauseExit);
 	document
 		.getElementById("player1Color")
 		.addEventListener("input", (event) => {
@@ -858,6 +864,129 @@ function checkBothPlayersReady() {
 	// This will be implemented when we receive ready signals from both players
 	console.log('🔄 Checking if both players are ready...');
 }
+
+// Pause system functions
+function handlePause() {
+	console.log('⏸️ Game paused');
+
+	// Only allow pause during active game
+	if (!state.isStarted || state.isPaused) {
+		return;
+	}
+
+	// Set game as paused
+	state.isPaused = true;
+	state.whoTriggeredPause = state.isMultiplayer ? (state.isHost ? 'player1' : 'player2') : 'player1';
+
+	// Show pause menu
+	showPauseMenu();
+
+	// If multiplayer, send pause event to other player
+	if (state.isMultiplayer && state.webrtcConnection) {
+		if (typeof state.webrtcConnection.sendGameEvent === 'function') {
+			state.webrtcConnection.sendGameEvent('pause', {
+				playerId: state.localPlayerId,
+				timestamp: Date.now()
+			});
+			console.log('📡 Pause event sent to other player');
+		}
+	}
+}
+
+function showPauseMenu() {
+	console.log('📋 Showing pause menu');
+
+	// Hide all other menus
+	const menus = ['menu', 'settingsMenu', 'nbrOfPlayerMenu', 'gameOverMenu'];
+	menus.forEach(menuId => {
+		const menu = document.getElementById(menuId);
+		if (menu) menu.style.display = 'none';
+	});
+
+	// Show pause menu
+	const pauseMenu = document.getElementById('pauseMenu');
+	if (pauseMenu) {
+		pauseMenu.style.display = 'block';
+
+		// Show/hide resume button based on who triggered pause
+		const resumeButton = document.getElementById('resumeButton');
+		if (resumeButton) {
+			if (state.isMultiplayer) {
+				// In multiplayer, only show resume button to who triggered pause
+				const canResume = (state.whoTriggeredPause === 'player1' && state.isHost) ||
+				                 (state.whoTriggeredPause === 'player2' && !state.isHost);
+				resumeButton.style.display = canResume ? 'block' : 'none';
+			} else {
+				// In single player, always show resume button
+				resumeButton.style.display = 'block';
+			}
+		}
+	}
+}
+
+function handleResume() {
+	console.log('▶️ Game resumed');
+
+	// Resume the game
+	state.isPaused = false;
+	state.whoTriggeredPause = null;
+
+	// Hide pause menu
+	const pauseMenu = document.getElementById('pauseMenu');
+	if (pauseMenu) pauseMenu.style.display = 'none';
+
+	// If multiplayer, send resume event to other player
+	if (state.isMultiplayer && state.webrtcConnection) {
+		if (typeof state.webrtcConnection.sendGameEvent === 'function') {
+			state.webrtcConnection.sendGameEvent('resume', {
+				playerId: state.localPlayerId,
+				timestamp: Date.now()
+			});
+			console.log('📡 Resume event sent to other player');
+		}
+	}
+}
+
+function handlePauseExit() {
+	console.log('🚪 Exiting from pause menu');
+
+	// If multiplayer, notify other player before leaving
+	if (state.isMultiplayer && state.webrtcConnection) {
+		if (typeof state.webrtcConnection.sendGameEvent === 'function') {
+			state.webrtcConnection.sendGameEvent('player_left', {
+				playerId: state.localPlayerId,
+				timestamp: Date.now(),
+				reason: 'Player left during pause'
+			});
+			console.log('📡 Player left event sent');
+		}
+	}
+
+	// Reset state and go to home
+	state.isStarted = false;
+	state.isPaused = false;
+	state.whoTriggeredPause = null;
+
+	// Hide pause menu
+	const pauseMenu = document.getElementById('pauseMenu');
+	if (pauseMenu) pauseMenu.style.display = 'none';
+
+	// Clean up and navigate to home
+	import('./settings.js').then(({ cleanupPong }) => {
+		cleanupPong();
+		window.navigateTo('#home');
+	}).catch(error => {
+		console.error('Error during cleanup:', error);
+		// Navigate anyway
+		window.navigateTo('#home');
+	});
+}
+
+// Make functions available globally
+window.handlePause = handlePause;
+window.handleResume = handleResume;
+window.handlePauseExit = handlePauseExit;
+window.showPauseMenu = showPauseMenu;
 
 // Export ready menu functions
 window.showReadyMenu = showReadyMenu;

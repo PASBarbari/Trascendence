@@ -604,6 +604,21 @@ class PongWebRTC {
                 console.log('🚀 Ready signal received from other player');
                 this.handlePlayerReady(data);
                 break;
+
+            case 'pause':
+                console.log('⏸️ Pause signal received from other player');
+                this.handlePauseReceived(data);
+                break;
+
+            case 'resume':
+                console.log('▶️ Resume signal received from other player');
+                this.handleResumeReceived(data);
+                break;
+
+            case 'player_left':
+                console.log('👋 Player left signal received');
+                this.handlePlayerLeft(data);
+                break;
         }
     }
 
@@ -910,6 +925,63 @@ class PongWebRTC {
         state.webrtcConnection = null;
 
         console.log('🗑️ WebRTC cleanup completato');
+    }
+
+    // Pause system handlers
+    handlePauseReceived(data) {
+        console.log('⏸️ Pause received from other player:', data);
+
+        // Set game as paused
+        state.isPaused = true;
+
+        // Set who triggered the pause (the other player)
+        state.whoTriggeredPause = state.isHost ? 'player2' : 'player1';
+
+        // Show pause menu (resume button will be hidden)
+        if (window.showPauseMenu) {
+            window.showPauseMenu();
+        }
+    }
+
+    handleResumeReceived(data) {
+        console.log('▶️ Resume received from other player:', data);
+
+        // Resume the game
+        state.isPaused = false;
+        state.whoTriggeredPause = null;
+
+        // Hide pause menu
+        const pauseMenu = document.getElementById('pauseMenu');
+        if (pauseMenu) {
+            pauseMenu.style.display = 'none';
+        }
+    }
+
+    handlePlayerLeft(data) {
+        console.log('👋 Player left received:', data);
+
+        // Stop the game
+        state.isStarted = false;
+        state.isPaused = true;
+
+        // Show notification instead of alert
+        import("../alert/alert.js").then(({ showAlertForXSeconds }) => {
+            showAlertForXSeconds('The other player has left the game.', 'alert-warning', 5, { asToast: true });
+        }).catch(error => {
+            console.error('Error loading alert module:', error);
+        });
+
+        // Clean up and go to home
+        this.destroy();
+
+        // Navigate to home
+        import("./locale/settings.js").then(({ cleanupPong }) => {
+            cleanupPong();
+            window.navigateTo('#home');
+        }).catch(error => {
+            console.error('Error during cleanup:', error);
+            window.navigateTo('#home');
+        });
     }
 }
 
