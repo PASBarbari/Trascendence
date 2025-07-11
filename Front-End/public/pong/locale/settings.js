@@ -178,7 +178,23 @@ export function cleanupPong() {
 		state.animationFrameId = null;
 	}
 
-	// 6. Reset state variables
+	// 6. Cleanup notification WebSocket duplicates (prevent multiple popups)
+	console.log('🧹 Cleaning up notification WebSocket to prevent duplicate popups');
+	try {
+		// Import and close notification WebSocket if needed
+		import('../../notification/notification.js').then(({ closeWebSocketConnection }) => {
+			if (typeof closeWebSocketConnection === 'function') {
+				console.log('🔌 Closing notification WebSocket connection');
+				closeWebSocketConnection();
+			}
+		}).catch(error => {
+			console.log('ℹ️ No notification WebSocket to cleanup:', error.message);
+		});
+	} catch (error) {
+		console.log('ℹ️ Error during notification cleanup:', error.message);
+	}
+
+	// 7. Reset state variables
 	state.ball = null;
 	state.players = [];
 	state.p1_score = 0;

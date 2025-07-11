@@ -398,6 +398,17 @@ function closeWebSocketConnection() {
 	}
 }
 
+function getWebSocketState() {
+	if (!socket) {
+		return { connected: false, state: null, readyState: null };
+	}
+	return {
+		connected: socket.readyState === WebSocket.OPEN,
+		state: socket.readyState,
+		readyState: socket.readyState
+	};
+}
+
 /**
  * EXTENSIBLE WebSocket MESSAGE HANDLER SYSTEM
  *
@@ -736,11 +747,24 @@ function handleDefaultMessage(message = null) {
 }
 
 function initializeWebSocket() {
+	// Check if WebSocket is already connected
+	if (socket && socket.readyState === WebSocket.OPEN) {
+		console.log('✅ WebSocket already connected, skipping initialization');
+		return;
+	}
+
+	// Close existing connection if it exists but is not open
+	if (socket && socket.readyState !== WebSocket.CLOSED) {
+		console.log('🔄 Closing existing WebSocket connection before creating new one');
+		socket.close();
+	}
+
 	const { token, wss_api } = getVariables();
 
 	// Use secure header-based authentication instead of query parameters
 	const wsUrl = `${wss_api}/notifications/ws/user_notifications/?token=${token}`;
 
+	console.log('🔌 Creating new WebSocket connection for notifications');
 	// Create WebSocket with token in query string
 	socket = new WebSocket(wsUrl);
 
@@ -801,10 +825,12 @@ document.addEventListener("DOMContentLoaded", function () {
 	window.getFriends = getFriends;
 	window.initializeWebSocket = initializeWebSocket;
 	window.closeWebSocketConnection = closeWebSocketConnection;
+	window.getWebSocketState = getWebSocketState;
 	window.registerMessageHandler = registerMessageHandler;
 	window.unregisterMessageHandler = unregisterMessageHandler;
 	window.getRegisteredMessageTypes = getRegisteredMessageTypes;
 	window.testMessageHandler = testMessageHandler;
+	window.socket = socket;
 });
 
 export {
@@ -813,12 +839,14 @@ export {
 	getFriends,
 	initializeWebSocket,
 	closeWebSocketConnection,
+	getWebSocketState,
 	registerMessageHandler,
 	unregisterMessageHandler,
 	getRegisteredMessageTypes,
 	testMessageHandler,
 	MESSAGE_HANDLERS,
 	sendGameInvitation,
+	socket,
 };
 
 // ==================== DYNAMIC HANDLER REGISTRATION ====================
