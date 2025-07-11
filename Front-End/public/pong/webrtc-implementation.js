@@ -648,9 +648,9 @@ class PongWebRTC {
         state.isStarted = false;
         state.isPaused = true;
 
-        // Reset ready states
-        this.hostReady = false;
-        this.guestReady = false;
+        // Reset ready states - use the correct property names
+        this.localPlayerReady = false;
+        this.otherPlayerReady = false;
 
         // Show Ready menu for guest
         this.showReadyMenu();

@@ -305,9 +305,9 @@ function restartGame() {
 			gameOverMenu.style.display = "none";
 		}
 
-		// Reset ready states
-		state.webrtcConnection.hostReady = false;
-		state.webrtcConnection.guestReady = false;
+		// Reset ready states - use the correct property names
+		state.webrtcConnection.localPlayerReady = false;
+		state.webrtcConnection.otherPlayerReady = false;
 
 		// Show Ready menu for host
 		state.webrtcConnection.showReadyMenu();
