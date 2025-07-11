@@ -6,7 +6,7 @@ export let state = {
 	cam: { x: 0, y: 20, z: 100 },
 	ring: {
 		height: 0,
-		length: (window.innerHeight * 15) / 100,
+		length: Math.max((window.innerHeight * 15) / 100, 120), // FIXED: Minimum field length of 120
 		depth: 10,
 		thickness: 3,
 	},
@@ -111,6 +111,17 @@ export let state = {
 	lastBallStateSent: 0,
 	ballStateThrottle: 50, // ~20fps for ball state sync (reduced from 60fps)
 	lastBallStateTimestamp: 0, // Track last processed ball state timestamp
+	// WebRTC per latenza ultra-bassa
+	isWebRTC: false, // Modalità WebRTC attiva
+	webrtcConnection: null, // Istanza PongWebRTC
+	inviteeWebRTCChoice: false, // Scelta del ricevente dell'invito
+	pendingGameInvitation: null, // Invito in sospeso
+	pendingWebRTCConnection: false, // Connessione WebRTC in attesa
+	webrtcRoomId: null, // Room ID per WebRTC
+
+	// Invitee game joining
+	shouldJoinExistingGame: false, // Flag per unirsi a gioco esistente
+	existingGameData: null, // Dati del gioco esistente per invitee
 	// Resize observer for container monitoring
 	resizeObserver: null,
 };

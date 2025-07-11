@@ -4,6 +4,7 @@ import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
 import { Group, remove } from "three/addons/libs/tween.module.js";
 import { moveIA } from "./ai.js";
 import { state } from "./state.js";
+import { webrtcGameLoop } from "../webrtc-implementation.js";
 
 const clock = new THREE.Clock();
 
@@ -70,14 +71,47 @@ export function animate() {
 			state.stats.update();
 		}
 
-		// In multiplayer mode, check if we should start the game automatically
-		if (state.isMultiplayer && !state.isStarted && state.socket && state.socket.readyState === WebSocket.OPEN) {
+		// WEBSOCKET AUTO-START COMMENTATO - Solo WebRTC
+		// if (state.isMultiplayer && !state.isStarted && state.socket && state.socket.readyState === WebSocket.OPEN) {
+		//	state.isStarted = true;
+		//	state.isPaused = false;
+		// }
+
+		// WebRTC auto-start check - only start when connection is ready
+		if (state.isWebRTC && !state.isStarted && state.webrtcConnection &&
+			state.webrtcConnection.dataChannel &&
+			state.webrtcConnection.dataChannel.readyState === 'open') {
+			console.log("🚀 WebRTC connection ready - starting game!");
 			state.isStarted = true;
 			state.isPaused = false;
 		}
 
 		// Update game objects only if game is started
 		if (state.isStarted) {
+			// WEBRTC: Ultra-fast communication
+			if (state.isWebRTC) {
+				webrtcGameLoop();
+
+				// Ball physics: Only Master simulates, Slave only receives
+				if (state.ball) {
+					if (state.isMaster) {
+						// Master: simulate ball physics and send to slave
+						state.ball.update(deltaTime);
+					}
+					// Slave: NEVER update ball physics locally - only receive via WebRTC
+					// Ball position is updated in applyBallState() from WebRTC messages
+				}
+
+				// Player movement: Immediate local updates + WebRTC sync
+				if (state.players[0] && state.p1_move_y !== 0) {
+					state.players[0].move(state.p1_move_y);
+				}
+				if (state.players[1] && state.p2_move_y !== 0) {
+					state.players[1].move(state.p2_move_y);
+				}
+
+			} else {
+				// WEBSOCKET/SINGLE PLAYER: Original logic
 			// Ball physics: ONLY WebSocket updates for perfect sync (both master and slave)
 			if (state.ball) {
 				if (state.isMultiplayer) {
@@ -153,6 +187,7 @@ export function animate() {
 					state.players[1].move(state.p2_move_y);
 				}
 			}
+			} // Chiude il blocco else per WEBSOCKET/SINGLE PLAYER
 		}
 
 		if (state.controls) {

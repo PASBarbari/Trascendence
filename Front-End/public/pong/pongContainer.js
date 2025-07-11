@@ -137,45 +137,48 @@ async function inviteToGame(friendId, friendName) {
 		// Get current user info for debugging
 		const { token, url_api, userId } = getVariables();
 
-		// Import the WebSocket functions and state
-		const { createGame } = await import("./multiplayer/serverSide.js");
+		// WEBRTC MODE: Ultra-low latency (SEMPRE ATTIVO)
 		const { state } = await import("./locale/state.js");
 
-		// Set up multiplayer state
+		// Set up WebRTC state
+		state.isWebRTC = true;
 		state.isMultiplayer = true;
 		state.localPlayerId = parseInt(userId);
 		state.remotePlayerId = parseInt(friendId);
+		state.isMaster = true; // Inviter is always master
 
-		// Try to create a game and establish WebSocket connection
-		try {
-			// Create game between current user and friend
-			await createGame(parseInt(userId), parseInt(friendId));
-		// Send notification using the notification system
+		// Create game in database first
+		const { createGame } = await import("./multiplayer/serverSide.js");
+		await createGame(parseInt(userId), parseInt(friendId));
+
+		// Store WebRTC connection for later use
+		state.pendingWebRTCConnection = true;
+		state.webrtcRoomId = state.room_id;
+
+		// Send notification
 		await sendPongInviteNotification(friendId, friendName);
 
-		// Show success notification
 		showNotification(
-			`🎮 Game created with ${friendName}! They will automatically join when they open Pong.`,
+			`🚀 WebRTC Game created with ${friendName}! Ultra-low latency mode. Waiting for connection...`,
 			"success",
 			6000
 		);
 
-			// Close friend list and navigate to game
-			closeFriendList();
-			// Navigate to game view
-			window.navigateTo("#pong");
-		} catch (gameError) {
-			// Reset multiplayer state on error
-			state.isMultiplayer = false;
-			state.localPlayerId = null;
-			state.remotePlayerId = null;
+		// Close friend list and navigate to game
+		closeFriendList();
+		// Navigate to game view
+		window.navigateTo("#pong");
 
-			showNotification(
-				"❌ Failed to start game. Please try again.",
-				"error"
-			);
-		}
 	} catch (error) {
+		// Reset multiplayer state on error
+		const { state } = await import("./locale/state.js");
+		state.isMultiplayer = false;
+		state.isWebRTC = false;
+		state.localPlayerId = null;
+		state.remotePlayerId = null;
+		state.pendingWebRTCConnection = false;
+		state.webrtcRoomId = null;
+
 		// Reset button state
 		const inviteBtn = document.querySelector(
 			`[data-friend-id="${friendId}"] .btn-game-invite`
@@ -184,6 +187,11 @@ async function inviteToGame(friendId, friendName) {
 			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
 			inviteBtn.disabled = false;
 		}
+
+		showNotification(
+			"❌ Failed to start game. Please try again.",
+			"error"
+		);
 	}
 }
 
@@ -191,6 +199,7 @@ async function inviteToGame(friendId, friendName) {
 async function sendPongInviteNotification(friendId, friendName) {
 	try {
 		const { userUsername, userId } = getVariables();
+		const { state } = await import("./locale/state.js");
 
 		await sendGameInvitation({
 			recipient_id: friendId,
@@ -198,7 +207,8 @@ async function sendPongInviteNotification(friendId, friendName) {
 			sender_name: userUsername,
 			sender_id: userId,
 			game_type: "Pong",
-			action: "join_pong_game"
+			action: "join_pong_game",
+			game_id: state.room_id // Include the game/room ID!
 		});
 
 		// Show a message that the friend should open Pong
@@ -351,7 +361,13 @@ function closeFriendList() {
 	}
 }
 
-// ... rest of your existing functions (showLoginBox, etc.) ...
+// Make functions available globally
+window.closeFriendList = closeFriendList;
+window.handleLocalePong = handleLocalePong;
+window.handleMultiPong = handleMultiPong;
+window.closeLoginBox = closeLoginBox;
+window.closeRegisterBox = closeRegisterBox;
+window.inviteToGame = inviteToGame;
 
 async function onHandleSubmit(e, email, password) {
 	e.preventDefault();

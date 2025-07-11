@@ -497,7 +497,9 @@ function handleGameCreatedMessage(message) {
 	const isInvitation = creatorName !== currentUserName;
 
 	if (isInvitation) {
-		// This is a game invitation - show notification and redirect to Pong
+		console.log("🎮 Game invitation received! Setting invitee state...");
+
+		// This is a game invitation - show notification
 		showAlertForXSeconds(
 			`${creatorName} invited you to play Pong!`,
 			"info",
@@ -519,9 +521,33 @@ function handleGameCreatedMessage(message) {
 			action: "join_pong_game"
 		});
 
+		// **CRITICAL**: Set global state for invitee BEFORE navigating to Pong
+		console.log("🏃‍♂️ Setting invitee state and WebRTC flags...");
+
+		// Set global variables that Pong will check
+		window.isInvitee = true;
+		window.shouldJoinExistingGame = true;
+		window.isWebRTCMode = true;
+		window.existingGameData = {
+			game_id: gameId,
+			room_id: gameId,
+			webrtc_room_id: gameId,
+			inviter_name: creatorName,
+			inviter_id: gameData.player_1?.user_id || 0,
+			player_role: "slave", // Invitee is always slave/player2
+			connection_type: "webrtc"
+		};
+
+		console.log("🎯 Global invitee state set:", {
+			isInvitee: window.isInvitee,
+			shouldJoinExistingGame: window.shouldJoinExistingGame,
+			isWebRTCMode: window.isWebRTCMode,
+			existingGameData: window.existingGameData
+		});
+
 		// Auto-redirect to pong game after a short delay
 		setTimeout(() => {
-			console.log("🎯 Auto-redirecting to Pong game...");
+			console.log("🎯 Auto-redirecting to Pong game as invitee...");
 			window.navigateTo("#pong");
 		}, 3000);
 	} else {
@@ -999,7 +1025,7 @@ function handleGameInvitationMessage(message) {
 
 	// Handle specific pong game invitation
 	if (gameData.action === "join_pong_game") {
-		console.log("🎮 Received Pong game invitation from", inviterName);
+		console.log("🎮 Received Pong game invitation from", inviterName, "Game data:", gameData);
 
 		// Store invitation in message history for user action
 		messageHistory.push({
@@ -1016,9 +1042,40 @@ function handleGameInvitationMessage(message) {
 			"info"
 		);
 
-		// Auto-redirect to pong game after a short delay
-		setTimeout(() => {
-			console.log("🎯 Auto-redirecting to Pong game...");
+		// Auto-redirect to pong game and force WebRTC
+		setTimeout(async () => {
+			console.log("🎯 Auto-redirecting to Pong game with WebRTC...");
+			console.log("🎯 Game data received:", JSON.stringify(gameData, null, 2));
+
+			// Automatically set WebRTC choice and game info
+			try {
+				const { state } = await import("../pong/locale/state.js");
+				state.inviteeWebRTCChoice = true; // Force WebRTC
+				state.pendingGameInvitation = gameData;
+
+				// Set multiplayer state for invitee
+				state.isMultiplayer = true;
+				state.isWebRTC = true;
+				state.localPlayerId = parseInt(gameData.recipient_id);
+				state.remotePlayerId = parseInt(gameData.sender_id);
+				state.isMaster = false; // Invitee is always slave
+
+				// Mark that we need to join an existing game
+				state.shouldJoinExistingGame = true;
+				state.existingGameData = gameData;
+
+				console.log(`🚀 Invitee state set:`, {
+					shouldJoinExistingGame: state.shouldJoinExistingGame,
+					localPlayerId: state.localPlayerId,
+					remotePlayerId: state.remotePlayerId,
+					isMaster: state.isMaster,
+					gameId: gameData.game_id
+				});
+			} catch (error) {
+				console.error("❌ Error setting WebRTC choice:", error);
+			}
+
+			console.log("🎯 Navigating to pong...");
 			window.navigateTo("#pong");
 		}, 3000);
 	} else {

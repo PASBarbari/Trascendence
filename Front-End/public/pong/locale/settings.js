@@ -201,11 +201,16 @@ function exitGame() {
 }
 
 function showGameOverMenu(winner) {
-	// Hide other menus
-	document.getElementById("menu").style.display = "none";
-	document.getElementById("pauseMenu").style.display = "none";
-	document.getElementById("settingsMenu").style.display = "none";
-	document.getElementById("nbrOfPlayerMenu").style.display = "none";
+	// Hide other menus with null checks
+	const menu = document.getElementById("menu");
+	const pauseMenu = document.getElementById("pauseMenu");
+	const settingsMenu = document.getElementById("settingsMenu");
+	const nbrOfPlayerMenu = document.getElementById("nbrOfPlayerMenu");
+
+	if (menu) menu.style.display = "none";
+	if (pauseMenu) pauseMenu.style.display = "none";
+	if (settingsMenu) settingsMenu.style.display = "none";
+	if (nbrOfPlayerMenu) nbrOfPlayerMenu.style.display = "none";
 
 	// Update winner text
 	document.getElementById(

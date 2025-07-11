@@ -428,8 +428,96 @@ export function renderPong() {
 
 	// Check if there's a multiplayer game waiting
 	async function checkForMultiplayerGame() {
+		console.log("🔍 Checking for multiplayer game...");
+
+		// **NEW**: Check for global invitee state set by notification system
+		console.log("🔍 Checking global invitee variables...");
+		console.log("🔍 Global state:", {
+			isInvitee: window.isInvitee,
+			shouldJoinExistingGame: window.shouldJoinExistingGame,
+			isWebRTCMode: window.isWebRTCMode,
+			existingGameData: window.existingGameData
+		});
+
+		// If invitee state is set globally, transfer to local state
+		if (window.isInvitee && window.shouldJoinExistingGame && window.existingGameData) {
+			console.log("🎯 Found global invitee state! Transferring to local state...");
+
+			// Transfer global state to local state
+			state.shouldJoinExistingGame = true;
+			state.existingGameData = window.existingGameData;
+			state.isWebRTC = window.isWebRTCMode || true; // Force WebRTC mode
+
+			// Clear global state to prevent re-processing
+			window.isInvitee = false;
+			window.shouldJoinExistingGame = false;
+			window.isWebRTCMode = false;
+			window.existingGameData = null;
+
+			console.log("🔄 Global state transferred to local state:", {
+				shouldJoinExistingGame: state.shouldJoinExistingGame,
+				existingGameData: state.existingGameData,
+				isWebRTC: state.isWebRTC
+			});
+		}
+
+		console.log("🔍 Final state flags:", {
+			shouldJoinExistingGame: state.shouldJoinExistingGame,
+			existingGameData: state.existingGameData,
+			isMultiplayer: state.isMultiplayer,
+			isWebRTC: state.isWebRTC
+		});
+
 		try {
 			const { userId, token, url_api } = getVariables();
+
+			// Check if this is an invitee joining an existing game
+			if (state.shouldJoinExistingGame && state.existingGameData) {
+				console.log("🎯 Invitee joining existing game with pre-set data");
+				console.log("🎯 Existing game data:", state.existingGameData);
+
+				// Use the game data from the invitation
+				const gameData = state.existingGameData;
+
+				// Set up game state
+				state.isMultiplayer = true;
+				state.room_id = gameData.game_id || gameData.room_id || gameData.webrtc_room_id; // Try all possible fields
+				state.localPlayerId = parseInt(userId); // Current user is the invitee
+				state.remotePlayerId = parseInt(gameData.inviter_id); // Inviter is the remote player
+				state.isMaster = false; // Invitee is always slave
+
+				// Clear the flags
+				state.shouldJoinExistingGame = false;
+				state.existingGameData = null;
+
+				// Initialize WebRTC connection directly
+				console.log("🚀 Invitee initializing WebRTC connection", {
+					room_id: state.room_id,
+					localPlayerId: state.localPlayerId,
+					remotePlayerId: state.remotePlayerId,
+					role: "slave"
+				});
+
+				state.isWebRTC = true;
+
+				setTimeout(async () => {
+					try {
+						const { initializeWebRTCGame } = await import("../webrtc-implementation.js");
+						const connection = await initializeWebRTCGame(state.room_id, false); // Invitee is not initiator
+						state.webrtcConnection = connection;
+
+						updateRoleIndicator(state.isMaster);
+						updateMultiplayerStatus("connecting", "🚀 Joining WebRTC game as invitee...");
+
+						console.log("🎮 Invitee WebRTC connection initialized successfully");
+					} catch (error) {
+						console.error("❌ Invitee WebRTC initialization failed:", error);
+						updateMultiplayerStatus("error", "❌ Failed to join WebRTC game");
+					}
+				}, 1000);
+
+				return; // Skip the regular game check
+			}
 
 			// Check if user has pending game invitations or active games
 			const response = await fetch(`${url_api}/pong/games/pending/${userId}/`, {
@@ -454,17 +542,131 @@ export function renderPong() {
 					// player_1 (game creator/inviter) = MASTER
 					// player_2 (game invitee) = SLAVE
 					const isPlayer1 = parseInt(userId) === data.active_game.player_1_id;
-					state.isMaster = isPlayer1;
+					state.isMaster = isPlayer1;					// Check if invitee chose WebRTC OR if we have a pending WebRTC connection
+					if ((state.inviteeWebRTCChoice && !isPlayer1) || state.pendingWebRTCConnection) {
+						// WEBRTC MODE: Initialize WebRTC connection
+						console.log("🚀 Initializing WebRTC connection");
 
-					// Update role indicator
-					updateRoleIndicator(state.isMaster);
+						state.isWebRTC = true;
+						state.webrtcConnection = null; // Will be set when connection is established
 
-					// Import and initialize WebSocket
-					const { initializeWebSocket } = await import("../multiplayer/serverSide.js");
-					initializeWebSocket(data.active_game.id, userId, data.active_game.opponent_id);
+						// Wait for DOM to be ready before initializing WebRTC
+						setTimeout(async () => {
+							try {
+								// Initialize WebRTC connection
+								const { initializeWebRTCGame } = await import("../webrtc-implementation.js");
+								const connection = await initializeWebRTCGame(state.room_id, state.pendingWebRTCConnection || isPlayer1);
+								state.webrtcConnection = connection;
 
-					// Show multiplayer status
-					updateMultiplayerStatus("connecting", "Connecting to multiplayer game...");
+								// Update role indicator
+								updateRoleIndicator(state.isMaster);
+								updateMultiplayerStatus("connecting", "🚀 Connecting via WebRTC...");
+
+								console.log("🎮 WebRTC connection initialized successfully");
+							} catch (error) {
+								console.error("❌ WebRTC initialization failed:", error);
+								// WEBSOCKET FALLBACK COMMENTATO - Solo WebRTC
+								// state.isWebRTC = false;
+								// state.webrtcConnection = null;
+								// const { initializeWebSocket } = await import("../multiplayer/serverSide.js");
+								// initializeWebSocket(data.active_game.id, userId, data.active_game.opponent_id);
+								// updateMultiplayerStatus("connecting", "Connecting via WebSocket...");
+
+								updateMultiplayerStatus("error", "❌ WebRTC connection failed");
+							}
+						}, 1000); // Wait 1 second for DOM to be ready					} else {
+						// WEBSOCKET MODE COMMENTATO - Solo WebRTC ora
+						console.log("🚀 Forcing WebRTC mode - WebSocket disabled");
+						console.log("🔍 No active game found, checking invitee state...");
+						console.log("🔍 Current state details:", {
+							shouldJoinExistingGame: state.shouldJoinExistingGame,
+							existingGameData: state.existingGameData,
+							inviteeWebRTCChoice: state.inviteeWebRTCChoice,
+							isMultiplayer: state.isMultiplayer,
+							isWebRTC: state.isWebRTC,
+							localPlayerId: state.localPlayerId,
+							remotePlayerId: state.remotePlayerId
+						});
+
+						// Check if we have invitee state set
+						if (state.shouldJoinExistingGame && state.existingGameData) {
+							console.log("🎯 Found invitee state, initializing WebRTC as invitee...");
+
+							// Use invitee game data
+							const gameData = state.existingGameData;
+							state.room_id = gameData.game_id || gameData.invitation_id;
+							state.isMaster = false;
+
+							// Clear flags
+							state.shouldJoinExistingGame = false;
+							state.existingGameData = null;
+
+							// Initialize WebRTC as invitee
+							state.isWebRTC = true;
+
+							setTimeout(async () => {
+								try {
+									const { initializeWebRTCGame } = await import("../webrtc-implementation.js");
+									const connection = await initializeWebRTCGame(state.room_id, false);
+									state.webrtcConnection = connection;
+
+									updateRoleIndicator(state.isMaster);
+									updateMultiplayerStatus("connecting", "🚀 Joining WebRTC game...");
+
+									console.log("🎮 Invitee WebRTC connection initialized successfully");
+								} catch (error) {
+									console.error("❌ Invitee WebRTC initialization failed:", error);
+									updateMultiplayerStatus("error", "❌ Failed to join WebRTC game");
+								}
+							}, 1000);
+						} else if (state.inviteeWebRTCChoice && state.isMultiplayer) {
+							console.log("🎯 Detected invitee with WebRTC choice but no game data - attempting manual setup");
+							console.log("🔍 Invitee state:", {
+								localPlayerId: state.localPlayerId,
+								remotePlayerId: state.remotePlayerId,
+								room_id: state.room_id
+							});
+
+							// Fallback: try to initialize with available state
+							if (state.localPlayerId && state.remotePlayerId) {
+								state.isMaster = false;
+								state.isWebRTC = true;
+
+								// Try to use localPlayerId and remotePlayerId to guess room_id
+								if (!state.room_id) {
+									// Create a room ID from player IDs as fallback
+									state.room_id = Math.min(state.localPlayerId, state.remotePlayerId) * 1000 + Math.max(state.localPlayerId, state.remotePlayerId);
+									console.log("🔧 Generated fallback room_id:", state.room_id);
+								}
+
+								setTimeout(async () => {
+									try {
+										const { initializeWebRTCGame } = await import("../webrtc-implementation.js");
+										const connection = await initializeWebRTCGame(state.room_id, false);
+										state.webrtcConnection = connection;
+
+										updateRoleIndicator(state.isMaster);
+										updateMultiplayerStatus("connecting", "🚀 Joining WebRTC game (fallback)...");
+
+										console.log("🎮 Invitee WebRTC connection initialized successfully (fallback)");
+									} catch (error) {
+										console.error("❌ Invitee WebRTC fallback initialization failed:", error);
+										updateMultiplayerStatus("error", "❌ Failed to join WebRTC game");
+									}
+								}, 1000);
+							} else {
+								console.warn("⚠️ Invitee detected but missing player IDs");
+								// Regular force WebRTC mode
+								state.isWebRTC = true;
+								state.pendingWebRTCConnection = true;
+							}
+						} else {
+							console.log("🔍 No invitee state found, using regular WebRTC mode");
+							// Regular force WebRTC mode
+							state.isWebRTC = true;
+							state.pendingWebRTCConnection = true;
+						}
+					}
 
 					// Don't auto-start the game, just prepare the multiplayer state
 					// The game will start when both players are ready

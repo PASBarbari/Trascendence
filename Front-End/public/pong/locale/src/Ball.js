@@ -54,24 +54,25 @@ export default class Ball extends THREE.EventDispatcher {
 		this.dir = this.velocity.clone().normalize();
 		this.raycaster.set(this.mesh.position, this.dir);
 
-		// Debug ball parameters
-		// Regular boundary collision code...
-		const dx =
-			this.boundaries.x - this.radius - Math.abs(this.mesh.position.x);
-		const dz =
-			this.boundaries.y - this.radius - Math.abs(this.mesh.position.z);
-		if (dx <= 0) {
-			const message = this.mesh.position.x > 0 ? "p1" : "p2";
+		// FIXED: Improved boundary collision detection
+		// Check X boundaries (goals) - ball should score and reset
+		if (Math.abs(tPos.x) >= (this.boundaries.x - this.radius)) {
+			const message = tPos.x > 0 ? "p1" : "p2";
 			this.dispatchEvent({ type: "score", message: message });
+			// Reset ball to center
 			tPos.set(0, 0, 0);
 			this.resetSpeed();
+			// Reverse X direction for new serve
 			this.velocity.x *= -1;
+			this.mesh.position.copy(tPos);
+			return; // Skip further processing this frame
 		}
-		if (dz <= 0) {
+
+		// Check Z boundaries (top/bottom walls) - ball should bounce
+		if (Math.abs(tPos.z) >= (this.boundaries.y - this.radius)) {
 			this.velocity.z *= -1;
-			tPos.z =
-				(this.boundaries.y - this.radius + dz) *
-				Math.sign(this.mesh.position.z);
+			// Clamp position to boundary
+			tPos.z = Math.sign(tPos.z) * (this.boundaries.y - this.radius);
 		}
 
 		// Debug target selection
@@ -154,8 +155,8 @@ export default class Ball extends THREE.EventDispatcher {
 				this.velocity.z = Math.sin(bounceAngle) * speed;
 
 				// Slightly increase speed with each hit to prevent endless rallies
-				this.speed *= 1.1;
-				// this.speed = Math.min(this.speed, 90); // Cap max speed
+				this.speed *= 1.05; // Reduced acceleration
+				this.speed = Math.min(this.speed, 60); // FIXED: Cap max speed to prevent infinite acceleration
 			}
 		}
 

@@ -520,3 +520,80 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					'type': 'error',
 					'error': f'Error joining tournament: {str(e)}'
 				}))
+
+class WebRTCSignalingConsumer(AsyncWebsocketConsumer):
+	"""
+	Consumer WebSocket per WebRTC Signaling - Latenza Ultra-Bassa
+	Gestisce solo lo scambio di SDP offers/answers e ICE candidates
+	"""
+	async def connect(self):
+		websocket_logger.info('WebRTC Signaling: New connection attempt')
+		self.room_id = self.scope['url_route']['kwargs']['room_id']
+		self.room_name = f'webrtc_signaling_{self.room_id}'
+
+		# Check authentication
+		user = self.scope.get('user')
+		if not user or not hasattr(user, 'user_id'):
+			websocket_logger.warning(f"Unauthenticated WebRTC signaling attempt for room {self.room_id}")
+			await self.close(code=4001)
+			return
+
+		self.player_id = user.user_id
+		websocket_logger.info(f"WebRTC Signaling: User {self.player_id} connected to room {self.room_id}")
+
+		# Join signaling room
+		await self.channel_layer.group_add(
+			self.room_name,
+			self.channel_name
+		)
+
+		await self.accept()
+
+		# Send confirmation
+		await self.send(text_data=json.dumps({
+			'type': 'signaling_connected',
+			'room_id': self.room_id,
+			'player_id': self.player_id
+		}))
+
+	async def disconnect(self, close_code):
+		websocket_logger.info(f"WebRTC Signaling disconnected: room={self.room_id}, code={close_code}")
+
+		# Leave room group
+		await self.channel_layer.group_discard(
+			self.room_name,
+			self.channel_name
+		)
+
+	async def receive(self, text_data):
+		try:
+			data = json.loads(text_data)
+			message_type = data.get('type')
+
+			websocket_logger.debug(f"WebRTC Signaling message: type={message_type}, room={self.room_id}")
+
+			# Relay signaling messages to other peers in the room
+			if message_type in ['offer', 'answer', 'ice-candidate']:
+				await self.channel_layer.group_send(
+					self.room_name,
+					{
+						'type': 'webrtc_signaling_message',
+						'message': data,
+						'sender_channel': self.channel_name  # Don't send back to sender
+					}
+				)
+			else:
+				websocket_logger.warning(f"Unknown WebRTC signaling message type: {message_type}")
+
+		except json.JSONDecodeError:
+			websocket_logger.error(f"Invalid JSON in WebRTC signaling: {text_data[:100]}")
+		except Exception as e:
+			websocket_logger.exception(f"Error processing WebRTC signaling message: {str(e)}")
+
+	async def webrtc_signaling_message(self, event):
+		"""Relay signaling messages to other peers (not back to sender)"""
+		# Don't send message back to the sender
+		if event.get('sender_channel') == self.channel_name:
+			return
+
+		await self.send(text_data=json.dumps(event['message']))
