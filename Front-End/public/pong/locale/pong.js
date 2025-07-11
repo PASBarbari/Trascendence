@@ -141,10 +141,13 @@ export function renderPong() {
 
 			<!-- Ready Menu for WebRTC Multiplayer -->
 			<div id="readyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
-  			<h2 class="text-light mb-4">Pong WebRTC</h2>
+  			<h2 class="text-light mb-3">Pong WebRTC</h2>
  			<div class="d-grid gap-3">
 				<button id="readyButton" class="btn btn-success btn-lg" disabled>
 					<i class="fas fa-rocket me-2"></i>Ready
+				</button>
+				<button id="readyExitButton" class="btn btn-primary btn-lg">
+					<i class="fas fa-home me-2"></i>Exit
 				</button>
 			</div>
 			<div id="readyStatus" class="text-light mt-3">
@@ -349,6 +352,10 @@ export function renderPong() {
 	document
 		.getElementById("readyButton")
 		.addEventListener("click", handleReadyButtonClick);
+
+	document
+		.getElementById("readyExitButton")
+		.addEventListener("click", handleReadyExitButtonClick);
 
 	// Only show main menu if not in WebRTC multiplayer mode
 	if (!state.isWebRTC && !state.isMultiplayer) {
@@ -768,6 +775,35 @@ function handleReadyButtonClick() {
 	}
 }
 
+function handleReadyExitButtonClick() {
+	console.log('🚪 Ready Exit button clicked - returning to home');
+
+	// If in WebRTC mode, disconnect properly
+	if (state.isWebRTC && state.webrtcConnection) {
+		console.log('🔌 Disconnecting WebRTC connection');
+		state.webrtcConnection.disconnect();
+		state.webrtcConnection = null;
+		state.isWebRTC = false;
+		state.isMultiplayer = false;
+	}
+
+	// Hide ready menu
+	const readyMenu = document.getElementById('readyMenu');
+	if (readyMenu) {
+		readyMenu.style.display = 'none';
+	}
+
+	// Clean up and navigate to home
+	import('./settings.js').then(({ cleanupPong }) => {
+		cleanupPong();
+		window.navigateTo('#home');
+	}).catch(error => {
+		console.error('Error during cleanup:', error);
+		// Navigate anyway
+		window.navigateTo('#home');
+	});
+}
+
 function showReadyMenu() {
 	console.log('📋 Showing ready menu');
 
@@ -827,6 +863,7 @@ function checkBothPlayersReady() {
 window.showReadyMenu = showReadyMenu;
 window.enableReadyButton = enableReadyButton;
 window.handleReadyButtonClick = handleReadyButtonClick;
+window.handleReadyExitButtonClick = handleReadyExitButtonClick;
 
 // Export for external usage
 export function updateMultiplayerStatus(status, message) {
