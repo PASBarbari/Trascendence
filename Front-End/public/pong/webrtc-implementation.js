@@ -644,37 +644,26 @@ class PongWebRTC {
             }
         }
 
-        // Restart game
-        state.isStarted = true;
-        state.isPaused = false;
+        // DON'T restart game immediately - show Ready menu instead
+        state.isStarted = false;
+        state.isPaused = true;
 
-        console.log('✅ Game restarted successfully on guest side');
+        // Reset ready states
+        this.hostReady = false;
+        this.guestReady = false;
+
+        // Show Ready menu for guest
+        this.showReadyMenu();
+
+        console.log('✅ Game reset successfully on guest side, showing Ready menu');
     }
 
     handleRematchRequest(data) {
         console.log('🔄 Processing rematch request from guest');
 
-        // Host automatically accepts and starts rematch
-        import("./locale/settings.js").then(({ resetGame }) => {
-            // Reset game state
-            resetGame();
-            state.isStarted = true;
-            state.isPaused = false;
-
-            // Hide game over menu for host
-            const gameOverMenu = document.getElementById("gameOverMenu");
-            if (gameOverMenu) {
-                gameOverMenu.style.display = "none";
-            }
-
-            // Send rematch signal to guest
-            this.sendGameEvent('rematch', {
-                p1_score: state.p1_score,
-                p2_score: state.p2_score,
-                timestamp: Date.now()
-            });
-
-            console.log('✅ Rematch accepted and started by host');
+        // Let the restartGame function handle the rematch logic
+        import("./locale/settings.js").then(({ restartGame }) => {
+            restartGame();
         }).catch(error => {
             console.error('Error handling rematch request:', error);
         });
@@ -805,6 +794,17 @@ class PongWebRTC {
         // Use the ready menu function from pong.js
         if (window.showReadyMenu) {
             window.showReadyMenu();
+
+            // If WebRTC connection is already established (e.g., during rematch),
+            // enable the ready button immediately
+            if (this.dataChannel && this.dataChannel.readyState === 'open') {
+                console.log('🔗 WebRTC already connected, enabling ready button immediately');
+                setTimeout(() => {
+                    if (window.enableReadyButton) {
+                        window.enableReadyButton();
+                    }
+                }, 100);
+            }
         } else {
             console.warn('showReadyMenu function not available yet - will be called later');
             // DO NOT start game automatically! Wait for Ready menu.
@@ -828,6 +828,11 @@ class PongWebRTC {
 
         // Disabilita AI
         state.IAisActive = false;
+
+        // Reset ball speed and ensure it's ready to move
+        if (state.ball && state.ball.resetSpeed) {
+            state.ball.resetSpeed();
+        }
 
         // Aggiorna UI status
         this.updateConnectionStatus('connected');

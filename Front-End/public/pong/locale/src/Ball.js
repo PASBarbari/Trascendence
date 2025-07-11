@@ -15,7 +15,8 @@ export default class Ball extends THREE.EventDispatcher {
 		this.material = state.mat.ball;
 		this.mesh = new THREE.Mesh(this.geometry, this.material);
 
-		this.velocity.multiplyScalar(this.speed);
+		// Initialize velocity to zero - will be set when game starts
+		this.velocity.set(0, 0, 0);
 
 		this.raycaster = new THREE.Raycaster();
 		this.raycaster.near = 0;
@@ -32,11 +33,20 @@ export default class Ball extends THREE.EventDispatcher {
 	}
 
 	resetSpeed() {
+		console.log(`🔄 Ball speed reset! Previous speed: ${this.speed}, resetting to 25`);
 		this.speed = 25;
+		// Set initial velocity direction (right) and speed
+		this.velocity.set(1, 0, 0);
 		this.velocity.normalize().multiplyScalar(this.speed);
+		console.log(`✅ Ball speed reset complete. New velocity: x=${this.velocity.x.toFixed(2)}, z=${this.velocity.z.toFixed(2)}`);
 	}
 
 	update(dt) {
+		// Only update ball movement if game is started
+		if (!state.isStarted) {
+			return;
+		}
+
 		// Calculate number of sub-steps based on ball speed
 		const substeps = Math.max(1, Math.ceil(this.speed / 15));
 		const subDt = dt / substeps;
@@ -58,6 +68,7 @@ export default class Ball extends THREE.EventDispatcher {
 		// Check X boundaries (goals) - ball should score and reset
 		if (Math.abs(tPos.x) >= (this.boundaries.x - this.radius)) {
 			const message = tPos.x > 0 ? "p1" : "p2";
+			console.log(`⚽ GOAL! Ball crossed boundary, scoring for ${message}`);
 			this.dispatchEvent({ type: "score", message: message });
 			// Reset ball to center
 			tPos.set(0, 0, 0);
@@ -145,6 +156,9 @@ export default class Ball extends THREE.EventDispatcher {
 				// Calculate new velocity components
 				const speed = this.speed;
 
+				// Log collision and speed
+				console.log(`🏓 Ball collision with Player ${playerIndex + 1}! Speed before: ${speed.toFixed(2)}`);
+
 				// FIX: Reverse X direction based on which player was hit
 				// If player 0 (left), ball should go right (positive X)
 				// If player 1 (right), ball should go left (negative X)
@@ -155,8 +169,15 @@ export default class Ball extends THREE.EventDispatcher {
 				this.velocity.z = Math.sin(bounceAngle) * speed;
 
 				// Slightly increase speed with each hit to prevent endless rallies
-				this.speed *= 1.05; // Reduced acceleration
-				this.speed = Math.min(this.speed, 60); // FIXED: Cap max speed to prevent infinite acceleration
+				// More aggressive acceleration like classic Pong
+				this.speed *= 1.1; // Increased from 1.05 to 1.1 for more aggressive acceleration
+				this.speed = Math.min(this.speed, 100); // Increased max speed from 60 to 100
+
+				console.log(`🚀 Ball speed after acceleration: ${this.speed.toFixed(2)}`);
+				console.log(`📐 Ball velocity: x=${this.velocity.x.toFixed(2)}, z=${this.velocity.z.toFixed(2)}`);
+
+				// Update velocity magnitude to match new speed
+				this.velocity.normalize().multiplyScalar(this.speed);
 			}
 		}
 

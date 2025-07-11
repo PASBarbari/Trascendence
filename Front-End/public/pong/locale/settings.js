@@ -289,18 +289,42 @@ function restartGame() {
 		return;
 	}
 
-	// If we're host or single player, restart locally
-	resetGame();
-	state.isStarted = true;
-	state.isPaused = false;
-
-	// Send rematch signal to guest if in WebRTC multiplayer mode
+	// If we're host in WebRTC mode, use the WebRTC rematch flow
 	if (state.isMultiplayer && state.isWebRTC && state.webrtcConnection && state.isHost) {
+		console.log('🔄 Host initiating rematch via WebRTC system');
+
+		// Reset game state
+		resetGame();
+		// DON'T start game immediately - show Ready menu instead
+		state.isStarted = false;
+		state.isPaused = true;
+
+		// Hide game over menu for host
+		const gameOverMenu = document.getElementById("gameOverMenu");
+		if (gameOverMenu) {
+			gameOverMenu.style.display = "none";
+		}
+
+		// Reset ready states
+		state.webrtcConnection.hostReady = false;
+		state.webrtcConnection.guestReady = false;
+
+		// Show Ready menu for host
+		state.webrtcConnection.showReadyMenu();
+
+		// Send rematch signal to guest
 		state.webrtcConnection.sendGameEvent('rematch', {
 			p1_score: state.p1_score,
 			p2_score: state.p2_score,
 			timestamp: Date.now()
 		});
-		console.log('🔄 Rematch signal sent to guest');
+
+		console.log('✅ Host rematch initiated - showing Ready menu');
+		return;
 	}
+
+	// If single player, restart immediately
+	resetGame();
+	state.isStarted = true;
+	state.isPaused = false;
 }
