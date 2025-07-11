@@ -44,10 +44,10 @@ export function renderPong() {
 				<span id="connection-status">Connecting...</span>
 			</div>
 
-			<!-- Master/Slave Role Indicator -->
+			<!-- Host/Guest Role Indicator -->
 			<div id="role-indicator" class="position-absolute top-0 end-0 p-2 bg-primary bg-opacity-75 rounded-start text-light" style="display: none;">
 				<i class="fas fa-crown me-2"></i>
-				<span id="role-status">Master</span>
+				<span id="role-status">Host</span>
 			</div>
 
 			<!-- Main Menu -->
@@ -133,7 +133,22 @@ export function renderPong() {
   			<h3 id="winnerAnnouncement" class="text-warning mb-4">Player 1 Wins!</h3>
  			<div class="d-grid gap-3">
 				<button id="restartGameButton" class="btn btn-success btn-lg">Rematch</button>
-				<button id="mainMenuButton" class="btn btn-primary btn-lg">Back to Main Menu</button>
+				<button id="mainMenuButton" class="btn btn-primary btn-lg">
+					<i class="fas fa-home me-2"></i>Exit
+				</button>
+			</div>
+			</div>
+
+			<!-- Ready Menu for WebRTC Multiplayer -->
+			<div id="readyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+  			<h2 class="text-light mb-4">Pong WebRTC</h2>
+ 			<div class="d-grid gap-3">
+				<button id="readyButton" class="btn btn-success btn-lg" disabled>
+					<i class="fas fa-rocket me-2"></i>Ready
+				</button>
+			</div>
+			<div id="readyStatus" class="text-light mt-3">
+				<small><i class="fas fa-spinner fa-spin me-2"></i>Connecting...</small>
 			</div>
 			</div>
 		</div>
@@ -161,7 +176,7 @@ export function renderPong() {
 				if (state.isMultiplayer) {
 					// In multiplayer: only set move_y for input calculation, DON'T apply position locally
 					// Position sync will be handled by WebSocket messages only
-					if (state.isMaster) {
+					if (state.isHost) {
 						state.p1_move_y = -state.player_speed;
 					} else {
 						state.p2_move_y = -state.player_speed;
@@ -176,7 +191,7 @@ export function renderPong() {
 				if (state.isMultiplayer) {
 					// In multiplayer: only set move_y for input calculation, DON'T apply position locally
 					// Position sync will be handled by WebSocket messages only
-					if (state.isMaster) {
+					if (state.isHost) {
 						state.p1_move_y = state.player_speed;
 					} else {
 						state.p2_move_y = state.player_speed;
@@ -188,8 +203,8 @@ export function renderPong() {
 				break;
 			case 'ArrowUp':
 				if (state.isMultiplayer) {
-					// In multiplayer: only slave (player 2) uses arrow keys
-					if (!state.isMaster) {
+					// In multiplayer: only guest (player 2) uses arrow keys
+					if (!state.isHost) {
 						state.p2_move_y = -state.player_speed;
 					}
 				} else {
@@ -199,8 +214,8 @@ export function renderPong() {
 				break;
 			case 'ArrowDown':
 				if (state.isMultiplayer) {
-					// In multiplayer: only slave (player 2) uses arrow keys
-					if (!state.isMaster) {
+					// In multiplayer: only guest (player 2) uses arrow keys
+					if (!state.isHost) {
 						state.p2_move_y = state.player_speed;
 					}
 				} else {
@@ -221,7 +236,7 @@ export function renderPong() {
 			case 'S':
 				if (state.isMultiplayer) {
 					// In multiplayer: stop input calculation, positions will be synced via WebSocket
-					if (state.isMaster) {
+					if (state.isHost) {
 						state.p1_move_y = 0;
 					} else {
 						state.p2_move_y = 0;
@@ -234,8 +249,8 @@ export function renderPong() {
 			case 'ArrowUp':
 			case 'ArrowDown':
 				if (state.isMultiplayer) {
-					// In multiplayer: only slave (player 2) uses arrow keys
-					if (!state.isMaster) {
+					// In multiplayer: only guest (player 2) uses arrow keys
+					if (!state.isHost) {
 						state.p2_move_y = 0;
 					}
 				} else {
@@ -330,11 +345,22 @@ export function renderPong() {
 		.getElementById("mainMenuButton")
 		.addEventListener("click", SETTINGS.restartMenu);
 
-	document.getElementById("menu").style.display = "block";
+	// Ready menu listeners
+	document
+		.getElementById("readyButton")
+		.addEventListener("click", handleReadyButtonClick);
+
+	// Only show main menu if not in WebRTC multiplayer mode
+	if (!state.isWebRTC && !state.isMultiplayer) {
+		document.getElementById("menu").style.display = "block";
+	}
 
 	setTimeout(() => {
 		SETUP.setupGame();
-		GAME.animate();
+		// Only start game animation if not in WebRTC mode (WebRTC will start it via Ready menu)
+		if (!state.isWebRTC && !state.isMultiplayer) {
+			GAME.animate();
+		}
 	}, 100);
 
 	//Resize handler
@@ -401,8 +427,8 @@ export function renderPong() {
 		}
 	}
 
-	// Function to update role indicator (Master/Slave)
-	function updateRoleIndicator(isMaster) {
+	// Function to update role indicator (Host/Guest)
+	function updateRoleIndicator(isHost) {
 		const roleIndicator = document.getElementById('role-indicator');
 		const roleText = document.getElementById('role-status');
 		const roleIcon = roleIndicator?.querySelector('i');
@@ -411,14 +437,14 @@ export function renderPong() {
 
 		if (state.isMultiplayer) {
 			roleIndicator.style.display = 'block';
-			roleText.textContent = isMaster ? 'Master' : 'Slave';
+			roleText.textContent = isHost ? 'Host' : 'Guest';
 
 			if (roleIcon) {
-				roleIcon.className = isMaster ? 'fas fa-crown me-2 text-warning' : 'fas fa-user me-2 text-info';
+				roleIcon.className = isHost ? 'fas fa-crown me-2 text-warning' : 'fas fa-user me-2 text-info';
 			}
 
 			// Update background color
-			roleIndicator.className = isMaster
+			roleIndicator.className = isHost
 				? 'position-absolute top-0 end-0 p-2 bg-warning bg-opacity-75 rounded-start text-dark'
 				: 'position-absolute top-0 end-0 p-2 bg-info bg-opacity-75 rounded-start text-light';
 		} else {
@@ -484,7 +510,7 @@ export function renderPong() {
 				state.room_id = gameData.game_id || gameData.room_id || gameData.webrtc_room_id; // Try all possible fields
 				state.localPlayerId = parseInt(userId); // Current user is the invitee
 				state.remotePlayerId = parseInt(gameData.inviter_id); // Inviter is the remote player
-				state.isMaster = false; // Invitee is always slave
+				state.isHost = false; // Invitee is always guest
 
 				// Clear the flags
 				state.shouldJoinExistingGame = false;
@@ -495,7 +521,7 @@ export function renderPong() {
 					room_id: state.room_id,
 					localPlayerId: state.localPlayerId,
 					remotePlayerId: state.remotePlayerId,
-					role: "slave"
+					role: "guest"
 				});
 
 				state.isWebRTC = true;
@@ -506,7 +532,7 @@ export function renderPong() {
 						const connection = await initializeWebRTCGame(state.room_id, false); // Invitee is not initiator
 						state.webrtcConnection = connection;
 
-						updateRoleIndicator(state.isMaster);
+						updateRoleIndicator(state.isHost);
 						updateMultiplayerStatus("connecting", "🚀 Joining WebRTC game as invitee...");
 
 						console.log("🎮 Invitee WebRTC connection initialized successfully");
@@ -538,11 +564,11 @@ export function renderPong() {
 					state.localPlayerId = parseInt(userId);
 					state.remotePlayerId = data.active_game.opponent_id;
 
-					// Determine master/slave roles based on who is player_1 (creator) vs player_2 (invitee)
-					// player_1 (game creator/inviter) = MASTER
-					// player_2 (game invitee) = SLAVE
+					// Determine host/guest roles based on who is player_1 (creator) vs player_2 (invitee)
+					// player_1 (game creator/inviter) = HOST
+					// player_2 (game invitee) = GUEST
 					const isPlayer1 = parseInt(userId) === data.active_game.player_1_id;
-					state.isMaster = isPlayer1;					// Check if invitee chose WebRTC OR if we have a pending WebRTC connection
+					state.isHost = isPlayer1;					// Check if invitee chose WebRTC OR if we have a pending WebRTC connection
 					if ((state.inviteeWebRTCChoice && !isPlayer1) || state.pendingWebRTCConnection) {
 						// WEBRTC MODE: Initialize WebRTC connection
 						console.log("🚀 Initializing WebRTC connection");
@@ -559,7 +585,7 @@ export function renderPong() {
 								state.webrtcConnection = connection;
 
 								// Update role indicator
-								updateRoleIndicator(state.isMaster);
+								updateRoleIndicator(state.isHost);
 								updateMultiplayerStatus("connecting", "🚀 Connecting via WebRTC...");
 
 								console.log("🎮 WebRTC connection initialized successfully");
@@ -595,7 +621,7 @@ export function renderPong() {
 							// Use invitee game data
 							const gameData = state.existingGameData;
 							state.room_id = gameData.game_id || gameData.invitation_id;
-							state.isMaster = false;
+							state.isHost = false;
 
 							// Clear flags
 							state.shouldJoinExistingGame = false;
@@ -610,7 +636,7 @@ export function renderPong() {
 									const connection = await initializeWebRTCGame(state.room_id, false);
 									state.webrtcConnection = connection;
 
-									updateRoleIndicator(state.isMaster);
+									updateRoleIndicator(state.isHost);
 									updateMultiplayerStatus("connecting", "🚀 Joining WebRTC game...");
 
 									console.log("🎮 Invitee WebRTC connection initialized successfully");
@@ -629,7 +655,7 @@ export function renderPong() {
 
 							// Fallback: try to initialize with available state
 							if (state.localPlayerId && state.remotePlayerId) {
-								state.isMaster = false;
+								state.isHost = false;
 								state.isWebRTC = true;
 
 								// Try to use localPlayerId and remotePlayerId to guess room_id
@@ -645,7 +671,7 @@ export function renderPong() {
 										const connection = await initializeWebRTCGame(state.room_id, false);
 										state.webrtcConnection = connection;
 
-										updateRoleIndicator(state.isMaster);
+										updateRoleIndicator(state.isHost);
 										updateMultiplayerStatus("connecting", "🚀 Joining WebRTC game (fallback)...");
 
 										console.log("🎮 Invitee WebRTC connection initialized successfully (fallback)");
@@ -679,8 +705,128 @@ export function renderPong() {
 
 	// Export functions to make them available outside
 	window.updateMultiplayerStatus = updateMultiplayerStatus;
-	window.updateRoleIndicator = updateRoleIndicator;
+	window.updateRoleIndicator = function(isHost) {
+		const roleIndicator = document.getElementById('role-indicator');
+		const roleText = document.getElementById('role-status');
+		const roleIcon = roleIndicator?.querySelector('i');
+
+		if (!roleIndicator || !roleText) return;
+
+		if (state.isMultiplayer) {
+			roleIndicator.style.display = 'block';
+			roleText.textContent = isHost ? 'Host' : 'Guest';
+
+			if (roleIcon) {
+				roleIcon.className = isHost ? 'fas fa-crown me-2 text-warning' : 'fas fa-user me-2 text-info';
+			}
+
+			// Update background color
+			roleIndicator.className = isHost
+				? 'position-absolute top-0 end-0 p-2 bg-warning bg-opacity-75 rounded-start text-dark'
+				: 'position-absolute top-0 end-0 p-2 bg-info bg-opacity-75 rounded-start text-light';
+		} else {
+			roleIndicator.style.display = 'none';
+		}
+	};
 }
+
+// Ready menu handlers
+function handleReadyButtonClick() {
+	console.log('🚀 Ready button clicked');
+
+	if (state.isWebRTC && state.webrtcConnection) {
+		// Mark local player as ready
+		state.webrtcConnection.localPlayerReady = true;
+
+		// Send ready signal to other player
+		state.webrtcConnection.sendGameEvent('ready', {
+			playerId: state.localPlayerId,
+			timestamp: Date.now()
+		});
+
+		// Disable button and show waiting message
+		const readyButton = document.getElementById('readyButton');
+		const readyStatus = document.getElementById('readyStatus');
+
+		if (readyButton) {
+			readyButton.disabled = true;
+			readyButton.innerHTML = '<i class="fas fa-check me-2"></i>Ready!';
+		}
+
+		if (readyStatus) {
+			// Check if other player is already ready
+			if (state.webrtcConnection.otherPlayerReady) {
+				readyStatus.innerHTML = '<small><i class="fas fa-rocket text-success me-2"></i>Both players ready! Starting game...</small>';
+				// Start game if both are ready
+				setTimeout(() => {
+					state.webrtcConnection.startGameFromReady();
+				}, 1000);
+			} else {
+				readyStatus.innerHTML = '<small><i class="fas fa-clock me-2"></i>Waiting for other player...</small>';
+			}
+		}
+	}
+}
+
+function showReadyMenu() {
+	console.log('📋 Showing ready menu');
+
+	// Hide all other menus
+	const menu = document.getElementById('menu');
+	const pauseMenu = document.getElementById('pauseMenu');
+	const gameOverMenu = document.getElementById('gameOverMenu');
+
+	if (menu) menu.style.display = 'none';
+	if (pauseMenu) pauseMenu.style.display = 'none';
+	if (gameOverMenu) gameOverMenu.style.display = 'none';
+
+	// Show ready menu
+	const readyMenu = document.getElementById('readyMenu');
+	if (readyMenu) {
+		readyMenu.style.display = 'block';
+
+		// Keep button disabled and status as "Connecting..." initially
+		const readyButton = document.getElementById('readyButton');
+		const readyStatus = document.getElementById('readyStatus');
+
+		if (readyButton) {
+			readyButton.disabled = true;
+			readyButton.innerHTML = '<i class="fas fa-rocket me-2"></i>Ready';
+		}
+
+		if (readyStatus) {
+			readyStatus.innerHTML = '<small><i class="fas fa-spinner fa-spin me-2"></i>Connecting...</small>';
+		}
+	}
+}
+
+// Function to enable ready button when connection is established
+function enableReadyButton() {
+	console.log('🔗 Enabling ready button - connection established');
+
+	const readyButton = document.getElementById('readyButton');
+	const readyStatus = document.getElementById('readyStatus');
+
+	if (readyButton) {
+		readyButton.disabled = false;
+		readyButton.innerHTML = '<i class="fas fa-rocket me-2"></i>Ready';
+	}
+
+	if (readyStatus) {
+		const role = state.isHost ? 'Host' : 'Guest';
+		readyStatus.innerHTML = `<small><i class="fas fa-check text-success me-2"></i>Connected! You are ${role}</small>`;
+	}
+}
+
+function checkBothPlayersReady() {
+	// This will be implemented when we receive ready signals from both players
+	console.log('🔄 Checking if both players are ready...');
+}
+
+// Export ready menu functions
+window.showReadyMenu = showReadyMenu;
+window.enableReadyButton = enableReadyButton;
+window.handleReadyButtonClick = handleReadyButtonClick;
 
 // Export for external usage
 export function updateMultiplayerStatus(status, message) {
@@ -689,8 +835,8 @@ export function updateMultiplayerStatus(status, message) {
 	}
 }
 
-export function updateRoleIndicator(isMaster) {
+export function updateRoleIndicator(isHost) {
 	if (window.updateRoleIndicator) {
-		window.updateRoleIndicator(isMaster);
+		window.updateRoleIndicator(isHost);
 	}
 }

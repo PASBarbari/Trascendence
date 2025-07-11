@@ -75,8 +75,8 @@ export function setupGame() {
 
 	state.ball.addEventListener("score", (event) => {
 
-		// Only process score changes if we're not in multiplayer OR we're the master
-		if (!state.isMultiplayer || state.isMaster) {
+		// Only process score changes if we're not in multiplayer OR we're the host
+		if (!state.isMultiplayer || state.isHost) {
 			if (event.message === "p1") {
 				state.p1_score++;
 			} else if (event.message === "p2") {
@@ -84,15 +84,21 @@ export function setupGame() {
 			}
 			updateScore(event.message);
 
-			// Send score update to slave if we're in multiplayer and master
-			if (state.isMultiplayer && state.isMaster && state.socket && state.socket.readyState === WebSocket.OPEN) {
-				const scoreMessage = {
-					type: "score_update",
-					p1_score: state.p1_score,
-					p2_score: state.p2_score,
-					timestamp: Date.now()
-				};
-				state.socket.send(JSON.stringify(scoreMessage));
+			// Send score update to guest via WebRTC if available, otherwise WebSocket
+			if (state.isMultiplayer && state.isHost) {
+				// Use WebRTC if available, otherwise fallback to WebSocket
+				if (state.isWebRTC && state.webrtcConnection) {
+					// Use the correct WebRTC method for score updates
+					state.webrtcConnection.sendScoreUpdate(state.p1_score, state.p2_score);
+				} else if (state.socket && state.socket.readyState === WebSocket.OPEN) {
+					const scoreMessage = {
+						type: "score_update",
+						p1_score: state.p1_score,
+						p2_score: state.p2_score,
+						timestamp: Date.now()
+					};
+					state.socket.send(JSON.stringify(scoreMessage));
+				}
 			}
 
 			if (state.p1_score >= state.maxScore) {
@@ -106,7 +112,7 @@ export function setupGame() {
 				game_over();
 			}
 		}
-		// If we're slave, ignore score events - they'll be updated via WebSocket
+		// If we're guest, ignore score events - they'll be updated via WebRTC/WebSocket
 	});
 
 	// //Game setup

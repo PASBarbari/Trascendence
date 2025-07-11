@@ -49,7 +49,7 @@ function handlePlayerReady(message) {
 }
 
 function handleBallState(message) {
-    // BOTH Master and Slave should receive and apply ball state for perfect sync
+    // BOTH Host and Guest should receive and apply ball state for perfect sync
     if (!state.isMultiplayer) {
         return; // Only multiplayer games should receive ball state updates
     }
@@ -90,7 +90,7 @@ function handleBallState(message) {
 
     state.ballMessageStats.applied++;
 
-    // Apply the latest ball state (BOTH Master and Slave use WebSocket data for perfect sync)
+    // Apply the latest ball state (BOTH Host and Guest use WebSocket data for perfect sync)
     const latestState = state.latestBallState;
     state.ball.mesh.position.set(...latestState.position);
     if (state.ball.velocity) {
@@ -108,7 +108,7 @@ function handleScoreUpdate(message) {
 		return; // Only multiplayer games should receive score updates
 	}
 
-	// Both master and slave can receive score updates for better sync
+	// Both host and guest can receive score updates for better sync
 
 	const { p1_score, p2_score, timestamp } = message;
 
@@ -142,17 +142,17 @@ function startMultiplayerGame(message) {
         state.player2Id = player2Id;
 
         // SIMPLE AND CLEAR MAPPING:
-        // Master = always controls left paddle (P1)
-        // Slave = always controls right paddle (P2)
-        // Player 1 (player_1_id) is always the Master
-        // Player 2 (player_2_id) is always the Slave
-        state.isMaster = (yourPlayerId === player1Id);
+        // Host = always controls left paddle (P1)
+        // Guest = always controls right paddle (P2)
+        // Player 1 (player_1_id) is always the Host
+        // Player 2 (player_2_id) is always the Guest
+        state.isHost = (yourPlayerId === player1Id);
         state.localPlayerId = yourPlayerId;
         state.remotePlayerId = (yourPlayerId === player1Id) ? player2Id : player1Id;
 
         // Update role indicator
         import("../locale/pong.js").then(({ updateRoleIndicator }) => {
-            updateRoleIndicator(state.isMaster);
+            updateRoleIndicator(state.isHost);
         }).catch(() => {
             // Role indicator not available during initial setup
         });
@@ -184,8 +184,8 @@ function startGameAfterSetup() {
 	// Disable AI in multiplayer
 	state.IAisActive = false;
 
-	// Master synchronizes field dimensions with all clients
-	if (state.isMaster) {
+	// Host synchronizes field dimensions with all clients
+	if (state.isHost) {
 		setTimeout(() => {
 			syncFieldDimensions();
 		}, 500); // Small delay to ensure all clients are ready
@@ -218,7 +218,7 @@ function handleRemotePaddleMovement(message) {
 	ensurePlayerSpeedIsValid();
 
 	// Determine which paddle to move based on the player ID and their role
-	// We need to determine if the remotePlayerId is the master or slave
+	// We need to determine if the remotePlayerId is the host or guest
 	// If this is our own movement echoed back, apply it for consistency
 	// If this is the other player's movement, apply it to their paddle
 
@@ -227,10 +227,10 @@ function handleRemotePaddleMovement(message) {
 
 	if (isOwnMovement) {
 		// This is our own movement echoed back from server - apply for consistency
-		paddleNumber = state.isMaster ? 1 : 2;
+		paddleNumber = state.isHost ? 1 : 2;
 	} else {
 		// This is the remote player's movement
-		// If we are master, remote is slave (P2). If we are slave, remote is master (P1)
+		// If we are host, remote is guest (P2). If we are guest, remote is host (P1)
 		paddleNumber = state.isMaster ? 2 : 1;
 	}
 
@@ -323,7 +323,7 @@ async function createGame(player_1, player_2) {
 
 	// Update role indicator
 	import("../locale/pong.js").then(({ updateRoleIndicator }) => {
-		updateRoleIndicator(state.isMaster);
+		updateRoleIndicator(state.isHost);
 	}).catch(() => {
 		// Ignore if not available
 	});

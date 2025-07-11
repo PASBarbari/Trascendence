@@ -8,9 +8,9 @@ import { webrtcGameLoop } from "../webrtc-implementation.js";
 
 const clock = new THREE.Clock();
 
-// Function to send ball state to slave (only for master)
-function sendBallStateToSlave() {
-	if (!state.isMaster || !state.socket || state.socket.readyState !== WebSocket.OPEN) {
+// Function to send ball state to guest (only for host)
+function sendBallStateToGuest() {
+	if (!state.isHost || !state.socket || state.socket.readyState !== WebSocket.OPEN) {
 		return;
 	}
 
@@ -77,14 +77,8 @@ export function animate() {
 		//	state.isPaused = false;
 		// }
 
-		// WebRTC auto-start check - only start when connection is ready
-		if (state.isWebRTC && !state.isStarted && state.webrtcConnection &&
-			state.webrtcConnection.dataChannel &&
-			state.webrtcConnection.dataChannel.readyState === 'open') {
-			console.log("🚀 WebRTC connection ready - starting game!");
-			state.isStarted = true;
-			state.isPaused = false;
-		}
+		// WebRTC auto-start REMOVED - game should start only when both players are ready
+		// Game will be started via startGame() method when ready menu signals completion
 
 		// Update game objects only if game is started
 		if (state.isStarted) {
@@ -92,13 +86,13 @@ export function animate() {
 			if (state.isWebRTC) {
 				webrtcGameLoop();
 
-				// Ball physics: Only Master simulates, Slave only receives
+				// Ball physics: Only Host simulates, Guest only receives
 				if (state.ball) {
-					if (state.isMaster) {
-						// Master: simulate ball physics and send to slave
+					if (state.isHost) {
+						// Host: simulate ball physics and send to guest
 						state.ball.update(deltaTime);
 					}
-					// Slave: NEVER update ball physics locally - only receive via WebRTC
+					// Guest: NEVER update ball physics locally - only receive via WebRTC
 					// Ball position is updated in applyBallState() from WebRTC messages
 				}
 
@@ -112,18 +106,18 @@ export function animate() {
 
 			} else {
 				// WEBSOCKET/SINGLE PLAYER: Original logic
-			// Ball physics: ONLY WebSocket updates for perfect sync (both master and slave)
+			// Ball physics: ONLY WebSocket updates for perfect sync (both host and guest)
 			if (state.ball) {
 				if (state.isMultiplayer) {
-					// In multiplayer, BOTH master and slave get ball updates ONLY from WebSocket
-					// Master still sends ball state, but also applies received state for sync
-					if (state.isMaster) {
-						// Master: simulate ball physics locally but don't render directly
+					// In multiplayer, BOTH host and guest get ball updates ONLY from WebSocket
+					// Host still sends ball state, but also applies received state for sync
+					if (state.isHost) {
+						// Host: simulate ball physics locally but don't render directly
 						// The rendered position will come from WebSocket for consistency
 						state.ball.update(deltaTime);
-						sendBallStateToSlave();
+						sendBallStateToGuest();
 					} else {
-						// Slave: NO local ball physics, only WebSocket updates
+						// Guest: NO local ball physics, only WebSocket updates
 					}
 				} else {
 					// Single player mode: always simulate ball locally
@@ -135,8 +129,8 @@ export function animate() {
 			if (state.players[0]) {
 				if (state.isMultiplayer) {
 					// In multiplayer: move locally first, then send position via WebSocket
-					if (state.isMaster && state.p1_move_y !== 0) {
-						// Master controls P1: move locally then send via WebSocket
+					if (state.isHost && state.p1_move_y !== 0) {
+						// Host controls P1: move locally then send via WebSocket
 						const previousY = state.players[0].mesh.position.y;
 						state.players[0].move(state.p1_move_y);
 
@@ -163,10 +157,10 @@ export function animate() {
 				if (state.IAisActive && !state.isMultiplayer) {
 					// AI only in single player mode
 					moveIA();
-				} else if (state.isMultiplayer) {
+				} else				if (state.isMultiplayer) {
 					// In multiplayer: move locally first, then send position via WebSocket
-					if (!state.isMaster && state.p2_move_y !== 0) {
-						// Slave controls P2: move locally then send via WebSocket
+					if (!state.isHost && state.p2_move_y !== 0) {
+						// Guest controls P2: move locally then send via WebSocket
 						const previousY = state.players[1].mesh.position.y;
 						state.players[1].move(state.p2_move_y);
 

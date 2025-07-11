@@ -106,8 +106,8 @@ export let state = {
 	lastInputSent: 0,
 	inputThrottle: 16, // ~60fps
 	lastPositionSent: 0,
-	// Master-Slave architecture for multiplayer
-	isMaster: false, // Master simulates ball physics, slave receives ball state
+	// Host-Guest architecture for multiplayer
+	isHost: false, // Host simulates ball physics, guest receives ball state
 	lastBallStateSent: 0,
 	ballStateThrottle: 50, // ~20fps for ball state sync (reduced from 60fps)
 	lastBallStateTimestamp: 0, // Track last processed ball state timestamp

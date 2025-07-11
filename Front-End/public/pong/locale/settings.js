@@ -15,6 +15,7 @@ export {
 	saveSettings,
 	resetSettings,
 	showGameOverMenu,
+	resetGame,
 	restartGame,
 	restartMenu,
 };
@@ -270,13 +271,36 @@ function resetPongMenuState() {
 function restartMenu() {
 	// Hide game over menu
 	document.getElementById("gameOverMenu").style.display = "none";
-	// Show main menu
-	showMainMenu();
+
+	// Reset game state
 	resetGame();
+
+	// Navigate to home instead of showing main menu
+	window.navigateTo('#home');
 }
 
 function restartGame() {
+	// If we're a guest in WebRTC mode, request rematch from host
+	if (state.isMultiplayer && state.isWebRTC && state.webrtcConnection && !state.isHost) {
+		state.webrtcConnection.sendGameEvent('rematch_request', {
+			timestamp: Date.now()
+		});
+		console.log('🔄 Rematch request sent to host');
+		return;
+	}
+
+	// If we're host or single player, restart locally
 	resetGame();
 	state.isStarted = true;
 	state.isPaused = false;
+
+	// Send rematch signal to guest if in WebRTC multiplayer mode
+	if (state.isMultiplayer && state.isWebRTC && state.webrtcConnection && state.isHost) {
+		state.webrtcConnection.sendGameEvent('rematch', {
+			p1_score: state.p1_score,
+			p2_score: state.p2_score,
+			timestamp: Date.now()
+		});
+		console.log('🔄 Rematch signal sent to guest');
+	}
 }

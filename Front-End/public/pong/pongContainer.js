@@ -145,7 +145,14 @@ async function inviteToGame(friendId, friendName) {
 		state.isMultiplayer = true;
 		state.localPlayerId = parseInt(userId);
 		state.remotePlayerId = parseInt(friendId);
-		state.isMaster = true; // Inviter is always master
+		state.isHost = true; // Inviter is always host
+
+		// Update role indicator for host
+		setTimeout(() => {
+			if (window.updateRoleIndicator) {
+				window.updateRoleIndicator(true); // true = host
+			}
+		}, 100);
 
 		// Create game in database first
 		const { createGame } = await import("./multiplayer/serverSide.js");
