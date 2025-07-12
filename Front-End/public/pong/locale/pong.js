@@ -124,25 +124,25 @@ export function renderPong() {
 			<h2 class="text-light mb-4">Game Paused</h2>
 			<div class="d-grid gap-3">
 				<button id="resumeButton" class="btn btn-success btn-lg">Resume Game</button>
-				<button id="exitButtonPause" class="btn btn-danger btn-lg">Exit Game</button>
+<button id="exitButtonPause" class="btn btn-primary btn-lg"><i class="fas fa-home me-2"></i>Exit</button>
 			</div>
 			</div>
 
 			<div id="gameOverMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
-  			<h2 class="text-light mb-3">Game Over</h2>
-  			<h3 id="winnerAnnouncement" class="text-warning mb-4">Player 1 Wins!</h3>
- 			<div class="d-grid gap-3">
+			<h2 class="text-light mb-3">Game Over</h2>
+			<h3 id="winnerAnnouncement" class="text-warning mb-4">Player 1 Wins!</h3>
+			<div class="d-grid gap-3">
 				<button id="restartGameButton" class="btn btn-success btn-lg">Rematch</button>
-				<button id="mainMenuButton" class="btn btn-primary btn-lg">
-					<i class="fas fa-home me-2"></i>Exit
-				</button>
+			<button id="mainMenuButton" class="btn btn-primary btn-lg">
+				<i class="fas fa-home me-2"></i>Exit
+			</button>
 			</div>
 			</div>
 
 			<!-- Ready Menu for WebRTC Multiplayer -->
 			<div id="readyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
-  			<h2 class="text-light mb-3">Pong WebRTC</h2>
- 			<div class="d-grid gap-3">
+			<h2 class="text-light mb-3">Pong WebRTC</h2>
+			<div class="d-grid gap-3">
 				<button id="readyButton" class="btn btn-success btn-lg" disabled>
 					<i class="fas fa-rocket me-2"></i>Ready
 				</button>
@@ -271,10 +271,10 @@ export function renderPong() {
 	}
 
 	document.addEventListener("keydown", pongKeyDownHandler);
-    document.addEventListener("keyup", pongKeyUpHandler);
+	document.addEventListener("keyup", pongKeyUpHandler);
 
-    window.pongKeyDownHandler = pongKeyDownHandler;
-    window.pongKeyUpHandler = pongKeyUpHandler;
+	window.pongKeyDownHandler = pongKeyDownHandler;
+	window.pongKeyUpHandler = pongKeyUpHandler;
 
 	// Check if there's a multiplayer game waiting
 	checkForMultiplayerGame();
@@ -352,7 +352,7 @@ export function renderPong() {
 
 	document
 		.getElementById("mainMenuButton")
-		.addEventListener("click", SETTINGS.restartMenu);
+		.addEventListener("click", SETTINGS.exitGame);
 
 	// Ready menu listeners
 	document
@@ -361,7 +361,7 @@ export function renderPong() {
 
 	document
 		.getElementById("readyExitButton")
-		.addEventListener("click", handleReadyExitButtonClick);
+		.addEventListener("click", SETTINGS.exitGame);
 
 	// Only show main menu if not in WebRTC multiplayer mode
 	if (!state.isWebRTC && !state.isMultiplayer) {
@@ -782,32 +782,12 @@ function handleReadyButtonClick() {
 }
 
 function handleReadyExitButtonClick() {
-	console.log('🚪 Ready Exit button clicked - returning to home');
-
-	// If in WebRTC mode, disconnect properly
-	if (state.isWebRTC && state.webrtcConnection) {
-		console.log('🔌 Disconnecting WebRTC connection');
-		state.webrtcConnection.disconnect();
-		state.webrtcConnection = null;
-		state.isWebRTC = false;
-		state.isMultiplayer = false;
-	}
-
-	// Hide ready menu
-	const readyMenu = document.getElementById('readyMenu');
-	if (readyMenu) {
-		readyMenu.style.display = 'none';
-	}
-
-	// Clean up and navigate to home
-	import('./settings.js').then(({ cleanupPong }) => {
-		cleanupPong();
+	// Tutti i pulsanti di uscita ora usano la stessa logica robusta
+	if (typeof SETTINGS.exitGame === 'function') {
+		SETTINGS.exitGame();
+	} else {
 		window.navigateTo('#home');
-	}).catch(error => {
-		console.error('Error during cleanup:', error);
-		// Navigate anyway
-		window.navigateTo('#home');
-	});
+	}
 }
 
 function showReadyMenu() {
@@ -914,7 +894,7 @@ function showPauseMenu() {
 			if (state.isMultiplayer) {
 				// In multiplayer, only show resume button to who triggered pause
 				const canResume = (state.whoTriggeredPause === 'player1' && state.isHost) ||
-				                 (state.whoTriggeredPause === 'player2' && !state.isHost);
+								 (state.whoTriggeredPause === 'player2' && !state.isHost);
 				resumeButton.style.display = canResume ? 'block' : 'none';
 			} else {
 				// In single player, always show resume button

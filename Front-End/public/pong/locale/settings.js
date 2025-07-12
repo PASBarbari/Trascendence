@@ -208,17 +208,37 @@ export function cleanupPong() {
 }
 
 function exitGame() {
+	console.log('🚪 Exit game triggered');
+
+	// Se multiplayer, avvisa l'altro giocatore prima di chiudere
+	if (state.isMultiplayer && state.webrtcConnection) {
+		if (typeof state.webrtcConnection.sendGameEvent === 'function') {
+			state.webrtcConnection.sendGameEvent('player_left', {
+				playerId: state.localPlayerId,
+				timestamp: Date.now(),
+				reason: 'Player left via exit menu'
+			});
+			console.log('📡 Player left event sent');
+		}
+
+		// Clean up WebRTC connection
+		console.log('🗑️ Cleaning up WebRTC connection');
+		if (typeof state.webrtcConnection.destroy === 'function') {
+			state.webrtcConnection.destroy();
+		}
+		state.webrtcConnection = null;
+		state.isWebRTC = false;
+	}
+
+	// Reset state
 	state.isStarted = false;
-	state.isPaused = true;
-	state.IAisActive = false;
+	state.isPaused = false;
+	state.whoTriggeredPause = null;
+	state.isMultiplayer = false;
 
+	// Clean up and navigate to home
 	cleanupPong();
-
-	// Uncomment this to navigate to home
-	window.navigateTo("#home");
-
-	// Or use this to show main menu
-	// showMainMenu();
+	window.navigateTo('#home');
 }
 
 function showGameOverMenu(winner) {
