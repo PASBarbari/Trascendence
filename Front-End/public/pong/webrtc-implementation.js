@@ -157,7 +157,13 @@ class PongWebRTC {
         };
 
         channel.onerror = (error) => {
-            console.error('❌ Errore Data Channel:', error);
+            // Filtra l'errore "User-Initiated Abort" (chiusura volontaria)
+            if (error && error.error && error.error.name === 'OperationError' && error.error.message && error.error.message.includes('User-Initiated Abort')) {
+                // Non loggare come errore, è normale in chiusura
+                console.info('ℹ️ Data Channel chiuso volontariamente.');
+            } else {
+                console.error('❌ Errore Data Channel:', error);
+            }
         };
 
         channel.onclose = () => {
@@ -385,30 +391,8 @@ class PongWebRTC {
     }
 
     showConnectionError() {
-        // Show user-friendly error message
-        const errorMsg = `
-            <div style="
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: #ff4757;
-                color: white;
-                padding: 20px;
-                border-radius: 10px;
-                z-index: 10000;
-                text-align: center;
-                max-width: 400px;
-            ">
-                <h3>🔌 Connection Failed</h3>
-                <p>Unable to establish WebRTC connection. This may be due to network restrictions or firewall settings.</p>
-                <button onclick="this.parentElement.remove(); window.navigateTo('#home');"
-                        style="background: white; color: #ff4757; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">
-                    Return to Home
-                </button>
-            </div>
-        `;
-        document.body.insertAdjacentHTML('beforeend', errorMsg);
+        // Solo log in console, nessun popup
+        console.error('🔌 Connection Failed: Unable to establish WebRTC connection. This may be due to network restrictions or firewall settings.');
     }
 
     showConnectionSuccessNotification() {

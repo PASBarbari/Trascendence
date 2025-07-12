@@ -96,6 +96,10 @@ function resumeGame() {
 }
 
 export function cleanupPong() {
+	// Chiudi la connessione WebRTC se attiva
+	if (state.webrtcConnection && typeof state.webrtcConnection.destroy === 'function') {
+		state.webrtcConnection.destroy();
+	}
 	resetPongMenuState();
 
 	// 1. Dispose all meshes in the game group
@@ -271,17 +275,17 @@ function resetGame() {
 }
 
 function resetPongMenuState() {
-    // Reset solo le variabili di stato, non il DOM
-    state.p1_score = 0;
-    state.p2_score = 0;
-    state.isStarted = false;
-    state.isPaused = true;
-    state.IAisActive = false;
+	// Reset solo le variabili di stato, non il DOM
+	state.p1_score = 0;
+	state.p2_score = 0;
+	state.isStarted = false;
+	state.isPaused = true;
+	state.IAisActive = false;
 
-    // DOM reset solo se siamo sicuri che esista
-    if (document.getElementById("menu")) {
-        showMainMenu();
-    }
+	// DOM reset solo se siamo sicuri che esista
+	if (document.getElementById("menu")) {
+		showMainMenu();
+	}
 }
 
 function restartMenu() {
