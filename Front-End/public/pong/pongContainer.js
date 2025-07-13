@@ -27,21 +27,21 @@ document.head.appendChild(fontAwesome);
 function renderPongInfo() {
 	const pongInfoContainer = document.getElementById("pongContainer");
 	pongInfoContainer.innerHTML = `
-        <div class="pong-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="card-title">Pong</h5>
-            </div>
-            <div class="card-body">
-                <p class="card-text">A simple pong game</p>
-                <button class="btn btn-primary" onclick="handleLocalePong()">
-                    <i class="fas fa-user me-2"></i>Locale
-                </button>
-                <button class="btn btn-secondary" onclick="handleMultiPong()">
-                    <i class="fas fa-users me-2"></i>Online
-                </button>
-            </div>
-        </div>
-    `;
+		<div class="pong-card">
+			<div class="d-flex justify-content-between align-items-center mb-3">
+				<h5 class="card-title">Pong</h5>
+			</div>
+			<div class="card-body">
+				<p class="card-text">A simple pong game</p>
+				<button class="btn btn-primary" onclick="handleLocalePong()">
+					<i class="fas fa-user me-2"></i>Locale
+				</button>
+				<button class="btn btn-secondary" onclick="handleMultiPong()">
+					<i class="fas fa-users me-2"></i>Online
+				</button>
+			</div>
+		</div>
+	`;
 }
 
 async function handleLocalePong() {
@@ -95,24 +95,24 @@ function createFriendItemHTML(friendship) {
 	const initials = getUserInitials(username);
 
 	return `
-        <div class="friend-item" data-friend-id="${userId}">
-            <div class="d-flex align-items-center">
-                <div class="friend-avatar me-3">
-                    ${initials}
-                </div>
-                <div class="flex-grow-1">
-                    <div class="friend-name">${username}</div>
-                </div>
-                <div class="ms-2">
-                    <button class="btn btn-game-invite btn-sm"
-                            onclick="inviteToGame('${userId}', '${username}')">
-                        <i class="fas fa-gamepad me-1"></i>
-                        Invite
-                    </button>
-                </div>
-            </div>
-        </div>
-    `;
+		<div class="friend-item" data-friend-id="${userId}">
+			<div class="d-flex align-items-center">
+				<div class="friend-avatar me-3">
+					${initials}
+				</div>
+				<div class="flex-grow-1">
+					<div class="friend-name">${username}</div>
+				</div>
+				<div class="ms-2">
+					<button class="btn btn-game-invite btn-sm"
+							onclick="inviteToGame('${userId}', '${username}')">
+						<i class="fas fa-gamepad me-1"></i>
+						Invite
+					</button>
+				</div>
+			</div>
+		</div>
+	`;
 }
 
 // Send game invitation
@@ -173,8 +173,8 @@ async function inviteToGame(friendId, friendName) {
 
 		// Close friend list and navigate to game
 		closeFriendList();
-		// Navigate to game view
-		window.navigateTo("#pong");
+		// Navigate to game view (WebRTC)
+		window.navigateTo("#pongwebrtc");
 
 	} catch (error) {
 		// Reset multiplayer state on error
@@ -248,16 +248,16 @@ function showNotification(message, type = "info") {
 	};
 
 	const toastHTML = `
-        <div class="toast custom-toast position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-            <div class="toast-header ${toastColors[type]} text-white">
-                <strong class="me-auto">Notification</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
-            </div>
-        </div>
-    `;
+		<div class="toast custom-toast position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+			<div class="toast-header ${toastColors[type]} text-white">
+				<strong class="me-auto">Notification</strong>
+				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+			</div>
+			<div class="toast-body">
+				${message}
+			</div>
+		</div>
+	`;
 
 	document.body.insertAdjacentHTML("beforeend", toastHTML);
 
@@ -402,23 +402,23 @@ function showLoginBox() {
 	const loginBox = document.createElement("div");
 	loginBox.className = "login-box-modal";
 	loginBox.innerHTML = `
-        <div class="login_box">
-            <h1>Login</h1>
-            <div class="login_form">
-                <form class="login_form" id="loginForm">
-                    <div class="mb-3">
-                        <input type="email" id="loginemail" placeholder="Email" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <input type="password" id="loginpassword" placeholder="Password" class="form-control" required />
-                    </div>
-                    <div class="empty"></div>
-                    <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
-                    <button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
-                </form>
-            </div>
-        </div>
-    `;
+		<div class="login_box">
+			<h1>Login</h1>
+			<div class="login_form">
+				<form class="login_form" id="loginForm">
+					<div class="mb-3">
+						<input type="email" id="loginemail" placeholder="Email" class="form-control" required />
+					</div>
+					<div class="mb-3">
+						<input type="password" id="loginpassword" placeholder="Password" class="form-control" required />
+					</div>
+					<div class="empty"></div>
+					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
+					<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
+				</form>
+			</div>
+		</div>
+	`;
 	document.body.appendChild(loginBox);
 
 	window.addEventListener("click", function (event) {
@@ -455,25 +455,25 @@ function showRegisterBox() {
 	const registerBox = document.createElement("div");
 	registerBox.className = "register-box-modal";
 	registerBox.innerHTML = `
-        <div class="login_box">
-            <h1>Register</h1>
-            <div class="login_form">
-                <form class="login_form" id="registerForm">
-                    <div class="mb-3">
-                        <input type="text" id="registerusername" placeholder="Username" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <input type="email" id="registeremail" placeholder="Email" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <input type="password" id="registerpassword" placeholder="Password" class="form-control" required />
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
-                    <button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
-                </form>
-            </div>
-        </div>
-    `;
+		<div class="login_box">
+			<h1>Register</h1>
+			<div class="login_form">
+				<form class="login_form" id="registerForm">
+					<div class="mb-3">
+						<input type="text" id="registerusername" placeholder="Username" class="form-control" required />
+					</div>
+					<div class="mb-3">
+						<input type="email" id="registeremail" placeholder="Email" class="form-control" required />
+					</div>
+					<div class="mb-3">
+						<input type="password" id="registerpassword" placeholder="Password" class="form-control" required />
+					</div>
+					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
+					<button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
+				</form>
+			</div>
+		</div>
+	`;
 	document.body.appendChild(registerBox);
 
 	window.addEventListener("click", function (event) {
