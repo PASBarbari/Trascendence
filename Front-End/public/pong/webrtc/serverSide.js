@@ -1,9 +1,8 @@
-// Fix the import paths - they should point to the locale folder
-import { state } from "../locale/state.js";
+import { state } from "./state.js";
 import { getVariables } from "../../var.js";
-import { renderPong } from "../locale/pong.js";
-import * as GAME from "../locale/gameLogic.js";
-import * as UTILS from "../locale/utils.js";
+import { renderPong } from "./pong.js";
+import * as GAME from "./gameLogic.js";
+import * as UTILS from "./utils.js";
 import { getCookie } from "../../cookie.js";
 import * as THREE from "three";
 
@@ -122,7 +121,7 @@ function handleScoreUpdate(message) {
 		state.isPaused = true;
 
 		// Import and call game_over function
-		import("../locale/utils.js").then(({ game_over }) => {
+		import("./utils.js").then(({ game_over }) => {
 			game_over();
 		}).catch((error) => {
 			// Could not trigger game over
@@ -151,7 +150,7 @@ function startMultiplayerGame(message) {
         state.remotePlayerId = (yourPlayerId === player1Id) ? player2Id : player1Id;
 
         // Update role indicator
-        import("../locale/pong.js").then(({ updateRoleIndicator }) => {
+        import("./pong.js").then(({ updateRoleIndicator }) => {
             updateRoleIndicator(state.isHost);
         }).catch(() => {
             // Role indicator not available during initial setup
@@ -160,7 +159,7 @@ function startMultiplayerGame(message) {
 
 	// Setup the game if not already done
 	if (!state.scene || !state.renderer) {
-		import("../locale/setup.js").then(({ setupGame }) => {
+		import("./setup.js").then(({ setupGame }) => {
 			setupGame();
 			startGameAfterSetup();
 		}).catch(error => {
@@ -193,7 +192,7 @@ function startGameAfterSetup() {
 
 	// Start the game loop if not already started
 	if (!state.animationFrameId) {
-		import("../locale/gameLogic.js").then(({ animate }) => {
+		import("./gameLogic.js").then(({ animate }) => {
 			animate();
 		}).catch(error => {
 			// Failed to start animation
@@ -274,7 +273,7 @@ function attemptReconnection() {
 	}, 2000 * state.reconnectAttempts); // Exponential backoff
 
 	// Update UI if available
-	import("../locale/pong.js").then(({ updateMultiplayerStatus }) => {
+	import("./pong.js").then(({ updateMultiplayerStatus }) => {
 		updateMultiplayerStatus("connecting", "Reconnecting...");
 	}).catch(() => {
 		// Ignore if not available
@@ -322,7 +321,7 @@ async function createGame(player_1, player_2) {
 	console.log(`🎮 Role assignment: Player ${player_1} (you) = MASTER (LEFT PADDLE), Player ${player_2} = SLAVE (RIGHT PADDLE)`);
 
 	// Update role indicator
-	import("../locale/pong.js").then(({ updateRoleIndicator }) => {
+	import("./pong.js").then(({ updateRoleIndicator }) => {
 		updateRoleIndicator(state.isHost);
 	}).catch(() => {
 		// Ignore if not available
@@ -344,7 +343,7 @@ function initializeWebSocket(room_id, player1, player2) {
 		state.socket = socket;
 
 		// Update UI status
-		import("../locale/pong.js").then(({ updateMultiplayerStatus }) => {
+		import("./pong.js").then(({ updateMultiplayerStatus }) => {
 			updateMultiplayerStatus("connected", "Connected to game");
 		}).catch(() => {
 			// Ignore if not available
@@ -381,7 +380,7 @@ function initializeWebSocket(room_id, player1, player2) {
 			// Welcome message
 		} else if (message.type === "connection_success") {
 			// Update UI status
-			import("../locale/pong.js").then(({ updateMultiplayerStatus }) => {
+			import("./pong.js").then(({ updateMultiplayerStatus }) => {
 				updateMultiplayerStatus("connected", "Connected to game");
 			}).catch(() => {
 				// Ignore if not available
@@ -495,7 +494,7 @@ function handleFieldDimensions(message) {
 	state.ball_speed = dimensions.ball_speed;
 
 	// Update boundaries to match new ring dimensions
-	import("../locale/setup.js").then(({ updatePlayerBoundaries, updateGameGeometries }) => {
+	import("./setup.js").then(({ updatePlayerBoundaries, updateGameGeometries }) => {
 		if (updatePlayerBoundaries) {
 			updatePlayerBoundaries();
 		}

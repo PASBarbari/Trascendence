@@ -2,7 +2,7 @@ import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
-import { renderPong } from "./locale/pong.js";
+import { renderPong } from "./webrtc/pong.js";
 import { sendGameInvitation } from "../notification/notification.js";
 
 // Load CSS files
@@ -46,7 +46,7 @@ function renderPongInfo() {
 
 async function handleLocalePong() {
 	// Reset multiplayer state for local game
-	const { state } = await import("./locale/state.js");
+	const { state } = await import("./webrtc/state.js");
 	state.isMultiplayer = false;
 	state.localPlayerId = null;
 	state.remotePlayerId = null;
@@ -138,7 +138,7 @@ async function inviteToGame(friendId, friendName) {
 		const { token, url_api, userId } = getVariables();
 
 		// WEBRTC MODE: Ultra-low latency (SEMPRE ATTIVO)
-		const { state } = await import("./locale/state.js");
+		const { state } = await import("./webrtc/state.js");
 
 		// Set up WebRTC state
 		state.isWebRTC = true;
@@ -155,7 +155,7 @@ async function inviteToGame(friendId, friendName) {
 		}, 100);
 
 		// Create game in database first
-		const { createGame } = await import("./multiplayer/serverSide.js");
+		const { createGame } = await import("./webrtc/serverSide.js");
 		await createGame(parseInt(userId), parseInt(friendId));
 
 		// Store WebRTC connection for later use
@@ -178,7 +178,7 @@ async function inviteToGame(friendId, friendName) {
 
 	} catch (error) {
 		// Reset multiplayer state on error
-		const { state } = await import("./locale/state.js");
+		const { state } = await import("./webrtc/state.js");
 		state.isMultiplayer = false;
 		state.isWebRTC = false;
 		state.localPlayerId = null;
@@ -206,7 +206,7 @@ async function inviteToGame(friendId, friendName) {
 async function sendPongInviteNotification(friendId, friendName) {
 	try {
 		const { userUsername, userId } = getVariables();
-		const { state } = await import("./locale/state.js");
+		const { state } = await import("./webrtc/state.js");
 
 		await sendGameInvitation({
 			recipient_id: friendId,

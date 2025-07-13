@@ -139,7 +139,7 @@ export function animate() {
 						if (!state.lastP1PositionSent || (now - state.lastP1PositionSent) >= 50) { // Max 20 FPS for position sending
 							state.lastP1PositionSent = now;
 							// Send new position via WebSocket (which will come back and override for sync)
-							import("../multiplayer/serverSide.js").then(({ sendPlayerPosition }) => {
+							import("./serverSide.js").then(({ sendPlayerPosition }) => {
 								sendPlayerPosition(state.localPlayerId);
 							}).catch(() => {
 								// Could not send P1 position
@@ -169,7 +169,7 @@ export function animate() {
 						if (!state.lastP2PositionSent || (now - state.lastP2PositionSent) >= 50) { // Max 20 FPS for position sending
 							state.lastP2PositionSent = now;
 							// Send new position via WebSocket (which will come back and override for sync)
-							import("../multiplayer/serverSide.js").then(({ sendPlayerPosition }) => {
+							import("./serverSide.js").then(({ sendPlayerPosition }) => {
 								sendPlayerPosition(state.localPlayerId);
 							}).catch(() => {
 								// Could not send P2 position

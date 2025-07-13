@@ -1,6 +1,6 @@
 import { toggleProfile } from "../home/home.js";
 import { getVariables, setVariables } from '../var.js';
-import { cleanupPong } from "../pong/locale/settings.js";
+import { cleanupPong } from "../pong/webrtc/settings.js";
 
 function Logout() {
     try {

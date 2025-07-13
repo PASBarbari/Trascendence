@@ -1,5 +1,5 @@
 // IMPLEMENTAZIONE WEBRTC PER PONG - LATENZA ULTRA-BASSA
-import { state } from "./locale/state.js";
+import { state } from "./webrtc/state.js";
 import { getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import * as THREE from "three";
@@ -531,7 +531,7 @@ class PongWebRTC {
         state.p2_score = p2_score;
 
         // Aggiorna UI score usando la funzione corretta
-        import("./locale/src/Score.js").then(({ updateScore }) => {
+        import("./webrtc/src/Score.js").then(({ updateScore }) => {
             if (updateScore) {
                 // Chiama updateScore per entrambi i giocatori per sincronizzare l'UI
                 updateScore("p1");
@@ -561,7 +561,7 @@ class PongWebRTC {
                 state.isPaused = true;
 
                 // Show game over menu for guest
-                import("./locale/settings.js").then(({ showGameOverMenu }) => {
+                import("./webrtc/settings.js").then(({ showGameOverMenu }) => {
                     if (showGameOverMenu && data.winner) {
                         showGameOverMenu(data.winner);
                         console.log('🏁 Game over menu shown for guest:', data.winner);
@@ -620,7 +620,7 @@ class PongWebRTC {
         state.p2_score = 0;
 
         // Update score UI
-        import("./locale/src/Score.js").then(({ updateScore }) => {
+        import("./webrtc/src/Score.js").then(({ updateScore }) => {
             updateScore("p1");
             updateScore("p2");
         }).catch(error => {
@@ -661,7 +661,7 @@ class PongWebRTC {
         console.log('🔄 Processing rematch request from guest');
 
         // Let the restartGame function handle the rematch logic
-        import("./locale/settings.js").then(({ restartGame }) => {
+        import("./webrtc/settings.js").then(({ restartGame }) => {
             restartGame();
         }).catch(error => {
             console.error('Error handling rematch request:', error);
@@ -846,7 +846,7 @@ class PongWebRTC {
 
         // Avvia game loop se non già avviato
         if (!state.animationFrameId) {
-            import("./locale/gameLogic.js").then(({ animate }) => {
+            import("./webrtc/gameLogic.js").then(({ animate }) => {
                 animate();
             }).catch(error => {
                 console.error('❌ Errore avviando animation:', error);
@@ -855,7 +855,7 @@ class PongWebRTC {
     }
 
     updateConnectionStatus(status) {
-        import("./locale/pong.js").then(({ updateMultiplayerStatus }) => {
+        import("./webrtc/pong.js").then(({ updateMultiplayerStatus }) => {
             const statusMap = {
                 'connecting': `🔄 Connecting via WebRTC... ${this.reconnectAttempts > 0 ? `(Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})` : ''}`,
                 'connected': `✅ WebRTC Connected`,
@@ -959,7 +959,7 @@ class PongWebRTC {
         this.destroy();
 
         // Navigate to home
-        import("./locale/settings.js").then(({ cleanupPong }) => {
+        import("./webrtc/settings.js").then(({ cleanupPong }) => {
             cleanupPong();
             window.navigateTo('#home');
         }).catch(error => {

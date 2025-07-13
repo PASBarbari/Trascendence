@@ -1,18 +1,18 @@
 import { renderLogin } from "./login/login.js";
 import { renderRegister } from "./register/register.js";
 import { renderHome } from "./home/home.js";
-import { renderPong } from "./pong/locale/pong.js";
-import { renderPong as renderPongWebRTC } from "./pong/locale/pongwebrtc.js";
+import { renderPong } from "./pong/webrtc/pong.js";
+import { renderPong as renderPongWebRTC } from "./pong/webrtc/pongwebrtc.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 //import { renderProfile } from './profile/profile.js';
 import { settingsPopup, Logout } from "./settings/settings.js";
-import { cleanupPong } from "./pong/locale/settings.js";
+import { cleanupPong } from "./pong/webrtc/settings.js";
 import { getVariables, setVariables } from "./var.js";
 
 function preloadPongCSS() {
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = "/pong/locale/pong.css";
+	link.href = "/pong/webrtc/pong.css";
 	document.head.appendChild(link);
 	console.log("Pong CSS precaricato");
 }

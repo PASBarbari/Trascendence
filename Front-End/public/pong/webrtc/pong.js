@@ -27,7 +27,7 @@ export function renderPong() {
 
 	const link = document.createElement("link");
 	link.rel = "stylesheet";
-	link.href = "/pong/locale/pong.css";
+	link.href = "/pong/webrtc/pong.css";
 	document.head.appendChild(link);
 
 	// Inside renderPong function
