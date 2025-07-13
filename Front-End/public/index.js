@@ -1,7 +1,7 @@
 import { renderLogin } from "./login/login.js";
 import { renderRegister } from "./register/register.js";
 import { renderHome } from "./home/home.js";
-import { renderPong } from "./pong/webrtc/pong.js";
+import { renderPong } from "./pong/locale/pong.js";
 import { renderPong as renderPongWebRTC } from "./pong/webrtc/pongwebrtc.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 //import { renderProfile } from './profile/profile.js';
