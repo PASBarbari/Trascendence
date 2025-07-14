@@ -29,7 +29,7 @@ class PongWebRTC {
         this.localPlayerReady = false;
         this.otherPlayerReady = false;
 
-        // WebRTC Configuration ottimizzata per gaming con fallback TURN
+        // WebRTC Configuration ottimizzata per LAN (solo STUN, nessun TURN)
         this.rtcConfig = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
@@ -51,7 +51,6 @@ class PongWebRTC {
                 { urls: 'stun:stun4.l.google.com:19302' }
             ],
             iceCandidatePoolSize: 10,
-            iceTransportPolicy: 'all', // Usa tutti i tipi di candidati
             bundlePolicy: 'max-bundle',
             rtcpMuxPolicy: 'require'
         };
@@ -150,6 +149,16 @@ class PongWebRTC {
             this.reconnectAttempts = 0; // Reset reconnect counter
             this.startHealthMonitoring(); // Start monitoring connection health
             this.onWebRTCReady();
+
+            // --- SYNC FIELD DIMENSIONS (HOST ONLY) ---
+            if (state.isHost) {
+                this.sendGameData({
+                    type: 'field_dimensions',
+                    length: state.ring.length,
+                    height: state.ring.height
+                });
+                console.log('📏 Field dimensions sent to guest:', state.ring.length, state.ring.height);
+            }
         };
 
         channel.onmessage = (event) => {
@@ -466,18 +475,30 @@ class PongWebRTC {
             case 'paddle_position':
                 this.applyPaddlePosition(message.player, message.position);
                 break;
-
             case 'ball_state':
                 this.applyBallState(message.position, message.velocity);
                 break;
-
             case 'score_update':
                 this.applyScoreUpdate(message.p1_score, message.p2_score);
                 break;
-
+            case 'field_dimensions':
+                this.applyFieldDimensions(message.length, message.height);
+                break;
             case 'game_event':
                 this.handleGameEvent(message.event, message.data);
                 break;
+        }
+    }
+
+    applyFieldDimensions(length, height) {
+        if (!state.isHost) {
+            state.ring.length = length;
+            state.ring.height = height;
+            import("./webrtc/setup.js").then(({ updateGameGeometries, updatePlayerBoundaries }) => {
+                updateGameGeometries();
+                updatePlayerBoundaries();
+                console.log('✅ Field dimensions updated from host:', length, height);
+            });
         }
     }
 
