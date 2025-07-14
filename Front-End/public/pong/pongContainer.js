@@ -49,6 +49,18 @@ function renderPongInfo(inviteHTML = "") {
 	showTournament(3, "marco3");
 }
 
+function handlePongGameButton(friendId, friendName) {
+    if (window.pendingPongInvite) {
+        // Esiste già un invito: accetta e partecipa
+        window.acceptPongInvite();
+    } else {
+        // Nessun invito: crea la partita e manda l'invito
+        inviteToGame(friendId, friendName);
+    }
+}
+
+window.handlePongGameButton = handlePongGameButton;
+
 function showTournament(user_id, username) {
 	const slot = document.getElementById("pong-tournament-html-slot");
 	if (!slot) {
@@ -61,8 +73,9 @@ function showTournament(user_id, username) {
 	tournamentDiv.id = "pong-tournament-notification";
 	tournamentDiv.className = "pongwebrtc-tournament";
 	tournamentDiv.innerHTML = `
-		<button class="btn btn-game-invite btn-sm" onclick="inviteToGame('${user_id}', '${username}')">
-			<i class="fas fa-gamepad me-1"></i>Invite
+		<button class="btn btn-primary btn-sm"
+			onclick="handlePongGameButton('${user_id}', '${username}')">
+			Unisciti/Invita a Pong
 		</button>
 	`;
 	slot.appendChild(tournamentDiv);
