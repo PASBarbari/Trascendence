@@ -2,6 +2,7 @@ import { setVariables, getVariables, calculateInitials } from "../var.js";
 import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
+import { showPongInviteNotification } from "../pong/pongContainer.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -532,27 +533,6 @@ function handleGameCreatedMessage(message) {
 			{ asToast: true }
 		);
 	}
-}
-
-// Funzione per mostrare la notifica con bottone nel container Pong
-function showPongInviteNotification(inviterName) {
-	const container = document.getElementById("pongContainer");
-	if (!container) {
-		console.warn("Pong container not found!");
-		return;
-	}
-	// Rimuovi eventuali inviti precedenti
-	const oldInvite = document.getElementById("pong-invite-notification");
-	if (oldInvite) oldInvite.remove();
-
-	const inviteDiv = document.createElement("div");
-	inviteDiv.id = "pong-invite-notification";
-	inviteDiv.className = "alert alert-info d-flex align-items-center justify-content-between mt-3";
-	inviteDiv.innerHTML = `
-		<span><strong>${inviterName}</strong> ti ha invitato a giocare a Pong!</span>
-		<button class="btn btn-success btn-sm ms-3" onclick="acceptPongInvite()">Partecipa</button>
-	`;
-	container.appendChild(inviteDiv);
 }
 
 // Funzione globale per accettare l'invito

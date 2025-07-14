@@ -24,7 +24,7 @@ fontAwesome.href =
 document.head.appendChild(fontAwesome);
 
 // Update your existing renderPongInfo function
-function renderPongInfo() {
+function renderPongInfo(inviteHTML = "") {
 	const pongInfoContainer = document.getElementById("pongContainer");
 	pongInfoContainer.innerHTML = `
 		<div class="pong-card">
@@ -39,10 +39,53 @@ function renderPongInfo() {
 				<button class="btn btn-secondary" onclick="handleMultiPong()">
 					<i class="fas fa-users me-2"></i>Online
 				</button>
+				<p class="card-text">invites</p>
+				<div id="pong-invite-html-slot">${inviteHTML}</div>
+				<p class="card-text">tournaments</p>
+				<div id="pong-tournament-html-slot"></div>
 			</div>
 		</div>
 	`;
+	showTournament(3, "marco3");
 }
+
+function showTournament(user_id, username) {
+	const slot = document.getElementById("pong-tournament-html-slot");
+	if (!slot) {
+		console.warn("pong-tournament-html-slot not found! For correct behavior, chiama prima renderPongInfo().");
+		return;
+	}
+	// Rimuovi eventuali tornei precedenti
+	slot.innerHTML = "";
+	const tournamentDiv = document.createElement("div");
+	tournamentDiv.id = "pong-tournament-notification";
+	tournamentDiv.className = "pongwebrtc-tournament";
+	tournamentDiv.innerHTML = `
+		<button class="btn btn-game-invite btn-sm" onclick="inviteToGame('${user_id}', '${username}')">
+			<i class="fas fa-gamepad me-1"></i>Invite
+		</button>
+	`;
+	slot.appendChild(tournamentDiv);
+}
+window.showTournament = showTournament;
+
+function showPongInviteNotification(inviterName) {
+	const slot = document.getElementById("pong-invite-html-slot");
+	if (!slot) {
+		console.warn("pong-invite-html-slot not found! For correct behavior, chiama prima renderPongInfo().");
+		return;
+	}
+	// Rimuovi eventuali inviti precedenti
+	slot.innerHTML = "";
+	const inviteDiv = document.createElement("div");
+	inviteDiv.id = "pong-invite-notification";
+	inviteDiv.className = "pongwebrtc-invite";
+	inviteDiv.innerHTML = `
+		<button class="btn btn-success btn-sm ms-3" onclick="acceptPongInvite()">${inviterName} <i class="fas fa-play ms-2"></i></button>
+	`;
+	slot.appendChild(inviteDiv);
+}
+window.showPongInviteNotification = showPongInviteNotification;
 
 async function handleLocalePong() {
 	// Reset eventuale stato multiplayer se necessario
@@ -509,4 +552,4 @@ window.closeLoginBox = closeLoginBox;
 window.closeRegisterBox = closeRegisterBox;
 window.inviteToGame = inviteToGame;
 
-export { renderPongInfo };
+export { renderPongInfo, showPongInviteNotification };
