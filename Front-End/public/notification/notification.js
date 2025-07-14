@@ -508,59 +508,21 @@ function handleGameCreatedMessage(message) {
 	const isInvitation = creatorName !== currentUserName;
 
 	if (isInvitation) {
-		console.log("🎮 Game invitation received! Setting invitee state...");
+		console.log("🎮 Game invitation received! Showing join button in Pong container...");
 
-		// This is a game invitation - show notification
-		showAlertForXSeconds(
-			`${creatorName} invited you to play Pong!`,
-			"success",
-			5,
-			{ asToast: true }
-		);
-
-		// Store invitation in message history for user action
-		messageHistory.push({
-			user_id: gameData.player_1?.user_id || 0,
-			type: "game_invitation",
-			userData: {
-				inviter_name: creatorName,
-				inviter_id: gameData.player_1?.user_id || 0,
-				game_type: "Pong",
-				action: "join_pong_game",
-				game_id: gameId
-			},
-			action: "join_pong_game"
-		});
-
-		// **CRITICAL**: Set global state for invitee BEFORE navigating to Pong
-		console.log("🏃‍♂️ Setting invitee state and WebRTC flags...");
-
-		// Set global variables that Pong will check
-		window.isInvitee = true;
-		window.shouldJoinExistingGame = true;
-		window.isWebRTCMode = true;
-		window.existingGameData = {
+		// Salva i dati dell'invito globalmente
+		window.pendingPongInvite = {
 			game_id: gameId,
 			room_id: gameId,
 			webrtc_room_id: gameId,
 			inviter_name: creatorName,
 			inviter_id: gameData.player_1?.user_id || 0,
-			player_role: "slave", // Invitee is always slave/player2
+			player_role: "slave",
 			connection_type: "webrtc"
 		};
 
-		console.log("🎯 Global invitee state set:", {
-			isInvitee: window.isInvitee,
-			shouldJoinExistingGame: window.shouldJoinExistingGame,
-			isWebRTCMode: window.isWebRTCMode,
-			existingGameData: window.existingGameData
-		});
-
-		// Auto-redirect to pong game after a short delay
-		setTimeout(() => {
-			console.log("🎯 Auto-redirecting to Pong game as invitee...");
-			window.navigateTo("#pongwebrtc");
-		}, 3000);
+		// Mostra la notifica nel container Pong
+		showPongInviteNotification(creatorName);
 	} else {
 		// This is a confirmation that the user created a game
 		showAlertForXSeconds(
@@ -571,6 +533,45 @@ function handleGameCreatedMessage(message) {
 		);
 	}
 }
+
+// Funzione per mostrare la notifica con bottone nel container Pong
+function showPongInviteNotification(inviterName) {
+	const container = document.getElementById("pongContainer");
+	if (!container) {
+		console.warn("Pong container not found!");
+		return;
+	}
+	// Rimuovi eventuali inviti precedenti
+	const oldInvite = document.getElementById("pong-invite-notification");
+	if (oldInvite) oldInvite.remove();
+
+	const inviteDiv = document.createElement("div");
+	inviteDiv.id = "pong-invite-notification";
+	inviteDiv.className = "alert alert-info d-flex align-items-center justify-content-between mt-3";
+	inviteDiv.innerHTML = `
+		<span><strong>${inviterName}</strong> ti ha invitato a giocare a Pong!</span>
+		<button class="btn btn-success btn-sm ms-3" onclick="acceptPongInvite()">Partecipa</button>
+	`;
+	container.appendChild(inviteDiv);
+}
+
+// Funzione globale per accettare l'invito
+window.acceptPongInvite = function() {
+	const invite = window.pendingPongInvite;
+	if (!invite) {
+		showNotificationToast("Nessun invito disponibile.", "warning");
+		return;
+	}
+	// Naviga e avvia la partita
+	window.isInvitee = true;
+	window.shouldJoinExistingGame = true;
+	window.isWebRTCMode = true;
+	window.existingGameData = invite;
+	window.navigateTo("#pongwebrtc");
+	// Rimuovi la notifica
+	const oldInvite = document.getElementById("pong-invite-notification");
+	if (oldInvite) oldInvite.remove();
+};
 
 /**
  * Send a game invitation notification (simplified)
@@ -1057,7 +1058,7 @@ function handleChatMessage(message) {
 //
 //		// Store invitation in message history for user action
 //		messageHistory.push({
-//			user_id: gameData.inviter_id || 0,
+//			user_id: gameData.player_1?.user_id || 0,
 //			type: "game_invitation",
 //			userData: gameData,
 //			invitation_id: gameData.invitation_id,
