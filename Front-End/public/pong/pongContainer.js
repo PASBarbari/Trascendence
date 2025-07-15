@@ -459,3 +459,5 @@ window.closeRegisterBox = closeRegisterBox;
 window.inviteToGame = inviteToGame;
 
 export { renderPongInfo };
+
+// Initialize the pong container
