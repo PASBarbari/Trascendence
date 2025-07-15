@@ -2,6 +2,7 @@ import { setVariables, getVariables, calculateInitials } from "../var.js";
 import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
+import { showPongInviteNotification } from "../pong/pongContainer.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -25,8 +26,8 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 
 	let card = document.getElementById(`notification-card-${index}`);
 	if (!card) {
-        card = document.getElementById(`notification-card-${receiver_id}`);
-    }
+		card = document.getElementById(`notification-card-${receiver_id}`);
+	}
 	const deleteCard = document.getElementById(`friend-item-${index}`);
 
 	try {
@@ -49,8 +50,8 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 				messageHistory.splice(index, 1);
 			}
 			if (str_method === 'DELETE') {
-                messageHistory = messageHistory.filter(msg => msg.user_id !== receiver_id);
-            }
+				messageHistory = messageHistory.filter(msg => msg.user_id !== receiver_id);
+			}
 
 			const info = data.info;
 			console.log("Info handleFriendRequest:", info); //------------------------
@@ -86,30 +87,30 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 }
 
 function renderSentFriendRequest(receiver_id, addToDOM = false) {
-    console.log("/***********renderSentFriendRequest************/");
-    console.log("Rendering sent friend request for ID:", receiver_id);
+	console.log("/***********renderSentFriendRequest************/");
+	console.log("Rendering sent friend request for ID:", receiver_id);
 
-    const notificationContent = document.getElementById("notificationContent");
+	const notificationContent = document.getElementById("notificationContent");
 
-    // Create the HTML
-    const htmlToAdd = `
-        <div class="card mb-3" id="notification-card-${receiver_id}">
-            <div class="card-body">
-                <p class="card-text">Friend request sent to User ID: ${receiver_id}</p>
-                <button class="btn btn-outline-secondary" type="button"
-                    onclick="handleFriendRequest('DELETE', ${receiver_id})">
-                    Cancel Request
-                </button>
-            </div>
-        </div>
-    `;
+	// Create the HTML
+	const htmlToAdd = `
+		<div class="card mb-3" id="notification-card-${receiver_id}">
+			<div class="card-body">
+				<p class="card-text">Friend request sent to User ID: ${receiver_id}</p>
+				<button class="btn btn-outline-secondary" type="button"
+					onclick="handleFriendRequest('DELETE', ${receiver_id})">
+					Cancel Request
+				</button>
+			</div>
+		</div>
+	`;
 
 	if (addToDOM) {
-        const notificationContent = document.getElementById("notificationContent");
-        notificationContent.innerHTML += htmlToAdd;
-    }
+		const notificationContent = document.getElementById("notificationContent");
+		notificationContent.innerHTML += htmlToAdd;
+	}
 
-    return htmlToAdd;
+	return htmlToAdd;
 }
 
 async function getFriends() {
@@ -164,11 +165,11 @@ function renderFriendsList(friends) {
 
 	if (friends.length === 0) {
 		friendsList.innerHTML = `
-            <div class="text-center text-muted py-3">
-                <i class="bi bi-people"></i>
-                <p class="mb-0">No friends yet. Add some friends to get started!</p>
-            </div>
-        `;
+			<div class="text-center text-muted py-3">
+				<i class="bi bi-people"></i>
+				<p class="mb-0">No friends yet. Add some friends to get started!</p>
+			</div>
+		`;
 		return;
 	}
 
@@ -182,28 +183,28 @@ function renderFriendsList(friends) {
 			const friend_initials = calculateInitials(username);
 
 			return `
-                <div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
-                    <!-- Friend Avatar -->
-                    <div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
-                         style="width: 45px; height: 45px; font-weight: 600;">
-                        ${friend_initials}
-                    </div>
+				<div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
+					<!-- Friend Avatar -->
+					<div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
+						 style="width: 45px; height: 45px; font-weight: 600;">
+						${friend_initials}
+					</div>
 
-                    <!-- Friend Info -->
-                    <div class="flex-grow-1">
-                        <h6 class="mb-0 fw-semibold">${username}</h6>
-                    </div>
+					<!-- Friend Info -->
+					<div class="flex-grow-1">
+						<h6 class="mb-0 fw-semibold">${username}</h6>
+					</div>
 
-                    <!-- Action Buttons -->
-                    <div
-                        <button class="btn btn-outline-danger btn-sm" type="button"
-                                onclick="handleFriendRequest('DELETE', ${friendId}, ${index})"
-                                title="Remove friend">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
+					<!-- Action Buttons -->
+					<div
+						<button class="btn btn-outline-danger btn-sm" type="button"
+								onclick="handleFriendRequest('DELETE', ${friendId}, ${index})"
+								title="Remove friend">
+							<i class="bi bi-trash"></i>
+						</button>
+					</div>
+				</div>
+			`;
 		})
 		.join("");
 }
@@ -274,20 +275,20 @@ function renderFriendRequest() {
 			const senderData = friendRequests.userData;
 			const senderId = friendRequests.user_id;
 			return `
-            <div class="card mb-3" id="notification-card-${index}">
-                <div class="card-body">
-                    <p class="card-text">User ID: ${senderId}</p>
-                    <button class="btn btn-outline-primary" type="button"
-                        onclick="handleFriendRequest('PATCH', ${senderId}, ${index})">
-                        Accept
-                    </button>
-                    <button class="btn btn-outline-secondary" type="button"
-                        onclick="handleFriendRequest('DELETE', ${senderId}, ${index})">
-                        Decline
-                    </button>
-                </div>
-            </div>
-        `;
+			<div class="card mb-3" id="notification-card-${index}">
+				<div class="card-body">
+					<p class="card-text">User ID: ${senderId}</p>
+					<button class="btn btn-outline-primary" type="button"
+						onclick="handleFriendRequest('PATCH', ${senderId}, ${index})">
+						Accept
+					</button>
+					<button class="btn btn-outline-secondary" type="button"
+						onclick="handleFriendRequest('DELETE', ${senderId}, ${index})">
+						Decline
+					</button>
+				</div>
+			</div>
+		`;
 		})
 		.join("");
 }
@@ -299,10 +300,10 @@ function renderFriendRequest2(friends) {
 	console.log("Friends:", friends);
 
 	const existingFriendIds = friends.map(f => f.friend_info.user_id);
-    messageHistory = messageHistory.filter(msg => {
-        // Mantieni solo i messaggi che esistono ancora come pending friends
-        return existingFriendIds.includes(msg.user_id);
-    });
+	messageHistory = messageHistory.filter(msg => {
+		// Mantieni solo i messaggi che esistono ancora come pending friends
+		return existingFriendIds.includes(msg.user_id);
+	});
 
 	notificationContent.innerHTML = friends
 		.map((friendship, index) => {
@@ -398,6 +399,17 @@ function closeWebSocketConnection() {
 	}
 }
 
+function getWebSocketState() {
+	if (!socket) {
+		return { connected: false, state: null, readyState: null };
+	}
+	return {
+		connected: socket.readyState === WebSocket.OPEN,
+		state: socket.readyState,
+		readyState: socket.readyState
+	};
+}
+
 /**
  * EXTENSIBLE WebSocket MESSAGE HANDLER SYSTEM
  *
@@ -434,7 +446,7 @@ const MESSAGE_HANDLERS = {
 	chat_message: handleChatMessage,
 
 	// Game-related messages
-	game_invitation: handleGameInvitationMessage,
+	//game_invitation: handleGameInvitationMessage,
 	game_started: handleGameStartedMessage,
 	game_ended: handleGameEndedMessage,
 	game_created: handleGameCreatedMessage,
@@ -458,15 +470,15 @@ const MESSAGE_HANDLERS = {
 
 //chat
 function handleChatInviteMessage(message) {
-    console.log("Processing chat invite message:", message);
+	console.log("Processing chat invite message:", message);
 
 		console.log("test: ", message.message.data);
-    const chatData = message.message?.data || {};
-    const roomName = chatData.room_name || "a chat room";
-    const creatorName = chatData.creator_name || "Someone";
-    const roomId = chatData.room_id;
+	const chatData = message.message?.data || {};
+	const roomName = chatData.room_name || "a chat room";
+	const creatorName = chatData.creator_name || "Someone";
+	const roomId = chatData.room_id;
 
-    // Mostra notifica toast
+	// Mostra notifica toast
 		if (creatorName != getVariables().userUsername) {
 			showAlertForXSeconds(
 					`You have been invited to join "${roomName}" by ${creatorName}`,
@@ -476,10 +488,10 @@ function handleChatInviteMessage(message) {
 			);
 		}
 
-    // Aggiorna la lista delle chat
-    if (typeof updateChatList === 'function') {
-        updateChatList();
-    }
+	// Aggiorna la lista delle chat
+	if (typeof updateChatList === 'function') {
+		updateChatList();
+	}
 }
 
 
@@ -489,15 +501,78 @@ function handleGameCreatedMessage(message) {
 
 	const gameData = message?.message || {};
 	const gameId = gameData.game_id;
-	const creatorName = gameData.player_1.username || "Someone";
+	const creatorName = gameData.player_1?.username || "Someone";
+	const currentUserId = getVariables().userId;
+	const currentUserName = getVariables().userUsername;
 
-	// Show toast notification
-	showAlertForXSeconds(
-		`Game created by ${creatorName}. Game ID: ${gameId}`,
-		"success",
-		5,
-		{ asToast: true }
-	);
+	// Check if this is a game invitation (current user is not the creator)
+	const isInvitation = creatorName !== currentUserName;
+
+	if (isInvitation) {
+		console.log("🎮 Game invitation received! Showing join button in Pong container...");
+
+		// Salva i dati dell'invito globalmente
+		window.pendingPongInvite = {
+			game_id: gameId,
+			room_id: gameId,
+			webrtc_room_id: gameId,
+			inviter_name: creatorName,
+			inviter_id: gameData.player_1?.user_id || 0,
+			player_role: "slave",
+			connection_type: "webrtc"
+		};
+
+		// Mostra la notifica nel container Pong
+		showPongInviteNotification(creatorName);
+	} else {
+		// This is a confirmation that the user created a game
+		showAlertForXSeconds(
+			`Game created! Game ID: ${gameId}`,
+			"success",
+			5,
+			{ asToast: true }
+		);
+	}
+}
+
+// Funzione globale per accettare l'invito
+window.acceptPongInvite = function() {
+	const invite = window.pendingPongInvite;
+	if (!invite) {
+		showNotificationToast("Nessun invito disponibile.", "warning");
+		return;
+	}
+	// Naviga e avvia la partita
+	window.isInvitee = true;
+	window.shouldJoinExistingGame = true;
+	window.isWebRTCMode = true;
+	window.existingGameData = invite;
+	window.navigateTo("#pongwebrtc");
+	// Rimuovi la notifica
+	const oldInvite = document.getElementById("pong-invite-notification");
+	if (oldInvite) oldInvite.remove();
+};
+
+/**
+ * Send a game invitation notification (simplified)
+ */
+async function sendGameInvitation(invitationData) {
+	try {
+		console.log("🎮 Game invitation (using backend automatic system):", invitationData);
+
+		// The backend automatically sends notifications when a game is created
+		// We just need to show a local confirmation that the invitation was sent
+		showNotificationToast(
+			`🎮 Game invitation sent to ${invitationData.recipient_name}!`,
+			"success"
+		);
+
+		console.log("✅ Game invitation sent successfully (backend handles notification)");
+		return { success: true, message: "Invitation sent via backend" };
+	} catch (error) {
+		console.error("❌ Error sending game invitation:", error);
+		return { success: false, message: "Error occurred" };
+	}
 }
 
 
@@ -653,11 +728,24 @@ function handleDefaultMessage(message = null) {
 }
 
 function initializeWebSocket() {
+	// Check if WebSocket is already connected
+	if (socket && socket.readyState === WebSocket.OPEN) {
+		console.log('✅ WebSocket already connected, skipping initialization');
+		return;
+	}
+
+	// Close existing connection if it exists but is not open
+	if (socket && socket.readyState !== WebSocket.CLOSED) {
+		console.log('🔄 Closing existing WebSocket connection before creating new one');
+		socket.close();
+	}
+
 	const { token, wss_api } = getVariables();
 
 	// Use secure header-based authentication instead of query parameters
 	const wsUrl = `${wss_api}/notifications/ws/user_notifications/?token=${token}`;
 
+	console.log('🔌 Creating new WebSocket connection for notifications');
 	// Create WebSocket with token in query string
 	socket = new WebSocket(wsUrl);
 
@@ -718,10 +806,12 @@ document.addEventListener("DOMContentLoaded", function () {
 	window.getFriends = getFriends;
 	window.initializeWebSocket = initializeWebSocket;
 	window.closeWebSocketConnection = closeWebSocketConnection;
+	window.getWebSocketState = getWebSocketState;
 	window.registerMessageHandler = registerMessageHandler;
 	window.unregisterMessageHandler = unregisterMessageHandler;
 	window.getRegisteredMessageTypes = getRegisteredMessageTypes;
 	window.testMessageHandler = testMessageHandler;
+	window.socket = socket;
 });
 
 export {
@@ -730,11 +820,14 @@ export {
 	getFriends,
 	initializeWebSocket,
 	closeWebSocketConnection,
+	getWebSocketState,
 	registerMessageHandler,
 	unregisterMessageHandler,
 	getRegisteredMessageTypes,
 	testMessageHandler,
 	MESSAGE_HANDLERS,
+	sendGameInvitation,
+	socket,
 };
 
 // ==================== DYNAMIC HANDLER REGISTRATION ====================
@@ -932,27 +1025,86 @@ function handleChatMessage(message) {
 }
 
 // Game-related message handlers
-function handleGameInvitationMessage(message) {
-	console.log("Processing game invitation message:", message);
-
-	const gameData = message.message?.data || {};
-	const inviterName = gameData.inviter_name || "Someone";
-	const gameType = gameData.game_type || "a game";
-
-	// Store invitation in message history for user action
-	messageHistory.push({
-		user_id: gameData.inviter_id || 0,
-		type: "game_invitation",
-		userData: gameData,
-		invitation_id: gameData.invitation_id,
-	});
-
-	renderFriendRequest(); // Reuse existing notification rendering
-	showNotificationToast(
-		`${inviterName} invited you to play ${gameType}`,
-		"info"
-	);
-}
+//function handleGameInvitationMessage(message) {
+//	console.log("Processing game invitation message:", message);
+//
+//	const gameData = message.message?.data || {};
+//	const inviterName = gameData.inviter_name || "Someone";
+//	const gameType = gameData.game_type || "Pong";
+//
+//	// Handle specific pong game invitation
+//	if (gameData.action === "join_pong_game") {
+//		console.log("🎮 Received Pong game invitation from", inviterName, "Game data:", gameData);
+//
+//		// Store invitation in message history for user action
+//		messageHistory.push({
+//			user_id: gameData.player_1?.user_id || 0,
+//			type: "game_invitation",
+//			userData: gameData,
+//			invitation_id: gameData.invitation_id,
+//			action: "join_pong_game"
+//		});
+//
+//		renderFriendRequest(); // Reuse existing notification rendering
+//	showAlertForXSeconds(
+//		`${inviterName} invited you to play Pong!`,
+//		"success",
+//		5,
+//		{ asToast: true }
+//	);
+//
+//		// Auto-redirect to pong game and force WebRTC
+//		setTimeout(async () => {
+//			console.log("🎯 Auto-redirecting to Pong game with WebRTC...");
+//			console.log("🎯 Game data received:", JSON.stringify(gameData, null, 2));
+//
+//			// Automatically set WebRTC choice and game info
+//			try {
+//				const { state } = await import("../pong/locale/state.js");
+//				state.inviteeWebRTCChoice = true; // Force WebRTC
+//				state.pendingGameInvitation = gameData;
+//
+//				// Set multiplayer state for invitee
+//				state.isMultiplayer = true;
+//				state.isWebRTC = true;
+//				state.localPlayerId = parseInt(gameData.recipient_id);
+//				state.remotePlayerId = parseInt(gameData.sender_id);
+//				state.isMaster = false; // Invitee is always slave
+//
+//				// Mark that we need to join an existing game
+//				state.shouldJoinExistingGame = true;
+//				state.existingGameData = gameData;
+//
+//				console.log(`🚀 Invitee state set:`, {
+//					shouldJoinExistingGame: state.shouldJoinExistingGame,
+//					localPlayerId: state.localPlayerId,
+//					remotePlayerId: state.remotePlayerId,
+//					isMaster: state.isMaster,
+//					gameId: gameData.game_id
+//				});
+//			} catch (error) {
+//				console.error("❌ Error setting WebRTC choice:", error);
+//			}
+//
+//			console.log("🎯 Navigating to pongwebrtc...");
+//			window.navigateTo("#pongwebrtc");
+//		}, 3000);
+//	} else {
+//		// Handle other game invitations
+//		messageHistory.push({
+//			user_id: gameData.inviter_id || 0,
+//			type: "game_invitation",
+//			userData: gameData,
+//			invitation_id: gameData.invitation_id,
+//		});
+//
+//		renderFriendRequest(); // Reuse existing notification rendering
+//		showNotificationToast(
+//			`${inviterName} invited you to play ${gameType}`,
+//			"info"
+//		);
+//	}
+//}
 
 function handleGameStartedMessage(message) {
 	console.log("Processing game started message:", message);

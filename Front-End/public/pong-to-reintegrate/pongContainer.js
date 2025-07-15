@@ -3,7 +3,6 @@ import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
 import { renderPong } from "./locale/pong.js";
-import { sendGameInvitation } from "../notification/notification.js";
 
 // Load CSS files
 const pongContainerCSS = document.createElement("link");
@@ -24,85 +23,27 @@ fontAwesome.href =
 document.head.appendChild(fontAwesome);
 
 // Update your existing renderPongInfo function
-function renderPongInfo(inviteHTML = "") {
+function renderPongInfo() {
 	const pongInfoContainer = document.getElementById("pongContainer");
 	pongInfoContainer.innerHTML = `
-		<div class="pong-card">
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<h5 class="card-title">Pong</h5>
-			</div>
-			<div class="card-body">
-				<p class="card-text">A simple pong game</p>
-				<button class="btn btn-primary" onclick="handleLocalePong()">
-					<i class="fas fa-user me-2"></i>Locale
-				</button>
-				<button class="btn btn-secondary" onclick="handleMultiPong()">
-					<i class="fas fa-users me-2"></i>Online
-				</button>
-				<p class="card-text">invites</p>
-				<div id="pong-invite-html-slot">${inviteHTML}</div>
-				<p class="card-text">tournaments</p>
-				<div id="pong-tournament-html-slot"></div>
-			</div>
-		</div>
-	`;
-	showTournament(3, "marco3");
+        <div class="pong-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="card-title">Pong</h5>
+            </div>
+            <div class="card-body">
+                <p class="card-text">A simple pong game</p>
+                <button class="btn btn-primary" onclick="handleLocalePong()">
+                    <i class="fas fa-user me-2"></i>Locale
+                </button>
+                <button class="btn btn-secondary" onclick="handleMultiPong()">
+                    <i class="fas fa-users me-2"></i>Online
+                </button>
+            </div>
+        </div>
+    `;
 }
-
-function handlePongGameButton(friendId, friendName) {
-    if (window.pendingPongInvite) {
-        // Esiste già un invito: accetta e partecipa
-        window.acceptPongInvite();
-    } else {
-        // Nessun invito: crea la partita e manda l'invito
-        inviteToGame(friendId, friendName);
-    }
-}
-
-window.handlePongGameButton = handlePongGameButton;
-
-function showTournament(user_id, username) {
-	const slot = document.getElementById("pong-tournament-html-slot");
-	if (!slot) {
-		console.warn("pong-tournament-html-slot not found! For correct behavior, chiama prima renderPongInfo().");
-		return;
-	}
-	// Rimuovi eventuali tornei precedenti
-	slot.innerHTML = "";
-	const tournamentDiv = document.createElement("div");
-	tournamentDiv.id = "pong-tournament-notification";
-	tournamentDiv.className = "pongwebrtc-tournament";
-	tournamentDiv.innerHTML = `
-		<button class="btn btn-primary btn-sm"
-			onclick="handlePongGameButton('${user_id}', '${username}')">
-			Unisciti/Invita a Pong
-		</button>
-	`;
-	slot.appendChild(tournamentDiv);
-}
-window.showTournament = showTournament;
-
-function showPongInviteNotification(inviterName) {
-	const slot = document.getElementById("pong-invite-html-slot");
-	if (!slot) {
-		console.warn("pong-invite-html-slot not found! For correct behavior, chiama prima renderPongInfo().");
-		return;
-	}
-	// Rimuovi eventuali inviti precedenti
-	slot.innerHTML = "";
-	const inviteDiv = document.createElement("div");
-	inviteDiv.id = "pong-invite-notification";
-	inviteDiv.className = "pongwebrtc-invite";
-	inviteDiv.innerHTML = `
-		<button class="btn btn-success btn-sm ms-3" onclick="acceptPongInvite()">${inviterName} <i class="fas fa-play ms-2"></i></button>
-	`;
-	slot.appendChild(inviteDiv);
-}
-window.showPongInviteNotification = showPongInviteNotification;
 
 async function handleLocalePong() {
-	// Reset eventuale stato multiplayer se necessario
-	// (opzionale: se vuoi pulire lo stato multiplayer, importa e resetta qui)
 	window.navigateTo("#pong");
 }
 
@@ -117,6 +58,7 @@ async function loadFriendListTemplate() {
 		if (!response.ok) throw new Error("Template not found");
 		return await response.text();
 	} catch (error) {
+		console.error("Error loading friend list template:", error);
 		showNotification(
 			"Failed to load friend list. Please try again.",
 			"error"
@@ -145,24 +87,24 @@ function createFriendItemHTML(friendship) {
 	const initials = getUserInitials(username);
 
 	return `
-		<div class="friend-item" data-friend-id="${userId}">
-			<div class="d-flex align-items-center">
-				<div class="friend-avatar me-3">
-					${initials}
-				</div>
-				<div class="flex-grow-1">
-					<div class="friend-name">${username}</div>
-				</div>
-				<div class="ms-2">
-					<button class="btn btn-game-invite btn-sm"
-							onclick="inviteToGame('${userId}', '${username}')">
-						<i class="fas fa-gamepad me-1"></i>
-						Invite
-					</button>
-				</div>
-			</div>
-		</div>
-	`;
+        <div class="friend-item" data-friend-id="${userId}">
+            <div class="d-flex align-items-center">
+                <div class="friend-avatar me-3">
+                    ${initials}
+                </div>
+                <div class="flex-grow-1">
+                    <div class="friend-name">${username}</div>
+                </div>
+                <div class="ms-2">
+                    <button class="btn btn-game-invite btn-sm" 
+                            onclick="inviteToGame('${userId}', '${username}')">
+                        <i class="fas fa-gamepad me-1"></i>
+                        Invite
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 // Send game invitation
@@ -186,55 +128,47 @@ async function inviteToGame(friendId, friendName) {
 
 		// Get current user info for debugging
 		const { token, url_api, userId } = getVariables();
+		console.log("🔍 Debug Info:");
+		console.log("  - Current User ID:", userId);
+		console.log("  - Friend ID:", friendId);
+		console.log("  - Token present:", token ? "✅ Yes" : "❌ No");
+		console.log("  - API URL:", url_api);
 
-		// WEBRTC MODE: Ultra-low latency (SEMPRE ATTIVO)
-		const { state } = await import("./webrtc/state.js");
+		// Import the WebSocket functions
+		const { createGame } = await import("./multiplayer/serverSide.js");
 
-		// Set up WebRTC state
-		state.isWebRTC = true;
-		state.isMultiplayer = true;
-		state.localPlayerId = parseInt(userId);
-		state.remotePlayerId = parseInt(friendId);
-		state.isHost = true; // Inviter is always host
+		// Try to create a game and establish WebSocket connection
+		console.log("🎯 Attempting to create game and establish WebSocket...");
 
-		// Update role indicator for host
-		setTimeout(() => {
-			if (window.updateRoleIndicator) {
-				window.updateRoleIndicator(true); // true = host
-			}
-		}, 100);
+		try {
+			// Create game between current user and friend
+			await createGame(parseInt(userId), parseInt(friendId));
 
-		// Create game in database first
-		const { createGame } = await import("./webrtc/serverSide.js");
-		await createGame(parseInt(userId), parseInt(friendId));
+			// Show success notification
+			showNotification(
+				`🎮 Game started with ${friendName}! WebSocket connection established.`,
+				"success"
+			);
 
-		// Store WebRTC connection for later use
-		state.pendingWebRTCConnection = true;
-		state.webrtcRoomId = state.room_id;
-
-		// Send notification
-		await sendPongInviteNotification(friendId, friendName);
+			// Close friend list and navigate to game
+			closeFriendList();
+			// Optional: Navigate to game view
+			// window.navigateTo("#pong");
+		} catch (gameError) {
+			console.error("❌ Failed to create game:", gameError);
+		}
+	} catch (error) {
+		console.error("💥 Complete failure in inviteToGame:", error);
+		console.error("Error details:", {
+			message: error.message,
+			stack: error.stack,
+			name: error.name,
+		});
 
 		showNotification(
-			`🚀 WebRTC Game created with ${friendName}! Ultra-low latency mode. Waiting for connection...`,
-			"success",
-			6000
+			"❌ Failed to start game. Check console for details.",
+			"error"
 		);
-
-		// Close friend list and navigate to game
-		closeFriendList();
-		// Navigate to game view (WebRTC)
-		window.navigateTo("#pongwebrtc");
-
-	} catch (error) {
-		// Reset multiplayer state on error
-		const { state } = await import("./webrtc/state.js");
-		state.isMultiplayer = false;
-		state.isWebRTC = false;
-		state.localPlayerId = null;
-		state.remotePlayerId = null;
-		state.pendingWebRTCConnection = false;
-		state.webrtcRoomId = null;
 
 		// Reset button state
 		const inviteBtn = document.querySelector(
@@ -244,43 +178,6 @@ async function inviteToGame(friendId, friendName) {
 			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
 			inviteBtn.disabled = false;
 		}
-
-		showNotification(
-			"❌ Failed to start game. Please try again.",
-			"error"
-		);
-	}
-}
-
-// Send game invitation using existing notification system
-async function sendPongInviteNotification(friendId, friendName) {
-	try {
-		const { userUsername, userId } = getVariables();
-		const { state } = await import("./webrtc/state.js");
-
-		await sendGameInvitation({
-			recipient_id: friendId,
-			recipient_name: friendName,
-			sender_name: userUsername,
-			sender_id: userId,
-			game_type: "Pong",
-			action: "join_pong_game",
-			game_id: state.room_id // Include the game/room ID!
-		});
-
-		// Show a message that the friend should open Pong
-		showNotification(
-			`🎮 Game invitation sent to ${friendName}! They should open Pong to join the game.`,
-			"info",
-			8000
-		);
-	} catch (error) {
-		// Fallback: show local notification
-		showNotification(
-			`🎮 Game created with ${friendName}! Tell them to open Pong to join the game.`,
-			"success",
-			8000
-		);
 	}
 }
 
@@ -298,16 +195,16 @@ function showNotification(message, type = "info") {
 	};
 
 	const toastHTML = `
-		<div class="toast custom-toast position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-			<div class="toast-header ${toastColors[type]} text-white">
-				<strong class="me-auto">Notification</strong>
-				<button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-			</div>
-			<div class="toast-body">
-				${message}
-			</div>
-		</div>
-	`;
+        <div class="toast custom-toast position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
+            <div class="toast-header ${toastColors[type]} text-white">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
 
 	document.body.insertAdjacentHTML("beforeend", toastHTML);
 
@@ -390,6 +287,7 @@ async function loadFriendsData() {
 
 		if (response.ok) {
 			const friendsData = await response.json();
+			console.log("Friends data:", friendsData);
 
 			if (friendsData.length === 0) {
 				emptyState.style.display = "block";
@@ -405,6 +303,7 @@ async function loadFriendsData() {
 			throw new Error(`HTTP ${response.status}`);
 		}
 	} catch (error) {
+		console.error("Error fetching friends:", error);
 		loadingState.style.display = "none";
 		errorState.style.display = "block";
 	}
@@ -418,13 +317,7 @@ function closeFriendList() {
 	}
 }
 
-// Make functions available globally
-window.closeFriendList = closeFriendList;
-window.handleLocalePong = handleLocalePong;
-window.handleMultiPong = handleMultiPong;
-window.closeLoginBox = closeLoginBox;
-window.closeRegisterBox = closeRegisterBox;
-window.inviteToGame = inviteToGame;
+// ... rest of your existing functions (showLoginBox, etc.) ...
 
 async function onHandleSubmit(e, email, password) {
 	e.preventDefault();
@@ -452,23 +345,23 @@ function showLoginBox() {
 	const loginBox = document.createElement("div");
 	loginBox.className = "login-box-modal";
 	loginBox.innerHTML = `
-		<div class="login_box">
-			<h1>Login</h1>
-			<div class="login_form">
-				<form class="login_form" id="loginForm">
-					<div class="mb-3">
-						<input type="email" id="loginemail" placeholder="Email" class="form-control" required />
-					</div>
-					<div class="mb-3">
-						<input type="password" id="loginpassword" placeholder="Password" class="form-control" required />
-					</div>
-					<div class="empty"></div>
-					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
-					<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
-				</form>
-			</div>
-		</div>
-	`;
+        <div class="login_box">
+            <h1>Login</h1>
+            <div class="login_form">
+                <form class="login_form" id="loginForm">
+                    <div class="mb-3">
+                        <input type="email" id="loginemail" placeholder="Email" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" id="loginpassword" placeholder="Password" class="form-control" required />
+                    </div>
+                    <div class="empty"></div>
+                    <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
+                    <button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
+                </form>
+            </div>
+        </div>
+    `;
 	document.body.appendChild(loginBox);
 
 	window.addEventListener("click", function (event) {
@@ -505,25 +398,25 @@ function showRegisterBox() {
 	const registerBox = document.createElement("div");
 	registerBox.className = "register-box-modal";
 	registerBox.innerHTML = `
-		<div class="login_box">
-			<h1>Register</h1>
-			<div class="login_form">
-				<form class="login_form" id="registerForm">
-					<div class="mb-3">
-						<input type="text" id="registerusername" placeholder="Username" class="form-control" required />
-					</div>
-					<div class="mb-3">
-						<input type="email" id="registeremail" placeholder="Email" class="form-control" required />
-					</div>
-					<div class="mb-3">
-						<input type="password" id="registerpassword" placeholder="Password" class="form-control" required />
-					</div>
-					<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
-					<button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
-				</form>
-			</div>
-		</div>
-	`;
+        <div class="login_box">
+            <h1>Register</h1>
+            <div class="login_form">
+                <form class="login_form" id="registerForm">
+                    <div class="mb-3">
+                        <input type="text" id="registerusername" placeholder="Username" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <input type="email" id="registeremail" placeholder="Email" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <input type="password" id="registerpassword" placeholder="Password" class="form-control" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
+                    <button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
+                </form>
+            </div>
+        </div>
+    `;
 	document.body.appendChild(registerBox);
 
 	window.addEventListener("click", function (event) {
@@ -565,4 +458,4 @@ window.closeLoginBox = closeLoginBox;
 window.closeRegisterBox = closeRegisterBox;
 window.inviteToGame = inviteToGame;
 
-export { renderPongInfo, showPongInviteNotification };
+export { renderPongInfo };

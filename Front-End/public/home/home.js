@@ -53,7 +53,28 @@ function renderHome() {
 	//renderTaskAvaiable();
 	//renderTaskActive();
 	renderNotification();
-	initializeWebSocket();
+
+	// Initialize WebSocket for notifications only if not already connected
+	console.log('🔍 Checking notification WebSocket status...');
+	try {
+		// Check if WebSocket is already connected using the state function
+		import('../notification/notification.js').then(({ getWebSocketState }) => {
+			const wsState = getWebSocketState();
+			if (!wsState.connected) {
+				console.log('🔌 Initializing notification WebSocket (not connected)');
+				initializeWebSocket();
+			} else {
+				console.log('✅ Notification WebSocket already connected');
+			}
+		}).catch(error => {
+			console.log('🔌 Initializing notification WebSocket (import error)');
+			initializeWebSocket();
+		});
+	} catch (error) {
+		console.log('🔌 Initializing notification WebSocket (fallback)');
+		initializeWebSocket();
+	}
+
 	renderPongInfo();
 	initializeProfile();
 }
