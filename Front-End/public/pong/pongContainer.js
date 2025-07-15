@@ -50,13 +50,13 @@ function renderPongInfo(inviteHTML = "") {
 }
 
 function handlePongGameButton(friendId, friendName) {
-    if (window.pendingPongInvite) {
-        // Esiste già un invito: accetta e partecipa
-        window.acceptPongInvite();
-    } else {
-        // Nessun invito: crea la partita e manda l'invito
-        inviteToGame(friendId, friendName);
-    }
+	if (window.pendingPongInvite) {
+		// Esiste già un invito: accetta e partecipa
+		window.acceptPongInvite();
+	} else {
+		// Nessun invito: crea la partita e manda l'invito
+		inviteToGame(friendId, friendName);
+	}
 }
 
 window.handlePongGameButton = handlePongGameButton;
@@ -64,7 +64,9 @@ window.handlePongGameButton = handlePongGameButton;
 function showTournament(user_id, username) {
 	const slot = document.getElementById("pong-tournament-html-slot");
 	if (!slot) {
-		console.warn("pong-tournament-html-slot not found! For correct behavior, chiama prima renderPongInfo().");
+		console.warn(
+			"pong-tournament-html-slot not found! For correct behavior, chiama prima renderPongInfo()."
+		);
 		return;
 	}
 	// Rimuovi eventuali tornei precedenti
@@ -85,7 +87,9 @@ window.showTournament = showTournament;
 function showPongInviteNotification(inviterName) {
 	const slot = document.getElementById("pong-invite-html-slot");
 	if (!slot) {
-		console.warn("pong-invite-html-slot not found! For correct behavior, chiama prima renderPongInfo().");
+		console.warn(
+			"pong-invite-html-slot not found! For correct behavior, chiama prima renderPongInfo()."
+		);
 		return;
 	}
 	// Rimuovi eventuali inviti precedenti
@@ -117,10 +121,7 @@ async function loadFriendListTemplate() {
 		if (!response.ok) throw new Error("Template not found");
 		return await response.text();
 	} catch (error) {
-		showNotification(
-			"Failed to load friend list. Please try again.",
-			"error"
-		);
+		showNotification("Failed to load friend list. Please try again.", "error");
 		return null;
 	}
 }
@@ -225,7 +226,6 @@ async function inviteToGame(friendId, friendName) {
 		closeFriendList();
 		// Navigate to game view (WebRTC)
 		window.navigateTo("#pongwebrtc");
-
 	} catch (error) {
 		// Reset multiplayer state on error
 		const { state } = await import("./webrtc/state.js");
@@ -245,10 +245,7 @@ async function inviteToGame(friendId, friendName) {
 			inviteBtn.disabled = false;
 		}
 
-		showNotification(
-			"❌ Failed to start game. Please try again.",
-			"error"
-		);
+		showNotification("❌ Failed to start game. Please try again.", "error");
 	}
 }
 
@@ -265,7 +262,7 @@ async function sendPongInviteNotification(friendId, friendName) {
 			sender_id: userId,
 			game_type: "Pong",
 			action: "join_pong_game",
-			game_id: state.room_id // Include the game/room ID!
+			game_id: state.room_id, // Include the game/room ID!
 		});
 
 		// Show a message that the friend should open Pong
@@ -437,12 +434,7 @@ async function onHandleSubmit(e, email, password) {
 
 async function onHandleRegisterSubmit(e, username, email, password) {
 	e.preventDefault();
-	const registerSuccess = await registerUser(
-		username,
-		email,
-		password,
-		false
-	);
+	const registerSuccess = await registerUser(username, email, password, false);
 	if (registerSuccess) {
 		showLoginBox();
 	}
@@ -542,12 +534,10 @@ function showRegisterBox() {
 			await onHandleRegisterSubmit(e, username, email, password);
 		});
 
-	document
-		.getElementById("loginButton")
-		.addEventListener("click", function () {
-			closeRegisterBox();
-			showLoginBox();
-		});
+	document.getElementById("loginButton").addEventListener("click", function () {
+		closeRegisterBox();
+		showLoginBox();
+	});
 }
 
 function closeRegisterBox() {

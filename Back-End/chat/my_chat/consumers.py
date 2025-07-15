@@ -20,13 +20,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 		self.room_id = query_string['room_id'][0]
 		self.room_group_name = f'chat_{self.room_id}'
 		
-		# Verifica che l'utente sia membro della chat
-		# is_member = await self.is_chat_member()
-		# if not is_member:
-		# 	logger.warning(f"User {self.scope['user']} attempted to join chat {self.room_id} but is not a member")
-		# 	await self.close(code=4003)
-		# 	return
-		
 		# Controlla connessione Redis
 		await self.log_redis_connection()
 		
@@ -97,7 +90,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			self.channel_name
 		)
 
-	async def save_message(self, room_id, message, sender_username, timestamp):
+	async def save_message(self, room_id, message, sender_username, timestamp, message_type='text'):
 		try:
 			room = await sync_to_async(ChatRoom.objects.get)(room_id=room_id)
 			
@@ -107,9 +100,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				room=room,
 				message=message,
 				sender=sender_profile,
-				timestamp=timestamp
+				timestamp=timestamp,
+				message_type=message_type
 			)
-			logger.info(f"Message saved: {message} from {sender_username} in room {room_id}")
+			logger.info(f"Message saved: {message_type} message from {sender_username} in room {room_id}")
 			return None
 		except ChatRoom.DoesNotExist:
 			return {'error': 'Room does not exist'}
@@ -122,7 +116,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 						room=room,
 						message=message,
 						sender=sender_profile,
-						timestamp=timestamp
+						timestamp=timestamp,
+						message_type=message_type
 					)
 					return None
 				except Exception as e:
@@ -134,11 +129,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			return {'error': f'Error saving message: {str(e)}'}
 
 	async def receive(self, text_data):
-		text_data_json = json.loads(text_data)
-		message = text_data_json['message']
-		room_id = text_data_json['room_id']
-		sender = text_data_json['sender']
-		timestamp = text_data_json.get('timestamp')
+		try:
+			data = json.loads(text_data)
+			message_type = data.get('type', 'text')
+			
+			if message_type == 'text':
+				await self.handle_text_message(data)
+			elif message_type == 'game_invitation':
+				await self.handle_game_invitation(data)
+			else:
+				logger.warning(f"Unknown message type: {message_type}")
+				
+		except json.JSONDecodeError:
+			logger.error("Invalid JSON received")
+		except Exception as e:
+			logger.error(f"Error processing message: {str(e)}")
+
+	async def handle_text_message(self, data):
+		"""Handle regular text messages"""
+		message = data['message']
+		room_id = data['room_id']
+		sender = data['sender']
+		timestamp = data.get('timestamp')
 
 		await self.channel_layer.group_send(
 			self.room_group_name,
@@ -151,7 +163,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			}
 		)
 
-		error = await self.save_message(room_id, message, sender, timestamp)
+		error = await self.save_message(room_id, message, sender, timestamp, 'text')
+		if error:
+			await self.send(text_data=json.dumps(error))
+
+	async def handle_game_invitation(self, data):
+		"""Handle game invitation messages"""
+		sender = data.get('sender')
+		message = data.get('message', f"{sender} invited you to play a game!")
+		room_id = data.get('room_id')
+		timestamp = data.get('timestamp')
+
+		# Broadcast game invitation to all users in the room
+		await self.channel_layer.group_send(
+			self.room_group_name,
+			{
+				'type': 'game_invitation_message',
+				'message': message,
+				'room_id': room_id,
+				'sender': sender,
+				'timestamp': timestamp
+			}
+		)
+
+		# Save to database as game_invitation type
+		error = await self.save_message(room_id, message, sender, timestamp, 'game_invitation')
 		if error:
 			await self.send(text_data=json.dumps(error))
 
@@ -159,6 +195,17 @@ class ChatConsumer(AsyncWebsocketConsumer):
 	async def chat_message(self, event):
 		# Send message to WebSocket
 		await self.send(text_data=json.dumps({
+			'type': 'text',
+			'message': event['message'],
+			'room_id': event['room_id'],
+			'sender': event['sender'],
+			'timestamp': event['timestamp']
+		}))
+
+	async def game_invitation_message(self, event):
+		"""Send game invitation to WebSocket"""
+		await self.send(text_data=json.dumps({
+			'type': 'game_invitation',
 			'message': event['message'],
 			'room_id': event['room_id'],
 			'sender': event['sender'],
