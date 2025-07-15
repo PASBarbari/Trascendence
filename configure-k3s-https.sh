@@ -68,7 +68,7 @@ spec:
       - POST
       - DELETE
     accessControlAllowOriginList:
-      - "https://trascendence.42firenze.it"
+      - "https://"
       - "https://kibana.trascendence.local"
       - "https://grafana.trascendence.local"
     accessControlMaxAge: 100

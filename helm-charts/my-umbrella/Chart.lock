@@ -23,14 +23,11 @@ dependencies:
 - name: api-docs-service-chart
   repository: file://charts/api-docs-service-chart
   version: 0.1.0
-- name: observability-chart
-  repository: file://charts/observability-chart
-  version: 0.1.0
 - name: redis-chart
   repository: file://charts/redis-chart
   version: 0.1.0
 - name: cert-manager-chart
   repository: file://charts/cert-manager-chart
   version: 0.1.0
-digest: sha256:8de2e52421401e599d93821630df796151eddbf6de7d31dff8190705fb0add7d
-generated: "2025-07-02T16:50:10.167825486+02:00"
+digest: sha256:beb8f68b4b7d30dd604dbd9f993fef30b7cd6043bd8f51ba58c3acf62613f5c4
+generated: "2025-07-15T15:16:59.454970414+02:00"
