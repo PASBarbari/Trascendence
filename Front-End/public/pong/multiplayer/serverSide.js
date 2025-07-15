@@ -5,6 +5,7 @@ import { renderPong } from "../locale/pong.js";
 import * as GAME from "../locale/gameLogic.js";
 import * as UTILS from "../locale/utils.js";
 import { getCookie } from "../../cookie.js";
+import { showNotification } from "../pongContainer.js";
 
 let socket;
 
@@ -76,9 +77,44 @@ function initializeWebSocket(room_id, player1, player2) {
 			console.log("🎉 Welcome message:", message.message);
 		} else if (message.type === "error") {
 			console.error("❌ Server error:", message.error);
-		} else if (message.ready) {
-			console.log("🎮 Game ready signal received!");
-			// GAME.start(message);
+		} else if (message.type === "ready") {
+			console.log("🎮 Opponent is ready!");
+			// Update opponent ready status in the UI
+			const opponentReadyStatus = document.getElementById(
+				"opponent-ready-status"
+			);
+			if (opponentReadyStatus) {
+				opponentReadyStatus.innerHTML = `
+                <span class="text-primary"><i class="fas fa-user-friends me-2"></i>Opponent: </span>
+                <span class="badge bg-success">Ready</span>
+            `;
+			}
+
+			// Check if both players are ready to start the game
+			const playerReadyStatus = document.getElementById(
+				"player-ready-status"
+			);
+			if (
+				playerReadyStatus &&
+				playerReadyStatus.querySelector(".badge.bg-success")
+			) {
+				// Both players are ready
+				setTimeout(() => {
+					// Hide ready screen and start the game
+					const readyScreen = document.getElementById("ready-screen");
+					if (readyScreen) {
+						readyScreen.style.display = "none";
+					}
+					// Initialize game (call your existing game initialization)
+					// You'd integrate with your existing game code here
+					showNotification(
+						"Both players are ready! Starting game...",
+						"success"
+					);
+				}, 1000);
+			}
+		} else if (message.type === "test_message") {
+			console.log("📝 Test message received:", message.message);
 		} else {
 			console.log("🔍 Unknown message type:", message);
 		}
@@ -143,5 +179,20 @@ function initializeWebSocket(room_id, player1, player2) {
 		}
 	};
 }
+function sendTestMessage(message) {
+	if (!socket || socket.readyState !== WebSocket.OPEN) {
+		throw new Error("WebSocket not connected");
+	}
 
-export { createGame, initializeWebSocket, socket };
+	const testMessage = {
+		type: "test_message",
+		message: message,
+		timestamp: new Date().toISOString(),
+	};
+
+	socket.send(JSON.stringify(testMessage));
+	console.log("✅ Test message sent:", testMessage);
+	return true;
+}
+
+export { createGame, initializeWebSocket, socket, sendTestMessage };
