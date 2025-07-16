@@ -29,10 +29,106 @@ Chat Service:
   {{- end }}
 {{- end }}
 
+{{- if index .Values "observability-chart" "grafana" "enabled" }}
+Grafana Dashboard:
+  {{- if index .Values "observability-chart" "ingressroutes" "enabled" }}
+  URL: https://grafana.{{ index .Values "observability-chart" "ingressroutes" "domain" }}
+  {{- else }}
+  To access Grafana using port-forward:
+  kubectl port-forward svc/{{ .Release.Name }}-grafana 3000:80
+  Then visit: http://localhost:3000
+  {{- end }}
+  Username: {{ index .Values "observability-chart" "grafana" "adminUser" | default "admin" }}
+  Password: {{ index .Values "observability-chart" "grafana" "adminPassword" | default "admin123" }}
+  
+  Pre-configured dashboards:
+  - Kubernetes Cluster Overview
+  - Node Exporter Metrics
+  - Kubernetes Pods
+  - Trascendence Services Overview
+{{- end }}
+
+{{- if index .Values "observability-chart" "kibana" "enabled" }}
+Kibana (ELK Stack):
+  {{- if index .Values "observability-chart" "ingressroutes" "enabled" }}
+  URL: https://kibana.{{ index .Values "observability-chart" "ingressroutes" "domain" }}
+  {{- else }}
+  To access Kibana using port-forward:
+  kubectl port-forward svc/{{ .Release.Name }}-kibana 5601:5601
+  Then visit: http://localhost:5601
+  {{- end }}
+  Username: {{ index .Values "observability-chart" "kibana" "username" | default "kibana_system" }}
+  Password: {{ index .Values "observability-chart" "kibana" "password" | default "changeme" }}
+  
+  Pre-configured features:
+  - Django application logs with JSON parsing
+  - Service identification and filtering
+  - Error tracking and analysis
+  - Performance monitoring dashboards
+  - Automatic index patterns for trascendence-logs-*
+{{- end }}
+
+{{- if index .Values "observability-chart" "elasticsearch" "enabled" }}
+Elasticsearch (ELK Stack):
+  To access Elasticsearch using port-forward:
+  kubectl port-forward svc/{{ .Release.Name }}-elasticsearch 9200:9200
+  Then visit: http://localhost:9200
+  
+  Health check: curl -X GET "localhost:9200/_cluster/health?pretty"
+{{- end }}
+
+{{- if index .Values "observability-chart" "logstash" "enabled" }}
+Logstash (Log Processing):
+  Processing pipeline includes:
+  - Django JSON log parsing
+  - Service field enrichment
+  - Error classification
+  - Performance metrics extraction
+{{- end }}
+
+Monitoring & Observability:
+  - Grafana provides visual dashboards for metrics and monitoring
+  - Kibana offers log analysis and search capabilities with Django-optimized parsing
+  - Prometheus collects and stores time-series metrics
+  - Elasticsearch stores and indexes application logs with JSON structure
+  - Filebeat collects container logs from Kubernetes pods
+  - Logstash processes and enriches Django application logs
+  
+ELK Stack Features:
+  - JSON-structured logging from all Django microservices
+  - Service identification (login, chat, user, notifications, pong, api-docs)
+  - Environment-based log level configuration
+  - Container-friendly stdout logging
+  - Automatic log rotation and retention
+
+{{- if index .Values "observability-chart" "enabled" }}
+Local Access Setup (for k3s with Traefik):
+  Add these entries to your /etc/hosts file:
+  127.0.0.1 grafana.trascendence.local
+  127.0.0.1 kibana.trascendence.local
+  
+  Or use port-forwarding commands shown above.
+{{- end }}
+
 For troubleshooting:
   - Check pod status: kubectl get pods --all-namespaces
   - Check certificates: kubectl get certificates --all-namespaces
   - View logs: kubectl logs -n <namespace> <pod-name>
   - Check ingress: kubectl get ingress --all-namespaces
+  - ELK Stack health: kubectl get pods -n observability
+
+ELK Logging Configuration:
+  All Django microservices are configured with uniform ELK-optimized logging:
+  - JSON-structured logs for Logstash parsing
+  - Service identification in log messages
+  - Environment-based configuration (USE_JSON_LOGGING=true for production)
+  - Comprehensive logger coverage (Django, ASGI, WebSocket, application)
+  - Container-friendly stdout logging for Filebeat collection
+
+Environment Variables for Production:
+  USE_JSON_LOGGING=true
+  USE_FILE_LOGGING=false
+  LOG_LEVEL=INFO
+  DEBUG=false
 
 For more information, see the documentation at: https://github.com/PASBarbari/Trascendence

@@ -1,6 +1,7 @@
 # praticamente quando un modello viene creato ricveve il segnale e fa quello che gli chiedi
 import math
 import random
+from venv import logger
 from django.shortcuts import render, get_object_or_404
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -10,6 +11,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
 from .serializer import *
+
+logger = logging.getLogger('pong_app')
 
 # ring_size = [160 , 90]
 tick_rate = 60
@@ -54,32 +57,99 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		print(f"Game {self.__dict__} started")
+		logger.error(f"Game {self.game_id} starting with angle: {self.angle}")
 		while self.ball_speed == 0:
 			await asyncio.sleep(0.1)
+		start_time = time.monotonic()
 		while self.running:
-			start_time = time.monotonic()
-
+	
 			self.physics()
 			self.movement()
 
 			await self.update()
 
-			if self.player_1_score == 5 or self.player_2_score == 5: #TODO add different games scores
+			if self.player_1_score == 5 or self.player_2_score == 5:
 				self.running = False
 				break
-			elapsed = time.monotonic() - start_time
-			self.avg_frame_time += [elapsed, 1]
-			await asyncio.sleep(max(0, tick_interval - elapsed))
-		self.game_end()
+			start_time += tick_interval
+			await asyncio.sleep(max(0, start_time - time.monotonic()))
+		logger.info(f"Game {self.game_id} ended with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
+		await self.game_end()
 
-	def game_end(self):
-		if self.tournament_id:
-			Game.objects.update_or_create(
-				player_1_score = self.player_1_score,
-				player_2_score = self.player_2_score,
-				tournament_id = self.tournament_id
+	async def game_end(self):
+		logger = logging.getLogger(__name__)
+		logger.info(f"Game {self.game_id} ending with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
+		
+		# Save game to database asynchronously
+		try:
+			from asgiref.sync import sync_to_async
+			await sync_to_async(Game.objects.filter(id=self.game_id).update)(
+				player_1_score=self.player_1_score,
+				player_2_score=self.player_2_score
 			)
+			logger.info(f"Game {self.game_id} saved to database with scores P1:{self.player_1_score} P2:{self.player_2_score}")
+			
+			# Get the updated game object to access properties
+			game = await sync_to_async(Game.objects.get)(id=self.game_id)
+			winner_id = game.winner_id
+			loser_id = game.loser_id
+			
+		except Exception as e:
+			logger.error(f"Error saving game {self.game_id} to database: {str(e)}")
+			# Fallback: calculate winner manually if DB access fails
+			if self.player_1_score > self.player_2_score:
+				winner_id = self.player_1.user_id
+				loser_id = self.player_2.user_id
+			else:
+				winner_id = self.player_2.user_id
+				loser_id = self.player_1.user_id
+		
+		# If this is a tournament game, register the result
+		if self.tournament_id and winner_id and loser_id:
+			try:
+				from .consumers import active_tournaments
+				if self.tournament_id in active_tournaments:
+					tournament = active_tournaments[self.tournament_id]
+					result = tournament.register_game_result(winner_id, loser_id)
+					logger.info(f"Tournament game result registered: {result}")
+					
+					# Notify tournament about game completion
+					channel_layer = get_channel_layer()
+					await channel_layer.group_send(
+						f'tournament_{self.tournament_id}',
+						{
+							'type': 'tournament_game_completed',
+							'game_id': self.game_id,
+							'winner': winner_id,
+							'loser': loser_id,
+							'scores': {
+								'player_1_score': self.player_1_score,
+								'player_2_score': self.player_2_score
+							}
+						}
+					)
+				else:
+					logger.warning(f"Tournament {self.tournament_id} not found in active tournaments")
+			except Exception as e:
+				logger.error(f"Error registering tournament result: {str(e)}")
+		
+		# Send game over message to players
+		try:
+			channel_layer = get_channel_layer()
+			await channel_layer.group_send(
+				f'game_{self.game_id}',
+				{
+					'type': 'game_over',
+					'winner': winner_id,
+					'loser': loser_id,
+					'final_scores': {
+						'player_1_score': self.player_1_score,
+						'player_2_score': self.player_2_score
+					}
+				}
+			)
+		except Exception as e:
+			logger.error(f"Error sending game over message: {str(e)}")
 
 
 	def p1_is_hit(self):
@@ -132,7 +202,7 @@ class GameState:
 		channel_layer = get_channel_layer()
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
-			# print(f"Sent game state: {serialized_data}")
+			logger.info(f"Sending game state: {serialized_data}")
 			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
@@ -208,10 +278,12 @@ class GameState:
 		}
 
 
-	def quit_game(self):
-		print(f"Game {self.game_id} quit")
-		self.running = False
-		#TODO set to 0 who quit
+	def quit_game(self, player_id=None):
+		"""Handle game quit - can be called statically or as instance method"""
+		print(f"Game {getattr(self, 'game_id', 'unknown')} quit by player {player_id}")
+		if hasattr(self, 'running'):
+			self.running = False
+		#TODO: implement forfeit logic - set quitting player score to 0 and opponent to 5
 # @receiver(post_save, sender=Game)
 # def start_game(sender, instance, created, **kwargs):
 # 	if created:
@@ -229,23 +301,31 @@ class TournamentState:
 		self.id = kwargs['tournament_id']
 		self.name = kwargs['name']
 		self.max_p = kwargs['max_p']
-		self.req_lvl = kwargs['req_lvl']
 		self.nbr_player = 1
 		self.players = []
 		self.next_round = []
 		self.players.append(kwargs['player_id'])
 		self.creator = kwargs['player_id']
+		self.creator_id = kwargs['player_id']  # Add creator_id property for easier access
+		self.current_round = 0
+		self.round_timer_task = None
+		self.round_results = {}
+		self.is_round_active = False
 
 	def add_player(self, player):
-		p = get_object_or_404(UserProfile, user_id=player['user_id'])
-		if player['user_id'] in self.players:
+		# Handle both dict and object formats for compatibility
+		if isinstance(player, dict):
+			user_id = player['user_id']
+		else:
+			user_id = player.user_id
+			
+		p = get_object_or_404(UserProfile, user_id=user_id)
+		if user_id in self.players:
 			return 'Player already in the tournament'
-		if p.level < self.req_lvl:
-			return 'Player level is too low'
 		if self.nbr_player >= self.max_p:
 			return 'Tournament is full'
 		self.nbr_player += 1
-		self.players.append(player['user_id'])
+		self.players.append(user_id)
 		return 'Player added to the tournament'
 
 	def start(self):
@@ -254,16 +334,23 @@ class TournamentState:
 				"type": "error",
 				'error':'Not enough players'
 			}
-		self.players = random.shuffle(self.players)
+		
+		# Shuffle players for random brackets
+		shuffled_players = self.players.copy()
+		random.shuffle(shuffled_players)
+		self.players = shuffled_players
+		
 		self.max_p = len(self.players)
 		next_2pow = int(math.pow(2, math.ceil(math.log2(self.nbr_player))))
 		nbr_bye = next_2pow - self.nbr_player
-		self.partecipants = self.players
+		self.partecipants = self.players.copy()
 		self.partecipants.extend([0] * nbr_bye)
-		self.half = len(self.partecipants) / 2
-		first = self.partecipants[0:self.half]
+		self.half = len(self.partecipants) // 2
+		first = self.partecipants[:self.half]
 		last = self.partecipants[self.half:]
 		self.next_round = []
+		
+		# Create initial games for first round
 		for pair in zip(first, last):
 			if pair[0] == 0:
 				self.next_round.append(pair[1])
@@ -271,6 +358,7 @@ class TournamentState:
 				self.next_round.append(pair[0])
 			else:
 				self.create_game(pair[0], pair[1])
+		
 		return {
 			'type' : 'success',
 			'success' : 'Tournament started'
@@ -278,29 +366,23 @@ class TournamentState:
 
 	def brackets(self, *args, **kwargs):
 		try:
-			if self.partecipants.get(kwargs['winner']) == None:
+			winner_id = kwargs.get('winner')
+			if winner_id not in self.partecipants:
 				return 'Player not in the tournament'
-			self.next_round.append(kwargs['winner'])
-			if len(self.next_round) == self.half:
-				self.partecipants = self.next_round
-				self.next_round = []
-				if len(self.partecipants) == 1:
-					self.winner = self.partecipants[0]
-					self.save_tournament()
-					return 'Tournament ended'
-				else:
-					self.half = len(self.partecipants) / 2
-					first = self.partecipants[0:self.half]
-					last = self.partecipants[self.half:]
-					for pair in zip(first, last):
-						if pair[0] == 0:
-							self.next_round.append(pair[1])
-						elif pair[1] == 0:
-							self.next_round.append(pair[0])
-						else:
-							self.create_game(pair[0], pair[1])
+			
+			# Register the game result
+			result = self.register_game_result(winner_id, kwargs.get('loser', 'unknown'))
+			
+			# Check if all games in current round are complete
+			expected_games = len([p for p in self.partecipants if p != 0]) // 2
+			completed_games = len(self.round_results)
+			
+			if completed_games >= expected_games:
+				# All games complete, round can end
+				return 'Round completed - ready to end'
 			else:
-				return 'Game registered successfully'
+				return result
+				
 		except Exception as e:
 			return f'Error registering game: {e}'
 
@@ -311,7 +393,8 @@ class TournamentState:
 		t.save()
 
 	def create_game(self, player_1, player_2):
-		get_channel_layer().group_send(
+		channel_layer = get_channel_layer()
+		async_to_sync(channel_layer.group_send)(
 			f'tournament_{self.id}',
 			{
 				'type': 'create_game',
@@ -320,6 +403,258 @@ class TournamentState:
 				'tournament_id': self.id
 			}
 		)
+
+	async def start_round(self):
+		"""Start a new tournament round with 5-minute timer"""
+		if self.is_round_active:
+			return {
+				'type': 'error',
+				'error': 'A round is already active'
+			}
+		
+		self.current_round += 1
+		self.is_round_active = True
+		self.round_results = {}
+		
+		logger = logging.getLogger(__name__)
+		logger.info(f"Starting round {self.current_round} for tournament {self.id}")
+		
+		# Cancel any existing timer
+		if self.round_timer_task:
+			self.round_timer_task.cancel()
+		
+		# Start 5-minute timer
+		self.round_timer_task = asyncio.create_task(self._round_timer())
+		
+		# Notify all players that round has started
+		channel_layer = get_channel_layer()
+		await channel_layer.group_send(
+			f'tournament_{self.id}',
+			{
+				'type': 'tournament_start_round',
+				'message': f'Round {self.current_round} has started!',
+				'round_data': {
+					'round_number': self.current_round,
+					'duration_minutes': 5,
+					'participants': len(self.partecipants) if hasattr(self, 'partecipants') else len(self.players)
+				},
+				'games': self._get_current_games(),
+				'creator': self.creator_id
+			}
+		)
+		
+		return {
+			'type': 'success',
+			'success': f'Round {self.current_round} started'
+		}
+
+	async def _round_timer(self):
+		"""5-minute timer for tournament rounds"""
+		try:
+			await asyncio.sleep(300)  # 5 minutes = 300 seconds
+			await self.end_round_automatically()
+		except asyncio.CancelledError:
+			logger = logging.getLogger(__name__)
+			logger.info(f"Round timer cancelled for tournament {self.id}")
+
+	async def end_round_automatically(self):
+		"""Automatically end round when timer expires"""
+		logger = logging.getLogger(__name__)
+		logger.info(f"Round {self.current_round} time expired for tournament {self.id}")
+		
+		# Process any incomplete games (could set default winners or forfeit)
+		await self.end_round(auto_ended=True)
+
+	async def end_round(self, auto_ended=False):
+		"""End the current round and prepare next round"""
+		if not self.is_round_active:
+			return {
+				'type': 'error',
+				'error': 'No active round to end'
+			}
+		
+		self.is_round_active = False
+		
+		# Cancel timer if manually ended
+		if self.round_timer_task and not auto_ended:
+			self.round_timer_task.cancel()
+		
+		logger = logging.getLogger(__name__)
+		logger.info(f"Ending round {self.current_round} for tournament {self.id}")
+		
+		# Process round results and create new brackets
+		bracket_result = self._process_round_results()
+		
+		channel_layer = get_channel_layer()
+		
+		if bracket_result.get('tournament_ended', False):
+			# Tournament is complete
+			await channel_layer.group_send(
+				f'tournament_{self.id}',
+				{
+					'type': 'tournament_end_round',
+					'message': f'Tournament {self.name} has ended!',
+					'results': {
+						'round_number': self.current_round,
+						'winner': bracket_result.get('winner'),
+						'tournament_completed': True
+					},
+					'next_round_info': None,
+					'creator': self.creator_id
+				}
+			)
+			
+			return {
+				'type': 'success',
+				'success': 'Tournament completed',
+				'winner': bracket_result.get('winner')
+			}
+		else:
+			# Prepare next round
+			await channel_layer.group_send(
+				f'tournament_{self.id}',
+				{
+					'type': 'tournament_end_round',
+					'message': f'Round {self.current_round} completed!',
+					'results': {
+						'round_number': self.current_round,
+						'advancing_players': self.next_round,
+						'eliminated_players': bracket_result.get('eliminated', [])
+					},
+					'next_round_info': {
+						'round_number': self.current_round + 1,
+						'participants': len(self.next_round),
+						'status': 'waiting_for_ready'
+					},
+					'creator': self.creator_id
+				}
+			)
+			
+			# Ask everyone to get ready for next round
+			await channel_layer.group_send(
+				f'tournament_{self.id}',
+				{
+					'type': 'tournament_get_ready',
+					'message': 'Get ready for the next round!',
+					'round_info': {
+						'next_round': self.current_round + 1,
+						'participants': len(self.next_round),
+						'brackets': self._get_next_round_brackets()
+					},
+					'sender': 'system'
+				}
+			)
+			
+			return {
+				'type': 'success', 
+				'success': f'Round {self.current_round} completed, ready for round {self.current_round + 1}'
+			}
+
+	def _process_round_results(self):
+		"""Process current round results and create new brackets"""
+		# Move current next_round to participants for next round
+		if hasattr(self, 'partecipants'):
+			eliminated = [p for p in self.partecipants if p not in self.next_round and p != 0]
+			self.partecipants = self.next_round.copy()
+		else:
+			eliminated = []
+			self.partecipants = self.next_round.copy()
+		
+		self.next_round = []
+		
+		# Check if tournament is complete
+		if len(self.partecipants) == 1:
+			winner = self.partecipants[0]
+			self.winner = winner
+			self.save_tournament()
+			return {
+				'tournament_ended': True,
+				'winner': winner,
+				'eliminated': eliminated
+			}
+		
+		# Prepare brackets for next round
+		self.half = len(self.partecipants) // 2
+		return {
+			'tournament_ended': False,
+			'eliminated': eliminated
+		}
+
+	def _get_current_games(self):
+		"""Get list of current round games"""
+		if not hasattr(self, 'partecipants'):
+			return []
+		
+		games = []
+		half = len(self.partecipants) // 2
+		first_half = self.partecipants[:half]
+		second_half = self.partecipants[half:]
+		
+		for i, (p1, p2) in enumerate(zip(first_half, second_half)):
+			if p1 != 0 and p2 != 0:
+				games.append({
+					'game_number': i + 1,
+					'player_1': p1,
+					'player_2': p2,
+					'status': 'active'
+				})
+			elif p1 != 0:
+				games.append({
+					'game_number': i + 1,
+					'player_1': p1,
+					'player_2': 'bye',
+					'status': 'bye'
+				})
+			elif p2 != 0:
+				games.append({
+					'game_number': i + 1,
+					'player_1': 'bye',
+					'player_2': p2,
+					'status': 'bye'
+				})
+		
+		return games
+
+	def _get_next_round_brackets(self):
+		"""Get brackets for the next round"""
+		if len(self.next_round) <= 1:
+			return []
+		
+		# Pair up players for next round
+		brackets = []
+		half = len(self.next_round) // 2
+		first_half = self.next_round[:half]
+		second_half = self.next_round[half:]
+		
+		for i, (p1, p2) in enumerate(zip(first_half, second_half)):
+			brackets.append({
+				'match_number': i + 1,
+				'player_1': p1,
+				'player_2': p2
+			})
+		
+		return brackets
+
+	def register_game_result(self, winner_id, loser_id):
+		"""Register the result of a game in the current round"""
+		if not self.is_round_active:
+			return 'No active round'
+		
+		# Add winner to next round if not already there
+		if winner_id not in self.next_round:
+			self.next_round.append(winner_id)
+		
+		# Store result
+		self.round_results[f"{winner_id}_vs_{loser_id}"] = {
+			'winner': winner_id,
+			'loser': loser_id,
+			'timestamp': time.time()
+		}
+		
+		logger = logging.getLogger(__name__)
+		logger.info(f"Game result registered: {winner_id} beat {loser_id} in tournament {self.id}")
+		
+		return 'Game result registered successfully'
 
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
