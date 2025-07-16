@@ -4,11 +4,6 @@ import datetime
 
 
 class PlayerSerializer(serializers.ModelSerializer):
-    # def validate_username(self, value):
-    #     if len(str(value)) < 1:
-    #         raise serializers.ValidationError('username is not valid')
-    #     return value
-    
     class Meta:
         model = UserProfile
         fields = '__all__'
@@ -75,3 +70,13 @@ class GameStateSerializer(serializers.Serializer):
     ball_radius = serializers.IntegerField()
     p_speed = serializers.IntegerField()
     
+class UserStatisticsSerializer(serializers.Serializer):
+    """Simple serializer for user statistics response"""
+    user_id = serializers.IntegerField()
+    username = serializers.CharField()
+    total_games = serializers.IntegerField()
+    total_wins = serializers.IntegerField()
+    total_losses = serializers.IntegerField()
+    win_rate = serializers.FloatField()
+    total_tournaments = serializers.IntegerField()
+    total_tournament_wins = serializers.IntegerField()

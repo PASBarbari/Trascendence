@@ -43,6 +43,7 @@ function renderPongInfo() {
     `;
 }
 
+
 async function handleLocalePong() {
 	window.navigateTo("#pong");
 }
@@ -169,6 +170,7 @@ async function inviteToGame(friendId, friendName) {
 			"❌ Failed to start game. Check console for details.",
 			"error"
 		);
+
 
 		// Reset button state
 		const inviteBtn = document.querySelector(
@@ -330,12 +332,7 @@ async function onHandleSubmit(e, email, password) {
 
 async function onHandleRegisterSubmit(e, username, email, password) {
 	e.preventDefault();
-	const registerSuccess = await registerUser(
-		username,
-		email,
-		password,
-		false
-	);
+	const registerSuccess = await registerUser(username, email, password, false);
 	if (registerSuccess) {
 		showLoginBox();
 	}
@@ -435,12 +432,10 @@ function showRegisterBox() {
 			await onHandleRegisterSubmit(e, username, email, password);
 		});
 
-	document
-		.getElementById("loginButton")
-		.addEventListener("click", function () {
-			closeRegisterBox();
-			showLoginBox();
-		});
+	document.getElementById("loginButton").addEventListener("click", function () {
+		closeRegisterBox();
+		showLoginBox();
+	});
 }
 
 function closeRegisterBox() {

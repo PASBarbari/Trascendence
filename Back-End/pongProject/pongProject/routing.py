@@ -11,5 +11,5 @@ from pong_app import consumers
 
 websocket_urlpatterns = [
 	re_path(r'pong/ws/pong/(?P<room_id>\d+)/$', consumers.GameTableConsumer.as_asgi()),
-	re_path(r'pong/ws/webrtc-signaling/(?P<room_id>\d+)/$', consumers.WebRTCSignalingConsumer.as_asgi()),
+	re_path(r'pong/ws/tournament/(?P<tournament_id>\d+)/$', consumers.TournamentConsumer.as_asgi()),
 ]

@@ -14,4 +14,6 @@ urlpatterns = [
 	path('chat_rooms/<int:room_id>/add_user/', views.AddUsersToChat.as_view()),
 	path('block_user/<int:user_id>', views.BlockUser.as_view()),
 	path('blocked_users/', views.allBlockedUsers.as_view()),
+	path('media/upload/', views.ChatMediaUpload.as_view(), name='chat_media_upload'),
+	path('media/manage/', views.ChatMediaManager.as_view(), name='chat_media_manager'),
 ]
