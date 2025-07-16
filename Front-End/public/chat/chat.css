@@ -19,6 +19,14 @@
   border-radius: 0.375rem !important;
 }
 
+#blockUserInput {
+    border-radius: 0.375rem !important;
+}
+
+#blockUserSuggestionList {
+	border-radius: 0.375rem !important;
+}
+
 @media (max-width: 500px) {
   .chat-container.open {
     position: absolute;

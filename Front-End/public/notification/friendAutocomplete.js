@@ -1,5 +1,6 @@
 import { getVariables } from "../var.js";
 import { handleFriendRequest } from "./notification.js";
+import { blockUser } from "../chat/blockUser.js";
 
 let debounceTimeout = null;
 
@@ -52,10 +53,19 @@ export function updateSuggestionList(suggestionList, results, friendInput, handl
 	suggestionList.querySelectorAll("a[data-userid]").forEach(item => {
 		item.addEventListener("mousedown", function(e) {
 			const userId = Number(this.getAttribute("data-userid"));
+			const username = this.textContent.trim();
 			if (typeof handlerOnSelect === "function") {
 				handlerOnSelect(friendInput, userId, this);
+			} else if (friendInput.id === "blockUserInput") {
+            // Chiamata diretta per il blocco utenti
+            blockUser(userId, username);
+            suggestionList.style.display = "none";
+            if (friendInput) {
+                friendInput.value = "";
+                friendInput.dataset.userid = "";
+      			}
 			} else {
-				handleFriendRequest('POST', userId, this.textContent.trim());
+				handleFriendRequest('POST', userId, username);
 				suggestionList.style.display = "none";
 				if (friendInput) friendInput.value = "";
 			}

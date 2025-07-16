@@ -2,6 +2,7 @@ import { getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 import { showAlertForXSeconds } from '../alert/alert.js';
 import { updateBlockedUsers } from './ExpandableSidebar.js';
+import { initFriendAutocomplete } from '../notification/friendAutocomplete.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -171,17 +172,25 @@ function showBlockedUsersModal() {
 
     loadBlockedUsers(blockedUserListModal);
 
-    blockedUserListModal.innerHTML += `
-    <div class="input-group mb-3">
-			<input type="text" class="form-control" id="userID" placeholder="User ID" style="width: 32%;">
-			<button class="btn btn-outline-primary" type="button" 
-				onclick="blockUser(Number(document.getElementById('userID').value), 'gino')">
-				<i class="bi bi-lock"></i>
-			</button>
+		blockedUserListModal.innerHTML += `
+		<div class="input-group mb-3">
+				<input type="text" class="form-control" id="blockUserInput" placeholder="Username" autocomplete="off">
+				<div id="blockUserSuggestionList" class="list-group" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1000;"></div>
 		</div>
-    `;
+		`;
 
     return blockedUserListModal;
+}
+
+
+
+function helperAutocomplete(blockedUserListModal) {
+	setTimeout(() => {
+    initFriendAutocomplete({
+        inputId: "blockUserInput",
+        suggestionListId: "blockUserSuggestionList"
+    });
+}, 0);
 }
 
 /**
@@ -233,4 +242,4 @@ window.blockUser = blockUser;
 // window.unblockUser = unblockUser;
 // window.showBlockedUsersModal = showBlockedUsersModal;
 
-export { blockUser, unblockUser, getBlockedUsersList, showBlockedUsersModal };
+export { blockUser, unblockUser, getBlockedUsersList, showBlockedUsersModal, helperAutocomplete };

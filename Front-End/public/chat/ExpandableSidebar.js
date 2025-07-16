@@ -2,7 +2,7 @@ import { getVariables } from '../var.js';
 import { renderAddChat } from './AddChat.js';
 import { renderChatBubble } from './ChatBubble.js';
 import { getCookie } from '../cookie.js';
-import { getBlockedUsersList, showBlockedUsersModal } from './blockUser.js';
+import { getBlockedUsersList, showBlockedUsersModal, helperAutocomplete } from './blockUser.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -118,6 +118,7 @@ async function renderExpandableSidebar() {
 			blockedUserListModal = null;
 		} else {
 			blockedUserListModal = showBlockedUsersModal();
+			helperAutocomplete(blockedUserListModal);
 			chatContainer.insertBefore(blockedUserListModal, chatContainer.firstChild);
 		}
 	});
