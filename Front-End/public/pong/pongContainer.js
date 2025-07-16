@@ -112,65 +112,51 @@ function createFriendItemHTML(friendship) {
 async function inviteToGame(friendId, friendName) {
 	try {
 		console.log(
-			`🎮 Starting game invitation to ${friendName} (ID: ${friendId})`
+			`🎮 Starting multiplayer game with ${friendName} (ID: ${friendId})`
 		);
 
-		// Show loading state on button
+		// Show loading state
 		const inviteBtn = document.querySelector(
 			`[data-friend-id="${friendId}"] .btn-game-invite`
 		);
 		if (inviteBtn) {
-			const originalHTML = inviteBtn.innerHTML;
 			inviteBtn.innerHTML =
 				'<i class="fas fa-spinner fa-spin me-1"></i>Connecting...';
 			inviteBtn.disabled = true;
 		}
 
-		// Get current user info for debugging
-		const { token, url_api, userId, userUsername } = getVariables();
-		console.log("🔍 Debug Info:");
-		console.log("  - Current User ID:", userId);
-		console.log("  - Friend ID:", friendId);
-		console.log("  - Token present:", token ? "✅ Yes" : "❌ No");
-		console.log("  - API URL:", url_api);
-
-		// Import the WebSocket functions
-		const serverSideModule = await import("./multiplayer/serverSide.js");
-		const { createGame, sendTestMessage } = serverSideModule;
-
-		// Try to create a game and establish WebSocket connection
-		console.log("🎯 Attempting to create game and establish WebSocket...");
-
-		// Create game between current user and friend
-		await createGame(parseInt(userId), parseInt(friendId));
-
-		// Show success notification
-		showNotification(
-			`🎮 Game created with ${friendName}! Waiting for opponent...`,
-			"success"
-		);
-
 		// Close friend list
 		closeFriendList();
 
-		// Create and navigate to multiplayer game view
-		createMultiplayerGameView(friendId, friendName);
+		// Create the game first and get room ID
+		const { createGame } = await import("./multiplayer/serverSide.js");
+		const { userId } = getVariables();
 
-		// Try sending initial message
-		setTimeout(() => {
-			try {
-				sendTestMessage(`Game invite from ${userUsername}`);
-			} catch (err) {
-				console.warn("Could not send initial message:", err);
-			}
-		}, 1000);
-	} catch (error) {
-		console.error("💥 Error in inviteToGame:", error);
+		console.log(`Creating game between ${userId} and ${friendId}`);
+		const gameData = await createGame(parseInt(userId), parseInt(friendId));
+		const roomId = gameData.room_id || gameData.id;
+
+		console.log(`Game created with room ID: ${roomId}`);
+
+		// ✅ Remove this line - no need to send manual notification
+		// await sendGameNotification(friendId, friendName, roomId, userUsername || 'Someone');
+
+		// Navigate to multiplayer route with URL parameters
+		const gameUrl = `pongmulti?room=${roomId}&opponent=${friendId}&opponentName=${encodeURIComponent(
+			friendName
+		)}`;
+		console.log(`Navigating to: #${gameUrl}`);
+
+		// Use direct hash assignment to ensure URL updates
+		window.location.hash = gameUrl;
 
 		showNotification(
-			"❌ Failed to start game. Check console for details.",
-			"error"
+			`🎮 Game created! ${friendName} will receive an invitation automatically.`,
+			"success"
 		);
+	} catch (error) {
+		console.error("💥 Error starting multiplayer game:", error);
+		showNotification("❌ Failed to start multiplayer game", "error");
 
 		// Reset button state
 		const inviteBtn = document.querySelector(
@@ -183,232 +169,76 @@ async function inviteToGame(friendId, friendName) {
 	}
 }
 
-// Add this new function to create the multiplayer game view
-function createMultiplayerGameView(opponentId, opponentName) {
-	// Check if the container already exists
-	let gameView = document.getElementById("pong-multiplayer-container");
-	if (gameView) {
-		gameView.remove(); // Remove existing one if present
-	}
-
-	// Create new container
-	gameView = document.createElement("div");
-	gameView.id = "pong-multiplayer-container";
-	gameView.className = "container-fluid p-0 vh-100";
-	gameView.style.display = "none"; // Initially hidden
-
-	// Create HTML structure
-	gameView.innerHTML = `
-        <div class="row h-100 g-0">
-            <div class="col-12 position-relative">
-                <div id="threejs-container" class="w-100 h-100"></div>
-                
-                <!-- Game UI Overlay -->
-                <div class="position-absolute top-0 end-0 p-3 bg-dark bg-opacity-75 text-white">
-                    <div class="mb-2">Match: <span class="fw-bold">${opponentName}</span></div>
-                    <div id="connection-status">Connecting...</div>
-                    <div class="mt-2 d-flex gap-2">
-                        <button id="leave-game-btn" class="btn btn-sm btn-danger">
-                            <i class="fas fa-sign-out-alt me-1"></i>Leave
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Ready Screen -->
-                <div id="ready-screen" class="position-absolute top-0 left-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-75">
-                    <div class="text-center p-4 bg-dark rounded shadow-lg">
-                        <h3 class="text-white mb-3">Game with ${opponentName}</h3>
-                        <div class="mb-4">
-                            <div id="player-ready-status" class="mb-2">
-                                <span class="text-success"><i class="fas fa-user me-2"></i>You: </span>
-                                <span class="badge bg-warning">Not Ready</span>
-                            </div>
-                            <div id="opponent-ready-status">
-                                <span class="text-primary"><i class="fas fa-user-friends me-2"></i>${opponentName}: </span>
-                                <span class="badge bg-warning">Not Ready</span>
-                            </div>
-                        </div>
-                        <button id="ready-button" class="btn btn-lg btn-success px-4">
-                            <i class="fas fa-check-circle me-2"></i>I'm Ready
-                        </button>
-                        <p class="text-white-50 mt-3 small">Both players must be ready to start the game</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-	// Add to document body
-	document.body.appendChild(gameView);
-
-	// Register navigation route for this view
-	if (window.registerRoute) {
-		window.registerRoute("pongmulti", () => {
-			document.querySelectorAll(".container-fluid").forEach((el) => {
-				if (el.id !== "pong-multiplayer-container") {
-					el.style.display = "none";
-				}
-			});
-			gameView.style.display = "block";
-		});
-	}
-
-	// Add event listeners
-	const leaveBtn = document.getElementById("leave-game-btn");
-	if (leaveBtn) {
-		leaveBtn.addEventListener("click", () => {
-			// Handle disconnection and return to main view
-			exitMultiplayerGame();
-		});
-	}
-
-	const readyBtn = document.getElementById("ready-button");
-	if (readyBtn) {
-		readyBtn.addEventListener("click", () => {
-			handlePlayerReady();
-		});
-	}
-
-	// Navigate to the multiplayer view
-	window.navigateTo("#pongmulti");
-
-	// Update connection status
-	const connectionStatus = document.getElementById("connection-status");
-	if (connectionStatus) {
-		connectionStatus.innerHTML =
-			'<span class="badge bg-success">Connected</span>';
-	}
-}
-
-// Add this function to handle player ready state
-function handlePlayerReady() {
-	const readyBtn = document.getElementById("ready-button");
-	const playerReadyStatus = document.getElementById("player-ready-status");
-
-	if (readyBtn && playerReadyStatus) {
-		// Update UI
-		readyBtn.disabled = true;
-		readyBtn.innerHTML =
-			'<i class="fas fa-spinner fa-spin me-2"></i>Waiting...';
-		playerReadyStatus.innerHTML = `
-            <span class="text-success"><i class="fas fa-user me-2"></i>You: </span>
-            <span class="badge bg-success">Ready</span>
-        `;
-
-		// Send ready message via WebSocket
-		import("./multiplayer/serverSide.js")
-			.then(({ socket, sendTestMessage }) => {
-				try {
-					// Send a ready message
-					if (socket && socket.readyState === WebSocket.OPEN) {
-						const readyMessage = {
-							type: "ready",
-							timestamp: new Date().toISOString(),
-						};
-						socket.send(JSON.stringify(readyMessage));
-						console.log("✅ Ready message sent");
-					} else {
-						throw new Error("WebSocket not connected");
-					}
-				} catch (error) {
-					console.error("Failed to send ready message:", error);
-
-					// Revert UI if message sending fails
-					readyBtn.disabled = false;
-					readyBtn.innerHTML =
-						'<i class="fas fa-check-circle me-2"></i>I\'m Ready';
-					playerReadyStatus.innerHTML = `
-                        <span class="text-success"><i class="fas fa-user me-2"></i>You: </span>
-                        <span class="badge bg-warning">Not Ready</span>
-                    `;
-
-					showNotification(
-						"Failed to send ready status. Please try again.",
-						"error"
-					);
-				}
-			})
-			.catch((error) => {
-				console.error("Error importing serverSide module:", error);
-			});
-	}
-}
-
-// Add this function to handle leaving the multiplayer game
-function exitMultiplayerGame() {
-	// Close WebSocket connection if it exists
-	import("./multiplayer/serverSide.js")
-		.then(({ socket }) => {
-			if (socket && socket.readyState === WebSocket.OPEN) {
-				socket.close(1000, "User left the game");
-			}
-		})
-		.catch((error) => {
-			console.error("Error importing serverSide module:", error);
-		});
-
-	// Hide game view
-	const gameView = document.getElementById("pong-multiplayer-container");
-	if (gameView) {
-		gameView.style.display = "none";
-	}
-
-	// Navigate back to main view
-	window.navigateTo("#pong");
-
-	// Show notification
-	showNotification("You left the multiplayer game", "info");
-}
-
 // Show Bootstrap toast notification
 function showNotification(message, type = "info") {
-	// Remove existing toasts
-	const existingToasts = document.querySelectorAll(".custom-toast");
-	existingToasts.forEach((toast) => toast.remove());
+	// Remove existing notifications
+	const existingNotifications = document.querySelectorAll(
+		".unified-notification"
+	);
+	existingNotifications.forEach((notification) => notification.remove());
 
-	const toastColors = {
-		success: "bg-success",
-		error: "bg-danger",
-		info: "bg-primary",
-		warning: "bg-warning",
+	const typeIcons = {
+		success: "✅",
+		error: "❌",
+		info: "ℹ️",
+		warning: "⚠️",
 	};
 
-	const toastHTML = `
-        <div class="toast custom-toast position-fixed top-0 end-0 m-3" role="alert" style="z-index: 9999;">
-            <div class="toast-header ${toastColors[type]} text-white">
-                <strong class="me-auto">Notification</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+	const typeNames = {
+		success: "Success",
+		error: "Error",
+		info: "Information",
+		warning: "Warning",
+	};
+
+	const notificationHTML = `
+        <div class="unified-notification ${type}">
+            <div class="unified-notification-header">
+                <span class="unified-notification-icon">${typeIcons[type]}</span>
+                <span class="unified-notification-title">${typeNames[type]}</span>
+                <button class="unified-notification-close" onclick="this.parentElement.parentElement.remove()">
+                    ×
+                </button>
             </div>
-            <div class="toast-body">
+            <div class="unified-notification-body">
                 ${message}
             </div>
+            <div class="unified-notification-progress" style="width: 100%;"></div>
         </div>
     `;
 
-	document.body.insertAdjacentHTML("beforeend", toastHTML);
+	document.body.insertAdjacentHTML("beforeend", notificationHTML);
 
-	const toastElement = document.querySelector(".custom-toast:last-child");
+	const notificationElement = document.querySelector(
+		".unified-notification:last-child"
+	);
 
-	// Check if Bootstrap is available
-	if (typeof bootstrap !== "undefined" && bootstrap.Toast) {
-		const toast = new bootstrap.Toast(toastElement);
-		toast.show();
-	} else {
-		// Fallback if Bootstrap JS is not loaded
-		toastElement.style.display = "block";
-		setTimeout(() => {
-			if (toastElement && toastElement.parentNode) {
-				toastElement.remove();
-			}
-		}, 3000);
-	}
-
-	// Auto remove after 5 seconds
+	// Show with animation
 	setTimeout(() => {
-		if (toastElement && toastElement.parentNode) {
-			toastElement.remove();
+		notificationElement.classList.add("show");
+	}, 100);
+
+	// Auto-dismiss after 5 seconds
+	setTimeout(() => {
+		if (notificationElement.parentNode) {
+			notificationElement.classList.remove("show");
+			notificationElement.classList.add("hide");
+			setTimeout(() => {
+				if (notificationElement.parentNode) {
+					notificationElement.remove();
+				}
+			}, 300);
 		}
 	}, 5000);
+
+	// Animate progress bar
+	const progressBar = notificationElement.querySelector(
+		".unified-notification-progress"
+	);
+	if (progressBar) {
+		progressBar.style.transition = "width 5000ms linear";
+		progressBar.style.width = "0%";
+	}
 }
 
 async function openFriendList() {

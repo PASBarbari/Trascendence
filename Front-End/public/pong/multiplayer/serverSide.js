@@ -1,8 +1,8 @@
-// Fix the import paths - they should point to the locale folder
 import { state } from "../locale/state.js";
 import { getVariables } from "../../var.js";
 import { renderPong } from "../locale/pong.js";
 import * as GAME from "../locale/gameLogic.js";
+import * as SETUP from "../locale/setup.js";
 import * as UTILS from "../locale/utils.js";
 import { getCookie } from "../../cookie.js";
 import { showNotification } from "../pongContainer.js";
@@ -69,7 +69,6 @@ function initializeWebSocket(room_id, player1, player2) {
 	console.log("  - player1:", player1);
 	console.log("  - player2:", player2);
 	console.log("  - token present:", token ? "✅ Yes" : "❌ No");
-	console.log("  - token length:", token ? token.length : 0);
 
 	const wsUrl = `${wss_api}/pong/ws/pong/${room_id}/?token=${token}`;
 	console.log("🔌 Connecting to WebSocket:", wsUrl);
@@ -88,57 +87,66 @@ function initializeWebSocket(room_id, player1, player2) {
 
 		if (message.type === "game_state") {
 			console.log("🎯 Game state update:", message.game_state);
-			// updateGameState(message.game_state);
+			updateGameState(message.game_state);
 		} else if (message.type === "connection_success") {
 			console.log("🎉 Connection successful:", message.message);
 			console.log("👤 Player ID:", message.player_id);
-		} else if (message.type === "error") {
-			console.error("❌ Server error:", message.error);
+
+			// Store player info
+			window.multiplayerInfo = {
+				playerId: message.player_id,
+				roomId: room_id,
+			};
+
+			// Update connection status in UI
+			updateConnectionStatus("connected", "Connected to game server");
+
+			// Initialize the game scene
+			syncMultiplayerWithLocalGame();
+
+			// ✅ Always show ready screen - no overlay logic needed
+			console.log("✅ Both players connected, ready screen is visible");
 		} else if (message.message === "All players are ready!") {
 			console.log("🎮 All players ready! Starting game...");
-			// Both players are ready
-			setTimeout(() => {
-				// Hide ready screen and start the game
-				const readyScreen = document.getElementById("ready-screen");
-				if (readyScreen) {
-					readyScreen.style.display = "none";
-				}
-				// Initialize game (call your existing game initialization)
-				showNotification(
-					"Both players are ready! Starting game...",
-					"success"
-				);
-			}, 1000);
+
+			// Start the game using local game logic
+			state.isStarted = true;
+			state.isPaused = false;
+			state.IAisActive = false; // Disable AI for multiplayer
+
+			// Hide ready screen
+			const readyScreen = document.getElementById("ready-screen");
+			if (readyScreen) {
+				readyScreen.style.display = "none";
+			}
+
+			// Show controls info
+			const controlsInfo = document.getElementById("controls-info");
+			if (controlsInfo) {
+				controlsInfo.style.display = "block";
+			}
+
+			// Start game animation
+			if (!state.animationFrameId) {
+				GAME.animate();
+			}
+
+			showNotification("🚀 Game Started! Good luck!", "success");
 		} else if (message.message === "Waiting for players to be ready...") {
 			console.log("⏳ Waiting for other player to be ready");
-			// Update UI to show waiting status
-			const opponentReadyStatus = document.getElementById(
-				"opponent-ready-status"
-			);
-			if (opponentReadyStatus) {
-				opponentReadyStatus.innerHTML = `
-                <span class="text-primary"><i class="fas fa-user-friends me-2"></i>Opponent: </span>
-                <span class="badge bg-warning">Waiting...</span>
-            `;
-			}
+			updateOpponentStatus("waiting");
+			// ✅ No overlay hiding needed - just update status
 		} else if (message.type === "quit_game") {
 			console.log("🚪 Player quit:", message.message);
 			showNotification(message.message, "warning");
-			if (message.game_over) {
-				// Handle game over due to player quit
-				const readyScreen = document.getElementById("ready-screen");
-				if (readyScreen) {
-					readyScreen.style.display = "block";
-				}
-			}
+
+			// Stop the game and show ready screen
+			state.isStarted = false;
+			state.isPaused = true;
+			showReadyScreen();
 		} else if (message.message === "Game Over!") {
 			console.log("🏁 Game Over!");
-			showNotification("Game Over!", "info");
-			// Handle game over
-			const readyScreen = document.getElementById("ready-screen");
-			if (readyScreen) {
-				readyScreen.style.display = "block";
-			}
+			handleGameOver();
 		} else if (message.type === "test_message") {
 			console.log("📝 Test message received:", message.message);
 		} else if (message.message && typeof message.message === "string") {
@@ -269,6 +277,129 @@ function sendChatMessage(message) {
 	return true;
 }
 
+function updateConnectionStatus(status, message) {
+	const connectionStatus = document.getElementById("connection-status");
+	if (!connectionStatus) return;
+
+	const statusBadges = {
+		connecting: '<span class="badge bg-warning">Connecting...</span>',
+		connected: '<span class="badge bg-success">Connected</span>',
+		error: '<span class="badge bg-danger">Connection Error</span>',
+		disconnected: '<span class="badge bg-secondary">Disconnected</span>',
+	};
+
+	connectionStatus.innerHTML =
+		statusBadges[status] || statusBadges.disconnected;
+
+	if (message) {
+		connectionStatus.title = message;
+	}
+}
+
+function syncMultiplayerWithLocalGame() {
+	if (!state.scene || !state.camera || !state.renderer) {
+		console.log("🎮 Initializing game scene for multiplayer...");
+		SETUP.setupGame();
+	}
+
+	// Disable local controls since we're using WebSocket
+	state.keys = {
+		w: false,
+		s: false,
+		ArrowUp: false,
+		ArrowDown: false,
+	};
+
+	// Set multiplayer mode
+	state.isMultiplayer = true;
+	state.isStarted = false;
+	state.isPaused = true;
+}
+
+function updateGameState(gameStateData) {
+	if (!gameStateData) return;
+
+	// Update ball position
+	if (gameStateData.ball && state.ball && state.ball.mesh) {
+		state.ball.mesh.position.set(
+			gameStateData.ball.x || 0,
+			gameStateData.ball.y || 0,
+			gameStateData.ball.z || 0
+		);
+	}
+
+	// Update player positions
+	if (gameStateData.player1 && state.players[0] && state.players[0].mesh) {
+		state.players[0].mesh.position.z = gameStateData.player1.z || 0;
+	}
+
+	if (gameStateData.player2 && state.players[1] && state.players[1].mesh) {
+		state.players[1].mesh.position.z = gameStateData.player2.z || 0;
+	}
+
+	// Update scores
+	if (gameStateData.score) {
+		state.p1_score = gameStateData.score.player1 || 0;
+		state.p2_score = gameStateData.score.player2 || 0;
+
+		// Update score display
+		import("../locale/src/Score.js").then(({ updateScore }) => {
+			updateScore("p1");
+			updateScore("p2");
+		});
+	}
+}
+
+function showReadyScreen() {
+	const readyScreen = document.getElementById("ready-screen");
+	if (readyScreen) {
+		readyScreen.style.display = "flex";
+	}
+
+	const controlsInfo = document.getElementById("controls-info");
+	if (controlsInfo) {
+		controlsInfo.style.display = "none";
+	}
+}
+
+function updateOpponentStatus(status) {
+	const opponentStatus = document.getElementById("opponent-ready-status");
+	if (opponentStatus) {
+		const statusBadge =
+			status === "waiting"
+				? '<span class="badge bg-warning">Not Ready</span>'
+				: '<span class="badge bg-success">Ready</span>';
+
+		// Get opponent name from the multiplayerGameInfo
+		const opponentName =
+			window.multiplayerGameInfo?.opponentName || "Opponent";
+
+		opponentStatus.innerHTML = `
+            <span class="text-primary">
+                <i class="fas fa-user-friends me-2"></i>${opponentName}:
+            </span>
+            ${statusBadge}
+        `;
+	}
+}
+
+function handleGameOver() {
+	state.isStarted = false;
+	state.isPaused = true;
+
+	// Determine winner
+	const winner = state.p1_score >= state.maxScore ? "Player 1" : "Player 2";
+
+	// Show game over with multiplayer context
+	showNotification(`🏆 Game Over! ${winner} wins!`, "info");
+
+	// Show ready screen for potential rematch
+	setTimeout(() => {
+		showReadyScreen();
+	}, 2000);
+}
+
+// Test functions
 function testWebSocketConnection() {
 	if (!socket) {
 		console.error("❌ No socket initialized. Call createGame() first.");
@@ -351,7 +482,7 @@ function testGameInit() {
 
 function runAllTests() {
 	console.log("🧪 Running All WebSocket Tests...");
-	console.log("=" * 50);
+	console.log("=".repeat(50));
 
 	if (!testWebSocketConnection()) {
 		console.error("❌ WebSocket not connected. Cannot run tests.");
@@ -402,4 +533,9 @@ export {
 	testPlayerMovement,
 	testGameInit,
 	runAllTests,
+	syncMultiplayerWithLocalGame,
+	updateGameState,
+	showReadyScreen,
+	updateOpponentStatus,
+	handleGameOver,
 };

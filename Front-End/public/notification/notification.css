@@ -1,3 +1,4 @@
+/* Existing notification styles */
 .notification-box {
     width: 100%;
     height: 100%;
@@ -7,9 +8,562 @@
 }
 
 .friend-item {
-	display: flex;
-	align-items: center;
-	padding: 10px;
-	border-bottom: 1px solid #e0e0e0;
-	justify-content: space-between;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+/* ====== UNIFIED NOTIFICATION SYSTEM ====== */
+
+/* Base notification toast styles */
+.unified-notification,
+.notification-toast,
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+    min-width: 280px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease-in-out;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: white;
+    border-left: 4px solid #3b82f6;
+}
+
+.unified-notification.show,
+.notification-toast.show,
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.unified-notification.hide,
+.notification-toast.hide,
+.toast-notification.hide {
+    opacity: 0;
+    transform: translateX(100%);
+}
+
+/* Notification header */
+.unified-notification-header,
+.notification-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-radius: 8px 8px 0 0;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Notification body */
+.unified-notification-body,
+.notification-body {
+    padding: 12px 16px;
+    background: white;
+    border-radius: 0 0 8px 8px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Simple notification style (for backward compatibility) */
+.simple-notification {
+    padding: 12px 16px;
+    background: white;
+    border-radius: 8px;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Close button */
+.unified-notification-close,
+.notification-close {
+    background: none;
+    border: none;
+    color: currentColor;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-left: auto;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.unified-notification-close:hover,
+.notification-close:hover {
+    opacity: 1;
+}
+
+/* Type-specific colors */
+.unified-notification.success,
+.notification-toast.success,
+.toast-notification.success {
+    border-left-color: #10b981;
+}
+
+.unified-notification.success .unified-notification-header,
+.notification-toast.success .notification-header {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.unified-notification.error,
+.notification-toast.error,
+.toast-notification.error {
+    border-left-color: #ef4444;
+}
+
+.unified-notification.error .unified-notification-header,
+.notification-toast.error .notification-header {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.unified-notification.warning,
+.notification-toast.warning,
+.toast-notification.warning {
+    border-left-color: #f59e0b;
+}
+
+.unified-notification.warning .unified-notification-header,
+.notification-toast.warning .notification-header {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.unified-notification.info,
+.notification-toast.info,
+.toast-notification.info {
+    border-left-color: #3b82f6;
+}
+
+.unified-notification.info .unified-notification-header,
+.notification-toast.info .notification-header {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* Simple notification type colors (no header) */
+.simple-notification.success {
+    background: #f0fdf4;
+    border-left-color: #10b981;
+    color: #065f46;
+}
+
+.simple-notification.error {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+    color: #991b1b;
+}
+
+.simple-notification.warning {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+    color: #92400e;
+}
+
+.simple-notification.info {
+    background: #eff6ff;
+    border-left-color: #3b82f6;
+    color: #1e40af;
+}
+
+/* Icons for different types */
+.unified-notification-icon,
+.notification-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* Progress bar for auto-dismiss */
+.unified-notification-progress,
+.notification-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 0 0 8px 8px;
+    transition: width linear;
+}
+
+/* Action buttons in notification body */
+.unified-notification-actions,
+.notification-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.unified-notification-btn,
+.notification-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.unified-notification-btn.primary,
+.notification-btn.primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.unified-notification-btn.primary:hover,
+.notification-btn.primary:hover {
+    background: #2563eb;
+}
+
+.unified-notification-btn.secondary,
+.notification-btn.secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.unified-notification-btn.secondary:hover,
+.notification-btn.secondary:hover {
+    background: #d1d5db;
+}
+
+/* Modal styles for game invitations */
+.unified-modal,
+.game-invitation-modal,
+#gameInvitationModal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.unified-modal.show,
+.game-invitation-modal.show,
+#gameInvitationModal.show {
+    opacity: 1;
+}
+
+.unified-modal-content,
+.game-invitation-modal .modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.unified-modal.show .unified-modal-content,
+.game-invitation-modal.show .modal-content {
+    transform: scale(1);
+}
+
+.unified-modal-header,
+.game-invitation-modal .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 12px 12px 0 0;
+}
+
+.unified-modal-title,
+.game-invitation-modal .modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    display: flex;
+    align-items: center;
+}
+
+.unified-modal-body,
+.game-invitation-modal .modal-body {
+    padding: 24px;
+    text-align: center;
+}
+
+.unified-modal-footer,
+.game-invitation-modal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    border-radius: 0 0 12px 12px;
+}
+
+/* Pong game specific notifications */
+.pong-notification {
+    border-left: 4px solid #8b5cf6;
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+}
+
+.pong-notification .notification-icon {
+    color: #8b5cf6;
+}
+
+/* Game status indicators */
+.game-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.game-status-indicator.connecting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.game-status-indicator.connected {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.game-status-indicator.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.game-status-indicator.waiting {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    .unified-notification,
+    .notification-toast,
+    .toast-notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        transform: translateY(-100%);
+    }
+    
+    .unified-notification.show,
+    .notification-toast.show,
+    .toast-notification.show {
+        transform: translateY(0);
+    }
+    
+    .unified-notification.hide,
+    .notification-toast.hide,
+    .toast-notification.hide {
+        transform: translateY(-100%);
+    }
+    
+    .unified-modal-content,
+    .game-invitation-modal .modal-content {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+}
+
+/* Animation keyframes */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Utility classes */
+.notification-stack {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.notification-container {
+    pointer-events: none;
+}
+
+.notification-container > * {
+    pointer-events: auto;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .unified-notification,
+    .notification-toast,
+    .toast-notification {
+        border: 2px solid currentColor;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .unified-notification,
+    .notification-toast,
+    .toast-notification,
+    .unified-modal,
+    .game-invitation-modal {
+        transition: none;
+    }
+    
+    .unified-notification-progress,
+    .notification-progress {
+        transition: none;
+    }
+}
+
+/* Add these styles at the end of your existing CSS */
+
+/* ====== MULTIPLAYER PONG READY SCREEN FIXES ====== */
+
+/* Ready screen container */
+#ready-screen {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 400px !important;
+    max-width: 500px !important;
+    width: auto !important;
+}
+
+/* Player status cards */
+#player-ready-status,
+#opponent-ready-status {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+    border-radius: 0.375rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Button container */
+#ready-screen .d-grid {
+    display: grid !important;
+    gap: 0.5rem !important;
+}
+
+/* Controls section */
+#ready-screen .mt-auto {
+    margin-top: auto !important;
+    padding-top: 1rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Keyboard key styling */
+#ready-screen kbd {
+    background-color: #6c757d !important;
+    color: white !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    font-size: 0.875rem !important;
+    font-weight: bold !important;
+}
+
+/* Controls layout */
+#ready-screen .d-flex.gap-3 {
+    display: flex !important;
+    gap: 1rem !important;
+    justify-content: center !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    #ready-screen {
+        min-width: 300px !important;
+        max-width: 350px !important;
+        padding: 1rem !important;
+    }
+    
+    #ready-screen .d-flex.gap-3 {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+        text-align: center !important;
+    }
+}
+
+/* Force block display for status elements */
+.ready-screen-status {
+    display: block !important;
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Ensure proper spacing */
+#ready-screen h2,
+#ready-screen h5 {
+    display: block !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Fix any Bootstrap conflicts */
+#ready-screen .row {
+    margin: 0 !important;
+}
+
+#ready-screen .col-12 {
+    padding: 0 !important;
+    margin-bottom: 0.5rem !important;
 }
