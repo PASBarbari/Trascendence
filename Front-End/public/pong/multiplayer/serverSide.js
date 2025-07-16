@@ -9,6 +9,42 @@ import { showNotification } from "../pongContainer.js";
 
 let socket;
 
+const DEBUG = {
+	movement: true, // Log movement messages
+	gameState: true, // Log game state updates
+	positions: true, // Log position changes
+	websocket: true, // Log websocket activity
+};
+
+// Debug logger
+function debugLog(category, ...args) {
+	if (DEBUG[category]) {
+		console.log(`🔍 [${category.toUpperCase()}]`, ...args);
+	}
+}
+
+// 2. Update the sendPlayerMovement function with better debugging
+function sendPlayerMovement(playerId, direction) {
+	if (!socket || socket.readyState !== WebSocket.OPEN) {
+		console.error("❌ WebSocket not connected!");
+		throw new Error("WebSocket not connected");
+	}
+
+	debugLog(
+		"movement",
+		`Sending ${direction} command from player ${playerId}`
+	);
+
+	const movementMessage = {
+		type: direction, // "up", "down", or "stop"
+		player: playerId, // ✅ ADD THIS BACK - backend still needs it
+	};
+
+	socket.send(JSON.stringify(movementMessage));
+	debugLog("movement", "✅ Movement message sent:", movementMessage);
+	return true;
+}
+
 async function createGame(player_1, player_2) {
 	const { url_api, token } = getVariables();
 
@@ -170,10 +206,25 @@ function initializeWebSocket(room_id, player1, player2) {
 		console.log("📨 WebSocket message received:", message);
 
 		if (message.type === "game_state") {
-			console.log("🎯 Game state update:", message.game_state);
+			console.log("📊 Game state update received:", message.game_state);
 			updateGameState(message.game_state);
 		} else if (message.type === "connection_success") {
-			// ... existing code ...
+			console.log("🎉 Connection successful:", message.message);
+			console.log("👤 Player ID:", message.player_id);
+
+			// ✅ CRITICAL: Store player info in window object
+			window.multiplayerInfo = {
+				playerId: message.player_id,
+				roomId: room_id,
+			};
+
+			// Update connection status in UI
+			updateConnectionStatus("connected", "Connected to game server");
+
+			// Initialize the game scene
+			syncMultiplayerWithLocalGame();
+
+			console.log("✅ Both players connected, ready screen is visible");
 		} else if (
 			message.type === "all_players_ready" ||
 			message.message === "All players are ready!"
@@ -304,21 +355,6 @@ function sendGameInit(gameConfig) {
 	return true;
 }
 
-function sendPlayerMovement(playerId, direction) {
-	if (!socket || socket.readyState !== WebSocket.OPEN) {
-		throw new Error("WebSocket not connected");
-	}
-
-	const movementMessage = {
-		type: direction, // "up", "down", or "stop"
-		player: playerId,
-	};
-
-	socket.send(JSON.stringify(movementMessage));
-	console.log("✅ Movement message sent:", movementMessage);
-	return true;
-}
-
 function sendChatMessage(message) {
 	if (!socket || socket.readyState !== WebSocket.OPEN) {
 		throw new Error("WebSocket not connected");
@@ -376,46 +412,102 @@ function syncMultiplayerWithLocalGame() {
 function updateGameState(gameStateData) {
 	if (!gameStateData) return;
 
-	console.log("🎯 Updating game state:", gameStateData);
+	debugLog("gameState", "Game state update received:", gameStateData);
 
-	// Update ball position and velocity
+	// Debug the global state
+	debugLog("gameState", "Current game state:", {
+		isStarted: state.isStarted,
+		isPaused: state.isPaused,
+		isMultiplayer: state.isMultiplayer,
+		players: state.players?.length,
+	});
+
+	// Update ball position and velocity with debug
 	if (gameStateData.ball_pos && state.ball && state.ball.mesh) {
 		const [ballX, ballZ] = gameStateData.ball_pos;
+		const oldPos = { ...state.ball.mesh.position };
 		state.ball.mesh.position.set(ballX || 0, 0, ballZ || 0);
+
+		debugLog(
+			"positions",
+			`Ball moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
+				2
+			)}) → (${ballX.toFixed(2)}, ${ballZ.toFixed(2)})`
+		);
 
 		// Also update ball velocity if available
 		if (state.ball.velocity && gameStateData.ball_velocity) {
 			const [velX, velZ] = gameStateData.ball_velocity;
 			state.ball.velocity.set(velX || 0, 0, velZ || 0);
+			debugLog(
+				"positions",
+				`Ball velocity: (${velX.toFixed(2)}, ${velZ.toFixed(2)})`
+			);
 		}
-
-		console.log(`🏐 Ball updated: pos(${ballX}, ${ballZ})`);
 	}
 
-	// Update player 1 position
+	// ✅ DRAMATICALLY increase position scaling to make movement obvious
+	const POSITION_SCALE = 1.8;
+	const MOVEMENT_SCALE = 20; // Make movements much more visible
+
+	// Update player 1 position with debug
 	if (
 		gameStateData.player_1_pos &&
 		state.players[0] &&
 		state.players[0].mesh
 	) {
-		const [p1X, p1Z] = gameStateData.player_1_pos;
-		state.players[0].mesh.position.x =
-			p1X || state.players[0].mesh.position.x;
-		state.players[0].mesh.position.z = p1Z || 0;
-		console.log(`👤 Player 1 updated: pos(${p1X}, ${p1Z})`);
+		const [backendX, backendY] = gameStateData.player_1_pos;
+		const oldPos = {
+			x: state.players[0].mesh.position.x,
+			z: state.players[0].mesh.position.z,
+		};
+
+		// Apply DRAMATIC scaling to make movement very obvious
+		state.players[0].mesh.position.x = backendX * POSITION_SCALE;
+		state.players[0].mesh.position.z = backendY * MOVEMENT_SCALE;
+
+		debugLog(
+			"positions",
+			`Player 1 moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
+				2
+			)}) → (${state.players[0].mesh.position.x.toFixed(
+				2
+			)}, ${state.players[0].mesh.position.z.toFixed(2)})`
+		);
+		debugLog(
+			"positions",
+			`Raw backend P1: (${backendX}, ${backendY}) → Frontend scale X:${POSITION_SCALE}, Z:${MOVEMENT_SCALE}`
+		);
 	}
 
-	// Update player 2 position
+	// Update player 2 position with debug
 	if (
 		gameStateData.player_2_pos &&
 		state.players[1] &&
 		state.players[1].mesh
 	) {
-		const [p2X, p2Z] = gameStateData.player_2_pos;
-		state.players[1].mesh.position.x =
-			p2X || state.players[1].mesh.position.x;
-		state.players[1].mesh.position.z = p2Z || 0;
-		console.log(`👤 Player 2 updated: pos(${p2X}, ${p2Z})`);
+		const [backendX, backendY] = gameStateData.player_2_pos;
+		const oldPos = {
+			x: state.players[1].mesh.position.x,
+			z: state.players[1].mesh.position.z,
+		};
+
+		// Apply DRAMATIC scaling to make movement very obvious
+		state.players[1].mesh.position.x = backendX * POSITION_SCALE;
+		state.players[1].mesh.position.z = backendY * MOVEMENT_SCALE;
+
+		debugLog(
+			"positions",
+			`Player 2 moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
+				2
+			)}) → (${state.players[1].mesh.position.x.toFixed(
+				2
+			)}, ${state.players[1].mesh.position.z.toFixed(2)})`
+		);
+		debugLog(
+			"positions",
+			`Raw backend P2: (${backendX}, ${backendY}) → Frontend scale X:${POSITION_SCALE}, Z:${MOVEMENT_SCALE}`
+		);
 	}
 
 	// Update scores
@@ -426,18 +518,9 @@ function updateGameState(gameStateData) {
 		state.p1_score = gameStateData.player_1_score || 0;
 		state.p2_score = gameStateData.player_2_score || 0;
 
-		// Update score display
-		import("../locale/src/Score.js")
-			.then(({ updateScore }) => {
-				updateScore("p1");
-				updateScore("p2");
-			})
-			.catch(() => {
-				console.warn("Could not update score display");
-			});
-
-		console.log(
-			`🏆 Scores updated: P1=${state.p1_score}, P2=${state.p2_score}`
+		debugLog(
+			"gameState",
+			`Scores updated: P1=${state.p1_score}, P2=${state.p2_score}`
 		);
 	}
 }

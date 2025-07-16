@@ -187,6 +187,36 @@ async function initializeMultiplayerGame(
 	}
 }
 
+function sendGameInitialization() {
+	console.log("🎮 Sending game initialization data...");
+
+	try {
+		const { sendGameInit } = import("./serverSide.js");
+
+		// Send current game dimensions to backend
+		const gameConfig = {
+			ring_length: state.ring.length || 160,
+			ring_height: state.ring.height || 90,
+			ring_width: state.ring.width || 200,
+			ring_thickness: state.ring.thickness || 3,
+			p_length: state.p.height || 15,
+			p_width: state.p.width || 2,
+			p_height: state.p.depth || 2,
+			ball_radius: state.ball_radius || 2.5,
+			player_1_pos: [-60, 0], // Left paddle position
+			player_2_pos: [60, 0], // Right paddle position
+			ball_speed: state.ball_speed || 1,
+			p_speed: state.player_speed || 2, // ✅ Increase from 0.1 to 2
+		};
+
+		console.log("🎮 Game config being sent:", gameConfig);
+		sendGameInit(gameConfig);
+	} catch (error) {
+		console.error("❌ Failed to send game initialization:", error);
+	}
+}
+
+// Update the hideAllMenusAndStartGame function to send init data
 function hideAllMenusAndStartGame() {
 	console.log("🎯 Hiding all menus and starting multiplayer game...");
 
@@ -195,14 +225,22 @@ function hideAllMenusAndStartGame() {
 	state.isPaused = false;
 	state.IAisActive = false; // Disable AI for multiplayer
 
-	// Hide ready screen (your existing HTML)
+	console.log("✅ Game state set:", {
+		isStarted: state.isStarted,
+		isPaused: state.isPaused,
+		isMultiplayer: state.isMultiplayer,
+	});
+
+	// Hide ready screen
 	const readyScreen = document.getElementById("ready-screen");
 	if (readyScreen) {
 		readyScreen.style.display = "none";
 		console.log("✅ Ready screen hidden");
+	} else {
+		console.warn("⚠️ Ready screen element not found!");
 	}
 
-	// Hide connection status overlay (optional - you might want to keep this)
+	// Hide connection status overlay
 	const connectionOverlay = document.querySelector(
 		".position-absolute.top-0.end-0"
 	);
@@ -217,6 +255,11 @@ function hideAllMenusAndStartGame() {
 		controlsInfo.style.display = "block";
 		console.log("✅ Controls info shown");
 	}
+
+	// ✅ CRITICAL: Send game initialization to backend
+	setTimeout(() => {
+		sendGameInitialization();
+	}, 500);
 
 	// Start game animation if not already running
 	if (!state.animationFrameId) {
@@ -309,17 +352,60 @@ function handlePlayerReady() {
 }
 
 function handleMultiplayerKeyDown(event) {
-	if (!state.isStarted || state.isPaused) return;
+	// ✅ Add comprehensive debug for key press events
+	console.log("🎮 Key pressed:", event.key);
+	console.log("🎮 Game state check:", {
+		started: state.isStarted,
+		paused: state.isPaused,
+		multiplayerId: window.multiplayerInfo?.playerId,
+		time: new Date().toLocaleTimeString(),
+	});
+
+	// ✅ CRITICAL: Early exit detection
+	if (!state.isStarted || state.isPaused) {
+		console.warn(
+			"⚠️ Movement ignored! Game not active. Set state.isStarted=true and state.isPaused=false"
+		);
+		return;
+	}
 
 	const playerId = window.multiplayerInfo?.playerId || 0;
 
 	try {
 		if (event.key.toLowerCase() === "w") {
+			console.log("⬆️ Sending UP movement for player", playerId);
 			sendPlayerMovement(playerId, "up");
-			console.log("⬆️ Sent UP movement");
+
+			// ✅ Monitor current positions after movement
+			setTimeout(() => {
+				if (
+					state.players &&
+					state.players[0] &&
+					state.players[0].mesh
+				) {
+					console.log("🔍 PLAYER POSITION after UP:", {
+						x: state.players[0].mesh.position.x.toFixed(2),
+						z: state.players[0].mesh.position.z.toFixed(2),
+					});
+				}
+			}, 100);
 		} else if (event.key.toLowerCase() === "s") {
+			console.log("⬇️ Sending DOWN movement for player", playerId);
 			sendPlayerMovement(playerId, "down");
-			console.log("⬇️ Sent DOWN movement");
+
+			// ✅ Monitor current positions after movement
+			setTimeout(() => {
+				if (
+					state.players &&
+					state.players[0] &&
+					state.players[0].mesh
+				) {
+					console.log("🔍 PLAYER POSITION after DOWN:", {
+						x: state.players[0].mesh.position.x.toFixed(2),
+						z: state.players[0].mesh.position.z.toFixed(2),
+					});
+				}
+			}, 100);
 		} else if (event.key === "Escape") {
 			togglePause();
 		}
@@ -327,7 +413,6 @@ function handleMultiplayerKeyDown(event) {
 		console.error("❌ Failed to send movement:", error);
 	}
 }
-
 function handleMultiplayerKeyUp(event) {
 	if (!state.isStarted || state.isPaused) return;
 
@@ -430,6 +515,82 @@ function showGameError(message) {
 	}
 }
 
+window.debugPlayerPositions = function () {
+	console.log("🔍 DEBUG: Current player positions:");
+	if (state.players[0]?.mesh) {
+		console.log(
+			`Player 1: X=${state.players[0].mesh.position.x}, Y=${state.players[0].mesh.position.y}, Z=${state.players[0].mesh.position.z}`
+		);
+	}
+	if (state.players[1]?.mesh) {
+		console.log(
+			`Player 2: X=${state.players[1].mesh.position.x}, Y=${state.players[1].mesh.position.y}, Z=${state.players[1].mesh.position.z}`
+		);
+	}
+	console.log("Game state:", {
+		isStarted: state.isStarted,
+		isPaused: state.isPaused,
+		isMultiplayer: state.isMultiplayer,
+	});
+};
+
+window.debugGameState = function () {
+	console.log("🎮 GAME STATE:", {
+		isStarted: state.isStarted,
+		isPaused: state.isPaused,
+		isMultiplayer: state.isMultiplayer,
+		players: state.players?.length || 0,
+		p1_pos: state.players?.[0]?.mesh
+			? `(${state.players[0].mesh.position.x.toFixed(
+					2
+			  )}, ${state.players[0].mesh.position.z.toFixed(2)})`
+			: "N/A",
+		p2_pos: state.players?.[1]?.mesh
+			? `(${state.players[1].mesh.position.x.toFixed(
+					2
+			  )}, ${state.players[1].mesh.position.z.toFixed(2)})`
+			: "N/A",
+		ball_pos: state.ball?.mesh
+			? `(${state.ball.mesh.position.x.toFixed(
+					2
+			  )}, ${state.ball.mesh.position.z.toFixed(2)})`
+			: "N/A",
+	});
+};
+
+window.fixGameState = function () {
+	state.isStarted = true;
+	state.isPaused = false;
+	console.log("✅ Game state fixed: isStarted=true, isPaused=false");
+	return "Game state fixed. Try moving now!";
+};
+
+window.testMovement = function () {
+	console.log("🧪 Testing movement sequence...");
+	const playerId = window.multiplayerInfo?.playerId || 0;
+
+	console.log("Current state:", {
+		isStarted: state.isStarted,
+		isPaused: state.isPaused,
+	});
+
+	// Fix game state
+	state.isStarted = true;
+	state.isPaused = false;
+
+	// Test sequence
+	setTimeout(() => sendPlayerMovement(playerId, "up"), 500);
+	setTimeout(() => sendPlayerMovement(playerId, "stop"), 1000);
+	setTimeout(() => sendPlayerMovement(playerId, "down"), 1500);
+	setTimeout(() => sendPlayerMovement(playerId, "stop"), 2000);
+
+	return "Movement test sequence initiated";
+};
+
+// Make functions available globally
+window.debugGameState = debugGameState;
+window.fixGameState = fixGameState;
+window.testMovement = testMovement;
 // Export functions for global access
 export {
 	initializeMultiplayerGame,
