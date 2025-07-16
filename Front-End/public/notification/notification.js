@@ -352,7 +352,7 @@ function renderNotification() {
 			<div id="friendsList" class="mb-3"></div>
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
 			<div class="input-group">
-				<input type="text" class="form-control" id="friendID" placeholder="User ID" style="width: 32%;" autocomplete="off" >
+				<input type="text" class="form-control" id="friendID" placeholder="Friend Username" style="width: 32%;" autocomplete="off" >
 				<!--<button class="btn btn-outline-primary" type="button"
 					onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))"><i class="bi bi-cart-plus"></i></button>-->
 
@@ -367,7 +367,10 @@ function renderNotification() {
 
 	renderFriendRequest();
 	getFriends();
-	initFriendAutocomplete();
+	initFriendAutocomplete({
+		inputId: "friendID",
+		suggestionListId: "suggestionList"
+	});
 }
 
 // Message validation utilities

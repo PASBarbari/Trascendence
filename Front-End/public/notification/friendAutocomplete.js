@@ -3,78 +3,81 @@ import { handleFriendRequest } from "./notification.js";
 
 let debounceTimeout = null;
 
-export function initFriendAutocomplete() {
-    const friendInput = document.getElementById("friendID");
-    const suggestionList = document.getElementById("suggestionList");
-    const inputGroup = friendInput?.closest('.input-group');
-    const { url_api, token } = getVariables();
-    if (friendInput && suggestionList && inputGroup) {
-        suggestionList.style.width = inputGroup.offsetWidth + "px";
-        friendInput.addEventListener("focus", () => {
-            suggestionList.style.width = inputGroup.offsetWidth + "px";
-            suggestionList.style.display = "block";
-        });
+export function initFriendAutocomplete({ inputId = "friendID", suggestionListId = "suggestionList", handlerOnSelect = null } = {}) {
+	const friendInput = document.getElementById(inputId);
+	const suggestionList = document.getElementById(suggestionListId);
+	const inputGroup = friendInput?.closest('.input-group');
+	const { url_api, token } = getVariables();
+	if (friendInput && suggestionList && inputGroup) {
+		suggestionList.style.width = inputGroup.offsetWidth + "px";
+		friendInput.addEventListener("focus", () => {
+			suggestionList.style.width = inputGroup.offsetWidth + "px";
+			suggestionList.style.display = "block";
+		});
 
-        friendInput.addEventListener("input", () => {
-					if (debounceTimeout) clearTimeout(debounceTimeout);
-					debounceTimeout = setTimeout(() => {
-            if (friendInput.value.trim() === "") {
-                suggestionList.style.display = "none";
-                suggestionList.innerHTML = "";
-                return;
-            }
-            suggestionList.style.display = "block";
-            searchUsers(url_api, token, friendInput.value)
-                .then((results) => {
-                    updateSuggestionList(suggestionList, results);
-                })
-                .catch((error) => {
-                    console.error("Error searching users:", error);
-                });
-					}, 100);
-        });
+		friendInput.addEventListener("input", () => {
+			if (debounceTimeout) clearTimeout(debounceTimeout);
+			debounceTimeout = setTimeout(() => {
+				if (friendInput.value.trim() === "") {
+					suggestionList.style.display = "none";
+					suggestionList.innerHTML = "";
+					return;
+				}
+				suggestionList.style.display = "block";
+				searchUsers(url_api, token, friendInput.value)
+					.then((results) => {
+						updateSuggestionList(suggestionList, results, friendInput, handlerOnSelect);
+					})
+					.catch((error) => {
+						console.error("Error searching users:", error);
+					});
+			}, 100);
+		});
 
-        friendInput.addEventListener("blur", () => {
-            setTimeout(() => suggestionList.style.display = "none", 150);
-        });
-    }
+		friendInput.addEventListener("blur", () => {
+			setTimeout(() => suggestionList.style.display = "none", 150);
+		});
+	}
 }
 
-export function updateSuggestionList(suggestionList, results) {
-    if (!results || results.length === 0) {
-        suggestionList.innerHTML = `<a class="list-group-item list-group-item-action disabled">Nessun risultato</a>`;
-        return;
-    }
-    suggestionList.innerHTML = results.map(user =>
-        `<a type="button" class="list-group-item list-group-item-action" data-userid="${user.user_id}">${user.username} <i class="bi bi-cart-plus float-end text-success"></i></a>`
-    ).join('');
+export function updateSuggestionList(suggestionList, results, friendInput, handlerOnSelect) {
+	if (!results || results.length === 0) {
+		suggestionList.innerHTML = `<a class="list-group-item list-group-item-action disabled">Nessun risultato</a>`;
+		return;
+	}
+	suggestionList.innerHTML = results.map(user =>
+		`<a type="button" class="list-group-item list-group-item-action" data-userid="${user.user_id}">${user.username} <i class="bi bi-cart-plus float-end text-success"></i></a>`
+	).join('');
 
-    suggestionList.querySelectorAll("a[data-userid]").forEach(item => {
-        item.addEventListener("mousedown", function(e) {
-            const userId = Number(this.getAttribute("data-userid"));
-            handleFriendRequest('POST', userId);
-            suggestionList.style.display = "none";
-
-            const friendInput = document.getElementById("friendID");
-            if (friendInput) friendInput.value = "";
-        });
-    });
+	suggestionList.querySelectorAll("a[data-userid]").forEach(item => {
+		item.addEventListener("mousedown", function(e) {
+			const userId = Number(this.getAttribute("data-userid"));
+			if (typeof handlerOnSelect === "function") {
+				handlerOnSelect(friendInput, userId, this);
+			} else {
+				handleFriendRequest('POST', userId);
+				suggestionList.style.display = "none";
+				if (friendInput) friendInput.value = "";
+			}
+			suggestionList.style.display = "none";
+		});
+	});
 }
 
 export async function searchUsers(url_api, token, query) {
-    const response = await fetch(`${url_api}/user/user/search?search=${query}&page=1&page_size=4`, {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-        },
-    });
+	const response = await fetch(`${url_api}/user/user/search?search=${query}&page=1&page_size=4`, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+			"Authorization": `Bearer ${token}`
+		},
+	});
 
-    if (response.ok) {
-        const data = await response.json();
-        return data.results || [];
-    } else {
-        console.error("searchUsers error:", response);
-        return [];
-    }
+	if (response.ok) {
+		const data = await response.json();
+		return data.results || [];
+	} else {
+		console.error("searchUsers error:", response);
+		return [];
+	}
 }
