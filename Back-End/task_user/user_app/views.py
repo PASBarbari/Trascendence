@@ -327,7 +327,7 @@ class AddFriend(APIView):
 							Sender="Users",
 							message={
 									'type': 'friendship_deleted',
-									'data': UserNotificationSerializer(u2).data
+									'data': UserNotificationSerializer(u1).data
 							},
 							user_id=u2.user_id,
 							group_id=None,

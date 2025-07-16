@@ -1,0 +1,82 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: install-crds
+  namespace: {{ .Release.Namespace }}
+spec:
+  template:
+    metadata:
+      name: install-crds
+    spec:
+      restartPolicy: Never
+      serviceAccountName: crds-installer
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl:1.28
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          echo "Installing Custom Resource Definitions..."
+          
+          # cert-manager CRDs
+          echo "Installing cert-manager CRDs..."
+          kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.13.3/cert-manager.crds.yaml || true
+          
+          # Traefik CRDs
+          echo "Installing Traefik CRDs..."
+          kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.3/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml || true
+          
+          # Prometheus Operator CRDs
+          echo "Installing Prometheus Operator CRDs..."
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml || true
+          kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml || true
+          
+          # Wait for CRDs to be established
+          echo "Waiting for CRDs to be established..."
+          sleep 10
+          kubectl wait --for condition=established --timeout=60s crd/middlewares.traefik.io || true
+          kubectl wait --for condition=established --timeout=60s crd/serverstransports.traefik.io || true
+          kubectl wait --for condition=established --timeout=60s crd/servicemonitors.monitoring.coreos.com || true
+          kubectl wait --for condition=established --timeout=60s crd/prometheusrules.monitoring.coreos.com || true
+          
+          echo "CRDs installation completed successfully!"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: crds-installer
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crds-installer
+rules:
+- apiGroups: ["apiextensions.k8s.io"]
+  resources: ["customresourcedefinitions"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: crds-installer
+subjects:
+- kind: ServiceAccount
+  name: crds-installer
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: crds-installer
+  apiGroup: rbac.authorization.k8s.io

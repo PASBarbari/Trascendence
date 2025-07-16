@@ -104,50 +104,21 @@ kubectl create namespace logging --dry-run=client -o yaml | kubectl apply -f -
 
 # Note: Application namespaces (login, front-end, chat, etc.) will be created by the Helm umbrella chart
 
-# Step 8: Install cert-manager CRDs
-print_status "Installing cert-manager CRDs..."
-kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.13.3/cert-manager.crds.yaml
+Step 8: Install CRDs via Helm chart
+print_status "Installing Custom Resource Definitions..."
+cd helm-charts/my-umbrella
+if helm list -A | grep -q "crds-only"; then
+     print_status "Upgrading existing deployment..."
+     helm upgrade crds-only . --timeout=15m --wait --debug --namespace default --create-namespace
+else
+     print_status "Installing new deployment..."
+     helm install crds-only . --timeout=15m --wait --debug --namespace default --create-namespace
+fi
+cd ../..
 
-print_success "cert-manager CRDs installed"
+print_success "CRDs installed successfully"
 
-# Step 9: Install Elastic Cloud on Kubernetes (ECK) operator and CRDs
-print_status "Installing ECK operator and CRDs..."
-kubectl apply -f https://download.elastic.co/downloads/eck/2.9.0/crds.yaml || true
-kubectl apply -f https://download.elastic.co/downloads/eck/2.9.0/operator.yaml || true
-
-print_success "ECK operator and CRDs installed"
-
-# Step 10: Install Traefik CRDs
-print_status "Installing Traefik CRDs..."
-kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.3/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml || true
-
-print_success "Traefik CRDs installed"
-
-# Step 11: Install Prometheus Operator CRDs
-print_status "Installing Prometheus Operator CRDs..."
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml || true
-kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml || true
-
-print_success "Prometheus Operator CRDs installed"
-
-# Wait for CRDs to be registered by the API server
-print_status "Waiting for CRDs to be registered..."
-sleep 10
-kubectl wait --for condition=established --timeout=60s crd/middlewares.traefik.io
-kubectl wait --for condition=established --timeout=60s crd/serverstransports.traefik.io
-kubectl wait --for condition=established --timeout=60s crd/servicemonitors.monitoring.coreos.com
-kubectl wait --for condition=established --timeout=60s crd/prometheusrules.monitoring.coreos.com
-
-print_success "CRDs are ready"
-
-# Step 12: Set up /etc/hosts entries for local development
+# Step 9: Set up /etc/hosts entries for local development
 print_status "Setting up /etc/hosts entries..."
 
 # Check if entries already exist
@@ -161,7 +132,7 @@ else
     print_warning "/etc/hosts entries already exist"
 fi
 
-# Step 13: Navigate to helm charts directory
+# Step 10: Navigate to helm charts directory
 if [ -d "helm-charts/my-umbrella" ]; then
     print_status "Deploying Trascendence application..."
     cd helm-charts/my-umbrella
@@ -170,7 +141,7 @@ if [ -d "helm-charts/my-umbrella" ]; then
     helm dependency update
     
     # Install or upgrade the application
-    if helm list | grep -q "my-umbrella"; then
+    if helm list -A | grep -q "my-umbrella"; then
         print_status "Upgrading existing deployment..."
         helm upgrade my-umbrella . --timeout=15m --wait --debug --namespace default --create-namespace
     else
@@ -186,7 +157,7 @@ else
     exit 1
 fi
 
-# Step 14: Display useful information
+# Step 11: Display useful information
 print_success "🎉 Setup completed successfully!"
 echo ""
 echo -e "${BLUE}📋 Useful Information:${NC}"

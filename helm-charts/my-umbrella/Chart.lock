@@ -33,4 +33,4 @@ dependencies:
   repository: file://charts/cert-manager-chart
   version: 0.1.0
 digest: sha256:8de2e52421401e599d93821630df796151eddbf6de7d31dff8190705fb0add7d
-generated: "2025-07-02T16:50:10.167825486+02:00"
+generated: "2025-07-16T12:19:14.513897758+02:00"

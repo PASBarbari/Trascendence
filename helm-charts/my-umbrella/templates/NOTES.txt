@@ -48,36 +48,58 @@ Grafana Dashboard:
   - Trascendence Services Overview
 {{- end }}
 
-{{- if index .Values "observability-chart" "eck-kibana" "enabled" }}
-Kibana (Observability Stack):
+{{- if index .Values "observability-chart" "kibana" "enabled" }}
+Kibana (ELK Stack):
   {{- if index .Values "observability-chart" "ingressroutes" "enabled" }}
   URL: https://kibana.{{ index .Values "observability-chart" "ingressroutes" "domain" }}
   {{- else }}
   To access Kibana using port-forward:
-  kubectl port-forward svc/eck-kibana-kb-http 5601:5601
+  kubectl port-forward svc/{{ .Release.Name }}-kibana 5601:5601
   Then visit: http://localhost:5601
   {{- end }}
-  Username: elastic
-  Password: <automatically generated - check secret: trascendence-elasticsearch-es-elastic-user>
+  Username: {{ index .Values "observability-chart" "kibana" "username" | default "kibana_system" }}
+  Password: {{ index .Values "observability-chart" "kibana" "password" | default "changeme" }}
   
-  Log indices: trascendence-logs-*
-  Data sources: Application logs, Kubernetes logs, System metrics
+  Pre-configured features:
+  - Django application logs with JSON parsing
+  - Service identification and filtering
+  - Error tracking and analysis
+  - Performance monitoring dashboards
+  - Automatic index patterns for trascendence-logs-*
 {{- end }}
 
-{{- if index .Values "observability-chart" "prometheus" "enabled" }}
-Prometheus Metrics:
-  To access Prometheus using port-forward:
-  kubectl port-forward svc/{{ .Release.Name }}-prometheus-prometheus 9090:9090
-  Then visit: http://localhost:9090
+{{- if index .Values "observability-chart" "elasticsearch" "enabled" }}
+Elasticsearch (ELK Stack):
+  To access Elasticsearch using port-forward:
+  kubectl port-forward svc/{{ .Release.Name }}-elasticsearch 9200:9200
+  Then visit: http://localhost:9200
+  
+  Health check: curl -X GET "localhost:9200/_cluster/health?pretty"
+{{- end }}
+
+{{- if index .Values "observability-chart" "logstash" "enabled" }}
+Logstash (Log Processing):
+  Processing pipeline includes:
+  - Django JSON log parsing
+  - Service field enrichment
+  - Error classification
+  - Performance metrics extraction
 {{- end }}
 
 Monitoring & Observability:
   - Grafana provides visual dashboards for metrics and monitoring
-  - Kibana offers log analysis and search capabilities
+  - Kibana offers log analysis and search capabilities with Django-optimized parsing
   - Prometheus collects and stores time-series metrics
-  - Elasticsearch stores and indexes application logs
-  - Filebeat collects container logs from Kubernetes
-  - Logstash processes and enriches log data
+  - Elasticsearch stores and indexes application logs with JSON structure
+  - Filebeat collects container logs from Kubernetes pods
+  - Logstash processes and enriches Django application logs
+  
+ELK Stack Features:
+  - JSON-structured logging from all Django microservices
+  - Service identification (login, chat, user, notifications, pong, api-docs)
+  - Environment-based log level configuration
+  - Container-friendly stdout logging
+  - Automatic log rotation and retention
 
 {{- if index .Values "observability-chart" "enabled" }}
 Local Access Setup (for k3s with Traefik):
@@ -93,5 +115,20 @@ For troubleshooting:
   - Check certificates: kubectl get certificates --all-namespaces
   - View logs: kubectl logs -n <namespace> <pod-name>
   - Check ingress: kubectl get ingress --all-namespaces
+  - ELK Stack health: kubectl get pods -n observability
+
+ELK Logging Configuration:
+  All Django microservices are configured with uniform ELK-optimized logging:
+  - JSON-structured logs for Logstash parsing
+  - Service identification in log messages
+  - Environment-based configuration (USE_JSON_LOGGING=true for production)
+  - Comprehensive logger coverage (Django, ASGI, WebSocket, application)
+  - Container-friendly stdout logging for Filebeat collection
+
+Environment Variables for Production:
+  USE_JSON_LOGGING=true
+  USE_FILE_LOGGING=false
+  LOG_LEVEL=INFO
+  DEBUG=false
 
 For more information, see the documentation at: https://github.com/PASBarbari/Trascendence
