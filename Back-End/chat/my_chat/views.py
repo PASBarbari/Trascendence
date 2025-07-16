@@ -641,7 +641,7 @@ class ChatMediaManager(APIView):
 				
 		except Exception as e:
 			logger.error(f"Error retrieving chat media info: {str(e)}")
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			return Response({'error': 'An internal error occurred. Please contact support.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 	def delete(self, request):
 		"""Delete a media message (only by sender or room admin)"""
@@ -702,4 +702,4 @@ class ChatMediaManager(APIView):
 				
 		except Exception as e:
 			logger.error(f"Error deleting chat media: {str(e)}")
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			return Response({'error': 'An internal error occurred. Please contact support.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
