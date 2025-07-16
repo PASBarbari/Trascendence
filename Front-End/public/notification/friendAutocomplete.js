@@ -46,8 +46,11 @@ export function updateSuggestionList(suggestionList, results, friendInput, handl
 		suggestionList.innerHTML = `<a class="list-group-item list-group-item-action disabled">Nessun risultato</a>`;
 		return;
 	}
+	const isBlockUser = friendInput.id === "blockUserInput";
 	suggestionList.innerHTML = results.map(user =>
-		`<a type="button" class="list-group-item list-group-item-action" data-userid="${user.user_id}">${user.username} <i class="bi bi-cart-plus float-end text-success"></i></a>`
+		`<a type="button" class="list-group-item list-group-item-action" data-userid="${user.user_id}">${user.username} 
+			<i class="bi ${isBlockUser ? "bi-lock-fill text-danger" : "bi-cart-plus text-success"} float-end"></i>
+		</a>`
 	).join('');
 
 	suggestionList.querySelectorAll("a[data-userid]").forEach(item => {

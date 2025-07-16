@@ -2,7 +2,7 @@ import { getVariables } from '../var.js';
 import { renderAddChat } from './AddChat.js';
 import { renderChatBubble } from './ChatBubble.js';
 import { getCookie } from '../cookie.js';
-import { getBlockedUsersList, showBlockedUsersModal, helperAutocomplete } from './blockUser.js';
+import { getBlockedUsersList, showBlockedUsersModal, helperAutocomplete, loadBlockedUsers } from './blockUser.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -393,6 +393,10 @@ function isUserBlocked(username) {
 async function updateBlockedUsers() {
 	await getBlockedUsers();
 	console.log("Lista utenti bloccati aggiornata");
+	if (blockedUserListModal) {
+    await loadBlockedUsers(blockedUserListModal);
+  }
+  console.log("Lista utenti bloccati aggiornata");
 }
 
 export { renderExpandableSidebar, updateChatList, updateBlockedUsers, isUserBlocked };

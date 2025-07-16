@@ -203,7 +203,7 @@ async function loadBlockedUsers(blockedUserListModal) {
     if (blockedUsers.length === 0) {
         listContainer.innerHTML = `
             <div class="text-center text-muted">
-                <i class="bi bi-person-check fs-1"></i>
+                <i class="bi bi-person-lock fs-1"></i>
                 <p>No blocked users</p>
             </div>
         `;
@@ -214,10 +214,9 @@ async function loadBlockedUsers(blockedUserListModal) {
         <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
             <div>
                 <strong>${user.username}</strong>
-                <small class="text-muted d-block">ID: ${user.user_id}</small>
             </div>
-            <button class="btn btn-sm btn-outline-success" onclick="unblockUserFromModal(${user.user_id}, '${user.username}')">
-                <i class="bi bi-person-plus"></i> Unblock
+            <button class="btn btn-outline-success" onclick="unblockUserFromModal(${user.user_id}, '${user.username}')">
+                <i class="bi bi-unlock2-fill"></i>
             </button>
         </div>
     `).join('');
@@ -242,4 +241,4 @@ window.blockUser = blockUser;
 // window.unblockUser = unblockUser;
 // window.showBlockedUsersModal = showBlockedUsersModal;
 
-export { blockUser, unblockUser, getBlockedUsersList, showBlockedUsersModal, helperAutocomplete };
+export { blockUser, unblockUser, getBlockedUsersList, showBlockedUsersModal, helperAutocomplete, loadBlockedUsers };
