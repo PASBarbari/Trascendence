@@ -106,7 +106,7 @@ function initializeWebSocket(room_id, player1, player2) {
 
 			// ✅ Always show ready screen - no overlay logic needed
 			console.log("✅ Both players connected, ready screen is visible");
-		} else if (message.message === "All players are ready!") {
+		} else if (message.type === "all_players_ready") {
 			console.log("🎮 All players ready! Starting game...");
 
 			// Start the game using local game logic
