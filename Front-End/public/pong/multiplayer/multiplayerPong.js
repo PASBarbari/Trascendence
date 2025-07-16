@@ -148,6 +148,12 @@ async function initializeMultiplayerGame(
 		state.isPaused = true;
 		state.IAisActive = false; // Disable AI for multiplayer
 
+		// ✅ IMPORTANT: Disable local ball physics for multiplayer
+		if (state.ball) {
+			state.ball.disableLocalPhysics = true;
+			console.log("🚫 Local ball physics disabled for multiplayer");
+		}
+
 		// Update connection status
 		updateConnectionStatus("connecting", "Connecting to server...");
 
@@ -179,6 +185,46 @@ async function initializeMultiplayerGame(
 			"Failed to connect to multiplayer game. Please try again."
 		);
 	}
+}
+
+function hideAllMenusAndStartGame() {
+	console.log("🎯 Hiding all menus and starting multiplayer game...");
+
+	// Start the game using local game logic
+	state.isStarted = true;
+	state.isPaused = false;
+	state.IAisActive = false; // Disable AI for multiplayer
+
+	// Hide ready screen (your existing HTML)
+	const readyScreen = document.getElementById("ready-screen");
+	if (readyScreen) {
+		readyScreen.style.display = "none";
+		console.log("✅ Ready screen hidden");
+	}
+
+	// Hide connection status overlay (optional - you might want to keep this)
+	const connectionOverlay = document.querySelector(
+		".position-absolute.top-0.end-0"
+	);
+	if (connectionOverlay) {
+		connectionOverlay.style.display = "none";
+		console.log("✅ Connection status overlay hidden");
+	}
+
+	// Show in-game controls info
+	const controlsInfo = document.getElementById("controls-info");
+	if (controlsInfo) {
+		controlsInfo.style.display = "block";
+		console.log("✅ Controls info shown");
+	}
+
+	// Start game animation if not already running
+	if (!state.animationFrameId) {
+		console.log("🎬 Starting game animation...");
+		GAME.animate();
+	}
+
+	console.log("🎮 Game started successfully! All menus hidden.");
 }
 
 function setupMultiplayerEventListeners() {
@@ -391,10 +437,12 @@ export {
 	handlePlayerReady,
 	exitMultiplayerGame,
 	updateConnectionStatus,
+	hideAllMenusAndStartGame,
 };
 
 // Make functions globally available for onclick handlers
 window.handlePlayerReady = handlePlayerReady;
 window.exitMultiplayerGame = exitMultiplayerGame;
+window.hideAllMenusAndStartGame = hideAllMenusAndStartGame;
 
 console.log("🎮 Multiplayer Pong module loaded successfully");

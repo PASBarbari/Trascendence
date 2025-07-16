@@ -60,6 +60,90 @@ async function createGame(player_1, player_2) {
 	}
 }
 
+function hideAllMenusAndStartGame() {
+	console.log("🎯 Hiding all menus and starting multiplayer game...");
+
+	// Start the game using local game logic
+	state.isStarted = true;
+	state.isPaused = false;
+	state.IAisActive = false; // Disable AI for multiplayer
+
+	// ✅ CRITICAL: Hide ready screen - this was missing proper implementation
+	const readyScreen = document.getElementById("ready-screen");
+	if (readyScreen) {
+		readyScreen.style.display = "none";
+		console.log("✅ Ready screen hidden");
+	} else {
+		console.warn("⚠️ Ready screen element not found!");
+	}
+
+	// Hide any local pong menus that might interfere
+	const menusToHide = [
+		"menu", // Main pong menu
+		"nbrOfPlayerMenu", // Player selection menu
+		"settingsMenu", // Settings menu
+		"pauseMenu", // Pause menu
+		"gameOverMenu", // Game over menu
+		"readyMenu", // WebRTC ready menu
+	];
+
+	menusToHide.forEach((menuId) => {
+		const menu = document.getElementById(menuId);
+		if (menu) {
+			menu.style.display = "none";
+			console.log(`✅ ${menuId} hidden`);
+		}
+	});
+
+	// ✅ CRITICAL: Hide connection status overlay completely
+	const connectionOverlay = document.querySelector(
+		".position-absolute.top-0.end-0"
+	);
+	if (connectionOverlay) {
+		connectionOverlay.style.display = "none";
+		console.log("✅ Connection status overlay hidden");
+	} else {
+		console.warn("⚠️ Connection overlay not found!");
+	}
+
+	// Show in-game controls info
+	const controlsInfo = document.getElementById("controls-info");
+	if (controlsInfo) {
+		controlsInfo.style.display = "block";
+		console.log("✅ Controls info shown");
+	}
+
+	// ✅ CRITICAL: Make sure the game canvas is visible and on top
+	const gameContainer = document.querySelector(".gamecontainer");
+	const threejsContainer = document.getElementById("threejs-container");
+
+	if (gameContainer) {
+		gameContainer.style.position = "relative";
+		gameContainer.style.width = "100%";
+		gameContainer.style.height = "100vh";
+		gameContainer.style.background = "#000";
+		console.log("✅ Game container styled");
+	}
+
+	if (threejsContainer) {
+		threejsContainer.style.position = "absolute";
+		threejsContainer.style.top = "0";
+		threejsContainer.style.left = "0";
+		threejsContainer.style.width = "100%";
+		threejsContainer.style.height = "100%";
+		threejsContainer.style.zIndex = "1";
+		console.log("✅ Three.js container styled");
+	}
+
+	// Start game animation if not already running
+	if (!state.animationFrameId) {
+		console.log("🎬 Starting game animation...");
+		GAME.animate();
+	}
+
+	console.log("🎮 Game started successfully! All menus hidden.");
+}
+
 function initializeWebSocket(room_id, player1, player2) {
 	const { token, wss_api } = getVariables();
 
@@ -89,55 +173,29 @@ function initializeWebSocket(room_id, player1, player2) {
 			console.log("🎯 Game state update:", message.game_state);
 			updateGameState(message.game_state);
 		} else if (message.type === "connection_success") {
-			console.log("🎉 Connection successful:", message.message);
-			console.log("👤 Player ID:", message.player_id);
-
-			// Store player info
-			window.multiplayerInfo = {
-				playerId: message.player_id,
-				roomId: room_id,
-			};
-
-			// Update connection status in UI
-			updateConnectionStatus("connected", "Connected to game server");
-
-			// Initialize the game scene
-			syncMultiplayerWithLocalGame();
-
-			// ✅ Always show ready screen - no overlay logic needed
-			console.log("✅ Both players connected, ready screen is visible");
-		} else if (message.type === "all_players_ready") {
+			// ... existing code ...
+		} else if (
+			message.type === "all_players_ready" ||
+			message.message === "All players are ready!"
+		) {
 			console.log("🎮 All players ready! Starting game...");
 
-			// Start the game using local game logic
-			state.isStarted = true;
-			state.isPaused = false;
-			state.IAisActive = false; // Disable AI for multiplayer
+			// ✅ Add game-active class to body
+			document.body.classList.add("game-active");
 
-			// Hide ready screen
-			const readyScreen = document.getElementById("ready-screen");
-			if (readyScreen) {
-				readyScreen.style.display = "none";
-			}
-
-			// Show controls info
-			const controlsInfo = document.getElementById("controls-info");
-			if (controlsInfo) {
-				controlsInfo.style.display = "block";
-			}
-
-			// Start game animation
-			if (!state.animationFrameId) {
-				GAME.animate();
-			}
+			// ✅ Use the local function
+			hideAllMenusAndStartGame();
 
 			showNotification("🚀 Game Started! Good luck!", "success");
 		} else if (message.message === "Waiting for players to be ready...") {
 			console.log("⏳ Waiting for other player to be ready");
 			updateOpponentStatus("waiting");
-			// ✅ No overlay hiding needed - just update status
 		} else if (message.type === "quit_game") {
 			console.log("🚪 Player quit:", message.message);
+
+			// ✅ Remove game-active class
+			document.body.classList.remove("game-active");
+
 			showNotification(message.message, "warning");
 
 			// Stop the game and show ready screen
@@ -146,12 +204,11 @@ function initializeWebSocket(room_id, player1, player2) {
 			showReadyScreen();
 		} else if (message.message === "Game Over!") {
 			console.log("🏁 Game Over!");
+
+			// ✅ Remove game-active class
+			document.body.classList.remove("game-active");
+
 			handleGameOver();
-		} else if (message.type === "test_message") {
-			console.log("📝 Test message received:", message.message);
-		} else if (message.message && typeof message.message === "string") {
-			// Handle plain chat messages (like your test message)
-			console.log("💬 Chat message received:", message.message);
 		} else {
 			console.log("🔍 Unknown message:", message);
 		}
@@ -319,34 +376,69 @@ function syncMultiplayerWithLocalGame() {
 function updateGameState(gameStateData) {
 	if (!gameStateData) return;
 
-	// Update ball position
-	if (gameStateData.ball && state.ball && state.ball.mesh) {
-		state.ball.mesh.position.set(
-			gameStateData.ball.x || 0,
-			gameStateData.ball.y || 0,
-			gameStateData.ball.z || 0
-		);
+	console.log("🎯 Updating game state:", gameStateData);
+
+	// Update ball position and velocity
+	if (gameStateData.ball_pos && state.ball && state.ball.mesh) {
+		const [ballX, ballZ] = gameStateData.ball_pos;
+		state.ball.mesh.position.set(ballX || 0, 0, ballZ || 0);
+
+		// Also update ball velocity if available
+		if (state.ball.velocity && gameStateData.ball_velocity) {
+			const [velX, velZ] = gameStateData.ball_velocity;
+			state.ball.velocity.set(velX || 0, 0, velZ || 0);
+		}
+
+		console.log(`🏐 Ball updated: pos(${ballX}, ${ballZ})`);
 	}
 
-	// Update player positions
-	if (gameStateData.player1 && state.players[0] && state.players[0].mesh) {
-		state.players[0].mesh.position.z = gameStateData.player1.z || 0;
+	// Update player 1 position
+	if (
+		gameStateData.player_1_pos &&
+		state.players[0] &&
+		state.players[0].mesh
+	) {
+		const [p1X, p1Z] = gameStateData.player_1_pos;
+		state.players[0].mesh.position.x =
+			p1X || state.players[0].mesh.position.x;
+		state.players[0].mesh.position.z = p1Z || 0;
+		console.log(`👤 Player 1 updated: pos(${p1X}, ${p1Z})`);
 	}
 
-	if (gameStateData.player2 && state.players[1] && state.players[1].mesh) {
-		state.players[1].mesh.position.z = gameStateData.player2.z || 0;
+	// Update player 2 position
+	if (
+		gameStateData.player_2_pos &&
+		state.players[1] &&
+		state.players[1].mesh
+	) {
+		const [p2X, p2Z] = gameStateData.player_2_pos;
+		state.players[1].mesh.position.x =
+			p2X || state.players[1].mesh.position.x;
+		state.players[1].mesh.position.z = p2Z || 0;
+		console.log(`👤 Player 2 updated: pos(${p2X}, ${p2Z})`);
 	}
 
 	// Update scores
-	if (gameStateData.score) {
-		state.p1_score = gameStateData.score.player1 || 0;
-		state.p2_score = gameStateData.score.player2 || 0;
+	if (
+		typeof gameStateData.player_1_score !== "undefined" &&
+		typeof gameStateData.player_2_score !== "undefined"
+	) {
+		state.p1_score = gameStateData.player_1_score || 0;
+		state.p2_score = gameStateData.player_2_score || 0;
 
 		// Update score display
-		import("../locale/src/Score.js").then(({ updateScore }) => {
-			updateScore("p1");
-			updateScore("p2");
-		});
+		import("../locale/src/Score.js")
+			.then(({ updateScore }) => {
+				updateScore("p1");
+				updateScore("p2");
+			})
+			.catch(() => {
+				console.warn("Could not update score display");
+			});
+
+		console.log(
+			`🏆 Scores updated: P1=${state.p1_score}, P2=${state.p2_score}`
+		);
 	}
 }
 
@@ -538,4 +630,5 @@ export {
 	showReadyScreen,
 	updateOpponentStatus,
 	handleGameOver,
+	hideAllMenusAndStartGame,
 };
