@@ -55,7 +55,7 @@ export function updateSuggestionList(suggestionList, results, friendInput, handl
 			if (typeof handlerOnSelect === "function") {
 				handlerOnSelect(friendInput, userId, this);
 			} else {
-				handleFriendRequest('POST', userId);
+				handleFriendRequest('POST', userId, this.textContent.trim());
 				suggestionList.style.display = "none";
 				if (friendInput) friendInput.value = "";
 			}

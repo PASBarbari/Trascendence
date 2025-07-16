@@ -12,7 +12,7 @@ document.head.appendChild(link);
 let messageHistory = [];
 let socket;
 
-async function handleFriendRequest(str_method, receiver_id, index) {
+async function handleFriendRequest(str_method, receiver_id, receiver_username, index) {
 	// Pulisce l'input dopo aver inviato la richiesta
 	receiver_id = Number(receiver_id);
 	const friendInput = document.getElementById("friendID");
@@ -72,7 +72,9 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 				getFriends();
 			} else if (info === "friend request sent") {
 				console.log("Friend request sent handleFriendRequest");
-				renderSentFriendRequest(receiver_id, true);
+				console.log("receiver_id:", receiver_id);
+				console.log("receiver_username:", receiver_username);
+				renderSentFriendRequest(receiver_id, receiver_username, true);
 			} else {
 				console.log("else handleFriendRequest");
 				getFriends();
@@ -86,20 +88,21 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 	}
 }
 
-function renderSentFriendRequest(receiver_id, addToDOM = false) {
+function renderSentFriendRequest(receiver_id, receiver_username, addToDOM = false) {
 	console.log("/***********renderSentFriendRequest************/");
 	console.log("Rendering sent friend request for ID:", receiver_id);
+	console.log("Rendering sent friend request for Username:", receiver_username);
 
 	const notificationContent = document.getElementById("notificationContent");
 
 	// Create the HTML
 	const htmlToAdd = `
-		<div class="card mb-3" id="notification-card-${receiver_id}">
-			<div class="card-body">
-				<p class="card-text">Friend request sent to User ID: ${receiver_id}</p>
-				<button class="btn btn-outline-secondary" type="button"
-					onclick="handleFriendRequest('DELETE', ${receiver_id})">
-					Cancel Request
+		<div class="card mb-3" id="notification-card-${receiver_username}">
+			<div class="card-body" style="display: flex; align-items: center;">
+				<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request sent to <b>${receiver_username}</b></p>
+				<button class="btn btn-outline-danger" type="button"
+					onclick="handleFriendRequest('DELETE', ${receiver_id}, '${receiver_username}')">
+					<i class="bi bi-eraser-fill"></i>
 				</button>
 			</div>
 		</div>
@@ -196,9 +199,9 @@ function renderFriendsList(friends) {
 					</div>
 
 					<!-- Action Buttons -->
-					<div
+					<div>
 						<button class="btn btn-outline-danger btn-sm" type="button"
-								onclick="handleFriendRequest('DELETE', ${friendId}, ${index})"
+								onclick="handleFriendRequest('DELETE', ${friendId}, '', ${index})"
 								title="Remove friend">
 							<i class="bi bi-trash"></i>
 						</button>
@@ -274,17 +277,19 @@ function renderFriendRequest() {
 		.map((friendRequests, index) => {
 			const senderData = friendRequests.userData;
 			const senderId = friendRequests.user_id;
+			const username = senderData.username || "Unknown";
+			console.log("senderdata:", senderData);
 			return `
 			<div class="card mb-3" id="notification-card-${index}">
-				<div class="card-body">
-					<p class="card-text">User ID: ${senderId}</p>
-					<button class="btn btn-outline-primary" type="button"
-						onclick="handleFriendRequest('PATCH', ${senderId}, ${index})">
-						Accept
+				<div class="card-body" style="display: flex; align-items: center;">
+					<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request from: <b>${username}</b></p>
+					<button class="btn btn-outline-success me-2" type="button"
+						onclick="handleFriendRequest('PATCH', ${senderId}, '', ${index})">
+						<i class="bi bi-hand-thumbs-up-fill"></i>
 					</button>
-					<button class="btn btn-outline-secondary" type="button"
-						onclick="handleFriendRequest('DELETE', ${senderId}, ${index})">
-						Decline
+					<button class="btn btn-outline-danger" type="button"
+						onclick="handleFriendRequest('DELETE', ${senderId}, '', ${index})">
+						<i class="bi bi-hand-thumbs-down-fill"></i>
 					</button>
 				</div>
 			</div>
@@ -310,25 +315,26 @@ function renderFriendRequest2(friends) {
 			const Data = friendship.friend_info;
 			const otherId = friendship.friend_info.user_id;
 			const actualSenderId = friendship.friend_info.sent_by.user_id;
+			const username = friendship.friend_info.username || "Unknown";
 			console.log("otherId:", otherId);
 			console.log("actualSenderId:", actualSenderId);
 			console.log("userId:", userId);
 			if (actualSenderId == userId) {
-				return renderSentFriendRequest(otherId);
+				return renderSentFriendRequest(otherId, username);
 				//return ""; // Skip if the user sent the request
 			}
 			else {
 				return `
 				<div class="card mb-3" id="notification-card-${index}">
-					<div class="card-body">
-						<p class="card-text">User ID: ${otherId}</p>
-						<button class="btn btn-outline-primary" type="button"
-							onclick="handleFriendRequest('PATCH', ${otherId}, ${index})">
-							Accept
+					<div class="card-body" style="display: flex; align-items: center;">
+						<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request from: <b>${username}</b></p>
+						<button class="btn btn-outline-success me-2" type="button"
+							onclick="handleFriendRequest('PATCH', ${otherId}, '', ${index})">
+							<i class="bi bi-hand-thumbs-up-fill"></i>
 						</button>
-						<button class="btn btn-outline-secondary" type="button"
-							onclick="handleFriendRequest('DELETE', ${otherId}, ${index})">
-							Decline
+						<button class="btn btn-outline-danger" type="button"
+							onclick="handleFriendRequest('DELETE', ${otherId}, '', ${index})">
+							<i class="bi bi-hand-thumbs-down-fill"></i>
 						</button>
 					</div>
 				</div>
@@ -840,6 +846,7 @@ function handleFriendDeletedMessage(message) {
 	// Show notification
 	if (message.message && message.message.data) {
 		const userData = message.message.data;
+		console.log("User data:", userData);
 		showNotificationToast(
 			`${
 				userData.username || "Someone"
