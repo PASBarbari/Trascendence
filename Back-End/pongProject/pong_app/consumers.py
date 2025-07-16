@@ -74,7 +74,9 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			
 			# Clean up game resources
 			game_state.quit_game(player)
-			del active_games[self.room_id]
+			if self.room_id in active_games:
+				# Remove game from active games
+				del active_games[self.room_id]
 			logger.info(f"Game {self.room_id} resources cleaned up after disconnect")
 		
 		# Leave room group
@@ -109,17 +111,20 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		# Use authenticated user from connection instead of client data
 		player = self.player_id
 		if self.room_id not in player_ready:
-			player_ready[self.room_id] = [False, False]
-		
-		player_ready[self.room_id][player] = True
-		logger.info(f"Player {player} ready in game {self.room_id}. Status: {player_ready[self.room_id]}")
-		
-		if all(player_ready[self.room_id]):
+			player_ready[self.room_id] = set()
+
+		player_ready[self.room_id].add(player)
+		logger.info(f"Player {player} ready in game {self.room_id}. Ready players: {len(player_ready[self.room_id])}")
+
+		if len(player_ready[self.room_id]) == 2:
 			logger.info(f"All players ready in game {self.room_id}, starting game")
-			await self.send(text_data=json.dumps({
-				'message': 'All players are ready!',
-				'ready': True
-			}))
+			await self.channel_layer.group_send(
+				self.room_name,
+				{
+					'type': 'all_players_ready',
+					'message': 'All players are ready!'
+				}
+			)
 			
 			try:
 				game = await sync_to_async(Game.objects.get)(id=self.room_id)
@@ -138,8 +143,8 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		if self.room_id in active_games:
 			logger.info(f"Game {self.room_id} already started, ignoring start request")
 			return
-			
-		logger.info(f"Starting game {self.room_id} with players {data['player1']} and {data['player2']}")
+
+		logger.info(f"Starting game {self.room_id} with players {data}")
 		try:
 			del player_ready[self.room_id]
 			active_games[self.room_id] = GameState(
@@ -259,6 +264,15 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		except Exception as e:
 			logger.error(f"Error during game quit: {str(e)}", exc_info=True)
 
+	async def all_players_ready(self, event):
+		"""Handle the all_players_ready group message"""
+		logger.info(f"Broadcasting all players ready message for game {self.room_id}")
+		await self.send(text_data=json.dumps({
+			'type': 'all_players_ready',
+			'message': event.get('message', 'All players are ready!'),
+			'ready': True
+		}))
+
 	message_handlers = {
 		'chat_message': chat_message,
 		'player_ready': player_ready,
@@ -269,6 +283,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		'game_init': game_init,
 		'game_over': game_over,
 		'quit_game': quit_game,
+		'all_players_ready': all_players_ready,
 	}
 
 class TournamentConsumer(AsyncWebsocketConsumer):
