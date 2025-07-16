@@ -16,6 +16,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 import logging
 
+logging.basicConfig(level=logging.ERROR)
+
 
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
@@ -306,7 +308,8 @@ class UserStatistics(APIView):
 						
 			return Response(stats_data, status=status.HTTP_200_OK)
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+			logging.error(f"An error occurred: {str(e)}")
+			return Response({'error': 'An internal error occurred.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @csrf_exempt
