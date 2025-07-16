@@ -222,7 +222,7 @@ function renderChatItem(chat) {
 			<div class="scrollable-content"></div>
 
 			<form class="input-group chat-input">
-				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048"/>
+				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048" autocomplete="off"/>
 				<button class="btn btn-outline-primary" type="submit">
 					<i class="bi bi-send"></i>
 				</button>
