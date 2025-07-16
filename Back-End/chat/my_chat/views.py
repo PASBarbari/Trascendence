@@ -11,7 +11,6 @@ from .models import ChatRoom, UserProfile, ChatMessage, ChatMember
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer, userBlockedSerializer, userCreateSerializer
 from .middleware import ServiceAuthentication, JWTAuthMiddleware , JWTAuth
-from .authentications import TokenAuthentication
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework_simplejwt.authentication import JWTAuthentication
