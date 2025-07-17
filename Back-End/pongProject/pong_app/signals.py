@@ -31,21 +31,22 @@ class GameState:
 		self.player_2 = player_2
 		self.player_1_score = 0
 		self.player_2_score = 0
-		self.player_1_pos = [0 , 0]
-		self.player_2_pos = [0 , 0]
+		self.player_1_pos = [-60 , 0]
+		self.player_2_pos = [60 , 0]
 		self.player_1_move = 0
 		self.player_2_move = 0
 		self.ball_pos = [0 , 0]
-		self.p_length = 0
-		self.p_height = 0
-		self.p_width = 0
-		self.p_speed = 0
-		self.ball_radius = 0
-		self.ball_speed = 0
-		self.ring_length = 0
-		self.ring_height = 0
-		self.ring_width = 0
-		self.ring_thickness = 0
+		# Initialize with safe defaults to prevent NaN values
+		self.p_length = 20
+		self.p_height = 2.5
+		self.p_width = 2
+		self.p_speed = 1.0
+		self.ball_radius = 2.5
+		self.ball_speed = 0.6
+		self.ring_length = 160
+		self.ring_height = 90  # Critical: Initialize to prevent division by zero
+		self.ring_width = 200
+		self.ring_thickness = 3
 		self.is_started = [0 , 0]
 		self.wall_hit_pos = 0
 		self.avg_frame_time = [0 , 1]
@@ -65,35 +66,10 @@ class GameState:
 			self.angle = random.uniform(110, 250)
 
 		logger.info(f"Game {self.game_id} starting with angle: {self.angle}")
-		
-		# ✅ CRITICAL: Initialize default game parameters if not set
-		if self.ball_speed == 0:
-			logger.warning(f"Game {self.game_id} ball_speed not initialized, using defaults")
-			self.ball_speed = 1.0  # Default ball speed
-			self.p_speed = 1.0     # Default paddle speed
-			self.ring_length = 160  # Default ring dimensions
-			self.ring_height = 90
-			self.ring_width = 200
-			self.ring_thickness = 3
-			self.p_length = 20      # Default paddle dimensions
-			self.p_width = 2
-			self.p_height = 2
-			self.ball_radius = 2.5
-			# Set initial positions
-			self.player_1_pos = [-self.ring_length/2 + 10, 0]
-			self.player_2_pos = [self.ring_length/2 - 10, 0]
-			self.ball_pos = [0, 0]
-			logger.info(f"Game {self.game_id} initialized with default parameters")
-		
 		# Wait a bit longer for game_init, but don't wait forever
-		wait_count = 0
-		while self.ball_speed == 0 and wait_count < 30:  # Wait max 3 seconds
-			await asyncio.sleep(0.1)
-			wait_count += 1
+		await asyncio.sleep(1.5)  # Wait max 1.5 seconds for initialization
 		
-		if self.ball_speed == 0:
-			logger.error(f"Game {self.game_id} never received proper initialization, using fallback defaults")
-			self.ball_speed = 1.0
+		self.ball_speed = 1.0
 		
 		logger.info(f"Game {self.game_id} starting main loop with ball_speed: {self.ball_speed}")
 		start_time = time.monotonic()
@@ -217,21 +193,27 @@ class GameState:
 			return True
 		return False
 
-	#TODO fixing radius and thickness and create function for score
-
 	def physics(self):
 		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
 		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
 		if self.ball_pos[0] < 0 and self.p1_is_hit():
 			hit_pos = self.ball_pos[1] - self.player_1_pos[1]
 			self.wall_hit_pos = 0
-			self.angle = hit_pos / self.p_length * -90
+			# Prevent division by zero which causes NaN
+			if self.p_length > 0:
+				self.angle = hit_pos / self.p_length * -90
+			else:
+				self.angle = -45  # Default angle if p_length is 0
 			if (self.ball_speed < 5 * self.p_length):
 				self.ball_speed += ball_acc
 		elif self.ball_pos[0] > 0 and self.p2_is_hit():
 			hit_pos = self.ball_pos[1] - self.player_2_pos[1]
 			self.wall_hit_pos = 0
-			self.angle = 180 + hit_pos / self.p_length * 90
+			# Prevent division by zero which causes NaN
+			if self.p_length > 0:
+				self.angle = 180 + hit_pos / self.p_length * 90
+			else:
+				self.angle = 135  # Default angle if p_length is 0
 			if (self.ball_speed < 5 * self.p_length):
 				self.ball_speed += ball_acc
 		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= self.ring_height / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -self.ring_height / 2):
@@ -286,17 +268,16 @@ class GameState:
 			self.player_2_pos[1] -= self.p_speed
 
 	def up(self, player):
-		print(f"Player {player} up")
 		if player == self.player_1.user_id:
-			self.player_1_move = 1
+			self.player_1_move = -1  # Set movement state, not direct position
 		elif player == self.player_2.user_id:
-			self.player_2_move = 1
+			self.player_2_move = -1
 
 	def down(self, player):
 		if player == self.player_1.user_id:
-			self.player_1_move = -1
+			self.player_1_move = 1  # Set movement state, not direct position
 		elif player == self.player_2.user_id:
-			self.player_2_move = -1
+			self.player_2_move = 1
 
 	def stop(self, player):
 		if player == self.player_1.user_id:
@@ -326,10 +307,22 @@ class GameState:
 
 	
 	def to_percent(self, player_pos):
-			"""Convert player position to percentage (0 = top, 100 = bottom)"""
-			normalized_pos = player_pos[1] + (self.ring_height / 2)  # Shift from [-h/2, h/2] to [0, h]
-			percentage = (normalized_pos / self.ring_height) * 100   # Convert to percentage
-			return [player_pos[0], percentage]  # Return [x, percentage]
+		"""Convert player position to percentage (0 = top, 100 = bottom)"""
+		# Prevent division by zero which causes NaN
+		if self.ring_height == 0:
+			logger.warning(f"Game {self.game_id}: ring_height is 0, returning default 50%")
+			return [player_pos[0], 50.0]  # Return middle position as fallback
+		
+		normalized_pos = player_pos[1] + (self.ring_height / 2)  # Shift from [-h/2, h/2] to [0, h]
+		percentage = (normalized_pos / self.ring_height) * 100   # Convert to percentage
+		
+		# Clamp percentage to valid range to prevent out-of-bounds values
+		percentage = max(0.0, min(100.0, percentage))
+		
+		# Debug logging
+		logger.debug(f"Game {self.game_id}: pos_y={player_pos[1]}, ring_height={self.ring_height}, normalized={normalized_pos}, percentage={percentage}")
+		
+		return [player_pos[0], percentage]  # Return [x, percentage]
 
 	def quit_game(self, player_id=None):
 		"""Handle game quit - can be called statically or as instance method"""

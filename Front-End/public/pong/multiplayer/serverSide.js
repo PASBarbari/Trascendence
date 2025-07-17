@@ -159,6 +159,7 @@ function initializeWebSocket(room_id, player1, player2) {
 		if (message.type === "game_state") {
 			try {
 				updateGameState(message.game_state);
+				// console.table(message.game_state);
 			} catch (error) {
 				console.error("Error processing game state:", error);
 			}
@@ -171,10 +172,7 @@ function initializeWebSocket(room_id, player1, player2) {
 
 			// Update connection status in UI
 			updateConnectionStatus("connected", "Connected to game server");
-			console.table(
-				"player pos:",
-				state.players.map((player) => player.mesh.position)
-			);
+
 			// Initialize the game scene
 			syncMultiplayerWithLocalGame();
 		} else if (
@@ -184,25 +182,28 @@ function initializeWebSocket(room_id, player1, player2) {
 			// Add game-active class to body
 			document.body.classList.add("game-active");
 
-			// Send game initialization to backend
+			// let player_1_pos = [state.players[0].mesh.position.x, state.players[0].mesh.position.y, state.players[0].mesh.position.z];
+			// let player_2_pos = [state.players[1].mesh.position.x, state.players[1].mesh.position.y, state.players[1].mesh.position.z];
+			// // Send game initialization to backend
 			try {
-				const gameConfig = {
-					ring_length: 160,
-					ring_height: 90,
-					ring_width: 200,
-					ring_thickness: 3,
-					p_length: 20,
-					p_width: 2.5,
-					p_height: 2.5,
-					ball_radius: 2.5,
-					player_1_pos: [-75, 0], // Left side
-					player_2_pos: [75, 0], // Right side
-					ball_pos: [0, 0],
-					ball_speed: 1.2,
-					p_speed: 1.5,
-				};
+			// 	const gameConfig = {
+			// 		ring_length: state.ring.length || 160,
+			// 		ring_height: state.ring.height || 90,
+			// 		ring_width: state.ring.depth || 10,
+			// 		ring_thickness: state.ring.thickness || 3,
+			// 		p_length: 20,
+			// 		p_width: state.p.width || 2.5,
+			// 		p_height: state.p.depth || 2.5,
+			// 		ball_radius: state.ball.radius || 2.5,
+			// 		player_1_pos: player_1_pos || [-75, 0], // Left side: [x, y, z] where y=0 is center
+			// 		player_2_pos: player_2_pos || [75, 0], // Right side: [x, y, z] where y=0 is center
+			// 		ball_pos: state.ball_pos || [0, 0, 0],
+			// 		ball_speed: state.ball_speed || 1.2,
+			// 		p_speed: state.p_speed || 1.5,
+			// 	};
+			// 	console.table(gameConfig);
 
-				sendGameInit(gameConfig);
+			// 	sendGameInit(gameConfig);
 
 				// Wait a moment for initialization to process
 				setTimeout(() => {
@@ -341,32 +342,89 @@ function updateGameState(gameStateData) {
 		return;
 	}
 
+	// Update state with backend values for consistency
+	if (gameStateData.player_1_score !== undefined) state.p1_score = gameStateData.player_1_score;
+	if (gameStateData.player_2_score !== undefined) state.p2_score = gameStateData.player_2_score;
+	if (gameStateData.ring_length !== undefined) state.ring.length = gameStateData.ring_length;
+	if (gameStateData.ring_height !== undefined) state.ring.height = gameStateData.ring_height;
+	if (gameStateData.ring_width !== undefined) state.ring.depth = gameStateData.ring_width;
+	if (gameStateData.ring_thickness !== undefined) state.ring.thickness = gameStateData.ring_thickness;
+	if (gameStateData.p_length !== undefined) state.p.depth = gameStateData.p_length;
+	if (gameStateData.p_height !== undefined) state.p.height = gameStateData.p_height;
+	if (gameStateData.p_width !== undefined) state.p.width = gameStateData.p_width;
+	if (gameStateData.ball_radius !== undefined) state.ball.radius = gameStateData.ball_radius;
+	if (gameStateData.p_speed !== undefined) state.p.speed = gameStateData.p_speed;
+
+	// Debug log the updated state values periodically
+	if (Math.random() < 0.01) { // Log ~1% of the time to avoid spam
+		console.log("🎮 Updated state from backend:", {
+			ring_length: state.ring.length,
+			ring_height: state.ring.height,
+			ring_width: state.ring.depth,
+			ring_thickness: state.ring.thickness,
+			p_length: state.p.depth,
+			p_height: state.p.height,
+			p_width: state.p.width,
+			ball_radius: state.ball.radius,
+			p_speed: state.p.speed
+		});
+	}
+
 	// PLAYER 1 POSITION UPDATE
 	if (gameStateData.player_1_pos && state.players && state.players[0]?.mesh) {
-		const percentY = gameStateData.player_1_pos;
+		// player_1_pos is [x, percentage] where percentage is 0-100
+		const [posX, percentY] = gameStateData.player_1_pos;
 
-		// Convert percentage (0-100) to actual position in the ring
-		// 0% = top of ring (-ring_height/2), 100% = bottom of ring (ring_height/2)
-		const actualY =
-			(percentY / 100) * gameStateData.ring_height -
-			gameStateData.ring_height / 2;
+		// Validate that we have valid numbers to prevent NaN
+		if (
+			typeof percentY === "number" &&
+			!isNaN(percentY) &&
+			gameStateData.ring_height > 0
+		) {
+			// Convert percentage (0-100) to actual position in the ring
+			// 0% = top of ring (-ring_height/2), 100% = bottom of ring (ring_height/2)
+			const actualY =
+				(percentY / 100) * gameStateData.ring_height -
+				gameStateData.ring_height / 2;
 
-		// Update position (Z in ThreeJS is Y in backend)
-		state.players[0].mesh.position.z = actualY;
+			// Update position (Z in ThreeJS is Y in backend)
+			state.players[0].mesh.position.z = actualY;
+		} else {
+			console.warn(
+				"Player 1 - Invalid percentY:",
+				percentY,
+				"or ring_height:",
+				gameStateData.ring_height
+			);
+		}
 	}
 
 	// PLAYER 2 POSITION UPDATE
 	if (gameStateData.player_2_pos && state.players && state.players[1]?.mesh) {
-		const percentY = gameStateData.player_2_pos;
+		// player_2_pos is [x, percentage] where percentage is 0-100
+		const [posX, percentY] = gameStateData.player_2_pos;
+		// Validate that we have valid numbers to prevent NaN
+		if (
+			typeof percentY === "number" &&
+			!isNaN(percentY) &&
+			gameStateData.ring_height > 0
+		) {
+			// Convert percentage (0-100) to actual position in the ring
+			// 0% = top of ring (-ring_height/2), 100% = bottom of ring (ring_height/2)
+			const actualY =
+				(percentY / 100) * gameStateData.ring_height -
+				gameStateData.ring_height / 2;
 
-		// Convert percentage (0-100) to actual position in the ring
-		// 0% = top of ring (-ring_height/2), 100% = bottom of ring (ring_height/2)
-		const actualY =
-			(percentY / 100) * gameStateData.ring_height -
-			gameStateData.ring_height / 2;
-
-		// Update position (Z in ThreeJS is Y in backend)
-		state.players[1].mesh.position.z = actualY;
+			// Update position (Z in ThreeJS is Y in backend)
+			state.players[1].mesh.position.z = actualY;
+		} else {
+			console.warn(
+				"Player 2 - Invalid percentY:",
+				percentY,
+				"or ring_height:",
+				gameStateData.ring_height
+			);
+		}
 	}
 
 	// BALL POSITION UPDATE (working)

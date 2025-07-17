@@ -164,7 +164,6 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			# Use authenticated user from connection instead of client data
 			player = self.player_id
 			active_games[self.room_id].up(player)
-			logger.debug(f"Player {player} moved up in game {self.room_id}")
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found for UP movement")
 		except Exception as e:
@@ -175,7 +174,6 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			# Use authenticated user from connection instead of client data
 			player = self.player_id
 			active_games[self.room_id].down(player)
-			logger.debug(f"Player {player} moved down in game {self.room_id}")
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found for DOWN movement")
 		except Exception as e:

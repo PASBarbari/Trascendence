@@ -115,7 +115,8 @@ export function setupGame() {
 			) {
 				state.isStarted = false;
 				state.isPaused = true;
-				game_over();
+				if (!state.isMultiplayer)
+					game_over();
 			}
 		});
 	}

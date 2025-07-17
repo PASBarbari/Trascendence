@@ -765,8 +765,7 @@ window.acceptGameInvitation = function (gameId, opponentId, opponentName) {
 	const gameUrl = `#pongmulti?room=${gameId}&opponent=${opponentId}&opponentName=${encodeURIComponent(
 		opponentName
 	)}`;
-	window.location.hash = gameUrl;
-
+	window.navigateTo(gameUrl);
 	showNotificationToast(`Joining game with ${opponentName}...`, "success");
 };
 

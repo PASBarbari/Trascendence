@@ -69,7 +69,7 @@ const routes = {
 
 			console.log("Route params:", { roomId, opponentId, opponentName });
 
-			if (roomId && opponentId && opponentName) {
+			if (opponentId && opponentName) {
 				// Load multiplayer game with invitation data
 				try {
 					const { renderMultiplayerPong } = await import(
@@ -78,18 +78,12 @@ const routes = {
 					renderMultiplayerPong(
 						opponentId,
 						decodeURIComponent(opponentName),
-						roomId
+						roomId || null
 					);
 				} catch (error) {
 					console.error("Failed to load multiplayer pong:", error);
 					window.navigateTo("#home");
 				}
-			} else {
-				// No proper parameters, redirect to pong selection
-				console.warn(
-					"Missing multiplayer game parameters, redirecting to pong menu"
-				);
-				window.navigateTo("#pong");
 			}
 		},
 		title: "Multiplayer Pong",

@@ -133,6 +133,7 @@ async function initializeMultiplayerGame(
 	try {
 		// Setup the game scene (same as local pong)
 		SETUP.setupGame();
+		console.table(state);
 
 		// Set multiplayer specific state
 		state.isMultiplayer = true;
@@ -170,68 +171,31 @@ async function initializeMultiplayerGame(
 	}
 }
 
-function sendGameInitialization() {
-	try {
-		const { sendGameInit } = import("./serverSide.js");
+// function sendGameInitialization() {
+// 	try {
+// 		const { sendGameInit } = import("./serverSide.js");
 
-		// Send current game dimensions to backend
-		const gameConfig = {
-			ring_length: state.ring.length || 160,
-			ring_height: state.ring.height || 90,
-			ring_width: state.ring.width || 200,
-			ring_thickness: state.ring.thickness || 3,
-			p_length: state.p.height || 15,
-			p_width: state.p.width || 2,
-			p_height: state.p.depth || 2,
-			ball_radius: state.ball_radius || 2.5,
-			player_1_pos: [-60, 0], // Left paddle position
-			player_2_pos: [60, 0], // Right paddle position
-			ball_speed: state.ball_speed || 1,
-			p_speed: state.player_speed || 2,
-		};
+// 		// Send current game dimensions to backend
+// 		const gameConfig = {
+// 			ring_length: state.ring.length || 160,
+// 			ring_height: state.ring.height || 90,
+// 			ring_width: state.ring.width || 200,
+// 			ring_thickness: state.ring.thickness || 3,
+// 			p_length: state.p.height || 15,
+// 			p_width: state.p.width || 2,
+// 			p_height: state.p.depth || 2,
+// 			ball_radius: state.ball_radius || 2.5,
+// 			player_1_pos: [-60, 0], // Left paddle position
+// 			player_2_pos: [60, 0], // Right paddle position
+// 			ball_speed: state.ball_speed || 1,
+// 			p_speed: state.player_speed || 2,
+// 		};
 
-		sendGameInit(gameConfig);
-	} catch (error) {
-		console.error("Failed to send game initialization:", error);
-	}
-}
-
-function hideAllMenusAndStartGame() {
-	// Start the game using local game logic
-	state.isStarted = true;
-	state.isPaused = false;
-	state.IAisActive = false; // Disable AI for multiplayer
-
-	// Hide ready screen
-	const readyScreen = document.getElementById("ready-screen");
-	if (readyScreen) {
-		readyScreen.style.display = "none";
-	}
-
-	// Hide connection status overlay
-	const connectionOverlay = document.querySelector(
-		".position-absolute.top-0.end-0"
-	);
-	if (connectionOverlay) {
-		connectionOverlay.style.display = "none";
-	}
-
-	// Show in-game controls info
-	const controlsInfo = document.getElementById("controls-info");
-	if (controlsInfo) {
-		controlsInfo.style.display = "block";
-	}
-
-	// Send game initialization to backend
-	setTimeout(() => {
-		sendGameInitialization();
-	}, 500);
-
-	// Start game animation if not already running
-	if (!state.animationFrameId) {
-		GAME.animate();
-	}
-}
+// 		sendGameInit(gameConfig);
+// 	} catch (error) {
+// 		console.error("Failed to send game initialization:", error);
+// 	}
+// }
 
 function setupMultiplayerEventListeners() {
 	// Ready button
@@ -423,10 +387,8 @@ export {
 	handlePlayerReady,
 	exitMultiplayerGame,
 	updateConnectionStatus,
-	hideAllMenusAndStartGame,
 };
 
 // Make functions globally available for onclick handlers
 window.handlePlayerReady = handlePlayerReady;
 window.exitMultiplayerGame = exitMultiplayerGame;
-window.hideAllMenusAndStartGame = hideAllMenusAndStartGame;
