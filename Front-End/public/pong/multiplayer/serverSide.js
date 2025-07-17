@@ -11,10 +11,14 @@ let socket;
 
 const DEBUG = {
 	movement: true, // Log movement messages
-	gameState: true, // Log game state updates
-	positions: true, // Log position changes
+	gameState: false, // ✅ Reduce gameState debug logging to prevent console spam
+	positions: false, // ✅ Reduce position logging to prevent spam
 	websocket: true, // Log websocket activity
 };
+
+// ✅ CRITICAL: Add throttling to prevent too frequent updates
+let lastGameStateUpdate = 0;
+const GAME_STATE_THROTTLE = 50; // Minimum 50ms between game state updates (20fps max)
 
 // Debug logger
 function debugLog(category, ...args) {
@@ -203,11 +207,26 @@ function initializeWebSocket(room_id, player1, player2) {
 
 	socket.onmessage = function (event) {
 		const message = JSON.parse(event.data);
-		console.log("📨 WebSocket message received:", message);
+		
+		// ✅ CRITICAL: Reduce logging verbosity for game_state messages
+		if (message.type === "game_state") {
+			debugLog("websocket", "📨 Game state message received");
+		} else {
+			debugLog("websocket", "📨 WebSocket message received:", {
+				type: message.type,
+				messageKeys: Object.keys(message),
+				timestamp: new Date().toISOString()
+			});
+		}
 
 		if (message.type === "game_state") {
-			console.log("📊 Game state update received:", message.game_state);
-			updateGameState(message.game_state);
+			// ✅ CRITICAL: Process game state with throttling
+			try {
+				updateGameState(message.game_state);
+			} catch (error) {
+				console.error("❌ Error processing game state:", error);
+				debugLog("gameState", "❌ Game state processing failed:", error.message);
+			}
 		} else if (message.type === "connection_success") {
 			console.log("🎉 Connection successful:", message.message);
 			console.log("👤 Player ID:", message.player_id);
@@ -234,10 +253,38 @@ function initializeWebSocket(room_id, player1, player2) {
 			// ✅ Add game-active class to body
 			document.body.classList.add("game-active");
 
-			// ✅ Use the local function
-			hideAllMenusAndStartGame();
-
-			showNotification("🚀 Game Started! Good luck!", "success");
+			// ✅ CRITICAL: Send game initialization to backend
+			try {
+				const gameConfig = {
+					ring_length: 160,
+					ring_height: 90,
+					ring_width: 200,
+					ring_thickness: 3,
+					p_length: 20,
+					p_width: 2.5,
+					p_height: 2.5,
+					ball_radius: 2.5,
+					player_1_pos: [-75, 0],  // Left side
+					player_2_pos: [75, 0],   // Right side
+					ball_pos: [0, 0],
+					ball_speed: 1.2,
+					p_speed: 1.5,
+				};
+				
+				console.log("🔧 Sending game initialization:", gameConfig);
+				sendGameInit(gameConfig);
+				
+				// Wait a moment for initialization to process
+				setTimeout(() => {
+					hideAllMenusAndStartGame();
+					showNotification("🚀 Game Started! Good luck!", "success");
+				}, 200);
+			} catch (error) {
+				console.error("❌ Failed to initialize game:", error);
+				// Still try to start the game
+				hideAllMenusAndStartGame();
+				showNotification("🚀 Game Started! Good luck!", "success");
+			}
 		} else if (message.message === "Waiting for players to be ready...") {
 			console.log("⏳ Waiting for other player to be ready");
 			updateOpponentStatus("waiting");
@@ -410,118 +457,183 @@ function syncMultiplayerWithLocalGame() {
 }
 
 function updateGameState(gameStateData) {
-	if (!gameStateData) return;
+	if (!gameStateData) {
+		debugLog("gameState", "❌ No game state data received");
+		return;
+	}
 
-	debugLog("gameState", "Game state update received:", gameStateData);
+	// ✅ CRITICAL: Throttle game state updates to prevent lag
+	const now = Date.now();
+	if (now - lastGameStateUpdate < GAME_STATE_THROTTLE) {
+		// Skip this update to prevent overwhelming the browser
+		return;
+	}
+	lastGameStateUpdate = now;
 
-	// Debug the global state
-	debugLog("gameState", "Current game state:", {
-		isStarted: state.isStarted,
-		isPaused: state.isPaused,
-		isMultiplayer: state.isMultiplayer,
-		players: state.players?.length,
-	});
+	debugLog("gameState", "🎮 Game state update received and processed");
 
-	// Update ball position and velocity with debug
-	if (gameStateData.ball_pos && state.ball && state.ball.mesh) {
-		const [ballX, ballZ] = gameStateData.ball_pos;
-		const oldPos = { ...state.ball.mesh.position };
-		state.ball.mesh.position.set(ballX || 0, 0, ballZ || 0);
-
-		debugLog(
-			"positions",
-			`Ball moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
-				2
-			)}) → (${ballX.toFixed(2)}, ${ballZ.toFixed(2)})`
-		);
-
-		// Also update ball velocity if available
-		if (state.ball.velocity && gameStateData.ball_velocity) {
-			const [velX, velZ] = gameStateData.ball_velocity;
-			state.ball.velocity.set(velX || 0, 0, velZ || 0);
-			debugLog(
-				"positions",
-				`Ball velocity: (${velX.toFixed(2)}, ${velZ.toFixed(2)})`
-			);
+	// ✅ CRITICAL: Check if game objects exist - if not, try to initialize
+	if (!state.scene || !state.players || !state.ball) {
+		debugLog("gameState", "⚠️ Game objects not initialized, trying to setup...");
+		try {
+			// Try to setup the game if objects don't exist
+			if (typeof SETUP !== 'undefined' && SETUP.setupGame) {
+				SETUP.setupGame();
+				debugLog("gameState", "✅ Game setup completed");
+			} else {
+				debugLog("gameState", "❌ SETUP.setupGame not available");
+				return;
+			}
+		} catch (error) {
+			debugLog("gameState", "❌ Failed to setup game:", error);
+			return;
 		}
 	}
 
-	// ✅ DRAMATICALLY increase position scaling to make movement obvious
-	const POSITION_SCALE = 1.8;
-	const MOVEMENT_SCALE = 20; // Make movements much more visible
+	// Debug the global state
+	debugLog("gameState", "Current frontend state:", {
+		isStarted: state.isStarted,
+		isPaused: state.isPaused,
+		isMultiplayer: state.isMultiplayer,
+		hasPlayers: state.players?.length || 0,
+		hasBall: !!state.ball,
+		ballHasMesh: !!(state.ball?.mesh),
+	});
 
-	// Update player 1 position with debug
-	if (
-		gameStateData.player_1_pos &&
-		state.players[0] &&
-		state.players[0].mesh
-	) {
-		const [backendX, backendY] = gameStateData.player_1_pos;
-		const oldPos = {
-			x: state.players[0].mesh.position.x,
-			z: state.players[0].mesh.position.z,
-		};
+	// ✅ CRITICAL: Update ball position and velocity with proper error handling
+	if (gameStateData.ball_pos) {
+		if (state.ball && state.ball.mesh) {
+			const [ballX, ballZ] = gameStateData.ball_pos;
+			const oldPos = { 
+				x: state.ball.mesh.position.x, 
+				z: state.ball.mesh.position.z 
+			};
+			
+			// Apply scaling for coordinate system conversion
+			const scaledX = (ballX || 0) * 1.0;  // Adjust scaling as needed
+			const scaledZ = (ballZ || 0) * 1.0;  // Adjust scaling as needed
+			
+			state.ball.mesh.position.set(scaledX, 0, scaledZ);
 
-		// Apply DRAMATIC scaling to make movement very obvious
-		state.players[0].mesh.position.x = backendX * POSITION_SCALE;
-		state.players[0].mesh.position.z = backendY * MOVEMENT_SCALE;
+			debugLog(
+				"positions",
+				`🔴 Ball moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
+					2
+				)}) → (${scaledX.toFixed(2)}, ${scaledZ.toFixed(2)})`
+			);
 
-		debugLog(
-			"positions",
-			`Player 1 moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
-				2
-			)}) → (${state.players[0].mesh.position.x.toFixed(
-				2
-			)}, ${state.players[0].mesh.position.z.toFixed(2)})`
-		);
-		debugLog(
-			"positions",
-			`Raw backend P1: (${backendX}, ${backendY}) → Frontend scale X:${POSITION_SCALE}, Z:${MOVEMENT_SCALE}`
-		);
+			// Also update ball velocity if available
+			if (state.ball.velocity && gameStateData.ball_velocity) {
+				const [velX, velZ] = gameStateData.ball_velocity;
+				state.ball.velocity.set(velX || 0, 0, velZ || 0);
+				debugLog(
+					"positions",
+					`🔴 Ball velocity: (${velX.toFixed(2)}, ${velZ.toFixed(2)})`
+				);
+			}
+		} else {
+			debugLog("positions", "❌ Ball object or mesh not found");
+		}
 	}
 
-	// Update player 2 position with debug
-	if (
-		gameStateData.player_2_pos &&
-		state.players[1] &&
-		state.players[1].mesh
-	) {
-		const [backendX, backendY] = gameStateData.player_2_pos;
-		const oldPos = {
-			x: state.players[1].mesh.position.x,
-			z: state.players[1].mesh.position.z,
-		};
+	// ✅ CRITICAL: Proper coordinate system conversion for players
+	const POSITION_SCALE_X = 1.0;  // Horizontal position scale
+	const POSITION_SCALE_Z = 1.0;  // Vertical movement scale
 
-		// Apply DRAMATIC scaling to make movement very obvious
-		state.players[1].mesh.position.x = backendX * POSITION_SCALE;
-		state.players[1].mesh.position.z = backendY * MOVEMENT_SCALE;
+	// Update player 1 position with proper error handling
+	if (gameStateData.player_1_pos) {
+		if (state.players && state.players[0] && state.players[0].mesh) {
+			const [backendX, backendY] = gameStateData.player_1_pos;
+			const oldPos = {
+				x: state.players[0].mesh.position.x,
+				z: state.players[0].mesh.position.z,
+			};
 
-		debugLog(
-			"positions",
-			`Player 2 moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
-				2
-			)}) → (${state.players[1].mesh.position.x.toFixed(
-				2
-			)}, ${state.players[1].mesh.position.z.toFixed(2)})`
-		);
-		debugLog(
-			"positions",
-			`Raw backend P2: (${backendX}, ${backendY}) → Frontend scale X:${POSITION_SCALE}, Z:${MOVEMENT_SCALE}`
-		);
+			// Apply coordinate system conversion
+			const scaledX = (backendX || 0) * POSITION_SCALE_X;
+			const scaledZ = (backendY || 0) * POSITION_SCALE_Z;
+			
+			state.players[0].mesh.position.x = scaledX;
+			state.players[0].mesh.position.z = scaledZ;
+
+			debugLog(
+				"positions",
+				`🔵 Player 1 moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
+					2
+				)}) → (${scaledX.toFixed(2)}, ${scaledZ.toFixed(2)})`
+			);
+			debugLog(
+				"positions",
+				`🔵 Raw backend P1: (${backendX}, ${backendY}) → Frontend: (${scaledX}, ${scaledZ})`
+			);
+		} else {
+			debugLog("positions", "❌ Player 1 object or mesh not found");
+		}
 	}
 
-	// Update scores
+	// Update player 2 position with proper error handling
+	if (gameStateData.player_2_pos) {
+		if (state.players && state.players[1] && state.players[1].mesh) {
+			const [backendX, backendY] = gameStateData.player_2_pos;
+			const oldPos = {
+				x: state.players[1].mesh.position.x,
+				z: state.players[1].mesh.position.z,
+			};
+
+			// Apply coordinate system conversion
+			const scaledX = (backendX || 0) * POSITION_SCALE_X;
+			const scaledZ = (backendY || 0) * POSITION_SCALE_Z;
+			
+			state.players[1].mesh.position.x = scaledX;
+			state.players[1].mesh.position.z = scaledZ;
+
+			debugLog(
+				"positions",
+				`🟢 Player 2 moved: (${oldPos.x.toFixed(2)}, ${oldPos.z.toFixed(
+					2
+				)}) → (${scaledX.toFixed(2)}, ${scaledZ.toFixed(2)})`
+			);
+			debugLog(
+				"positions",
+				`🟢 Raw backend P2: (${backendX}, ${backendY}) → Frontend: (${scaledX}, ${scaledZ})`
+			);
+		} else {
+			debugLog("positions", "❌ Player 2 object or mesh not found");
+		}
+	}
+
+	// ✅ CRITICAL: Update scores with proper handling
 	if (
 		typeof gameStateData.player_1_score !== "undefined" &&
 		typeof gameStateData.player_2_score !== "undefined"
 	) {
+		const oldScores = { p1: state.p1_score, p2: state.p2_score };
 		state.p1_score = gameStateData.player_1_score || 0;
 		state.p2_score = gameStateData.player_2_score || 0;
 
 		debugLog(
 			"gameState",
-			`Scores updated: P1=${state.p1_score}, P2=${state.p2_score}`
+			`🏆 Scores updated: P1: ${oldScores.p1} → ${state.p1_score}, P2: ${oldScores.p2} → ${state.p2_score}`
 		);
+
+		// ✅ Update score display if elements exist
+		const p1ScoreElement = document.getElementById("p1Score");
+		const p2ScoreElement = document.getElementById("p2Score");
+		
+		if (p1ScoreElement) p1ScoreElement.textContent = state.p1_score;
+		if (p2ScoreElement) p2ScoreElement.textContent = state.p2_score;
+	}
+
+	// ✅ CRITICAL: Force scene render if renderer exists
+	if (state.renderer && state.scene && state.camera) {
+		try {
+			state.renderer.render(state.scene, state.camera);
+			debugLog("gameState", "✅ Scene rendered successfully");
+		} catch (error) {
+			debugLog("gameState", "❌ Render error:", error);
+		}
+	} else {
+		debugLog("gameState", "⚠️ Missing renderer, scene, or camera for rendering");
 	}
 }
 
@@ -572,6 +684,123 @@ function handleGameOver() {
 	setTimeout(() => {
 		showReadyScreen();
 	}, 2000);
+}
+
+// Enhanced debugging functions for troubleshooting
+function enableAllDebugging() {
+	DEBUG.movement = true;
+	DEBUG.gameState = true;
+	DEBUG.positions = true;
+	DEBUG.websocket = true;
+	console.log("🔍 All debugging enabled!");
+}
+
+function disableAllDebugging() {
+	DEBUG.movement = false;
+	DEBUG.gameState = false;
+	DEBUG.positions = false;
+	DEBUG.websocket = false;
+	console.log("🔇 All debugging disabled!");
+}
+
+function monitorGameState() {
+	if (!socket || socket.readyState !== WebSocket.OPEN) {
+		console.error("❌ WebSocket not connected for monitoring");
+		return;
+	}
+
+	let messageCount = 0;
+	let gameStateCount = 0;
+	let droppedUpdates = 0;
+	const startTime = Date.now();
+
+	const originalOnMessage = socket.onmessage;
+	const originalUpdateGameState = updateGameState;
+	
+	// Override updateGameState to count dropped updates
+	updateGameState = function(gameStateData) {
+		const now = Date.now();
+		if (now - lastGameStateUpdate < GAME_STATE_THROTTLE) {
+			droppedUpdates++;
+			return;
+		}
+		return originalUpdateGameState(gameStateData);
+	};
+
+	socket.onmessage = function(event) {
+		messageCount++;
+		const message = JSON.parse(event.data);
+		
+		if (message.type === "game_state") {
+			gameStateCount++;
+		}
+
+		// Call original handler
+		if (originalOnMessage) {
+			originalOnMessage(event);
+		}
+	};
+
+	// Report statistics every 5 seconds
+	const monitorInterval = setInterval(() => {
+		const elapsed = (Date.now() - startTime) / 1000;
+		console.log(`📊 Performance Monitor (${elapsed.toFixed(1)}s):`);
+		console.log(`  - Total messages: ${messageCount}`);
+		console.log(`  - Game state messages: ${gameStateCount}`);
+		console.log(`  - Dropped updates (throttled): ${droppedUpdates}`);
+		console.log(`  - Messages per second: ${(messageCount / elapsed).toFixed(1)}`);
+		console.log(`  - Game state per second: ${(gameStateCount / elapsed).toFixed(1)}`);
+		console.log(`  - Processed updates per second: ${((gameStateCount - droppedUpdates) / elapsed).toFixed(1)}`);
+		console.log(`  - WebSocket state: ${socket.readyState === WebSocket.OPEN ? "OPEN" : "CLOSED"}`);
+	}, 5000);
+
+	// Stop monitoring after 60 seconds and restore original functions
+	setTimeout(() => {
+		clearInterval(monitorInterval);
+		updateGameState = originalUpdateGameState;
+		console.log("⏹️ WebSocket monitoring stopped");
+	}, 60000);
+
+	console.log("🔍 Starting performance monitoring for 60 seconds...");
+}
+
+function checkGameObjectsStatus() {
+	console.log("🔍 Game Objects Status Check:");
+	console.log("  - state object:", typeof state !== 'undefined' ? "✅ Available" : "❌ Missing");
+	console.log("  - state.scene:", state?.scene ? "✅ Available" : "❌ Missing");
+	console.log("  - state.camera:", state?.camera ? "✅ Available" : "❌ Missing");
+	console.log("  - state.renderer:", state?.renderer ? "✅ Available" : "❌ Missing");
+	console.log("  - state.players:", state?.players ? `✅ Available (${state.players.length})` : "❌ Missing");
+	console.log("  - state.ball:", state?.ball ? "✅ Available" : "❌ Missing");
+	console.log("  - state.ball.mesh:", state?.ball?.mesh ? "✅ Available" : "❌ Missing");
+	
+	if (state?.players) {
+		state.players.forEach((player, index) => {
+			console.log(`  - player[${index}].mesh:`, player?.mesh ? "✅ Available" : "❌ Missing");
+		});
+	}
+
+	console.log("  - Game state flags:");
+	console.log(`    - isStarted: ${state?.isStarted}`);
+	console.log(`    - isPaused: ${state?.isPaused}`);
+	console.log(`    - isMultiplayer: ${state?.isMultiplayer}`);
+	console.log(`    - IAisActive: ${state?.IAisActive}`);
+}
+
+function forceGameStateUpdate() {
+	console.log("🔄 Forcing manual game state update...");
+	
+	// Create test game state data to verify the update function works
+	const testGameState = {
+		player_1_pos: [10, 20],
+		player_2_pos: [30, 40],
+		ball_pos: [0, 0],
+		player_1_score: 1,
+		player_2_score: 2,
+	};
+
+	console.log("🧪 Testing with fake game state:", testGameState);
+	updateGameState(testGameState);
 }
 
 // Test functions
@@ -675,6 +904,33 @@ function runAllTests() {
 	console.log("🧪 All tests queued. Check messages above for results.");
 }
 
+// ✅ CRITICAL: Add console helper for easy debugging
+console.log(`
+🎮 MULTIPLAYER PONG DEBUG HELPERS LOADED (OPTIMIZED)
+==================================================
+
+🚀 PERFORMANCE OPTIMIZATIONS ACTIVE:
+• Backend: 30fps physics, 20fps WebSocket updates
+• Frontend: 20fps max update throttling
+• Reduced debug logging to prevent console spam
+
+Available in console:
+• wsTests.enableDebug()     - Enable all debugging
+• wsTests.disableDebug()    - Disable all debugging  
+• wsTests.monitor()         - Monitor performance for 60s (includes throttling stats)
+• wsTests.checkObjects()    - Check game object status
+• wsTests.forceUpdate()     - Test updateGameState function
+• wsTests.testConnection()  - Test WebSocket connection
+• wsTests.runAll()          - Run all WebSocket tests
+
+Example usage for lag debugging:
+wsTests.enableDebug();
+wsTests.monitor();  // Watch for dropped frames and throttling
+wsTests.checkObjects();
+
+🔧 If still lagging, check Redis capacity warnings in server logs
+`);
+
 // Make test functions available globally for console access
 window.wsTests = {
 	testConnection: testWebSocketConnection,
@@ -684,6 +940,12 @@ window.wsTests = {
 	testGameInit,
 	runAll: runAllTests,
 	socket: () => socket,
+	// Enhanced debugging functions
+	enableDebug: enableAllDebugging,
+	disableDebug: disableAllDebugging,
+	monitor: monitorGameState,
+	checkObjects: checkGameObjectsStatus,
+	forceUpdate: forceGameStateUpdate,
 	// Add the main functions too
 	createGame,
 	initializeWebSocket,
@@ -714,4 +976,9 @@ export {
 	updateOpponentStatus,
 	handleGameOver,
 	hideAllMenusAndStartGame,
+	enableAllDebugging,
+	disableAllDebugging,
+	monitorGameState,
+	checkGameObjectsStatus,
+	forceGameStateUpdate,
 };
