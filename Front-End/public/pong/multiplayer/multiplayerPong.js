@@ -15,10 +15,6 @@ export function renderMultiplayerPong(
 	opponentName,
 	existingRoomId = null
 ) {
-	console.log(
-		`🎮 Rendering multiplayer pong vs ${opponentName} (Room: ${existingRoomId})`
-	);
-
 	window.multiplayerGameInfo = {
 		opponentId,
 		opponentName,
@@ -135,10 +131,6 @@ async function initializeMultiplayerGame(
 	existingRoomId = null
 ) {
 	try {
-		console.log(
-			`🔧 Initializing multiplayer game vs ${opponentName} (ID: ${opponentId}, Room: ${existingRoomId})`
-		);
-
 		// Setup the game scene (same as local pong)
 		SETUP.setupGame();
 
@@ -148,10 +140,9 @@ async function initializeMultiplayerGame(
 		state.isPaused = true;
 		state.IAisActive = false; // Disable AI for multiplayer
 
-		// ✅ IMPORTANT: Disable local ball physics for multiplayer
+		// Disable local ball physics for multiplayer
 		if (state.ball) {
 			state.ball.disableLocalPhysics = true;
-			console.log("🚫 Local ball physics disabled for multiplayer");
 		}
 
 		// Update connection status
@@ -159,15 +150,11 @@ async function initializeMultiplayerGame(
 
 		if (existingRoomId) {
 			// Join existing game room (from URL parameters)
-			console.log(`🔗 Joining existing game room: ${existingRoomId}`);
 			const { initializeWebSocket } = await import("./serverSide.js");
 			initializeWebSocket(existingRoomId, opponentId, opponentName);
 		} else {
 			// Create new game session (fallback)
 			const { userId } = getVariables();
-			console.log(
-				`🎯 Creating new game: Player ${userId} vs Player ${opponentId}`
-			);
 			await createGame(parseInt(userId), parseInt(opponentId));
 		}
 
@@ -176,20 +163,14 @@ async function initializeMultiplayerGame(
 
 		// Start game animation (paused until both players ready)
 		GAME.animate();
-
-		console.log("✅ Multiplayer game initialized successfully");
 	} catch (error) {
-		console.error("❌ Failed to initialize multiplayer game:", error);
+		console.error("Failed to initialize multiplayer game:", error);
 		updateConnectionStatus("error", "Connection failed");
-		showGameError(
-			"Failed to connect to multiplayer game. Please try again."
-		);
+		showGameError("Failed to connect to multiplayer game. Please try again.");
 	}
 }
 
 function sendGameInitialization() {
-	console.log("🎮 Sending game initialization data...");
-
 	try {
 		const { sendGameInit } = import("./serverSide.js");
 
@@ -206,38 +187,25 @@ function sendGameInitialization() {
 			player_1_pos: [-60, 0], // Left paddle position
 			player_2_pos: [60, 0], // Right paddle position
 			ball_speed: state.ball_speed || 1,
-			p_speed: state.player_speed || 2, // ✅ Increase from 0.1 to 2
+			p_speed: state.player_speed || 2,
 		};
 
-		console.log("🎮 Game config being sent:", gameConfig);
 		sendGameInit(gameConfig);
 	} catch (error) {
-		console.error("❌ Failed to send game initialization:", error);
+		console.error("Failed to send game initialization:", error);
 	}
 }
 
-// Update the hideAllMenusAndStartGame function to send init data
 function hideAllMenusAndStartGame() {
-	console.log("🎯 Hiding all menus and starting multiplayer game...");
-
 	// Start the game using local game logic
 	state.isStarted = true;
 	state.isPaused = false;
 	state.IAisActive = false; // Disable AI for multiplayer
 
-	console.log("✅ Game state set:", {
-		isStarted: state.isStarted,
-		isPaused: state.isPaused,
-		isMultiplayer: state.isMultiplayer,
-	});
-
 	// Hide ready screen
 	const readyScreen = document.getElementById("ready-screen");
 	if (readyScreen) {
 		readyScreen.style.display = "none";
-		console.log("✅ Ready screen hidden");
-	} else {
-		console.warn("⚠️ Ready screen element not found!");
 	}
 
 	// Hide connection status overlay
@@ -246,33 +214,26 @@ function hideAllMenusAndStartGame() {
 	);
 	if (connectionOverlay) {
 		connectionOverlay.style.display = "none";
-		console.log("✅ Connection status overlay hidden");
 	}
 
 	// Show in-game controls info
 	const controlsInfo = document.getElementById("controls-info");
 	if (controlsInfo) {
 		controlsInfo.style.display = "block";
-		console.log("✅ Controls info shown");
 	}
 
-	// ✅ CRITICAL: Send game initialization to backend
+	// Send game initialization to backend
 	setTimeout(() => {
 		sendGameInitialization();
 	}, 500);
 
 	// Start game animation if not already running
 	if (!state.animationFrameId) {
-		console.log("🎬 Starting game animation...");
 		GAME.animate();
 	}
-
-	console.log("🎮 Game started successfully! All menus hidden.");
 }
 
 function setupMultiplayerEventListeners() {
-	console.log("🔧 Setting up multiplayer event listeners...");
-
 	// Ready button
 	const readyBtn = document.getElementById("ready-button");
 	if (readyBtn) {
@@ -296,13 +257,9 @@ function setupMultiplayerEventListeners() {
 	// Store references for cleanup
 	window.multiplayerKeyDown = handleMultiplayerKeyDown;
 	window.multiplayerKeyUp = handleMultiplayerKeyUp;
-
-	console.log("✅ Event listeners setup complete");
 }
 
 function handlePlayerReady() {
-	console.log("🎯 Player ready button clicked");
-
 	const readyBtn = document.getElementById("ready-button");
 	const playerStatus = document.getElementById("player-ready-status");
 
@@ -323,19 +280,11 @@ function handlePlayerReady() {
 		// Send ready signal to server
 		try {
 			const playerId = window.multiplayerInfo?.playerId || 0;
-			console.log(`📤 Sending ready signal for player ${playerId}`);
 			sendPlayerReady(playerId);
-			console.log("✅ Ready signal sent successfully");
-			showNotification(
-				"✅ You are ready! Waiting for opponent...",
-				"info"
-			);
+			showNotification("You are ready! Waiting for opponent...", "info");
 		} catch (error) {
-			console.error("❌ Failed to send ready signal:", error);
-			showNotification(
-				"❌ Failed to send ready signal. Try again.",
-				"error"
-			);
+			console.error("Failed to send ready signal:", error);
+			showNotification("Failed to send ready signal. Try again.", "error");
 
 			// Revert UI
 			readyBtn.disabled = false;
@@ -352,20 +301,7 @@ function handlePlayerReady() {
 }
 
 function handleMultiplayerKeyDown(event) {
-	// ✅ Add comprehensive debug for key press events
-	console.log("🎮 Key pressed:", event.key);
-	console.log("🎮 Game state check:", {
-		started: state.isStarted,
-		paused: state.isPaused,
-		multiplayerId: window.multiplayerInfo?.playerId,
-		time: new Date().toLocaleTimeString(),
-	});
-
-	// ✅ CRITICAL: Early exit detection
 	if (!state.isStarted || state.isPaused) {
-		console.warn(
-			"⚠️ Movement ignored! Game not active. Set state.isStarted=true and state.isPaused=false"
-		);
 		return;
 	}
 
@@ -373,61 +309,28 @@ function handleMultiplayerKeyDown(event) {
 
 	try {
 		if (event.key.toLowerCase() === "w") {
-			console.log("⬆️ Sending UP movement for player", playerId);
 			sendPlayerMovement(playerId, "up");
-
-			// ✅ Monitor current positions after movement
-			setTimeout(() => {
-				if (
-					state.players &&
-					state.players[0] &&
-					state.players[0].mesh
-				) {
-					console.log("🔍 PLAYER POSITION after UP:", {
-						x: state.players[0].mesh.position.x.toFixed(2),
-						z: state.players[0].mesh.position.z.toFixed(2),
-					});
-				}
-			}, 100);
 		} else if (event.key.toLowerCase() === "s") {
-			console.log("⬇️ Sending DOWN movement for player", playerId);
 			sendPlayerMovement(playerId, "down");
-
-			// ✅ Monitor current positions after movement
-			setTimeout(() => {
-				if (
-					state.players &&
-					state.players[0] &&
-					state.players[0].mesh
-				) {
-					console.log("🔍 PLAYER POSITION after DOWN:", {
-						x: state.players[0].mesh.position.x.toFixed(2),
-						z: state.players[0].mesh.position.z.toFixed(2),
-					});
-				}
-			}, 100);
 		} else if (event.key === "Escape") {
 			togglePause();
 		}
 	} catch (error) {
-		console.error("❌ Failed to send movement:", error);
+		console.error("Failed to send movement:", error);
 	}
 }
+
 function handleMultiplayerKeyUp(event) {
 	if (!state.isStarted || state.isPaused) return;
 
 	const playerId = window.multiplayerInfo?.playerId || 0;
 
 	try {
-		if (
-			event.key.toLowerCase() === "w" ||
-			event.key.toLowerCase() === "s"
-		) {
+		if (event.key.toLowerCase() === "w" || event.key.toLowerCase() === "s") {
 			sendPlayerMovement(playerId, "stop");
-			console.log("⏹️ Sent STOP movement");
 		}
 	} catch (error) {
-		console.error("❌ Failed to send movement:", error);
+		console.error("Failed to send movement:", error);
 	}
 }
 
@@ -435,14 +338,14 @@ function togglePause() {
 	state.isPaused = !state.isPaused;
 
 	if (state.isPaused) {
-		showNotification("⏸️ Game Paused", "info");
+		showNotification("Game Paused", "info");
 		// Show controls info when paused
 		const controlsInfo = document.getElementById("controls-info");
 		if (controlsInfo) {
 			controlsInfo.style.display = "block";
 		}
 	} else {
-		showNotification("▶️ Game Resumed", "info");
+		showNotification("Game Resumed", "info");
 		// Hide controls info when resumed
 		const controlsInfo = document.getElementById("controls-info");
 		if (controlsInfo) {
@@ -471,8 +374,6 @@ function updateConnectionStatus(status, message) {
 }
 
 function exitMultiplayerGame() {
-	console.log("🚪 Exiting multiplayer game...");
-
 	// Cleanup event listeners
 	if (window.multiplayerKeyDown) {
 		document.removeEventListener("keydown", window.multiplayerKeyDown);
@@ -492,7 +393,7 @@ function exitMultiplayerGame() {
 	// Navigate back to home
 	window.navigateTo("#home");
 
-	showNotification("👋 Left multiplayer game", "info");
+	showNotification("Left multiplayer game", "info");
 }
 
 function showGameError(message) {
@@ -500,14 +401,14 @@ function showGameError(message) {
 	if (readyScreen) {
 		readyScreen.innerHTML = `
             <div class="text-center p-4 bg-dark rounded shadow">
-                <h3 class="text-danger mb-3">❌ Connection Error</h3>
+                <h3 class="text-danger mb-3">Connection Error</h3>
                 <p class="text-light mb-3">${message}</p>
                 <div class="d-grid gap-2">
                     <button class="btn btn-primary" onclick="window.navigateTo('#home')">
-                        🏠 Return to Home
+                        Return to Home
                     </button>
                     <button class="btn btn-outline-secondary" onclick="window.location.reload()">
-                        🔄 Retry
+                        Retry
                     </button>
                 </div>
             </div>
@@ -515,82 +416,6 @@ function showGameError(message) {
 	}
 }
 
-window.debugPlayerPositions = function () {
-	console.log("🔍 DEBUG: Current player positions:");
-	if (state.players[0]?.mesh) {
-		console.log(
-			`Player 1: X=${state.players[0].mesh.position.x}, Y=${state.players[0].mesh.position.y}, Z=${state.players[0].mesh.position.z}`
-		);
-	}
-	if (state.players[1]?.mesh) {
-		console.log(
-			`Player 2: X=${state.players[1].mesh.position.x}, Y=${state.players[1].mesh.position.y}, Z=${state.players[1].mesh.position.z}`
-		);
-	}
-	console.log("Game state:", {
-		isStarted: state.isStarted,
-		isPaused: state.isPaused,
-		isMultiplayer: state.isMultiplayer,
-	});
-};
-
-window.debugGameState = function () {
-	console.log("🎮 GAME STATE:", {
-		isStarted: state.isStarted,
-		isPaused: state.isPaused,
-		isMultiplayer: state.isMultiplayer,
-		players: state.players?.length || 0,
-		p1_pos: state.players?.[0]?.mesh
-			? `(${state.players[0].mesh.position.x.toFixed(
-					2
-			  )}, ${state.players[0].mesh.position.z.toFixed(2)})`
-			: "N/A",
-		p2_pos: state.players?.[1]?.mesh
-			? `(${state.players[1].mesh.position.x.toFixed(
-					2
-			  )}, ${state.players[1].mesh.position.z.toFixed(2)})`
-			: "N/A",
-		ball_pos: state.ball?.mesh
-			? `(${state.ball.mesh.position.x.toFixed(
-					2
-			  )}, ${state.ball.mesh.position.z.toFixed(2)})`
-			: "N/A",
-	});
-};
-
-window.fixGameState = function () {
-	state.isStarted = true;
-	state.isPaused = false;
-	console.log("✅ Game state fixed: isStarted=true, isPaused=false");
-	return "Game state fixed. Try moving now!";
-};
-
-window.testMovement = function () {
-	console.log("🧪 Testing movement sequence...");
-	const playerId = window.multiplayerInfo?.playerId || 0;
-
-	console.log("Current state:", {
-		isStarted: state.isStarted,
-		isPaused: state.isPaused,
-	});
-
-	// Fix game state
-	state.isStarted = true;
-	state.isPaused = false;
-
-	// Test sequence
-	setTimeout(() => sendPlayerMovement(playerId, "up"), 500);
-	setTimeout(() => sendPlayerMovement(playerId, "stop"), 1000);
-	setTimeout(() => sendPlayerMovement(playerId, "down"), 1500);
-	setTimeout(() => sendPlayerMovement(playerId, "stop"), 2000);
-
-	return "Movement test sequence initiated";
-};
-
-// Make functions available globally
-window.debugGameState = debugGameState;
-window.fixGameState = fixGameState;
-window.testMovement = testMovement;
 // Export functions for global access
 export {
 	initializeMultiplayerGame,
@@ -605,5 +430,3 @@ export {
 window.handlePlayerReady = handlePlayerReady;
 window.exitMultiplayerGame = exitMultiplayerGame;
 window.hideAllMenusAndStartGame = hideAllMenusAndStartGame;
-
-console.log("🎮 Multiplayer Pong module loaded successfully");

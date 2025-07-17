@@ -24,6 +24,14 @@ export function setupGame() {
 	);
 	state.camera.position.set(state.cam.x, state.cam.y, state.cam.z);
 
+	// Clear existing players
+	state.players.forEach((player) => {
+		if (player && player.mesh) {
+			state.scene.remove(player.mesh);
+		}
+	});
+	state.players = [];
+
 	// Create renderer
 	state.renderer = new THREE.WebGLRenderer({
 		antialias: window.devicePixelRatio < 2,
@@ -69,6 +77,7 @@ export function setupGame() {
 	// //Ball setup
 
 	console.log("Ball radius:", state.ball_radius);
+
 	new Ball(state.scene, state.ball_radius, state.boundaries, [
 		state.players[0],
 		state.players[1],
@@ -78,25 +87,38 @@ export function setupGame() {
 
 	createScore();
 
-	state.ball.addEventListener("score", (event) => {
-		console.log("Score event:", event);
-		if (event.message === "p1") {
-			state.p1_score++;
-		} else if (event.message === "p2") {
-			state.p2_score++;
-		}
-		updateScore(event.message);
-		if (state.p1_score >= state.maxScore) {
-			state.isStarted = false;
-			state.isPaused = true;
-			game_over();
-		}
-		if (state.p2_score >= state.maxScore) {
-			state.isStarted = false;
-			state.isPaused = true;
-			game_over();
-		}
-	});
+	if (state.isMultiplayer) {
+		// For multiplayer, prevent local game state changes
+		state.ball.addEventListener("score", (event) => {
+			console.log("Score event in multiplayer mode:", event);
+			if (event.message === "p1") {
+				state.p1_score++;
+			} else if (event.message === "p2") {
+				state.p2_score++;
+			}
+			updateScore(event.message);
+			// Don't call game_over() or change game state
+		});
+	} else {
+		// Original single-player scoring logic
+		state.ball.addEventListener("score", (event) => {
+			console.log("Score event:", event);
+			if (event.message === "p1") {
+				state.p1_score++;
+			} else if (event.message === "p2") {
+				state.p2_score++;
+			}
+			updateScore(event.message);
+			if (
+				state.p1_score >= state.maxScore ||
+				state.p2_score >= state.maxScore
+			) {
+				state.isStarted = false;
+				state.isPaused = true;
+				game_over();
+			}
+		});
+	}
 
 	// //Game setup
 

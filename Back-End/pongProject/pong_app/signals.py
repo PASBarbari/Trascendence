@@ -308,8 +308,8 @@ class GameState:
 		return {
 			'player_1_score': self.player_1_score,
 			'player_2_score': self.player_2_score,
-			'player_1_pos': self.player_1_pos,
-			'player_2_pos': self.player_2_pos,
+			'player_1_pos': self.to_percent(self.player_1_pos),
+			'player_2_pos': self.to_percent(self.player_2_pos),
 			'ball_pos': self.ball_pos,
 			'ball_speed': self.ball_speed,
 			'angle': self.angle,
@@ -324,6 +324,12 @@ class GameState:
 			'p_speed': self.p_speed
 		}
 
+	
+	def to_percent(self, player_pos):
+			"""Convert player position to percentage (0 = top, 100 = bottom)"""
+			normalized_pos = player_pos[1] + (self.ring_height / 2)  # Shift from [-h/2, h/2] to [0, h]
+			percentage = (normalized_pos / self.ring_height) * 100   # Convert to percentage
+			return [player_pos[0], percentage]  # Return [x, percentage]
 
 	def quit_game(self, player_id=None):
 		"""Handle game quit - can be called statically or as instance method"""
@@ -342,6 +348,8 @@ class GameState:
 # 	else:
 # 		logger = logging.getLogger(__name__)
 # 		logger.info(f'Game already started: {instance}')
+
+
 
 class TournamentState:
 	def __init__(self, *args, **kwargs):
