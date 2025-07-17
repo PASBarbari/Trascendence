@@ -32,5 +32,8 @@ dependencies:
 - name: cert-manager-chart
   repository: file://charts/cert-manager-chart
   version: 0.1.0
-digest: sha256:8de2e52421401e599d93821630df796151eddbf6de7d31dff8190705fb0add7d
-generated: "2025-07-16T12:19:14.513897758+02:00"
+- name: traefik-chart
+  repository: file://charts/traefik-chart
+  version: 0.1.0
+digest: sha256:5375f6c9dadb65d53b03f1e9c72614770dbb9913de76b3bbcd92ba200f629d0f
+generated: "2025-07-17T12:36:35.604657547+02:00"
