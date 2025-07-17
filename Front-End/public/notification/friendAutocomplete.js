@@ -11,9 +11,32 @@ export function initFriendAutocomplete({ inputId = "friendID", suggestionListId 
 	const { url_api, token } = getVariables();
 	if (friendInput && suggestionList && inputGroup) {
 		suggestionList.style.width = inputGroup.offsetWidth + "px";
+
+		function positionSuggestionList() {
+			const inputRect = friendInput.getBoundingClientRect();
+			const listHeight = suggestionList.offsetHeight || 200;
+			const spaceBelow = window.innerHeight - inputRect.bottom;
+			const spaceAbove = inputRect.top;
+			// Default: sotto
+			suggestionList.style.left = inputRect.left + "px";
+			suggestionList.style.width = inputRect.width + "px";
+			suggestionList.style.position = "fixed";
+			suggestionList.style.zIndex = "9999";
+			if (spaceBelow < listHeight && spaceAbove > listHeight) {
+				// Mostra sopra
+				suggestionList.style.top = (inputRect.top - listHeight) + "px";
+				suggestionList.style.bottom = "auto";
+			} else {
+				// Mostra sotto
+				suggestionList.style.top = inputRect.bottom + "px";
+				suggestionList.style.bottom = "auto";
+			}
+		}
+
 		friendInput.addEventListener("focus", () => {
 			suggestionList.style.width = inputGroup.offsetWidth + "px";
 			suggestionList.style.display = "block";
+			positionSuggestionList();
 		});
 
 		friendInput.addEventListener("input", () => {
@@ -28,12 +51,16 @@ export function initFriendAutocomplete({ inputId = "friendID", suggestionListId 
 				searchUsers(url_api, token, friendInput.value)
 					.then((results) => {
 						updateSuggestionList(suggestionList, results, friendInput, handlerOnSelect);
+						positionSuggestionList();
 					})
 					.catch((error) => {
 						console.error("Error searching users:", error);
 					});
 			}, 100);
 		});
+
+		window.addEventListener("resize", positionSuggestionList);
+		window.addEventListener("scroll", positionSuggestionList, true);
 
 		friendInput.addEventListener("blur", () => {
 			setTimeout(() => suggestionList.style.display = "none", 150);
@@ -60,13 +87,13 @@ export function updateSuggestionList(suggestionList, results, friendInput, handl
 			if (typeof handlerOnSelect === "function") {
 				handlerOnSelect(friendInput, userId, this);
 			} else if (friendInput.id === "blockUserInput") {
-            // Chiamata diretta per il blocco utenti
-            blockUser(userId, username);
-            suggestionList.style.display = "none";
-            if (friendInput) {
-                friendInput.value = "";
-                friendInput.dataset.userid = "";
-      			}
+			// Chiamata diretta per il blocco utenti
+			blockUser(userId, username);
+			suggestionList.style.display = "none";
+			if (friendInput) {
+				friendInput.value = "";
+				friendInput.dataset.userid = "";
+				}
 			} else {
 				handleFriendRequest('POST', userId, username);
 				suggestionList.style.display = "none";
