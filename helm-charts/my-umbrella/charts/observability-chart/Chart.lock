@@ -1,18 +1,9 @@
 dependencies:
-- name: eck-elasticsearch
-  repository: https://helm.elastic.co
-  version: 0.13.0
-- name: eck-kibana
-  repository: https://helm.elastic.co
-  version: 0.13.0
-- name: eck-logstash
-  repository: https://helm.elastic.co
-  version: 0.13.0
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 45.7.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 6.50.7
-digest: sha256:06b0ed32e1befe008c39babc332ce5fe934d0f173ab0b6a12fd0a19e1193e147
-generated: "2025-06-30T11:26:09.488726773+02:00"
+digest: sha256:c4f776c2d1302b77640cd9d19d10529e417710d703a7ef55d117dd7fb1ee0afc
+generated: "2025-07-17T12:34:55.280362291+02:00"

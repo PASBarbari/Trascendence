@@ -17,7 +17,6 @@ import secrets , os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -26,8 +25,6 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%p
 API_KEY = os.getenv('API_KEY', '123')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', True)
-
-
 
 # Simple microservices definition
 Microservices = {
@@ -154,7 +151,6 @@ CORS_ALLOW_HEADERS = [
 	'x-requested-with',
 ]
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -245,8 +241,6 @@ DATABASES = {
 	}
 }
 
-
-
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
@@ -265,7 +259,6 @@ AUTH_PASSWORD_VALIDATORS = [
 	},
 ]
 
-
 # BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
 
 # Internationalization
@@ -279,7 +272,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 # Update your static files configuration
@@ -289,6 +281,18 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
+
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Security settings for file uploads
+FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -322,7 +326,6 @@ CHANNEL_LAYERS = {
 	}
 }
 
-
 REST_FRAMEWORK = {
 	'DEFAULT_AUTHENTICATION_CLASSES': [
 		'my_chat.middleware.JWTAuth',
@@ -332,183 +335,209 @@ REST_FRAMEWORK = {
 		],
 }
 
-LOG_DIR = os.path.join(BASE_DIR, 'logs')
-os.makedirs(LOG_DIR, exist_ok=True)
-
 # Get environment specifics
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+
+# Environment-based logging configuration
+
+# Logging configuration optimized for ELK Stack
+
+# ELK-Optimized Logging Configuration for chat service
+# This configuration provides standardized logging for the ELK Stack
+
+import os
+from datetime import datetime
+
+# Logging environment configuration
+USE_JSON_LOGGING = os.getenv('USE_JSON_LOGGING', 'true').lower() == 'true'
+USE_FILE_LOGGING = os.getenv('USE_FILE_LOGGING', 'false').lower() == 'true'
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
-ERROR_LOG = os.path.join(LOG_DIR, f'error_{datetime.now().strftime("%Y-%m-%d")}.log')
-INFO_LOG = os.path.join(LOG_DIR, f'info_{datetime.now().strftime("%Y-%m-%d")}.log')
-DEBUG_LOG = os.path.join(LOG_DIR, f'debug_{datetime.now().strftime("%Y-%m-%d")}.log')
-DAPHNE_LOG = os.path.join(LOG_DIR, f'daphne_{datetime.now().strftime("%Y-%m-%d")}.log')
-CHANNEL_LOG = os.path.join(LOG_DIR, f'channels_{datetime.now().strftime("%Y-%m-%d")}.log')
+# Create logs directory for file logging (if enabled)
+if USE_FILE_LOGGING:
+    LOG_DIR = os.path.join(BASE_DIR, 'logs')
+    os.makedirs(LOG_DIR, exist_ok=True)
+    ERROR_LOG = os.path.join(LOG_DIR, f'error_{datetime.now().strftime("%Y-%m-%d")}.log')
+    INFO_LOG = os.path.join(LOG_DIR, f'info_{datetime.now().strftime("%Y-%m-%d")}.log')
+else:
+    ERROR_LOG = None
+    INFO_LOG = None
 
-# Logging configuration
 LOGGING = {
-	'version': 1,
-	'disable_existing_loggers': False,
-	'formatters': {
-		'verbose': {
-			'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-			'style': '{',
-		},
-		'json': {
-			'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "module": "%(module)s", "message": "%(message)s", "path": "%(pathname)s", "lineno": %(lineno)d}',
-			'style': '%',
-		},
-		'simple': {
-			'format': '{levelname} {message}',
-			'style': '{',
-		},
-	},
-	'filters': {
-		'require_debug_true': {
-			'()': 'django.utils.log.RequireDebugTrue',
-		},
-		'require_debug_false': {
-			'()': 'django.utils.log.RequireDebugFalse',
-		},
-	},
-	'handlers': {
-		'console': {
-			'level': 'DEBUG',
-			'class': 'logging.StreamHandler',
-			'formatter': 'verbose',
-		},
-		'file_error': {
-			'level': 'ERROR',
-			'class': 'logging.handlers.TimedRotatingFileHandler',
-			'filename': ERROR_LOG,
-			'when': 'midnight',
-			'backupCount': 30,
-			'formatter': 'json',
-		},
-		'file_info': {
-			'level': 'INFO',
-			'class': 'logging.handlers.TimedRotatingFileHandler',
-			'filename': INFO_LOG,
-			'when': 'midnight',
-			'backupCount': 30,
-			'formatter': 'json',
-		},
-		'file_debug': {
-			'level': 'DEBUG',
-			'class': 'logging.handlers.TimedRotatingFileHandler',
-			'filename': DEBUG_LOG,
-			'when': 'midnight',
-			'backupCount': 10,
-			'formatter': 'json',
-			'filters': ['require_debug_true'],
-		},
-		'daphne': {
-			'level': 'INFO',
-			'class': 'logging.handlers.TimedRotatingFileHandler',
-			'filename': DAPHNE_LOG,
-			'when': 'midnight',
-			'backupCount': 30,
-			'formatter': 'json',
-		},
-		'channels': {
-			'level': 'INFO',
-			'class': 'logging.handlers.TimedRotatingFileHandler',
-			'filename': CHANNEL_LOG,
-			'when': 'midnight',
-			'backupCount': 30,
-			'formatter': 'json',
-		},
-		'mail_admins': {
-			'level': 'ERROR',
-			'class': 'django.utils.log.AdminEmailHandler',
-			'filters': ['require_debug_false'],
-			'formatter': 'verbose',
-		},
-	},
-	'loggers': {
-		'django': {
-			'handlers': ['console', 'file_info', 'file_error'],
-			'level': LOG_LEVEL,
-			'propagate': True,
-		},
-		'django.request': {
-			'handlers': ['file_error', 'mail_admins'],
-			'level': 'ERROR',
-			'propagate': False,
-		},
-		'django.server': {
-			'handlers': ['file_info', 'file_error'],
-			'level': 'INFO',
-			'propagate': False,
-		},
-		'django.db.backends': {
-			'handlers': ['file_debug'],
-			'level': 'DEBUG' if DEBUG else 'INFO',
-			'propagate': False,
-		},
-		'daphne': {
-			'handlers': ['daphne', 'console'],
-			'level': 'INFO',
-			'propagate': False,
-		},
-		'channels': {
-			'handlers': ['channels', 'console'],
-			'level': 'INFO',
-			'propagate': False,
-		},
-		'my_chat': {
-			'handlers': ['console', 'file_info', 'file_error', 'file_debug'],
-			'level': 'DEBUG' if DEBUG else 'INFO',
-			'propagate': False,
-		},
-		'websockets': {
-			'handlers': ['console', 'channels'],
-			'level': 'INFO',
-			'propagate': False,
-		},
-	},
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'json_kubernetes': {
+            'format': '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "module": "%(module)s", "message": "%(message)s", "pathname": "%(pathname)s", "lineno": %(lineno)d, "funcName": "%(funcName)s", "process": %(process)d, "thread": %(thread)d, "service": "chat"}',
+            'datefmt': '%Y-%m-%dT%H:%M:%S.%fZ',
+            'style': '%',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+    'handlers': {
+        # Primary handler for Kubernetes - JSON logs to stdout
+        'console_json': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'json_kubernetes',
+        },
+        # Development console handler
+        'console_verbose': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        # Optional file handlers (controlled by USE_FILE_LOGGING)
+        'file_error': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': ERROR_LOG or '/dev/null',
+            'when': 'midnight',
+            'backupCount': 7,
+            'formatter': 'json_kubernetes',
+        } if USE_FILE_LOGGING and ERROR_LOG else {
+            'level': 'ERROR',
+            'class': 'logging.NullHandler',
+        },
+        'file_info': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': INFO_LOG or '/dev/null',
+            'when': 'midnight',
+            'backupCount': 7,
+            'formatter': 'json_kubernetes',
+        } if USE_FILE_LOGGING and INFO_LOG else {
+            'level': 'INFO',
+            'class': 'logging.NullHandler',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        # Root logger
+        '': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        # Django core loggers
+        'django': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': LOG_LEVEL,
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': (['console_json'] if USE_JSON_LOGGING else ['console_verbose']) + ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.security': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # ASGI/WebSocket loggers (for chat and pong services)
+        'daphne': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'channels': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'websockets': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        # Service-specific loggers
+        'chat': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        'my_chat': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        # Additional app-specific loggers
+        'task_app': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        'user_app': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        'pong_app': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        'my_notifications': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        'api_docs': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'DEBUG' if os.getenv('DEBUG', 'False').lower() == 'true' else 'INFO',
+            'propagate': False,
+        },
+        # Third-party library loggers
+        'redis': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'oauth2_provider': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'corsheaders': {
+            'handlers': ['console_json'] if USE_JSON_LOGGING else ['console_verbose'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
 }
-
-SIMPLE_JWT = {
-	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-	'ROTATE_REFRESH_TOKENS': True,
-	'BLACKLIST_AFTER_ROTATION': True,
-	'ALGORITHM': 'HS256',
-	# 'ISSUER': 'login',
-	'SIGNING_KEY': SECRET_KEY,
-	'VERIFYING_KEY': None,
-	'AUTH_HEADER_TYPES': ('Bearer',),
-	'USER_ID_FIELD': 'user_id',
-	'USER_ID_CLAIM': 'user_id',
-	'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-	'TOKEN_TYPE_CLAIM': 'token_type',
-}
-
-OAUTH2_APP_NAME = 'Chat_' + datetime.strftime(datetime.now(), '%Y-%m-%d:%H%M%S')
-
-SWAGGER_SETTINGS = {
-	'USE_SESSION_AUTH': False,
-	'SECURITY_DEFINITIONS': {
-		'Bearer': {
-			'type': 'apiKey',
-			'name': 'Authorization',
-			'in': 'header',
-			'description': "JWT Token. Example: 'Bearer {token}'",
-		}
-	},
-	'SECURITY_REQUIREMENTS': [
-		{'Bearer': []}
-	],
-}
-
-ADMIN = {
-	'username': os.getenv('ADMIN_USERNAME', 'admin'),
-	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
-	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
-}
-
-CSRF_LOGIN_URL = Microservices['Login'] + '/login/get_csrf_token'
-REGISTER_URL = Microservices['Login'] + '/login/Serviceregister'
-# OAUTH2_REDIRECT_URL = f"{Microservices['Login']}/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html"
-# OAUTH2_REDIRECT_URL = 'http://localhost:8001/static/drf-yasg/swagger-ui-dist/oauth2-redirect.html'

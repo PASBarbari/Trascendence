@@ -70,6 +70,7 @@ pytz==2025.1
     #   -r requirements.in
     #   django-loki
     #   drf-yasg
+pillow==11.1.0
 pyyaml==6.0.2
     # via
     #   -r requirements.in

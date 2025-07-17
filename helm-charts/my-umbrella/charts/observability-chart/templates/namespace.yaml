@@ -5,10 +5,4 @@ metadata:
   name: {{ .Values.global.namespace.name }}
   labels:
     name: {{ .Values.global.namespace.name }}
-    app.kubernetes.io/name: {{ include "observability-chart.name" . }}
-    helm.sh/chart: {{ include "observability-chart.chart" . }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-  annotations:
-    helm.sh/resource-policy: keep
 {{- end }}

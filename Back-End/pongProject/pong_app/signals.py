@@ -1,6 +1,7 @@
 # praticamente quando un modello viene creato ricveve il segnale e fa quello che gli chiedi
 import math
 import random
+from venv import logger
 from django.shortcuts import render, get_object_or_404
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -10,6 +11,8 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
 from .serializer import *
+
+logger = logging.getLogger('pong_app')
 
 # ring_size = [160 , 90]
 tick_rate = 60
@@ -54,7 +57,7 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		print(f"Game {self.__dict__} started")
+		logger.error(f"Game {self.game_id} starting with angle: {self.angle}")
 		while self.ball_speed == 0:
 			await asyncio.sleep(0.1)
 		start_time = time.monotonic()
@@ -70,6 +73,7 @@ class GameState:
 				break
 			start_time += tick_interval
 			await asyncio.sleep(max(0, start_time - time.monotonic()))
+		logger.info(f"Game {self.game_id} ended with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
 		await self.game_end()
 
 	async def game_end(self):
@@ -198,7 +202,7 @@ class GameState:
 		channel_layer = get_channel_layer()
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
-			# print(f"Sent game state: {serialized_data}")
+			logger.info(f"Sending game state: {serialized_data}")
 			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
