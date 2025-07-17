@@ -61,7 +61,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			sender_profile = UserProfile.objects.get(username=sender_username)
 			current_user_profile = UserProfile.objects.get(user_id=current_user.user_id)
 			
-			return current_user_profile.blockedUsers.filter(user_id=sender_profile.user_id).exists()
+			return current_user_profile.is_blocked_by(sender_profile)
 		except Exception as e:
 			logger.error(f"Error checking if user is blocked: {str(e)}")
 			return False

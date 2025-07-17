@@ -196,21 +196,27 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		logger.info(f"Game initialization for {self.room_id}")
 		try:
 			game_state = active_games[self.room_id]
-			game_state.ring_length = data.get('ring_length', 0)
-			game_state.ring_height = data.get('ring_height', 0)
-			game_state.ring_width = data.get('ring_width', 0)
-			game_state.ring_thickness = data.get('ring_thickness', 0)
-			game_state.p_length = data.get('p_length', 0)
-			game_state.p_width = data.get('p_width', 0)
-			game_state.p_height = data.get('p_height', 0)
-			game_state.ball_radius = data.get('ball_radius', 0)
-			game_state.player_1_pos = data.get('player_1_pos', [0, 0])
-			game_state.player_2_pos = data.get('player_2_pos', [0, 0])
-			game_state.ball_speed = data.get('ball_speed', 0)
-			game_state.p_speed = data.get('p_speed', 0)
-			await game_state.update()
-			logger.info(f'Game state updated: {game_state.game_state}')
-			logger.info(f"Game {self.room_id} initialized with configuration")
+			game_state.ring_length = data.get('ring_length', 160)
+			game_state.ring_height = data.get('ring_height', 90)
+			game_state.ring_width = data.get('ring_width', 200)
+			game_state.ring_thickness = data.get('ring_thickness', 3)
+			game_state.p_length = data.get('p_length', 20)
+			game_state.p_width = data.get('p_width', 2.5)
+			game_state.p_height = data.get('p_height', 2.5)
+			game_state.ball_radius = data.get('ball_radius', 2.5)
+			game_state.player_1_pos = data.get('player_1_pos', [-75, 0])
+			game_state.player_2_pos = data.get('player_2_pos', [75, 0])
+			game_state.ball_pos = data.get('ball_pos', [0, 0])
+			game_state.ball_speed = data.get('ball_speed', 1.2)
+			game_state.p_speed = data.get('p_speed', 1.5)
+			
+			# ✅ CRITICAL: Don't call update() immediately to avoid spamming
+			# await game_state.update()
+			
+			# ✅ Use to_dict() method instead of non-existent game_state attribute
+			state_dict = game_state.to_dict()
+			logger.info(f'Game {self.room_id} initialized with ball_speed: {game_state.ball_speed}')
+			logger.debug(f'Game state configuration: {state_dict}')
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found during initialization")
 		except Exception as e:

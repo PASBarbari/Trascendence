@@ -14,8 +14,11 @@ from .serializer import *
 
 logger = logging.getLogger('pong_app')
 
+# ✅ CRITICAL: Reduce tick rate to prevent lag and channel overflow
+tick_rate = 30  # Reduced from 60 to 30 FPS for better performance
+websocket_update_rate = 20  # Send WebSocket updates at 20 FPS (every 3rd frame)
+
 # ring_size = [160 , 90]
-tick_rate = 60
 # self.ball_radius = 2.5
 # self.p_width = 2
 # ring_thickness = 3
@@ -47,6 +50,10 @@ class GameState:
 		self.wall_hit_pos = 0
 		self.avg_frame_time = [0 , 1]
 		self.tournament_id = tournament_id
+		
+		# ✅ CRITICAL: Add frame tracking for reduced WebSocket update frequency
+		self.frame_count = 0
+		self.last_websocket_update = 0
 
 	async def start(self):
 		self.running = True
@@ -57,22 +64,60 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		logger.error(f"Game {self.game_id} starting with angle: {self.angle}")
-		while self.ball_speed == 0:
+		logger.info(f"Game {self.game_id} starting with angle: {self.angle}")
+		
+		# ✅ CRITICAL: Initialize default game parameters if not set
+		if self.ball_speed == 0:
+			logger.warning(f"Game {self.game_id} ball_speed not initialized, using defaults")
+			self.ball_speed = 1.0  # Default ball speed
+			self.p_speed = 1.0     # Default paddle speed
+			self.ring_length = 160  # Default ring dimensions
+			self.ring_height = 90
+			self.ring_width = 200
+			self.ring_thickness = 3
+			self.p_length = 20      # Default paddle dimensions
+			self.p_width = 2
+			self.p_height = 2
+			self.ball_radius = 2.5
+			# Set initial positions
+			self.player_1_pos = [-self.ring_length/2 + 10, 0]
+			self.player_2_pos = [self.ring_length/2 - 10, 0]
+			self.ball_pos = [0, 0]
+			logger.info(f"Game {self.game_id} initialized with default parameters")
+		
+		# Wait a bit longer for game_init, but don't wait forever
+		wait_count = 0
+		while self.ball_speed == 0 and wait_count < 30:  # Wait max 3 seconds
 			await asyncio.sleep(0.1)
+			wait_count += 1
+		
+		if self.ball_speed == 0:
+			logger.error(f"Game {self.game_id} never received proper initialization, using fallback defaults")
+			self.ball_speed = 1.0
+		
+		logger.info(f"Game {self.game_id} starting main loop with ball_speed: {self.ball_speed}")
 		start_time = time.monotonic()
+		frame_count = 0
+		
 		while self.running:
-	
 			self.physics()
 			self.movement()
 
 			await self.update()
 
 			if self.player_1_score == 5 or self.player_2_score == 5:
+				logger.info(f"Game {self.game_id} ended due to score limit")
 				self.running = False
 				break
+			
+			frame_count += 1
+			# Log periodically to confirm game is running
+			if frame_count % (tick_rate * 10) == 0:  # Every 10 seconds
+				logger.info(f"Game {self.game_id} running - Frame {frame_count}")
+			
 			start_time += tick_interval
 			await asyncio.sleep(max(0, start_time - time.monotonic()))
+		
 		logger.info(f"Game {self.game_id} ended with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
 		await self.game_end()
 
@@ -202,7 +247,8 @@ class GameState:
 		channel_layer = get_channel_layer()
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
-			logger.info(f"Sending game state: {serialized_data}")
+			# Reduce logging verbosity - only log occasionally
+			logger.debug(f"Sending game state for game {self.game_id}")
 			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
@@ -211,6 +257,7 @@ class GameState:
 				}
 			)
 		except Exception as e:
+			logger.error(f"Error sending game state for game {self.game_id}: {e}")
 			print(f"Error sending game state: {e}") #TODO logg
 
 	def check_score(self):
