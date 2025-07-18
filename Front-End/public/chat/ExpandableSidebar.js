@@ -225,6 +225,9 @@ function renderChatItem(chat) {
 
 			<form class="input-group chat-input">
 				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048" autocomplete="off"/>
+				<button class="btn btn-outline-secondary" id="pongInvite">
+					<i class="fas fa-gamepad"></i>
+				</button>
 				<button class="btn btn-outline-primary" type="submit">
 					<i class="bi bi-send"></i>
 				</button>
@@ -277,10 +280,12 @@ function renderChatItem(chat) {
 
 				// Aggiungi il messaggio alla chat room corrispondente
 				const chatBubble = renderChatBubble({
-					sender: data.sender,
+					senderName: data.sender,
 					date: new Date(data.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
 					message: data.message,
-					isSingleChat: chat.type === 'single'
+					isSingleChat: chat.type === 'single',
+					type: data.type,
+					senderId: data.sender_id
 				});
 				chatContent.appendChild(chatBubble);
 
@@ -330,10 +335,12 @@ function renderChatItem(chat) {
 						}
 
 						const chatBubble = renderChatBubble({
-							sender: msg.sender,
+							senderName: msg.sender,
 							date: new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
 							message: msg.message,
-							isSingleChat: chat.type === 'single'
+							isSingleChat: chat.type === 'single',
+							type: msg.message_type,
+							senderId: msg.sender_id
 						});
 						chatContent.appendChild(chatBubble);
 					});
@@ -382,7 +389,6 @@ function renderChatItem(chat) {
 
 			scrollToBottom(chatItem.querySelector('.scrollable-content'));
 		} else if (message.trim() == "" && socket && socket.readyState === WebSocket.OPEN) {
-			// Fai tremare input e bottone insieme (form intero)
 			chatsInput.classList.add("shake");
 			setTimeout(() => {
 				chatsInput.classList.remove("shake");
@@ -396,6 +402,47 @@ function renderChatItem(chat) {
 			);
 		}
 	});
+
+	const pongInviteButton = chatsInput.querySelector('#pongInvite');
+
+	pongInviteButton.addEventListener('click', function (e) {
+		e.preventDefault();
+		console.info("Pong invite button clicked");
+
+		const message = inputField.value;
+		console.info("Invio messaggio:", message);
+		const userVariables = getVariables();
+		if (message.trim() !== "" && socket && socket.readyState === WebSocket.OPEN) {
+			// Usa userUsername per identificare l'utente
+			const messageData = {
+				type: "game_invitation",
+				room_id: chat.id,
+				message: message,
+				timestamp: new Date().toISOString(),
+				sender: userVariables.userUsername,
+			};
+			console.info("Invio messaggio tramite WebSocket:", messageData);
+			socket.send(JSON.stringify(messageData));
+			inputField.value = '';
+
+			scrollToBottom(chatItem.querySelector('.scrollable-content'));
+		} else if (message.trim() == "" && socket && socket.readyState === WebSocket.OPEN) {
+			chatsInput.classList.add("shake");
+			setTimeout(() => {
+				chatsInput.classList.remove("shake");
+			}, 400);
+		} else {
+			showAlertForXSeconds(
+				"WebSocket connection not open",
+				"error",
+				3,
+				{ asToast: true }
+			);
+		}
+
+	});
+
+
 }
 
 function isUserBlocked(username) {

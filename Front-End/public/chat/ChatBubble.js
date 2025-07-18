@@ -5,10 +5,10 @@ link.rel = "stylesheet";
 link.href = "/chat/chat.css";
 document.head.appendChild(link);
 
-function renderChatBubble({ sender, date, message, isSingleChat }) {
+function renderChatBubble({ senderName, date, message, isSingleChat, type, senderId }) {
 	const { userUsername } = getVariables();
-	const isSenderMe = userUsername === sender;
-	const initials = calculateInitials(sender);
+	const isSenderMe = userUsername === senderName;
+	const initials = calculateInitials(senderName);
 
 	const chatBubble = document.createElement("div");
 	chatBubble.className = `chat-bubble ${isSenderMe ? "true" : "false"}`;
@@ -20,7 +20,7 @@ function renderChatBubble({ sender, date, message, isSingleChat }) {
 
 				<div class="friend-avatar"
            style="width: 100%; height: 100%; font-weight: 600;">
-          ${initials || sender?.charAt(0).toUpperCase() || '?'}
+          ${initials || senderName?.charAt(0).toUpperCase() || '?'}
         </div>
 
 
@@ -29,10 +29,25 @@ function renderChatBubble({ sender, date, message, isSingleChat }) {
 		`
 				: ""
 		}
+
 		<div class="chat-content ${isSenderMe ? "true" : ""}">
-			${!isSingleChat && !isSenderMe ? `<div class="username">${sender}</div>` : ""}
-			<div class="message text-break">${message}</div>
+			${!isSingleChat && !isSenderMe ? `<div class="username">${senderName}</div>` : ""}
+			<div class="message text-break">
+				${message}
+
+				${type === "game_invitation" 
+					? `<button class="btn btn-outline-primary game-invitation-btn 
+							${isSenderMe ? "disabled" : ""}"
+						" >
+							<i class="bi bi-playstation"></i>
+						</button>`
+					: ""
+				}
+
+			</div>
+
 		</div>
+
 		${
 			isSingleChat || isSenderMe
 				? `<div class="date ${
@@ -42,7 +57,21 @@ function renderChatBubble({ sender, date, message, isSingleChat }) {
 		}
 	`;
 
+	gameInvitationButton(chatBubble, senderName, senderId);
+
 	return chatBubble;
 }
 
-export { renderChatBubble };
+function gameInvitationButton (chatBubble, senderName, senderId) {
+    const gameBtn = chatBubble.querySelector('.game-invitation-btn');
+    if (gameBtn) {
+        gameBtn.addEventListener("click", () => {
+            console.log("Game invitation button clicked");
+
+						window.navigateTo(`#pongmulti?opponent=${senderId}&opponentName=${encodeURIComponent(senderName)}`);
+
+        });
+    }
+}
+
+export { renderChatBubble, gameInvitationButton };
