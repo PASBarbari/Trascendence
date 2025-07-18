@@ -1,4 +1,4 @@
-// import * as THREE from "three";
+import * as THREE from "three";
 import { state } from "../locale/state.js";
 import { getVariables } from "../../var.js";
 import { renderPong } from "../locale/pong.js";
@@ -13,11 +13,6 @@ let socket;
 // Throttling to prevent too frequent updates
 let lastGameStateUpdate = 0;
 const GAME_STATE_THROTTLE = 20; // Minimum 50ms between game state updates (20fps max)
-
-// ✅ PERFORMANCE: Ball interpolation variables for smoother movement
-let lastBallPosition = { x: 0, y: 0 };
-let targetBallPosition = { x: 0, y: 0 };
-let ballLerpFactor = 0.3; // Adjust for smoothness vs responsiveness
 
 function sendPlayerMovement(playerId, direction) {
 	if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -353,12 +348,18 @@ function updateGameState(gameStateData) {
 		state.p1_score = gameStateData.player_1_score;
 	if (gameStateData.player_2_score !== undefined)
 		state.p2_score = gameStateData.player_2_score;
-	
+
 	// Update ring dimensions only when provided (they're sent less frequently now for performance)
-	if (gameStateData.ring_length !== undefined && gameStateData.ring_length !== null) {
+	if (
+		gameStateData.ring_length !== undefined &&
+		gameStateData.ring_length !== null
+	) {
 		state.ring.length = gameStateData.ring_length;
 	}
-	if (gameStateData.ring_height !== undefined && gameStateData.ring_height !== null) {
+	if (
+		gameStateData.ring_height !== undefined &&
+		gameStateData.ring_height !== null
+	) {
 		state.ring.height = gameStateData.ring_height;
 	}
 	// if (gameStateData.ring_width !== undefined) state.ring.depth = gameStateData.ring_width;
@@ -460,44 +461,33 @@ function updateGameState(gameStateData) {
 		}
 	}
 
-	// BALL POSITION UPDATE - Use client-side prediction with server reconciliation
+	// BALL POSITION AND PHYSICS UPDATE - Use server authority with client-side prediction
 	if (gameStateData.ball_pos && state.ball?.mesh) {
 		const [ballX, ballY] = gameStateData.ball_pos;
 		
-		// If ball is in multiplayer mode, use gentle reconciliation
-		if (state.ball.isMultiplayer) {
-			const serverPos = new THREE.Vector3(ballX, 0, ballY);
-			const clientPos = state.ball.mesh.position.clone();
-			const distance = serverPos.distanceTo(clientPos);
-			
-			// Only reconcile if positions differ significantly (> 5 units)
-			if (distance > 5) {
-				console.log(`Ball reconciliation: distance=${distance.toFixed(2)}`);
-				// Smooth correction towards server position
-				const correctionFactor = Math.min(distance / 20, 0.5); // Max 50% correction
-				state.ball.mesh.position.lerp(serverPos, correctionFactor);
-			}
-		} else {
-			// Fallback: direct position update for non-multiplayer or if prediction fails
-			state.ball.mesh.position.set(ballX, 0, ballY);
+		// Update ball position directly from server (authoritative)
+		state.ball.mesh.position.set(ballX, 0, ballY);
+		
+		// Update ball physics from server for client-side prediction
+		if (gameStateData.ball_speed !== undefined) {
+			state.ball_speed = gameStateData.ball_speed;
 		}
-	}
-
-	// Interpolate ball position for smoother movement
-	if (gameStateData.ball_pos) {
-		const [ballX, ballY] = gameStateData.ball_pos;
-
-		// Update target position
-		targetBallPosition = { x: ballX, y: ballY };
-
-		// Interpolate between last and current position
-		state.ball.mesh.position.x +=
-			(targetBallPosition.x - lastBallPosition.x) * ballLerpFactor;
-		state.ball.mesh.position.z +=
-			(targetBallPosition.y - lastBallPosition.y) * ballLerpFactor;
-
-		// Update last position
-		lastBallPosition = targetBallPosition;
+		
+		if (gameStateData.angle !== undefined) {
+			state.angle = gameStateData.angle;
+			
+			// Update ball velocity based on server angle and speed for prediction
+			if (state.ball_speed > 0) {
+				const angleRad = (state.angle * Math.PI) / 180;
+				state.ball_velocity = {
+					x: state.ball_speed * Math.cos(angleRad),
+					y: state.ball_speed * -Math.sin(angleRad) // Negative because backend uses -sin
+				};
+			}
+		}
+		
+		// Enable client-side prediction flag
+		state.ball.isMultiplayer = true;
 	}
 
 	// Force render scene

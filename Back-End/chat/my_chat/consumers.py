@@ -159,7 +159,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				'message': message,
 				'room_id': room_id,
 				'timestamp': timestamp,
-				'sender': sender
+				'sender': sender,
+				'sender_id': self.scope['user'].user_id if hasattr(self.scope['user'], 'user_id') else None
 			}
 		)
 
@@ -182,7 +183,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				'message': message,
 				'room_id': room_id,
 				'sender': sender,
-				'timestamp': timestamp
+				'timestamp': timestamp,
+				'sender_id': self.scope['user'].user_id if hasattr(self.scope['user'], 'user_id') else None
 			}
 		)
 
@@ -199,7 +201,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			'message': event['message'],
 			'room_id': event['room_id'],
 			'sender': event['sender'],
-			'timestamp': event['timestamp']
+			'timestamp': event['timestamp'],
+			'sender_id': event['sender_id']
 		}))
 
 	async def game_invitation_message(self, event):
@@ -209,5 +212,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			'message': event['message'],
 			'room_id': event['room_id'],
 			'sender': event['sender'],
-			'timestamp': event['timestamp']
+			'timestamp': event['timestamp'],
+			'sender_id': event['sender_id']
 		}))

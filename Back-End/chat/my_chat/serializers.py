@@ -110,7 +110,9 @@ class chat_messageSerializer(serializers.ModelSerializer):
                 'message_id': instance.message_id,
                 'message': instance.message,
                 'timestamp': instance.timestamp,
-                'sender': getattr(instance.sender, 'username', 'Unknown User')
+                'sender': getattr(instance.sender, 'username', 'Unknown User'),
+								'sender_id': instance.sender.user_id if instance.sender else None,
+                'message_type': instance.message_type
             }
             return data
         except Exception as e:
@@ -120,5 +122,6 @@ class chat_messageSerializer(serializers.ModelSerializer):
                 'message_id': getattr(instance, 'message_id', 0),
                 'message': getattr(instance, 'message', 'Error retrieving message'),
                 'timestamp': getattr(instance, 'timestamp', ''),
-                'sender': 'Unknown'
+                'sender': 'Unknown User',
+                'message_type': 'unknown'
             }

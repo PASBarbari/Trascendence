@@ -255,7 +255,7 @@ class GameState:
 		self.frame_count += 1
 		
 		# Only send WebSocket updates every 3rd frame (10 FPS instead of 30 FPS)
-		if self.frame_count % 3 != 0:
+		if self.frame_count % 2 != 0:
 			return
 			
 		channel_layer = get_channel_layer()
