@@ -1,7 +1,7 @@
 import { getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 import { showAlertForXSeconds } from '../alert/alert.js';
-import { updateBlockedUsers } from './ExpandableSidebar.js';
+import { updateBlockedUsers, updateChatList } from './ExpandableSidebar.js';
 import { initFriendAutocomplete } from '../notification/friendAutocomplete.js';
 
 const link = document.createElement('link');
@@ -39,8 +39,8 @@ async function blockUser(userId, username) {
                 { asToast: true }
             );
             
-            // Aggiorna la lista degli utenti bloccati
             await updateBlockedUsers();
+						await updateChatList();
             
             return true;
         } else {
@@ -97,6 +97,7 @@ async function unblockUser(userId, username) {
             
             // Aggiorna la lista degli utenti bloccati
             await updateBlockedUsers();
+						await updateChatList();
             
             return true;
         } else {
