@@ -51,12 +51,12 @@ class chat_roomSerializer(serializers.ModelSerializer):
 				
 				for profile in user_profiles:
 					# Check if creator has blocked this user
-					if creator and creator.blockedUsers.filter(user_id=profile.user_id).exists():
+					if creator and creator.has_blocked(profile):
 						logging.warning(f"Creator {creator.user_id} has blocked user {profile.user_id}, skipping")
 						continue
 					
 					# Check if this user has blocked the creator
-					if creator and profile.blockedUsers.filter(user_id=creator.user_id).exists():
+					if creator and profile.has_blocked(profile):
 						logging.warning(f"User {profile.user_id} has blocked creator {creator.user_id}, skipping")
 						continue
 					
@@ -90,11 +90,11 @@ class chat_roomSerializer(serializers.ModelSerializer):
 class chat_messageSerializer(serializers.ModelSerializer):
     # Aggiungi campi espliciti per evitare problemi di serializzazione
     sender_name = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = ChatMessage
-        fields = ['message_id', 'room', 'message', 'sender', 'sender_name', 'timestamp']
-    
+        fields = ['message_id', 'room', 'message', 'sender', 'sender_name', 'timestamp', 'message_type']
+
     def get_sender_name(self, obj):
         try:
             if hasattr(obj.sender, 'username') and obj.sender.username:

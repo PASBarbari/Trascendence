@@ -130,33 +130,6 @@ async function inviteToGame(friendId, friendName) {
 		closeFriendList();
 
 		window.navigateTo(`#pongmulti?opponent=${friendId}&opponentName=${encodeURIComponent(friendName)}`);
-
-		// Create the game first and get room ID
-		// const { createGame } = await import("./multiplayer/serverSide.js");
-		// const { userId } = getVariables();
-
-		// console.log(`Creating game between ${userId} and ${friendId}`);
-		// const gameData = await createGame(parseInt(userId), parseInt(friendId));
-		// const roomId = gameData.room_id || gameData.id;
-
-		// console.log(`Game created with room ID: ${roomId}`);
-
-		// // ✅ Remove this line - no need to send manual notification
-		// // await sendGameNotification(friendId, friendName, roomId, userUsername || 'Someone');
-
-		// // Navigate to multiplayer route with URL parameters
-		// const gameUrl = `pongmulti?room=${roomId}&opponent=${friendId}&opponentName=${encodeURIComponent(
-		// 	friendName
-		// )}`;
-		// console.log(`Navigating to: #${gameUrl}`);
-
-		// // Use direct hash assignment to ensure URL updates
-		// window.location.hash = gameUrl;
-
-		// showNotification(
-		// 	`🎮 Game created! ${friendName} will receive an invitation automatically.`,
-		// 	"success"
-		// );
 	} catch (error) {
 		console.error("💥 Error starting multiplayer game:", error);
 		showNotification("❌ Failed to start multiplayer game", "error");

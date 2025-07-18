@@ -141,9 +141,10 @@ async function initializeMultiplayerGame(
 		state.isPaused = true;
 		state.IAisActive = false; // Disable AI for multiplayer
 
-		// Disable local ball physics for multiplayer
+		// Use client-side prediction for smoother gameplay instead of disabling physics
 		if (state.ball) {
-			state.ball.disableLocalPhysics = true;
+			state.ball.disableLocalPhysics = false; // Keep physics for prediction
+			state.ball.isMultiplayer = true; // Flag for server reconciliation
 		}
 
 		// Update connection status

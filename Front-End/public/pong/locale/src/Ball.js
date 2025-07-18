@@ -37,6 +37,11 @@ export default class Ball extends THREE.EventDispatcher {
 	}
 
 	update(dt) {
+		// Skip local physics if disabled for multiplayer
+		if (this.disableLocalPhysics) {
+			return;
+		}
+		
 		// Calculate number of sub-steps based on ball speed
 		const substeps = Math.max(1, Math.ceil(this.speed / 15));
 		const subDt = dt / substeps;

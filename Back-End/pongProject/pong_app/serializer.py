@@ -62,13 +62,6 @@ class GameStateSerializer(serializers.Serializer):
     angle = serializers.FloatField()
     ring_length = serializers.IntegerField()
     ring_height = serializers.IntegerField()
-    ring_width = serializers.IntegerField()
-    ring_thickness = serializers.IntegerField()
-    p_length = serializers.IntegerField()
-    p_height = serializers.IntegerField()
-    p_width = serializers.IntegerField()
-    ball_radius = serializers.IntegerField()
-    p_speed = serializers.IntegerField()
     
 class UserStatisticsSerializer(serializers.Serializer):
     """Simple serializer for user statistics response"""

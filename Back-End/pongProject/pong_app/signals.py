@@ -11,6 +11,7 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
 from .serializer import *
+from .physics_integration import create_physics_manager
 
 logger = logging.getLogger('pong_app')
 
@@ -55,6 +56,17 @@ class GameState:
 		# ✅ CRITICAL: Add frame tracking for reduced WebSocket update frequency
 		self.frame_count = 0
 		self.last_websocket_update = 0
+		
+		# 🚀 NEW: Physics engine integration (can switch between legacy/modern)
+		# Set via environment variable or default to modern for better performance
+		engine_type = "modern"  # Using modern physics engine!
+		self.physics = create_physics_manager(
+			engine_type=engine_type,
+			ring_length=self.ring_length,
+			ring_height=self.ring_height,
+			ring_thickness=self.ring_thickness
+		)
+		logger.info(f"Game {self.game_id} initialized with {engine_type} physics engine")
 
 	async def start(self):
 		self.running = True
@@ -76,7 +88,7 @@ class GameState:
 		frame_count = 0
 		
 		while self.running:
-			self.physics()
+			self.physics_step()
 			self.movement()
 
 			await self.update()
@@ -100,7 +112,7 @@ class GameState:
 	async def game_end(self):
 		logger = logging.getLogger(__name__)
 		logger.info(f"Game {self.game_id} ending with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
-		
+
 		# Save game to database asynchronously
 		try:
 			from asgiref.sync import sync_to_async
@@ -112,8 +124,8 @@ class GameState:
 			
 			# Get the updated game object to access properties
 			game = await sync_to_async(Game.objects.get)(id=self.game_id)
-			winner_id = game.winner_id
-			loser_id = game.loser_id
+			winner_id = await sync_to_async(lambda: game.winner_id)()
+			loser_id = await sync_to_async(lambda: game.loser_id)()
 			
 		except Exception as e:
 			logger.error(f"Error saving game {self.game_id} to database: {str(e)}")
@@ -173,6 +185,7 @@ class GameState:
 			logger.error(f"Error sending game over message: {str(e)}")
 
 
+	# Legacy collision detection methods (kept for compatibility)
 	def p1_is_hit(self):
 		if (
 			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player_1_pos[0] + self.p_width / 2 and
@@ -193,44 +206,65 @@ class GameState:
 			return True
 		return False
 
-	def physics(self):
-		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
-		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
-		if self.ball_pos[0] < 0 and self.p1_is_hit():
-			hit_pos = self.ball_pos[1] - self.player_1_pos[1]
-			self.wall_hit_pos = 0
-			# Prevent division by zero which causes NaN
-			if self.p_length > 0:
-				self.angle = hit_pos / self.p_length * -90
-			else:
-				self.angle = -45  # Default angle if p_length is 0
-			if (self.ball_speed < 5 * self.p_length):
-				self.ball_speed += ball_acc
-		elif self.ball_pos[0] > 0 and self.p2_is_hit():
-			hit_pos = self.ball_pos[1] - self.player_2_pos[1]
-			self.wall_hit_pos = 0
-			# Prevent division by zero which causes NaN
-			if self.p_length > 0:
-				self.angle = 180 + hit_pos / self.p_length * 90
-			else:
-				self.angle = 135  # Default angle if p_length is 0
-			if (self.ball_speed < 5 * self.p_length):
-				self.ball_speed += ball_acc
-		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= self.ring_height / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -self.ring_height / 2):
-			self.wall_hit_pos = self.ball_pos[1]
-			self.angle = -self.angle
-		self.check_score()
-		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
-			self.player_1_pos[1] += self.player_1_move
-		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
-			self.player_2_pos[1] += self.player_2_move
+	def physics_step(self):
+		"""🚀 NEW: Use physics manager instead of inline physics"""
+		# Sync game state to physics engine
+		if self.physics.engine_type == "legacy":
+			self.physics.engine.player_1_pos = self.player_1_pos.copy()
+			self.physics.engine.player_2_pos = self.player_2_pos.copy()
+			self.physics.engine.ball_pos = self.ball_pos.copy()
+			self.physics.engine.ball_speed = self.ball_speed
+		else:  # modern
+			self.physics.engine.player_1_pos.x = self.player_1_pos[0]
+			self.physics.engine.player_1_pos.y = self.player_1_pos[1]
+			self.physics.engine.player_2_pos.x = self.player_2_pos[0]
+			self.physics.engine.player_2_pos.y = self.player_2_pos[1]
+			self.physics.engine.ball_pos.x = self.ball_pos[0]
+			self.physics.engine.ball_pos.y = self.ball_pos[1]
+		
+		# Execute physics step
+		result = self.physics.physics_step(ball_acc=ball_acc)
+		
+		# Sync back to game state
+		self.ball_pos = self.physics.get_ball_position()
+		
+		# Sync angle from physics engine
+		if hasattr(self.physics.engine, 'angle'):
+			self.angle = self.physics.engine.angle
+		
+		# Handle scoring
+		if result == "player_1_scores":
+			self.player_1_score += 1
+			self.reset_ball(random.uniform(110, 250))
+		elif result == "player_2_scores":
+			self.player_2_score += 1
+			self.reset_ball(random.uniform(70, -70))
+		
+		# Log physics stats occasionally for debugging
+		if self.frame_count % 300 == 0:  # Every 10 seconds
+			stats = self.physics.get_engine_stats()
+			logger.debug(f"Game {self.game_id} physics stats: {stats}")
+	
+	def switch_physics_engine(self, engine_type):
+		"""🔧 Switch physics engine (for testing)"""
+		logger.info(f"Game {self.game_id} switching to {engine_type} physics engine")
+		self.physics.switch_engine(engine_type, preserve_state=True)
 
 	async def update(self):
+		# ✅ PERFORMANCE: Throttle WebSocket updates to reduce lag
+		self.frame_count += 1
+		
+		# Only send WebSocket updates every 3rd frame (10 FPS instead of 30 FPS)
+		if self.frame_count % 3 != 0:
+			return
+			
 		channel_layer = get_channel_layer()
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
 			# Reduce logging verbosity - only log occasionally
-			logger.debug(f"Sending game state for game {self.game_id}")
+			if self.frame_count % 300 == 0:  # Log every 10 seconds at 30fps
+				logger.debug(f"Sending game state for game {self.game_id} (frame {self.frame_count})")
+			
 			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
@@ -242,19 +276,15 @@ class GameState:
 			logger.error(f"Error sending game state for game {self.game_id}: {e}")
 			print(f"Error sending game state: {e}") #TODO logg
 
-	def check_score(self):
-		if self.ball_pos[0] - self.ball_radius <= -self.ring_length / 2:
-			self.player_2_score += 1
-			self.reset_ball(random.uniform(70, -70))
-		elif self.ball_pos[0] + self.ball_radius >= self.ring_length / 2 + self.ring_thickness:
-			self.player_1_score += 1
-			self.reset_ball(random.uniform(110, 250))
-
 	def reset_ball(self, angle):
 		self.ball_pos = [0, 0]
 		self.angle = angle
 		self.ball_speed = 90 / 150
 		self.wall_hit_pos = 0
+		
+		# Also reset physics engine state
+		if hasattr(self.physics, 'engine'):
+			self.physics.engine.reset_ball(angle)
 
 
 	def movement(self):
@@ -286,6 +316,7 @@ class GameState:
 			self.player_2_move = 0
 
 	def to_dict(self):
+		# ✅ PERFORMANCE: Only send essential game state data to reduce payload size
 		return {
 			'player_1_score': self.player_1_score,
 			'player_2_score': self.player_2_score,
@@ -294,25 +325,14 @@ class GameState:
 			'ball_pos': self.ball_pos,
 			'ball_speed': self.ball_speed,
 			'angle': self.angle,
-			'ring_length': self.ring_length,
-			'ring_height': self.ring_height,
-			'ring_width': self.ring_width,
-			'ring_thickness': self.ring_thickness,
-			'p_length': self.p_length,
-			'p_height': self.p_height,
-			'p_width': self.p_width,
-			'ball_radius': self.ball_radius,
-			'p_speed': self.p_speed
+			# Send ring dimensions only occasionally (they don't change during game)
+			'ring_length': self.ring_length if self.frame_count % 30 == 0 else None,
+			'ring_height': self.ring_height if self.frame_count % 30 == 0 else None,
 		}
 
 	
 	def to_percent(self, player_pos):
 		"""Convert player position to percentage (0 = top, 100 = bottom)"""
-		# Prevent division by zero which causes NaN
-		if self.ring_height == 0:
-			logger.warning(f"Game {self.game_id}: ring_height is 0, returning default 50%")
-			return [player_pos[0], 50.0]  # Return middle position as fallback
-		
 		normalized_pos = player_pos[1] + (self.ring_height / 2)  # Shift from [-h/2, h/2] to [0, h]
 		percentage = (normalized_pos / self.ring_height) * 100   # Convert to percentage
 		

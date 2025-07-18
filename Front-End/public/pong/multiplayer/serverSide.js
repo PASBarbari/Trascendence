@@ -1,3 +1,4 @@
+// import * as THREE from "three";
 import { state } from "../locale/state.js";
 import { getVariables } from "../../var.js";
 import { renderPong } from "../locale/pong.js";
@@ -12,6 +13,11 @@ let socket;
 // Throttling to prevent too frequent updates
 let lastGameStateUpdate = 0;
 const GAME_STATE_THROTTLE = 20; // Minimum 50ms between game state updates (20fps max)
+
+// ✅ PERFORMANCE: Ball interpolation variables for smoother movement
+let lastBallPosition = { x: 0, y: 0 };
+let targetBallPosition = { x: 0, y: 0 };
+let ballLerpFactor = 0.3; // Adjust for smoothness vs responsiveness
 
 function sendPlayerMovement(playerId, direction) {
 	if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -158,8 +164,8 @@ function initializeWebSocket(room_id, player1, player2) {
 
 		if (message.type === "game_state") {
 			try {
-				updateGameState(message.game_state);
 				// console.table(message.game_state);
+				updateGameState(message.game_state);
 			} catch (error) {
 				console.error("Error processing game state:", error);
 			}
@@ -186,24 +192,24 @@ function initializeWebSocket(room_id, player1, player2) {
 			// let player_2_pos = [state.players[1].mesh.position.x, state.players[1].mesh.position.y, state.players[1].mesh.position.z];
 			// // Send game initialization to backend
 			try {
-			// 	const gameConfig = {
-			// 		ring_length: state.ring.length || 160,
-			// 		ring_height: state.ring.height || 90,
-			// 		ring_width: state.ring.depth || 10,
-			// 		ring_thickness: state.ring.thickness || 3,
-			// 		p_length: 20,
-			// 		p_width: state.p.width || 2.5,
-			// 		p_height: state.p.depth || 2.5,
-			// 		ball_radius: state.ball.radius || 2.5,
-			// 		player_1_pos: player_1_pos || [-75, 0], // Left side: [x, y, z] where y=0 is center
-			// 		player_2_pos: player_2_pos || [75, 0], // Right side: [x, y, z] where y=0 is center
-			// 		ball_pos: state.ball_pos || [0, 0, 0],
-			// 		ball_speed: state.ball_speed || 1.2,
-			// 		p_speed: state.p_speed || 1.5,
-			// 	};
-			// 	console.table(gameConfig);
+				// 	const gameConfig = {
+				// 		ring_length: state.ring.length || 160,
+				// 		ring_height: state.ring.height || 90,
+				// 		ring_width: state.ring.depth || 10,
+				// 		ring_thickness: state.ring.thickness || 3,
+				// 		p_length: 20,
+				// 		p_width: state.p.width || 2.5,
+				// 		p_height: state.p.depth || 2.5,
+				// 		ball_radius: state.ball.radius || 2.5,
+				// 		player_1_pos: player_1_pos || [-75, 0], // Left side: [x, y, z] where y=0 is center
+				// 		player_2_pos: player_2_pos || [75, 0], // Right side: [x, y, z] where y=0 is center
+				// 		ball_pos: state.ball_pos || [0, 0, 0],
+				// 		ball_speed: state.ball_speed || 1.2,
+				// 		p_speed: state.p_speed || 1.5,
+				// 	};
+				// 	console.table(gameConfig);
 
-			// 	sendGameInit(gameConfig);
+				// 	sendGameInit(gameConfig);
 
 				// Wait a moment for initialization to process
 				setTimeout(() => {
@@ -343,49 +349,66 @@ function updateGameState(gameStateData) {
 	}
 
 	// Update state with backend values for consistency
-	if (gameStateData.player_1_score !== undefined) state.p1_score = gameStateData.player_1_score;
-	if (gameStateData.player_2_score !== undefined) state.p2_score = gameStateData.player_2_score;
-	if (gameStateData.ring_length !== undefined) state.ring.length = gameStateData.ring_length;
-	if (gameStateData.ring_height !== undefined) state.ring.height = gameStateData.ring_height;
-	if (gameStateData.ring_width !== undefined) state.ring.depth = gameStateData.ring_width;
-	if (gameStateData.ring_thickness !== undefined) state.ring.thickness = gameStateData.ring_thickness;
-	if (gameStateData.p_length !== undefined) state.p.depth = gameStateData.p_length;
-	if (gameStateData.p_height !== undefined) state.p.height = gameStateData.p_height;
-	if (gameStateData.p_width !== undefined) state.p.width = gameStateData.p_width;
-	if (gameStateData.ball_radius !== undefined) state.ball.radius = gameStateData.ball_radius;
-	if (gameStateData.p_speed !== undefined) state.p.speed = gameStateData.p_speed;
-
-	// Debug log the updated state values periodically
-	if (Math.random() < 0.01) { // Log ~1% of the time to avoid spam
-		console.log("🎮 Updated state from backend:", {
-			ring_length: state.ring.length,
-			ring_height: state.ring.height,
-			ring_width: state.ring.depth,
-			ring_thickness: state.ring.thickness,
-			p_length: state.p.depth,
-			p_height: state.p.height,
-			p_width: state.p.width,
-			ball_radius: state.ball.radius,
-			p_speed: state.p.speed
-		});
+	if (gameStateData.player_1_score !== undefined)
+		state.p1_score = gameStateData.player_1_score;
+	if (gameStateData.player_2_score !== undefined)
+		state.p2_score = gameStateData.player_2_score;
+	
+	// Update ring dimensions only when provided (they're sent less frequently now for performance)
+	if (gameStateData.ring_length !== undefined && gameStateData.ring_length !== null) {
+		state.ring.length = gameStateData.ring_length;
 	}
+	if (gameStateData.ring_height !== undefined && gameStateData.ring_height !== null) {
+		state.ring.height = gameStateData.ring_height;
+	}
+	// if (gameStateData.ring_width !== undefined) state.ring.depth = gameStateData.ring_width;
+	// if (gameStateData.ring_thickness !== undefined) state.ring.thickness = gameStateData.ring_thickness;
+	// if (gameStateData.p_length !== undefined) state.p.depth = gameStateData.p_length;
+	// if (gameStateData.p_height !== undefined) state.p.height = gameStateData.p_height;
+	// if (gameStateData.p_width !== undefined) state.p.width = gameStateData.p_width;
+	// if (gameStateData.ball_radius !== undefined) state.ball.radius = gameStateData.ball_radius;
+	// if (gameStateData.p_speed !== undefined) state.p.speed = gameStateData.p_speed;
+
+	// // Debug log the updated state values periodically
+	// if (Math.random() < 0.01) { // Log ~1% of the time to avoid spam
+	// 	console.log("🎮 Updated state from backend:", {
+	// 		ring_length: state.ring.length,
+	// 		ring_height: state.ring.height,
+	// 		ring_width: state.ring.depth,
+	// 		ring_thickness: state.ring.thickness,
+	// 		p_length: state.p.depth,
+	// 		p_height: state.p.height,
+	// 		p_width: state.p.width,
+	// 		ball_radius: state.ball.radius,
+	// 		p_speed: state.p.speed
+	// 	});
+	// }
 
 	// PLAYER 1 POSITION UPDATE
 	if (gameStateData.player_1_pos && state.players && state.players[0]?.mesh) {
 		// player_1_pos is [x, percentage] where percentage is 0-100
 		const [posX, percentY] = gameStateData.player_1_pos;
 
+		// Scale X position from backend to frontend dimensions
+		if (
+			typeof posX === "number" &&
+			!isNaN(posX) &&
+			gameStateData.ring_length > 0
+		) {
+			const scaledX = (posX / gameStateData.ring_length) * state.ring.length;
+			state.players[0].mesh.position.x = scaledX;
+		}
+
 		// Validate that we have valid numbers to prevent NaN
 		if (
 			typeof percentY === "number" &&
 			!isNaN(percentY) &&
-			gameStateData.ring_height > 0
+			state.ring.height > 0
 		) {
-			// Convert percentage (0-100) to actual position in the ring
-			// 0% = top of ring (-ring_height/2), 100% = bottom of ring (ring_height/2)
+			// Convert percentage (0-100) to actual position relative to FRONTEND ring dimensions
+			// 0% = top of ring (-state.ring.height/2), 100% = bottom of ring (state.ring.height/2)
 			const actualY =
-				(percentY / 100) * gameStateData.ring_height -
-				gameStateData.ring_height / 2;
+				(percentY / 100) * state.ring.height - state.ring.height / 2;
 
 			// Update position (Z in ThreeJS is Y in backend)
 			state.players[0].mesh.position.z = actualY;
@@ -393,8 +416,8 @@ function updateGameState(gameStateData) {
 			console.warn(
 				"Player 1 - Invalid percentY:",
 				percentY,
-				"or ring_height:",
-				gameStateData.ring_height
+				"or frontend ring_height:",
+				state.ring.height
 			);
 		}
 	}
@@ -403,17 +426,27 @@ function updateGameState(gameStateData) {
 	if (gameStateData.player_2_pos && state.players && state.players[1]?.mesh) {
 		// player_2_pos is [x, percentage] where percentage is 0-100
 		const [posX, percentY] = gameStateData.player_2_pos;
+
+		// Scale X position from backend to frontend dimensions
+		if (
+			typeof posX === "number" &&
+			!isNaN(posX) &&
+			gameStateData.ring_length > 0
+		) {
+			const scaledX = (posX / gameStateData.ring_length) * state.ring.length;
+			state.players[1].mesh.position.x = scaledX;
+		}
+
 		// Validate that we have valid numbers to prevent NaN
 		if (
 			typeof percentY === "number" &&
 			!isNaN(percentY) &&
-			gameStateData.ring_height > 0
+			state.ring.height > 0
 		) {
-			// Convert percentage (0-100) to actual position in the ring
-			// 0% = top of ring (-ring_height/2), 100% = bottom of ring (ring_height/2)
+			// Convert percentage (0-100) to actual position relative to FRONTEND ring dimensions
+			// 0% = top of ring (-state.ring.height/2), 100% = bottom of ring (state.ring.height/2)
 			const actualY =
-				(percentY / 100) * gameStateData.ring_height -
-				gameStateData.ring_height / 2;
+				(percentY / 100) * state.ring.height - state.ring.height / 2;
 
 			// Update position (Z in ThreeJS is Y in backend)
 			state.players[1].mesh.position.z = actualY;
@@ -421,16 +454,50 @@ function updateGameState(gameStateData) {
 			console.warn(
 				"Player 2 - Invalid percentY:",
 				percentY,
-				"or ring_height:",
-				gameStateData.ring_height
+				"or frontend ring_height:",
+				state.ring.height
 			);
 		}
 	}
 
-	// BALL POSITION UPDATE (working)
+	// BALL POSITION UPDATE - Use client-side prediction with server reconciliation
 	if (gameStateData.ball_pos && state.ball?.mesh) {
 		const [ballX, ballY] = gameStateData.ball_pos;
-		state.ball.mesh.position.set(ballX, 0, ballY);
+		
+		// If ball is in multiplayer mode, use gentle reconciliation
+		if (state.ball.isMultiplayer) {
+			const serverPos = new THREE.Vector3(ballX, 0, ballY);
+			const clientPos = state.ball.mesh.position.clone();
+			const distance = serverPos.distanceTo(clientPos);
+			
+			// Only reconcile if positions differ significantly (> 5 units)
+			if (distance > 5) {
+				console.log(`Ball reconciliation: distance=${distance.toFixed(2)}`);
+				// Smooth correction towards server position
+				const correctionFactor = Math.min(distance / 20, 0.5); // Max 50% correction
+				state.ball.mesh.position.lerp(serverPos, correctionFactor);
+			}
+		} else {
+			// Fallback: direct position update for non-multiplayer or if prediction fails
+			state.ball.mesh.position.set(ballX, 0, ballY);
+		}
+	}
+
+	// Interpolate ball position for smoother movement
+	if (gameStateData.ball_pos) {
+		const [ballX, ballY] = gameStateData.ball_pos;
+
+		// Update target position
+		targetBallPosition = { x: ballX, y: ballY };
+
+		// Interpolate between last and current position
+		state.ball.mesh.position.x +=
+			(targetBallPosition.x - lastBallPosition.x) * ballLerpFactor;
+		state.ball.mesh.position.z +=
+			(targetBallPosition.y - lastBallPosition.y) * ballLerpFactor;
+
+		// Update last position
+		lastBallPosition = targetBallPosition;
 	}
 
 	// Force render scene
@@ -481,6 +548,7 @@ function handleGameOver() {
 	// Show game over with multiplayer context
 	showNotification(`Game Over! ${winner} wins!`, "info");
 
+	window.navigateTo("#home");
 	// Show ready screen for potential rematch
 	setTimeout(() => {
 		showReadyScreen();
