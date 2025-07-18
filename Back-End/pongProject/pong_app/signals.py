@@ -11,11 +11,15 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
 from .serializer import *
+from .physics_integration import create_physics_manager
 
 logger = logging.getLogger('pong_app')
 
+# ✅ CRITICAL: Reduce tick rate to prevent lag and channel overflow
+tick_rate = 30  # Reduced from 60 to 30 FPS for better performance
+websocket_update_rate = 20  # Send WebSocket updates at 20 FPS (every 3rd frame)
+
 # ring_size = [160 , 90]
-tick_rate = 60
 # self.ball_radius = 2.5
 # self.p_width = 2
 # ring_thickness = 3
@@ -28,25 +32,41 @@ class GameState:
 		self.player_2 = player_2
 		self.player_1_score = 0
 		self.player_2_score = 0
-		self.player_1_pos = [0 , 0]
-		self.player_2_pos = [0 , 0]
+		self.player_1_pos = [-60 , 0]
+		self.player_2_pos = [60 , 0]
 		self.player_1_move = 0
 		self.player_2_move = 0
 		self.ball_pos = [0 , 0]
-		self.p_length = 0
-		self.p_height = 0
-		self.p_width = 0
-		self.p_speed = 0
-		self.ball_radius = 0
-		self.ball_speed = 0
-		self.ring_length = 0
-		self.ring_height = 0
-		self.ring_width = 0
-		self.ring_thickness = 0
+		# Initialize with safe defaults to prevent NaN values
+		self.p_length = 20
+		self.p_height = 2.5
+		self.p_width = 2
+		self.p_speed = 1.0
+		self.ball_radius = 2.5
+		self.ball_speed = 0.6
+		self.ring_length = 160
+		self.ring_height = 90  # Critical: Initialize to prevent division by zero
+		self.ring_width = 200
+		self.ring_thickness = 3
 		self.is_started = [0 , 0]
 		self.wall_hit_pos = 0
 		self.avg_frame_time = [0 , 1]
 		self.tournament_id = tournament_id
+		
+		# ✅ CRITICAL: Add frame tracking for reduced WebSocket update frequency
+		self.frame_count = 0
+		self.last_websocket_update = 0
+		
+		# 🚀 NEW: Physics engine integration (can switch between legacy/modern)
+		# Set via environment variable or default to modern for better performance
+		engine_type = "modern"  # Using modern physics engine!
+		self.physics = create_physics_manager(
+			engine_type=engine_type,
+			ring_length=self.ring_length,
+			ring_height=self.ring_height,
+			ring_thickness=self.ring_thickness
+		)
+		logger.info(f"Game {self.game_id} initialized with {engine_type} physics engine")
 
 	async def start(self):
 		self.running = True
@@ -57,29 +77,42 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
-		logger.error(f"Game {self.game_id} starting with angle: {self.angle}")
-		while self.ball_speed == 0:
-			await asyncio.sleep(0.1)
+		logger.info(f"Game {self.game_id} starting with angle: {self.angle}")
+		# Wait a bit longer for game_init, but don't wait forever
+		await asyncio.sleep(1.5)  # Wait max 1.5 seconds for initialization
+		
+		self.ball_speed = 1.0
+		
+		logger.info(f"Game {self.game_id} starting main loop with ball_speed: {self.ball_speed}")
 		start_time = time.monotonic()
+		frame_count = 0
+		
 		while self.running:
-	
-			self.physics()
+			self.physics_step()
 			self.movement()
 
 			await self.update()
 
 			if self.player_1_score == 5 or self.player_2_score == 5:
+				logger.info(f"Game {self.game_id} ended due to score limit")
 				self.running = False
 				break
+			
+			frame_count += 1
+			# Log periodically to confirm game is running
+			if frame_count % (tick_rate * 10) == 0:  # Every 10 seconds
+				logger.info(f"Game {self.game_id} running - Frame {frame_count}")
+			
 			start_time += tick_interval
 			await asyncio.sleep(max(0, start_time - time.monotonic()))
+		
 		logger.info(f"Game {self.game_id} ended with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
 		await self.game_end()
 
 	async def game_end(self):
 		logger = logging.getLogger(__name__)
 		logger.info(f"Game {self.game_id} ending with scores: Player 1: {self.player_1_score}, Player 2: {self.player_2_score}")
-		
+
 		# Save game to database asynchronously
 		try:
 			from asgiref.sync import sync_to_async
@@ -91,8 +124,8 @@ class GameState:
 			
 			# Get the updated game object to access properties
 			game = await sync_to_async(Game.objects.get)(id=self.game_id)
-			winner_id = game.winner_id
-			loser_id = game.loser_id
+			winner_id = await sync_to_async(lambda: game.winner_id)()
+			loser_id = await sync_to_async(lambda: game.loser_id)()
 			
 		except Exception as e:
 			logger.error(f"Error saving game {self.game_id} to database: {str(e)}")
@@ -152,6 +185,7 @@ class GameState:
 			logger.error(f"Error sending game over message: {str(e)}")
 
 
+	# Legacy collision detection methods (kept for compatibility)
 	def p1_is_hit(self):
 		if (
 			self.ball_pos[0] - self.ball_radius - self.ball_speed <= self.player_1_pos[0] + self.p_width / 2 and
@@ -172,37 +206,65 @@ class GameState:
 			return True
 		return False
 
-	#TODO fixing radius and thickness and create function for score
-
-	def physics(self):
-		self.ball_pos[0] += self.ball_speed * math.cos(math.radians(self.angle))
-		self.ball_pos[1] += self.ball_speed * -math.sin(math.radians(self.angle))
-		if self.ball_pos[0] < 0 and self.p1_is_hit():
-			hit_pos = self.ball_pos[1] - self.player_1_pos[1]
-			self.wall_hit_pos = 0
-			self.angle = hit_pos / self.p_length * -90
-			if (self.ball_speed < 5 * self.p_length):
-				self.ball_speed += ball_acc
-		elif self.ball_pos[0] > 0 and self.p2_is_hit():
-			hit_pos = self.ball_pos[1] - self.player_2_pos[1]
-			self.wall_hit_pos = 0
-			self.angle = 180 + hit_pos / self.p_length * 90
-			if (self.ball_speed < 5 * self.p_length):
-				self.ball_speed += ball_acc
-		elif (self.wall_hit_pos <= 0 and self.ball_pos[1] + self.ball_radius + self.ring_thickness + self.ball_speed >= self.ring_height / 2) or (self.wall_hit_pos >= 0 and self.ball_pos[1] - self.ball_radius - self.ring_thickness - self.ball_speed <= -self.ring_height / 2):
-			self.wall_hit_pos = self.ball_pos[1]
-			self.angle = -self.angle
-		self.check_score()
-		if (self.player_1_move > 0 and self.player_1_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_1_move < 0 and self.player_1_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
-			self.player_1_pos[1] += self.player_1_move
-		if (self.player_2_move > 0 and self.player_2_pos[1] + self.p_length / 2 < self.ring_height / 2 - self.ring_thickness) or (self.player_2_move < 0 and self.player_2_pos[1] - self.p_length / 2 > -self.ring_height / 2 + self.ring_thickness):
-			self.player_2_pos[1] += self.player_2_move
+	def physics_step(self):
+		"""🚀 NEW: Use physics manager instead of inline physics"""
+		# Sync game state to physics engine
+		if self.physics.engine_type == "legacy":
+			self.physics.engine.player_1_pos = self.player_1_pos.copy()
+			self.physics.engine.player_2_pos = self.player_2_pos.copy()
+			self.physics.engine.ball_pos = self.ball_pos.copy()
+			self.physics.engine.ball_speed = self.ball_speed
+		else:  # modern
+			self.physics.engine.player_1_pos.x = self.player_1_pos[0]
+			self.physics.engine.player_1_pos.y = self.player_1_pos[1]
+			self.physics.engine.player_2_pos.x = self.player_2_pos[0]
+			self.physics.engine.player_2_pos.y = self.player_2_pos[1]
+			self.physics.engine.ball_pos.x = self.ball_pos[0]
+			self.physics.engine.ball_pos.y = self.ball_pos[1]
+		
+		# Execute physics step
+		result = self.physics.physics_step(ball_acc=ball_acc)
+		
+		# Sync back to game state
+		self.ball_pos = self.physics.get_ball_position()
+		
+		# Sync angle from physics engine
+		if hasattr(self.physics.engine, 'angle'):
+			self.angle = self.physics.engine.angle
+		
+		# Handle scoring
+		if result == "player_1_scores":
+			self.player_1_score += 1
+			self.reset_ball(random.uniform(110, 250))
+		elif result == "player_2_scores":
+			self.player_2_score += 1
+			self.reset_ball(random.uniform(70, -70))
+		
+		# Log physics stats occasionally for debugging
+		if self.frame_count % 300 == 0:  # Every 10 seconds
+			stats = self.physics.get_engine_stats()
+			logger.debug(f"Game {self.game_id} physics stats: {stats}")
+	
+	def switch_physics_engine(self, engine_type):
+		"""🔧 Switch physics engine (for testing)"""
+		logger.info(f"Game {self.game_id} switching to {engine_type} physics engine")
+		self.physics.switch_engine(engine_type, preserve_state=True)
 
 	async def update(self):
+		# ✅ PERFORMANCE: Throttle WebSocket updates to reduce lag
+		self.frame_count += 1
+		
+		# Only send WebSocket updates every 3rd frame (10 FPS instead of 30 FPS)
+		if self.frame_count % 2 != 0:
+			return
+			
 		channel_layer = get_channel_layer()
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
-			logger.info(f"Sending game state: {serialized_data}")
+			# Reduce logging verbosity - only log occasionally
+			if self.frame_count % 300 == 0:  # Log every 10 seconds at 30fps
+				logger.debug(f"Sending game state for game {self.game_id} (frame {self.frame_count})")
+			
 			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
@@ -211,21 +273,18 @@ class GameState:
 				}
 			)
 		except Exception as e:
+			logger.error(f"Error sending game state for game {self.game_id}: {e}")
 			print(f"Error sending game state: {e}") #TODO logg
-
-	def check_score(self):
-		if self.ball_pos[0] - self.ball_radius <= -self.ring_length / 2:
-			self.player_2_score += 1
-			self.reset_ball(random.uniform(70, -70))
-		elif self.ball_pos[0] + self.ball_radius >= self.ring_length / 2 + self.ring_thickness:
-			self.player_1_score += 1
-			self.reset_ball(random.uniform(110, 250))
 
 	def reset_ball(self, angle):
 		self.ball_pos = [0, 0]
 		self.angle = angle
 		self.ball_speed = 90 / 150
 		self.wall_hit_pos = 0
+		
+		# Also reset physics engine state
+		if hasattr(self.physics, 'engine'):
+			self.physics.engine.reset_ball(angle)
 
 
 	def movement(self):
@@ -239,17 +298,16 @@ class GameState:
 			self.player_2_pos[1] -= self.p_speed
 
 	def up(self, player):
-		print(f"Player {player} up")
 		if player == self.player_1.user_id:
-			self.player_1_move = 1
+			self.player_1_move = -1  # Set movement state, not direct position
 		elif player == self.player_2.user_id:
-			self.player_2_move = 1
+			self.player_2_move = -1
 
 	def down(self, player):
 		if player == self.player_1.user_id:
-			self.player_1_move = -1
+			self.player_1_move = 1  # Set movement state, not direct position
 		elif player == self.player_2.user_id:
-			self.player_2_move = -1
+			self.player_2_move = 1
 
 	def stop(self, player):
 		if player == self.player_1.user_id:
@@ -258,25 +316,33 @@ class GameState:
 			self.player_2_move = 0
 
 	def to_dict(self):
+		# ✅ PERFORMANCE: Only send essential game state data to reduce payload size
 		return {
 			'player_1_score': self.player_1_score,
 			'player_2_score': self.player_2_score,
-			'player_1_pos': self.player_1_pos,
-			'player_2_pos': self.player_2_pos,
+			'player_1_pos': self.to_percent(self.player_1_pos),
+			'player_2_pos': self.to_percent(self.player_2_pos),
 			'ball_pos': self.ball_pos,
 			'ball_speed': self.ball_speed,
 			'angle': self.angle,
-			'ring_length': self.ring_length,
-			'ring_height': self.ring_height,
-			'ring_width': self.ring_width,
-			'ring_thickness': self.ring_thickness,
-			'p_length': self.p_length,
-			'p_height': self.p_height,
-			'p_width': self.p_width,
-			'ball_radius': self.ball_radius,
-			'p_speed': self.p_speed
+			# Send ring dimensions only occasionally (they don't change during game)
+			'ring_length': self.ring_length if self.frame_count % 30 == 0 else None,
+			'ring_height': self.ring_height if self.frame_count % 30 == 0 else None,
 		}
 
+	
+	def to_percent(self, player_pos):
+		"""Convert player position to percentage (0 = top, 100 = bottom)"""
+		normalized_pos = player_pos[1] + (self.ring_height / 2)  # Shift from [-h/2, h/2] to [0, h]
+		percentage = (normalized_pos / self.ring_height) * 100   # Convert to percentage
+		
+		# Clamp percentage to valid range to prevent out-of-bounds values
+		percentage = max(0.0, min(100.0, percentage))
+		
+		# Debug logging
+		logger.debug(f"Game {self.game_id}: pos_y={player_pos[1]}, ring_height={self.ring_height}, normalized={normalized_pos}, percentage={percentage}")
+		
+		return [player_pos[0], percentage]  # Return [x, percentage]
 
 	def quit_game(self, player_id=None):
 		"""Handle game quit - can be called statically or as instance method"""
@@ -295,6 +361,8 @@ class GameState:
 # 	else:
 # 		logger = logging.getLogger(__name__)
 # 		logger.info(f'Game already started: {instance}')
+
+
 
 class TournamentState:
 	def __init__(self, *args, **kwargs):

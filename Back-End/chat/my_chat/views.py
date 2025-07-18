@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-from .models import ChatRoom, UserProfile, ChatMessage, ChatMember
+from .models import ChatRoom, UserProfile, ChatMessage, ChatMember, BlockedUser
 from django.contrib.auth.models import AnonymousUser
 from .serializers import chat_roomSerializer, chat_messageSerializer, userSerializer, userBlockedSerializer, userCreateSerializer
 from .middleware import ServiceAuthentication, JWTAuthMiddleware , JWTAuth
@@ -77,10 +77,12 @@ class GetChatMessage(generics.ListAPIView):
 				logger.warning(f"User {user} attempted to access messages in room {room_id} but is not a member")
 				return ChatMessage.objects.none()
 				
-			# Get user's blocked users
+			# Get user's blocked users using the new BlockedUser model
 			try:
 				user_profile = UserProfile.objects.get(user_id=user.user_id)
-				blocked_user_ids = list(user_profile.blockedUsers.values_list('user_id', flat=True))
+				# Get all users blocked by this user
+				blocked_relationships = BlockedUser.objects.filter(blocker=user_profile).select_related('blocked')
+				blocked_user_ids = [relationship.blocked.user_id for relationship in blocked_relationships]
 			except UserProfile.DoesNotExist:
 				blocked_user_ids = []
 			
@@ -155,7 +157,9 @@ class CreateChat(generics.ListCreateAPIView):
 		# Get creator's user profile
 		try:
 			creator_profile = UserProfile.objects.get(user_id=creator.user_id)
-			blocked_user_ids = list(creator_profile.blockedUsers.values_list('user_id', flat=True))
+			# Get users blocked by creator using new BlockedUser model
+			blocked_relationships = BlockedUser.objects.filter(blocker=creator_profile).select_related('blocked')
+			blocked_user_ids = [relationship.blocked.user_id for relationship in blocked_relationships]
 			
 			# Filter out users that the creator has blocked
 			filtered_user_ids = [uid for uid in user_ids if uid not in blocked_user_ids]
@@ -168,8 +172,8 @@ class CreateChat(generics.ListCreateAPIView):
 			final_user_ids = []
 			
 			for user_to_add in users_to_add:
-				# Check if user_to_add has blocked the creator
-				if not user_to_add.blockedUsers.filter(user_id=creator.user_id).exists():
+				# Check if user_to_add has blocked the creator using new model
+				if not BlockedUser.objects.filter(blocker=user_to_add, blocked=creator_profile).exists():
 					final_user_ids.append(user_to_add.user_id)
 				else:
 					logger.warning(f"User {user_to_add.user_id} has blocked creator {creator.user_id}, cannot add to chat")
@@ -203,10 +207,11 @@ class GetChats(generics.ListAPIView):
         logger.info(f"Retrieving chats for user: {user.user_id} ({getattr(user, 'username', 'unknown')})")
         
         try:
-            # Get user's blocked users
+            # Get user's blocked users using new BlockedUser model
             try:
                 user_profile = UserProfile.objects.get(user_id=user.user_id)
-                blocked_user_ids = list(user_profile.blockedUsers.values_list('user_id', flat=True))
+                blocked_relationships = BlockedUser.objects.filter(blocker=user_profile).select_related('blocked')
+                blocked_user_ids = [relationship.blocked.user_id for relationship in blocked_relationships]
             except UserProfile.DoesNotExist:
                 blocked_user_ids = []
             
@@ -255,10 +260,11 @@ class AddUsersToChat(generics.UpdateAPIView):
 		user = self.request.user
 		user_ids = self.request.data.get('users', [])
 		
-		# Get current user's blocked users
+		# Get current user's blocked users using new BlockedUser model
 		try:
 			user_profile = UserProfile.objects.get(user_id=user.user_id)
-			blocked_user_ids = list(user_profile.blockedUsers.values_list('user_id', flat=True))
+			blocked_relationships = BlockedUser.objects.filter(blocker=user_profile).select_related('blocked')
+			blocked_user_ids = [relationship.blocked.user_id for relationship in blocked_relationships]
 			
 			# Filter out blocked users from the user_ids list
 			filtered_user_ids = [uid for uid in user_ids if uid not in blocked_user_ids]
@@ -271,8 +277,8 @@ class AddUsersToChat(generics.UpdateAPIView):
 			final_user_ids = []
 			
 			for user_to_add in users_to_add:
-				# Check if user_to_add has blocked the current user
-				if not user_to_add.blockedUsers.filter(user_id=user.user_id).exists():
+				# Check if user_to_add has blocked the current user using new model
+				if not BlockedUser.objects.filter(blocker=user_to_add, blocked=user_profile).exists():
 					final_user_ids.append(user_to_add.user_id)
 				else:
 					logger.warning(f"User {user_to_add.user_id} has blocked {user.user_id}, cannot add to chat")
@@ -342,58 +348,97 @@ class BlockUser(APIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
 	def post(self, request, *args, **kwargs):
 		try:
-			#get the user id for url
+			# Get the user id from url
 			user_id = self.kwargs.get('user_id')
 
 			if not user_id:
 				return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+			
 			toBlock = get_object_or_404(UserProfile, user_id=user_id)
 			user = request.user
 			
-			user.blockedUsers.add(toBlock)
-			user.save()
-			return Response({'message': f'User {toBlock.username} blocked successfully'}, status=status.HTTP_200_OK)
+			# Check if user is trying to block themselves
+			if user.user_id == user_id:
+				return Response({'error': 'You cannot block yourself'}, status=status.HTTP_400_BAD_REQUEST)
+			
+			# Check if user is already blocked
+			if BlockedUser.objects.filter(blocker=user, blocked=toBlock).exists():
+				return Response({'error': 'User is already blocked'}, status=status.HTTP_400_BAD_REQUEST)
+			
+			# Create the blocking relationship using the new model
+			blocked_relationship = BlockedUser.objects.create(
+				blocker=user,
+				blocked=toBlock,
+				reason=request.data.get('reason', '')  # Optional reason
+			)
+			
+			logger.info(f"User {user.user_id} blocked user {toBlock.user_id}")
+			return Response({
+				'message': f'User {toBlock.username} blocked successfully',
+				'blocked_at': blocked_relationship.blocked_at.isoformat(),
+				'block_id': str(blocked_relationship.id)
+			}, status=status.HTTP_200_OK)
 
 		except UserProfile.DoesNotExist:
 			return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 		except Exception as e:
-			logger.error(f"Error retrieving user: {str(e)}")
-			return Response({'error': 'An error occurred while retrieving the user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			logger.error(f"Error blocking user: {str(e)}")
+			return Response({'error': 'An error occurred while blocking the user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 
 	def delete(self, request, *args, **kwargs):
 		try:
-			#get the user id for url
+			# Get the user id from url
 			user_id = self.kwargs.get('user_id')
-
+			
 			if not user_id:
 				return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+			
 			toUnblock = get_object_or_404(UserProfile, user_id=user_id)
 			user = request.user
-			if toUnblock not in user.blockedUsers.all():
+			
+			# Check if user is trying to unblock themselves
+			if user.user_id == user_id:
+				return Response({'error': 'You cannot unblock yourself'}, status=status.HTTP_400_BAD_REQUEST)
+			
+			# Find and delete the blocking relationship
+			blocked_relationship = BlockedUser.objects.filter(blocker=user, blocked=toUnblock).first()
+			if not blocked_relationship:
 				return Response({'error': 'User is not blocked'}, status=status.HTTP_400_BAD_REQUEST)
-			# Remove the user from the blocked list
-			user.blockedUsers.remove(toUnblock)
-			user.save()
-			return Response({'message': f'User {toUnblock.username} unblocked successfully'}, status=status.HTTP_200_OK)
+			
+			blocked_relationship.delete()
+			
+			logger.info(f"User {user.user_id} unblocked user {toUnblock.user_id}")
+			return Response({
+				'message': f'User {toUnblock.username} unblocked successfully'
+			}, status=status.HTTP_200_OK)
 
 		except UserProfile.DoesNotExist:
 			return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 		except Exception as e:
-			logger.error(f"Error retrieving user: {str(e)}")
-			return Response({'error': 'An error occurred while retrieving the user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			logger.error(f"Error unblocking user: {str(e)}")
+			return Response({'error': 'An error occurred while unblocking the user'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 	
 	def get(self, request):
 		user = request.user
 		if not user.is_authenticated:
 			return Response({'error': 'User is not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
 
-		blocked_users = user.blockedUsers.all()
-		if not blocked_users:
+		# Get all users that this user has blocked using the new BlockedUser model
+		blocked_relationships = BlockedUser.objects.filter(blocker=user).select_related('blocked')
+		
+		if not blocked_relationships.exists():
 			return Response({'message': 'No blocked users found'}, status=status.HTTP_404_NOT_FOUND)
-		blocked_users = userBlockedSerializer(blocked_users, many=True).data
-		# Return the list of blocked users
-		return Response({'blocked_users': blocked_users}, status=status.HTTP_200_OK)
+		
+		# Extract the blocked users from the relationships
+		blocked_users = [relationship.blocked for relationship in blocked_relationships]
+		blocked_users_data = userBlockedSerializer(blocked_users, many=True).data
+		
+		# Return the list of blocked users with additional metadata
+		return Response({
+			'blocked_users': blocked_users_data,
+			'count': len(blocked_users_data)
+		}, status=status.HTTP_200_OK)
 
 
 class allBlockedUsers(generics.ListAPIView):
@@ -413,7 +458,14 @@ class allBlockedUsers(generics.ListAPIView):
 
 	def get_queryset(self):
 		user = self.request.user
-		return user.blockedUsers.all() if user.is_authenticated else UserProfile.objects.none()
+		if not user.is_authenticated:
+			return UserProfile.objects.none()
+		
+		# Get all users blocked by the current user using the new BlockedUser model
+		blocked_relationships = BlockedUser.objects.filter(blocker=user).select_related('blocked')
+		blocked_user_ids = [relationship.blocked.user_id for relationship in blocked_relationships]
+		
+		return UserProfile.objects.filter(user_id__in=blocked_user_ids)
 
 class ChatMediaUpload(APIView):
 	"""

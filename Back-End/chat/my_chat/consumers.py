@@ -61,7 +61,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			sender_profile = UserProfile.objects.get(username=sender_username)
 			current_user_profile = UserProfile.objects.get(user_id=current_user.user_id)
 			
-			return current_user_profile.blockedUsers.filter(user_id=sender_profile.user_id).exists()
+			return current_user_profile.is_blocked_by(sender_profile)
 		except Exception as e:
 			logger.error(f"Error checking if user is blocked: {str(e)}")
 			return False
@@ -159,7 +159,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				'message': message,
 				'room_id': room_id,
 				'timestamp': timestamp,
-				'sender': sender
+				'sender': sender,
+				'sender_id': self.scope['user'].user_id if hasattr(self.scope['user'], 'user_id') else None
 			}
 		)
 
@@ -182,7 +183,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 				'message': message,
 				'room_id': room_id,
 				'sender': sender,
-				'timestamp': timestamp
+				'timestamp': timestamp,
+				'sender_id': self.scope['user'].user_id if hasattr(self.scope['user'], 'user_id') else None
 			}
 		)
 
@@ -199,7 +201,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			'message': event['message'],
 			'room_id': event['room_id'],
 			'sender': event['sender'],
-			'timestamp': event['timestamp']
+			'timestamp': event['timestamp'],
+			'sender_id': event['sender_id']
 		}))
 
 	async def game_invitation_message(self, event):
@@ -209,5 +212,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
 			'message': event['message'],
 			'room_id': event['room_id'],
 			'sender': event['sender'],
-			'timestamp': event['timestamp']
+			'timestamp': event['timestamp'],
+			'sender_id': event['sender_id']
 		}))

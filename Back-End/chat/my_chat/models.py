@@ -1,4 +1,6 @@
 from django.db import models
+import uuid
+from django.utils import timezone
 
 # Create your models here.
 
@@ -8,13 +10,7 @@ class UserProfile(models.Model):
 	username = models.CharField(max_length=255, null=True)
 	email = models.EmailField(max_length=255, unique=True, null=True)
 	is_staff = models.BooleanField(default=False)
-	blockedUsers = models.ManyToManyField(
-		'self', 
-		symmetrical=False, 
-		related_name='blocked_by', 
-		blank=True
-	)
-		
+
 	@property
 	def is_authenticated(self):
 		return True
@@ -30,6 +26,84 @@ class UserProfile(models.Model):
 
 	def __str__(self):
 		return self.username or f"User {self.user_id}"
+	
+	def block_user(self, user_to_block):
+		"""Block a user"""
+		blocked_user, created = BlockedUser.objects.get_or_create(
+			blocker=self,
+			blocked=user_to_block
+		)
+		return blocked_user
+	
+	def unblock_user(self, user_to_unblock):
+		"""Unblock a user"""
+		try:
+			blocked_user = BlockedUser.objects.get(
+				blocker=self,
+				blocked=user_to_unblock
+			)
+			blocked_user.delete()
+			return True
+		except BlockedUser.DoesNotExist:
+			return False
+	
+	def is_blocked_by(self, user):
+		"""Check if this user is blocked by another user"""
+		return BlockedUser.objects.filter(blocker=user, blocked=self).exists()
+	
+	def has_blocked(self, user):
+		"""Check if this user has blocked another user"""
+		return BlockedUser.objects.filter(blocker=self, blocked=user).exists()
+	
+	def get_blocked_users(self):
+		"""Get all users blocked by this user"""
+		return UserProfile.objects.filter(
+			user_id__in=BlockedUser.objects.filter(blocker=self).values_list('blocked_id', flat=True)
+		)
+	
+	def get_users_who_blocked_me(self):
+		"""Get all users who blocked this user"""
+		return UserProfile.objects.filter(
+			user_id__in=BlockedUser.objects.filter(blocked=self).values_list('blocker_id', flat=True)
+		)
+
+
+class BlockedUser(models.Model):
+	"""Model to handle user blocking relationships with additional metadata"""
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+	blocker = models.ForeignKey(
+		UserProfile, 
+		on_delete=models.CASCADE, 
+		related_name='blocked_users'
+	)
+	blocked = models.ForeignKey(
+		UserProfile, 
+		on_delete=models.CASCADE, 
+		related_name='blocked_by_users'
+	)
+	blocked_at = models.DateTimeField(default=timezone.now)
+	reason = models.TextField(blank=True, null=True)  # Optional reason for blocking
+	
+	class Meta:
+		unique_together = ('blocker', 'blocked')
+		indexes = [
+			models.Index(fields=['blocker']),
+			models.Index(fields=['blocked']),
+			models.Index(fields=['blocked_at']),
+		]
+	
+	def __str__(self):
+		return f"{self.blocker} blocked {self.blocked} at {self.blocked_at}"
+	
+	def clean(self):
+		"""Prevent users from blocking themselves"""
+		from django.core.exceptions import ValidationError
+		if self.blocker == self.blocked:
+			raise ValidationError("Users cannot block themselves")
+	
+	def save(self, *args, **kwargs):
+		self.clean()
+		super().save(*args, **kwargs)
 
 class ChatRoom(models.Model):
 	room_id = models.AutoField(primary_key=True)

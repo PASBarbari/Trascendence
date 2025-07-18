@@ -88,6 +88,7 @@ async function handleFriendRequest(str_method, receiver_id, receiver_username, i
 	}
 }
 
+
 function renderSentFriendRequest(receiver_id, receiver_username, addToDOM = false) {
 	console.log("/***********renderSentFriendRequest************/");
 	console.log("Rendering sent friend request for ID:", receiver_id);
@@ -123,17 +124,14 @@ async function getFriends() {
 	console.log("Token:", token);
 	console.log("indirizzo:", `${url_api}/user/friend`);
 	try {
-		const response = await fetch(
-			`${url_api}/user/user/friend`,
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
-					"X-CSRFToken": getCookie("csrftoken"),
-				},
-			}
-		);
+		const response = await fetch(`${url_api}/user/user/friend`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+				"X-CSRFToken": getCookie("csrftoken"),
+			},
+		});
 		if (response.ok) {
 			const data = await response.json();
 			console.log("getFriends data:", data);
@@ -304,6 +302,7 @@ function renderFriendRequest2(friends) {
 	const notificationContent = document.getElementById("notificationContent");
 	console.log("Friends:", friends);
 
+
 	const existingFriendIds = friends.map(f => f.friend_info.user_id);
 	messageHistory = messageHistory.filter(msg => {
 		// Mantieni solo i messaggi che esistono ancora come pending friends
@@ -322,8 +321,7 @@ function renderFriendRequest2(friends) {
 			if (actualSenderId == userId) {
 				return renderSentFriendRequest(otherId, username);
 				//return ""; // Skip if the user sent the request
-			}
-			else {
+			} else {
 				return `
 				<div class="card mb-3" id="notification-card-${index}">
 					<div class="card-body" style="display: flex; align-items: center;">
@@ -464,75 +462,342 @@ const MESSAGE_HANDLERS = {
 	// String-based messages (legacy support)
 	string_message: handleStringMessage,
 
+	pong_invitation: handlePongInvitationMessage,
+
 	// Fallback handler
 	default: handleDefaultMessage,
 };
 
+function handlePongInvitationMessage(message) {
+	console.log("Processing pong invitation message:", message);
 
+	const gameData = message.message?.data || message.data || {};
+	const inviterName = gameData.inviter_name || gameData.username || "Someone";
+	const inviterId = gameData.inviter_id || gameData.user_id;
+	const roomId = gameData.room_id || gameData.game_id;
+	const gameUrl = gameData.game_url;
 
+	// Show invitation modal
+	showPongInvitationModal(inviterName, inviterId, roomId, gameUrl);
+}
+
+function showPongInvitationModal(inviterName, inviterId, roomId, gameUrl) {
+	// Remove any existing invitation modals
+	const existingModal = document.getElementById("pongInvitationModal");
+	if (existingModal) {
+		existingModal.remove();
+	}
+
+	const modalHTML = `
+        <div class="modal fade" id="pongInvitationModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-table-tennis me-2"></i>Pong Invitation
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-gamepad fa-3x text-primary mb-3"></i>
+                            <h6>${inviterName} wants to play Pong with you!</h6>
+                            <p class="text-muted">Do you want to join the game?</p>
+                            <div class="small text-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Game Room: ${roomId}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary me-2" onclick="declinePongInvitation()">
+                            <i class="fas fa-times me-1"></i>Maybe Later
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="acceptPongInvitation('${gameUrl}')">
+                            <i class="fas fa-play me-1"></i>Join Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+	document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+	// Show the modal
+	const modal = document.getElementById("pongInvitationModal");
+	if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+		const bsModal = new bootstrap.Modal(modal);
+		bsModal.show();
+
+		// Auto-decline after 30 seconds
+		setTimeout(() => {
+			if (document.getElementById("pongInvitationModal")) {
+				bsModal.hide();
+				modal.remove();
+			}
+		}, 30000);
+	} else {
+		// Fallback if Bootstrap is not available
+		modal.style.display = "block";
+		modal.classList.add("show");
+	}
+
+	// Show toast notification as well
+	showNotificationToast(
+		`🎮 ${inviterName} invited you to play Pong!`,
+		"info"
+	);
+}
+
+// Add these global functions
+window.acceptPongInvitation = function (gameUrl) {
+	console.log(`Accepting pong invitation: ${gameUrl}`);
+
+	// Close the modal
+	const modal = document.getElementById("pongInvitationModal");
+	if (modal) {
+		if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+			const bsModal = bootstrap.Modal.getInstance(modal);
+			if (bsModal) bsModal.hide();
+		}
+		modal.remove();
+	}
+
+	// Navigate to multiplayer game
+	window.location.hash = gameUrl;
+
+	showNotificationToast("Joining Pong game...", "success");
+};
+
+window.declinePongInvitation = function () {
+	console.log("Declining pong invitation");
+
+	// Close the modal
+	const modal = document.getElementById("pongInvitationModal");
+	if (modal) {
+		if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+			const bsModal = bootstrap.Modal.getInstance(modal);
+			if (bsModal) bsModal.hide();
+		}
+		modal.remove();
+	}
+
+	showNotificationToast("Game invitation declined", "info");
+};
 
 //chat
 function handleChatInviteMessage(message) {
 	console.log("Processing chat invite message:", message);
 
-		console.log("test: ", message.message.data);
+	console.log("test: ", message.message.data);
+
 	const chatData = message.message?.data || {};
 	const roomName = chatData.room_name || "a chat room";
 	const creatorName = chatData.creator_name || "Someone";
 	const roomId = chatData.room_id;
 
 	// Mostra notifica toast
-		if (creatorName != getVariables().userUsername) {
-			showAlertForXSeconds(
-					`You have been invited to join "${roomName}" by ${creatorName}`,
-					"success",
-					5,
-					{ asToast: true }
-			);
-		}
+	if (creatorName != getVariables().userUsername) {
+		showAlertForXSeconds(
+			`You have been invited to join "${roomName}" by ${creatorName}`,
+			"success",
+			5,
+			{ asToast: true }
+		);
+	}
 
 	// Aggiorna la lista delle chat
-	if (typeof updateChatList === 'function') {
+	if (typeof updateChatList === "function") {
 		updateChatList();
 	}
 }
 
-
 //pong
 function handleGameCreatedMessage(message) {
-	console.log("Processing game created message:", message);
+	console.log("🚀 DEBUG: handleGameCreatedMessage called!");
+	console.log("🚀 DEBUG: Full message:", JSON.stringify(message, null, 2));
 
 	const gameData = message?.message || {};
 	const gameId = gameData.game_id;
-	const creatorName = gameData.player_1.username || "Someone";
+	const player1Data = gameData.player_1 || {};
+	const player2Data = gameData.player_2 || {};
 
-	// Show toast notification
-	showAlertForXSeconds(
-		`Game created by ${creatorName}. Game ID: ${gameId}`,
-		"success",
-		5,
-		{ asToast: true }
+	console.log("🚀 DEBUG: gameData:", gameData);
+	console.log("🚀 DEBUG: gameId:", gameId);
+	console.log("🚀 DEBUG: player1Data:", player1Data);
+	console.log("🚀 DEBUG: player2Data:", player2Data);
+
+	const { userId } = getVariables();
+	const currentUserId = parseInt(userId);
+
+	console.log("🚀 DEBUG: currentUserId:", currentUserId);
+	console.log("🚀 DEBUG: player1Data.user_id:", player1Data.user_id);
+	console.log("🚀 DEBUG: player2Data.user_id:", player2Data.user_id);
+
+	// Determine if this user is the inviter or the invited player
+	const isPlayer1 = player1Data.user_id === currentUserId;
+	const isPlayer2 = player2Data.user_id === currentUserId;
+
+	console.log("🚀 DEBUG: isPlayer1:", isPlayer1);
+	console.log("🚀 DEBUG: isPlayer2:", isPlayer2);
+
+	if (isPlayer2) {
+		// This user is the invited player (player 2) - show invitation modal
+		const inviterName = player1Data.username || "Someone";
+		const inviterId = player1Data.user_id;
+
+		console.log("🚀 DEBUG: Player 2 detected! Showing invitation modal");
+		console.log("🚀 DEBUG: inviterName:", inviterName);
+		console.log("🚀 DEBUG: inviterId:", inviterId);
+		console.log("🚀 DEBUG: gameId:", gameId);
+
+		// Show the invitation modal
+		showGameInvitationModal(inviterName, inviterId, gameId);
+	} else if (isPlayer1) {
+		console.log("🚀 DEBUG: Player 1 detected! (Game creator)");
+	} else {
+		console.log("🚀 DEBUG: Neither player 1 nor player 2!");
+	}
+}
+
+function showGameInvitationModal(inviterName, inviterId, gameId) {
+	console.log("🎮 DEBUG: showGameInvitationModal called!");
+	console.log("🎮 DEBUG: inviterName:", inviterName);
+	console.log("🎮 DEBUG: inviterId:", inviterId);
+	console.log("🎮 DEBUG: gameId:", gameId);
+
+	// Remove any existing invitation modals
+	const existingModal = document.getElementById("gameInvitationModal");
+	if (existingModal) {
+		console.log("🎮 DEBUG: Removing existing modal");
+		existingModal.remove();
+	}
+
+	console.log("🎮 DEBUG: Creating modal HTML...");
+	const modalHTML = `
+        <div class="modal fade" id="gameInvitationModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-table-tennis me-2"></i>Pong Game Invitation
+                        </h5>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-gamepad fa-3x text-primary mb-3"></i>
+                            <h6>${inviterName} wants to play Pong with you!</h6>
+                            <p class="text-muted">Do you want to join the game?</p>
+                            <div class="small text-info">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Game ID: ${gameId}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-secondary me-2" onclick="declineGameInvitation()">
+                            <i class="fas fa-times me-1"></i>Maybe Later
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="acceptGameInvitation('${gameId}', '${inviterId}', '${inviterName}')">
+                            <i class="fas fa-play me-1"></i>Join Game
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+	console.log("🎮 DEBUG: Adding modal to document...");
+	document.body.insertAdjacentHTML("beforeend", modalHTML);
+
+	// Show the modal
+	const modal = document.getElementById("gameInvitationModal");
+	console.log("🎮 DEBUG: Modal element found:", !!modal);
+
+	if (modal) {
+		console.log(
+			"🎮 DEBUG: Modal HTML:",
+			modal.outerHTML.substring(0, 200) + "..."
+		);
+	}
+
+	if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+		console.log("🎮 DEBUG: Bootstrap Modal available, showing modal...");
+		const bsModal = new bootstrap.Modal(modal);
+		bsModal.show();
+
+		// Auto-decline after 30 seconds
+		setTimeout(() => {
+			if (document.getElementById("gameInvitationModal")) {
+				console.log("🎮 DEBUG: Auto-declining modal after 30 seconds");
+				bsModal.hide();
+				modal.remove();
+			}
+		}, 30000);
+	} else {
+		console.log(
+			"🎮 DEBUG: Bootstrap Modal not available, using fallback..."
+		);
+		// Fallback if Bootstrap is not available
+		modal.style.display = "block";
+		modal.classList.add("show");
+		modal.style.position = "fixed";
+		modal.style.top = "0";
+		modal.style.left = "0";
+		modal.style.width = "100%";
+		modal.style.height = "100%";
+		modal.style.backgroundColor = "rgba(0,0,0,0.5)";
+		modal.style.zIndex = "9999";
+	}
+
+	// Show toast notification as well
+	console.log("🎮 DEBUG: Showing toast notification...");
+	showNotificationToast(
+		`🎮 ${inviterName} invited you to play Pong!`,
+		"info"
 	);
 }
 
+// Add these global functions
+window.acceptGameInvitation = function (gameId, opponentId, opponentName) {
+	console.log(
+		`Accepting game invitation: game=${gameId}, opponent=${opponentId}`
+	);
 
+	// Close the modal
+	const modal = document.getElementById("gameInvitationModal");
+	if (modal) {
+		if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+			const bsModal = bootstrap.Modal.getInstance(modal);
+			if (bsModal) bsModal.hide();
+		}
+		modal.remove();
+	}
 
+	// Navigate to multiplayer game with the correct parameters
+	// Use gameId as roomId since that's what your backend uses
+	const gameUrl = `#pongmulti?room=${gameId}&opponent=${opponentId}&opponentName=${encodeURIComponent(
+		opponentName
+	)}`;
+	window.navigateTo(gameUrl);
+	showNotificationToast(`Joining game with ${opponentName}...`, "success");
+};
 
+window.declineGameInvitation = function () {
+	console.log("Declining game invitation");
 
+	// Close the modal
+	const modal = document.getElementById("gameInvitationModal");
+	if (modal) {
+		if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
+			const bsModal = bootstrap.Modal.getInstance(modal);
+			if (bsModal) bsModal.hide();
+		}
+		modal.remove();
+	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+	showNotificationToast("Game invitation declined", "info");
+};
 
 /**
  * Enhanced message type detection with support for multiple message formats
@@ -685,7 +950,8 @@ function initializeWebSocket() {
 
 			// Determine message type and route to appropriate handler
 			const messageType = getMessageType(message);
-			const handler = MESSAGE_HANDLERS[messageType] || MESSAGE_HANDLERS["default"];
+			const handler =
+				MESSAGE_HANDLERS[messageType] || MESSAGE_HANDLERS["default"];
 
 			console.log(`Routing to handler: ${messageType}`);
 			handler(message);

@@ -17,10 +17,6 @@ export function animate() {
 		}
 		if (state.ball) {
 			state.ball.update(deltaTime);
-			// if (state.ball && state.lightTarget) {
-			// 	state.lightTarget.position.copy(state.ball.mesh.position);
-			// 	state.lightTarget.updateMatrixWorld(); // Ensure world matrix is updated
-			// }
 		}
 
 		if (state.players[0]) {

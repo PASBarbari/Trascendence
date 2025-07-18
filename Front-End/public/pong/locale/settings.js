@@ -206,10 +206,12 @@ function exitGame() {
 
 function showGameOverMenu(winner) {
 	// Hide other menus
+	if (!state.IsMultiplayer){
 	document.getElementById("menu").style.display = "none";
 	document.getElementById("pauseMenu").style.display = "none";
 	document.getElementById("settingsMenu").style.display = "none";
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
+	}
 
 	// Update winner text
 	document.getElementById(
