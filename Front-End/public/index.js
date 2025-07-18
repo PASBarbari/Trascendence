@@ -167,7 +167,8 @@ const locationHandler = async () => {
 			renderFunction();
 		} catch (error) {
 			console.error(
-				`Errore nel caricamento del modulo ${location}:`,
+				"Errore nel caricamento del modulo %s:",
+				location,
 				error
 			);
 		}
