@@ -2,7 +2,7 @@ import { getVariables } from '../var.js';
 import { renderAddChat } from './AddChat.js';
 import { renderChatBubble } from './ChatBubble.js';
 import { getCookie } from '../cookie.js';
-import { getBlockedUsersList, showBlockedUsersModal } from './blockUser.js';
+import { getBlockedUsersList, showBlockedUsersModal, helperAutocomplete, loadBlockedUsers } from './blockUser.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -118,6 +118,7 @@ async function renderExpandableSidebar() {
 			blockedUserListModal = null;
 		} else {
 			blockedUserListModal = showBlockedUsersModal();
+			helperAutocomplete(blockedUserListModal);
 			chatContainer.insertBefore(blockedUserListModal, chatContainer.firstChild);
 		}
 	});
@@ -222,7 +223,7 @@ function renderChatItem(chat) {
 			<div class="scrollable-content"></div>
 
 			<form class="input-group chat-input">
-				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048"/>
+				<input class="form-control" type="text" id="messages" placeholder="Type a message" style="width: 32%;" maxlength="2048" autocomplete="off"/>
 				<button class="btn btn-outline-primary" type="submit">
 					<i class="bi bi-send"></i>
 				</button>
@@ -392,6 +393,10 @@ function isUserBlocked(username) {
 async function updateBlockedUsers() {
 	await getBlockedUsers();
 	console.log("Lista utenti bloccati aggiornata");
+	if (blockedUserListModal) {
+    await loadBlockedUsers(blockedUserListModal);
+  }
+  console.log("Lista utenti bloccati aggiornata");
 }
 
 export { renderExpandableSidebar, updateChatList, updateBlockedUsers, isUserBlocked };

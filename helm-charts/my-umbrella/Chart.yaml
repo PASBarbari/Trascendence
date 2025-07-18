@@ -79,3 +79,9 @@ dependencies:
     condition: cert-manager.enabled
     tags:
       - cert-manager
+  - name: traefik-chart
+    repository: file://charts/traefik-chart
+    version: 0.1.0
+    condition: traefik.enabled
+    tags:
+      - traefik

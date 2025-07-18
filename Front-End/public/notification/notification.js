@@ -2,6 +2,7 @@ import { setVariables, getVariables, calculateInitials } from "../var.js";
 import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
+import { initFriendAutocomplete } from "./friendAutocomplete.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -11,7 +12,7 @@ document.head.appendChild(link);
 let messageHistory = [];
 let socket;
 
-async function handleFriendRequest(str_method, receiver_id, index) {
+async function handleFriendRequest(str_method, receiver_id, receiver_username, index) {
 	// Pulisce l'input dopo aver inviato la richiesta
 	receiver_id = Number(receiver_id);
 	const friendInput = document.getElementById("friendID");
@@ -48,10 +49,8 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 			if (index !== undefined && index !== null && index >= 0) {
 				messageHistory.splice(index, 1);
 			}
-			if (str_method === "DELETE") {
-				messageHistory = messageHistory.filter(
-					(msg) => msg.user_id !== receiver_id
-				);
+			if (str_method === 'DELETE') {
+				messageHistory = messageHistory.filter(msg => msg.user_id !== receiver_id);
 			}
 
 			const info = data.info;
@@ -73,7 +72,9 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 				getFriends();
 			} else if (info === "friend request sent") {
 				console.log("Friend request sent handleFriendRequest");
-				renderSentFriendRequest(receiver_id, true);
+				console.log("receiver_id:", receiver_id);
+				console.log("receiver_username:", receiver_username);
+				renderSentFriendRequest(receiver_id, receiver_username, true);
 			} else {
 				console.log("else handleFriendRequest");
 				getFriends();
@@ -87,29 +88,29 @@ async function handleFriendRequest(str_method, receiver_id, index) {
 	}
 }
 
-function renderSentFriendRequest(receiver_id, addToDOM = false) {
+
+function renderSentFriendRequest(receiver_id, receiver_username, addToDOM = false) {
 	console.log("/***********renderSentFriendRequest************/");
 	console.log("Rendering sent friend request for ID:", receiver_id);
+	console.log("Rendering sent friend request for Username:", receiver_username);
 
 	const notificationContent = document.getElementById("notificationContent");
 
 	// Create the HTML
 	const htmlToAdd = `
-        <div class="card mb-3" id="notification-card-${receiver_id}">
-            <div class="card-body">
-                <p class="card-text">Friend request sent to User ID: ${receiver_id}</p>
-                <button class="btn btn-outline-secondary" type="button"
-                    onclick="handleFriendRequest('DELETE', ${receiver_id})">
-                    Cancel Request
-                </button>
-            </div>
-        </div>
-    `;
+		<div class="card mb-3" id="notification-card-${receiver_username}">
+			<div class="card-body" style="display: flex; align-items: center;">
+				<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request sent to <b>${receiver_username}</b></p>
+				<button class="btn btn-outline-danger" type="button"
+					onclick="handleFriendRequest('DELETE', ${receiver_id}, '${receiver_username}')">
+					<i class="bi bi-eraser-fill"></i>
+				</button>
+			</div>
+		</div>
+	`;
 
 	if (addToDOM) {
-		const notificationContent = document.getElementById(
-			"notificationContent"
-		);
+		const notificationContent = document.getElementById("notificationContent");
 		notificationContent.innerHTML += htmlToAdd;
 	}
 
@@ -165,11 +166,11 @@ function renderFriendsList(friends) {
 
 	if (friends.length === 0) {
 		friendsList.innerHTML = `
-            <div class="text-center text-muted py-3">
-                <i class="bi bi-people"></i>
-                <p class="mb-0">No friends yet. Add some friends to get started!</p>
-            </div>
-        `;
+			<div class="text-center text-muted py-3">
+				<i class="bi bi-people"></i>
+				<p class="mb-0">No friends yet. Add some friends to get started!</p>
+			</div>
+		`;
 		return;
 	}
 
@@ -183,28 +184,28 @@ function renderFriendsList(friends) {
 			const friend_initials = calculateInitials(username);
 
 			return `
-                <div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
-                    <!-- Friend Avatar -->
-                    <div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
-                         style="width: 45px; height: 45px; font-weight: 600;">
-                        ${friend_initials}
-                    </div>
+				<div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
+					<!-- Friend Avatar -->
+					<div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
+						 style="width: 45px; height: 45px; font-weight: 600;">
+						${friend_initials}
+					</div>
 
-                    <!-- Friend Info -->
-                    <div class="flex-grow-1">
-                        <h6 class="mb-0 fw-semibold">${username}</h6>
-                    </div>
+					<!-- Friend Info -->
+					<div class="flex-grow-1">
+						<h6 class="mb-0 fw-semibold">${username}</h6>
+					</div>
 
-                    <!-- Action Buttons -->
-                    <div
-                        <button class="btn btn-outline-danger btn-sm" type="button"
-                                onclick="handleFriendRequest('DELETE', ${friendId}, ${index})"
-                                title="Remove friend">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
+					<!-- Action Buttons -->
+					<div>
+						<button class="btn btn-outline-danger btn-sm" type="button"
+								onclick="handleFriendRequest('DELETE', ${friendId}, '', ${index})"
+								title="Remove friend">
+							<i class="bi bi-trash"></i>
+						</button>
+					</div>
+				</div>
+			`;
 		})
 		.join("");
 }
@@ -274,21 +275,23 @@ function renderFriendRequest() {
 		.map((friendRequests, index) => {
 			const senderData = friendRequests.userData;
 			const senderId = friendRequests.user_id;
+			const username = senderData.username || "Unknown";
+			console.log("senderdata:", senderData);
 			return `
-            <div class="card mb-3" id="notification-card-${index}">
-                <div class="card-body">
-                    <p class="card-text">User ID: ${senderId}</p>
-                    <button class="btn btn-outline-primary" type="button"
-                        onclick="handleFriendRequest('PATCH', ${senderId}, ${index})">
-                        Accept
-                    </button>
-                    <button class="btn btn-outline-secondary" type="button"
-                        onclick="handleFriendRequest('DELETE', ${senderId}, ${index})">
-                        Decline
-                    </button>
-                </div>
-            </div>
-        `;
+			<div class="card mb-3" id="notification-card-${index}">
+				<div class="card-body" style="display: flex; align-items: center;">
+					<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request from: <b>${username}</b></p>
+					<button class="btn btn-outline-success me-2" type="button"
+						onclick="handleFriendRequest('PATCH', ${senderId}, '', ${index})">
+						<i class="bi bi-hand-thumbs-up-fill"></i>
+					</button>
+					<button class="btn btn-outline-danger" type="button"
+						onclick="handleFriendRequest('DELETE', ${senderId}, '', ${index})">
+						<i class="bi bi-hand-thumbs-down-fill"></i>
+					</button>
+				</div>
+			</div>
+		`;
 		})
 		.join("");
 }
@@ -299,8 +302,9 @@ function renderFriendRequest2(friends) {
 	const notificationContent = document.getElementById("notificationContent");
 	console.log("Friends:", friends);
 
-	const existingFriendIds = friends.map((f) => f.friend_info.user_id);
-	messageHistory = messageHistory.filter((msg) => {
+
+	const existingFriendIds = friends.map(f => f.friend_info.user_id);
+	messageHistory = messageHistory.filter(msg => {
 		// Mantieni solo i messaggi che esistono ancora come pending friends
 		return existingFriendIds.includes(msg.user_id);
 	});
@@ -310,24 +314,25 @@ function renderFriendRequest2(friends) {
 			const Data = friendship.friend_info;
 			const otherId = friendship.friend_info.user_id;
 			const actualSenderId = friendship.friend_info.sent_by.user_id;
+			const username = friendship.friend_info.username || "Unknown";
 			console.log("otherId:", otherId);
 			console.log("actualSenderId:", actualSenderId);
 			console.log("userId:", userId);
 			if (actualSenderId == userId) {
-				return renderSentFriendRequest(otherId);
+				return renderSentFriendRequest(otherId, username);
 				//return ""; // Skip if the user sent the request
 			} else {
 				return `
 				<div class="card mb-3" id="notification-card-${index}">
-					<div class="card-body">
-						<p class="card-text">User ID: ${otherId}</p>
-						<button class="btn btn-outline-primary" type="button"
-							onclick="handleFriendRequest('PATCH', ${otherId}, ${index})">
-							Accept
+					<div class="card-body" style="display: flex; align-items: center;">
+						<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request from: <b>${username}</b></p>
+						<button class="btn btn-outline-success me-2" type="button"
+							onclick="handleFriendRequest('PATCH', ${otherId}, '', ${index})">
+							<i class="bi bi-hand-thumbs-up-fill"></i>
 						</button>
-						<button class="btn btn-outline-secondary" type="button"
-							onclick="handleFriendRequest('DELETE', ${otherId}, ${index})">
-							Decline
+						<button class="btn btn-outline-danger" type="button"
+							onclick="handleFriendRequest('DELETE', ${otherId}, '', ${index})">
+							<i class="bi bi-hand-thumbs-down-fill"></i>
 						</button>
 					</div>
 				</div>
@@ -350,18 +355,26 @@ function renderNotification() {
 			</div>
 			<div id="friendsList" class="mb-3"></div>
 			<div id="notificationContent" class="d-flex flex-column gap-3"></div>
-			<div class="input-group mb-3">
-				<input type="text" class="form-control" id="friendID" placeholder="User ID" style="width: 32%;">
-				<button class="btn btn-outline-primary" type="button"
-					onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))">Send Friend Request</button>
+			<div class="input-group">
+				<input type="text" class="form-control" id="friendID" placeholder="Friend Username" style="width: 32%;" autocomplete="off" >
+				<!--<button class="btn btn-outline-primary" type="button"
+					onclick="handleFriendRequest('POST', Number(document.getElementById('friendID').value))"><i class="bi bi-cart-plus"></i></button>-->
+
 				<!--<button class="btn btn-outline-secondary" type="button"
-					onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>-->
+				onclick="handleFriendRequest('DELETE', Number(document.getElementById('friendID').value))">Delete Friend Request</button>-->
+				</div>
+			<div id="suggestionList" class="list-group" style="display:none; position: absolute;">
+						<!-- Suggestions will be populated here -->
 			</div>
 		</div>
 	`;
 
 	renderFriendRequest();
 	getFriends();
+	initFriendAutocomplete({
+		inputId: "friendID",
+		suggestionListId: "suggestionList"
+	});
 }
 
 // Message validation utilities
@@ -577,6 +590,7 @@ function handleChatInviteMessage(message) {
 	console.log("Processing chat invite message:", message);
 
 	console.log("test: ", message.message.data);
+
 	const chatData = message.message?.data || {};
 	const roomName = chatData.room_name || "a chat room";
 	const creatorName = chatData.creator_name || "Someone";
@@ -1098,6 +1112,7 @@ function handleFriendDeletedMessage(message) {
 	// Show notification
 	if (message.message && message.message.data) {
 		const userData = message.message.data;
+		console.log("User data:", userData);
 		showNotificationToast(
 			`${
 				userData.username || "Someone"

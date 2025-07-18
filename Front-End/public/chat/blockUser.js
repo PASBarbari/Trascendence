@@ -2,6 +2,7 @@ import { getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 import { showAlertForXSeconds } from '../alert/alert.js';
 import { updateBlockedUsers } from './ExpandableSidebar.js';
+import { initFriendAutocomplete } from '../notification/friendAutocomplete.js';
 
 const link = document.createElement('link');
 link.rel = 'stylesheet';
@@ -171,17 +172,25 @@ function showBlockedUsersModal() {
 
     loadBlockedUsers(blockedUserListModal);
 
-    blockedUserListModal.innerHTML += `
-    <div class="input-group mb-3">
-			<input type="text" class="form-control" id="userID" placeholder="User ID" style="width: 32%;">
-			<button class="btn btn-outline-primary" type="button" 
-				onclick="blockUser(Number(document.getElementById('userID').value), 'gino')">
-				<i class="bi bi-lock"></i>
-			</button>
+		blockedUserListModal.innerHTML += `
+		<div class="input-group mb-3">
+				<input type="text" class="form-control" id="blockUserInput" placeholder="Username" autocomplete="off">
+				<div id="blockUserSuggestionList" class="list-group" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1000;"></div>
 		</div>
-    `;
+		`;
 
     return blockedUserListModal;
+}
+
+
+
+function helperAutocomplete(blockedUserListModal) {
+	setTimeout(() => {
+    initFriendAutocomplete({
+        inputId: "blockUserInput",
+        suggestionListId: "blockUserSuggestionList"
+    });
+}, 0);
 }
 
 /**
@@ -194,7 +203,7 @@ async function loadBlockedUsers(blockedUserListModal) {
     if (blockedUsers.length === 0) {
         listContainer.innerHTML = `
             <div class="text-center text-muted">
-                <i class="bi bi-person-check fs-1"></i>
+                <i class="bi bi-person-lock fs-1"></i>
                 <p>No blocked users</p>
             </div>
         `;
@@ -205,10 +214,9 @@ async function loadBlockedUsers(blockedUserListModal) {
         <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
             <div>
                 <strong>${user.username}</strong>
-                <small class="text-muted d-block">ID: ${user.user_id}</small>
             </div>
-            <button class="btn btn-sm btn-outline-success" onclick="unblockUserFromModal(${user.user_id}, '${user.username}')">
-                <i class="bi bi-person-plus"></i> Unblock
+            <button class="btn btn-outline-success" onclick="unblockUserFromModal(${user.user_id}, '${user.username}')">
+                <i class="bi bi-unlock2-fill"></i>
             </button>
         </div>
     `).join('');
@@ -233,4 +241,4 @@ window.blockUser = blockUser;
 // window.unblockUser = unblockUser;
 // window.showBlockedUsersModal = showBlockedUsersModal;
 
-export { blockUser, unblockUser, getBlockedUsersList, showBlockedUsersModal };
+export { blockUser, unblockUser, getBlockedUsersList, showBlockedUsersModal, helperAutocomplete, loadBlockedUsers };
