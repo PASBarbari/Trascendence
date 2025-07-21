@@ -141,6 +141,14 @@ function hideAllMenusAndStartGame() {
 	if (!state.animationFrameId) {
 		GAME.animate();
 	}
+
+	// Show mobile controls if on mobile device
+	if (window.initializeMobileControls) {
+		window.initializeMobileControls();
+		if (window.showMobileControls) {
+			window.showMobileControls();
+		}
+	}
 }
 
 function initializeWebSocket(room_id, player1, player2) {
@@ -342,6 +350,11 @@ const gameStateChecker = setInterval(() => {
 // Clean up on page navigation
 window.addEventListener("hashchange", () => {
 	clearInterval(gameStateChecker);
+	
+	// Remove mobile controls when navigating away from pong
+	if (typeof window.removeMobileControls === 'function') {
+		window.removeMobileControls();
+	}
 });
 
 function updateGameState(gameStateData) {
@@ -354,6 +367,11 @@ function updateGameState(gameStateData) {
 		state.p1_score = gameStateData.player_1_score;
 	if (gameStateData.player_2_score !== undefined)
 		state.p2_score = gameStateData.player_2_score;
+	
+	// Update mobile score display
+	// if (typeof window.updateMobileScore === 'function') {
+	// 	window.updateMobileScore(state.p1_score, state.p2_score);
+	// }
 
 	// Update ring dimensions only when provided (they're sent less frequently now for performance)
 	if (
@@ -537,6 +555,11 @@ function updateOpponentStatus(status) {
 function handleGameOver() {
 	state.isStarted = false;
 	state.isPaused = true;
+
+	// Remove mobile controls
+	if (typeof window.removeMobileControls === 'function') {
+		window.removeMobileControls();
+	}
 
 	// Determine winner
 	const winner = state.p1_score >= state.maxScore ? "Player 1" : "Player 2";

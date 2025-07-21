@@ -15,6 +15,12 @@ friendListCSS.rel = "stylesheet";
 friendListCSS.href = "/pong/friendlist.css";
 document.head.appendChild(friendListCSS);
 
+// Load mobile controls CSS
+const mobileControlsCSS = document.createElement("link");
+mobileControlsCSS.rel = "stylesheet";
+mobileControlsCSS.href = "/pong/mobile-controls.css";
+document.head.appendChild(mobileControlsCSS);
+
 // Load FontAwesome for icons
 const fontAwesome = document.createElement("link");
 fontAwesome.rel = "stylesheet";
@@ -464,6 +470,175 @@ window.handleMultiPong = handleMultiPong;
 window.closeLoginBox = closeLoginBox;
 window.closeRegisterBox = closeRegisterBox;
 window.inviteToGame = inviteToGame;
+
+// Mobile Controls Functions
+function createMobileControls() {
+	// Remove existing controls
+	removeMobileControls();
+	
+	const mobileControls = document.createElement('div');
+	mobileControls.id = 'mobile-pong-controls';
+	mobileControls.className = 'mobile-pong-controls';
+	mobileControls.innerHTML = `
+		<div class="mobile-controls-left">
+			<button class="mobile-btn mobile-btn-up" id="mobileUpBtn">
+				<i class="fas fa-chevron-up"></i>
+			</button>
+			<button class="mobile-btn mobile-btn-down" id="mobileDownBtn">
+				<i class="fas fa-chevron-down"></i>
+			</button>
+		</div>
+	`;
+	
+	document.body.appendChild(mobileControls);
+	attachMobileControlEvents();
+}
+
+function attachMobileControlEvents() {
+	const upBtn = document.getElementById('mobileUpBtn');
+	const downBtn = document.getElementById('mobileDownBtn');
+	
+	if (!upBtn || !downBtn) return;
+	
+	// Simulate keyboard events for 'w' and 's' keys
+	function simulateKeyEvent(key, type) {
+		const event = new KeyboardEvent(type, {
+			key: key,
+			code: key === 'w' ? 'KeyW' : 'KeyS',
+			keyCode: key === 'w' ? 87 : 83,
+			which: key === 'w' ? 87 : 83,
+			bubbles: true
+		});
+		document.dispatchEvent(event);
+	}
+	
+	// Up button (W key)
+	upBtn.addEventListener('touchstart', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('w', 'keydown');
+		upBtn.classList.add('active');
+	});
+	
+	upBtn.addEventListener('touchend', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('w', 'keyup');
+		upBtn.classList.remove('active');
+	});
+	
+	// Down button (S key)
+	downBtn.addEventListener('touchstart', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('s', 'keydown');
+		downBtn.classList.add('active');
+	});
+	
+	downBtn.addEventListener('touchend', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('s', 'keyup');
+		downBtn.classList.remove('active');
+	});
+	
+	// Mouse events for testing on desktop
+	upBtn.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('w', 'keydown');
+		upBtn.classList.add('active');
+	});
+	
+	upBtn.addEventListener('mouseup', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('w', 'keyup');
+		upBtn.classList.remove('active');
+	});
+	
+	downBtn.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('s', 'keydown');
+		downBtn.classList.add('active');
+	});
+	
+	downBtn.addEventListener('mouseup', (e) => {
+		e.preventDefault();
+		simulateKeyEvent('s', 'keyup');
+		downBtn.classList.remove('active');
+	});
+	
+	// Prevent context menu
+	[upBtn, downBtn].forEach(btn => {
+		btn.addEventListener('contextmenu', (e) => {
+			e.preventDefault();
+		});
+	});
+}
+
+// function updateMobileScore(p1Score, p2Score) {
+// 	const p1ScoreElement = document.getElementById('mobileP1Score');
+// 	const p2ScoreElement = document.getElementById('mobileP2Score');
+	
+// 	if (p1ScoreElement) p1ScoreElement.textContent = p1Score || 0;
+// 	if (p2ScoreElement) p2ScoreElement.textContent = p2Score || 0;
+// }
+
+function showMobileControls() {
+	const controls = document.getElementById('mobile-pong-controls');
+	if (controls) {
+		controls.style.display = 'flex';
+		controls.classList.add('show');
+	} else {
+		createMobileControls();
+	}
+}
+
+function hideMobileControls() {
+	const controls = document.getElementById('mobile-pong-controls');
+	if (controls) {
+		controls.style.display = 'none';
+		controls.classList.remove('show');
+	}
+}
+
+function removeMobileControls() {
+	const existingControls = document.getElementById('mobile-pong-controls');
+	if (existingControls) {
+		existingControls.remove();
+	}
+}
+
+// Check if device is mobile or has touch capability
+function isMobileDevice() {
+	return 'ontouchstart' in window || 
+		   navigator.maxTouchPoints > 0 || 
+		   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Auto-show mobile controls when game starts (call this from your game initialization)
+function initializeMobileControls() {
+	if (isMobileDevice()) {
+		createMobileControls();
+		showMobileControls();
+	}
+}
+
+// Export mobile control functions
+window.createMobileControls = createMobileControls;
+window.showMobileControls = showMobileControls;
+window.hideMobileControls = hideMobileControls;
+window.removeMobileControls = removeMobileControls;
+window.initializeMobileControls = initializeMobileControls;
+
+// Global cleanup function for pong
+window.cleanupMobileControls = function() {
+	if (typeof window.removeMobileControls === 'function') {
+		window.removeMobileControls();
+	}
+};
+
+// Clean up mobile controls on page unload
+window.addEventListener('beforeunload', () => {
+	if (typeof window.removeMobileControls === 'function') {
+		window.removeMobileControls();
+	}
+});
 
 export { renderPongInfo, showNotification };
 
