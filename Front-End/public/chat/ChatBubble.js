@@ -7,9 +7,17 @@ link.href = "/chat/chat.css";
 document.head.appendChild(link);
 
 function renderChatBubble({ senderName, date, message, isSingleChat, type, senderId }) {
-	const { userUsername } = getVariables();
+	const { userUsername, url_api } = getVariables();
 	const isSenderMe = userUsername === senderName;
 	const initials = calculateInitials(senderName);
+	// if (!isSingleChat && !isSenderMe) {
+	// 	takeDatafromUserId(senderId).then(ImgData => {
+	// 		console.log("[renderChatBubble] ImgData:", ImgData);
+	// 		let ProfileImg = ImgData?.current_avatar_url || "";
+	// 		if (ProfileImg == "/media/placeholder.jpeg") ProfileImg = "";	
+	// 		console.log("[renderChatBubble] ProfileImg:", ProfileImg);
+	// 	});
+	// }
 
 	const chatBubble = document.createElement("div");
 	chatBubble.className = `chat-bubble ${isSenderMe ? "true" : "false"}`;
@@ -19,8 +27,7 @@ function renderChatBubble({ senderName, date, message, isSingleChat, type, sende
 				? `
 			<button class="avatar">
 
-				<div class="friend-avatar"
-           style="width: 100%; height: 100%; font-weight: 600;">
+				<div class="friend-avatar" style="width: 100%; height: 100%; font-weight: 600;">
           ${initials || senderName?.charAt(0).toUpperCase() || '?'}
         </div>
 
@@ -57,6 +64,24 @@ function renderChatBubble({ senderName, date, message, isSingleChat, type, sende
 				: ""
 		}
 	`;
+
+		    if (!isSingleChat && !isSenderMe) {
+        takeDatafromUserId(senderId).then(ImgData => {
+						console.log("[renderChatBubble] ImgData:", ImgData);
+            let ProfileImg = ImgData?.current_avatar.image_url || "";
+            if (ProfileImg == "/media/placeholder.jpeg") ProfileImg = "";
+						else ProfileImg = url_api + '/user' + ProfileImg;
+
+            const avatarDiv = chatBubble.querySelector('.friend-avatar');
+            if (avatarDiv) {
+                if (ProfileImg) {
+                    avatarDiv.innerHTML = `<img src="${ProfileImg}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                } else {
+                    avatarDiv.textContent = initials || senderName?.charAt(0).toUpperCase() || '?';
+                }
+            }
+        });
+    }
 
 	gameInvitationButton(chatBubble, senderName, senderId);
 	showOtherProfile(chatBubble, senderId);

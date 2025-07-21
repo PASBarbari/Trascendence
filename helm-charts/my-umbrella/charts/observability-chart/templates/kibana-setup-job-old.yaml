@@ -1,0 +1,134 @@
+{{- if (index .Values "eck-kibana").enabled }}
+---
+# Job to import Kibana dashboards and index patterns
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "observability-chart.fullname" . }}-kibana-setup
+  namespace: {{ .Values.global.namespace.name }}
+  labels:
+    {{- include "observability-chart.labels" . | nindent 4 }}
+    app.kubernetes.io/component: kibana-setup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        {{- include "observability-chart.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kibana-setup
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: kibana-setup
+        image: curlimages/curl:8.1.2
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -x
+          echo "Waiting for Kibana to be ready..."
+          
+          # Wait for Kibana to be available with a timeout
+          ATTEMPTS=0
+          MAX_ATTEMPTS=30 # 30 attempts * 20s sleep = 10 minutes timeout
+          until curl --connect-timeout 5 -s -k "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/status" \
+            -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+            -H "Content-Type: application/json" | grep -q '"level":"available"'; do
+            ATTEMPTS=$((ATTEMPTS + 1))
+            if [ "$ATTEMPTS" -gt "$MAX_ATTEMPTS" ]; then
+              echo "Error: Timed out waiting for Kibana to be ready after ${MAX_ATTEMPTS} attempts."
+              exit 1
+            fi
+            echo "Kibana not ready yet (attempt ${ATTEMPTS}/${MAX_ATTEMPTS}), waiting 20 seconds..."
+            sleep 20
+          done
+          
+          echo "Kibana is ready, setting up index patterns and dashboards..."
+          
+          # Create main index pattern for Trascendence logs
+          echo "Creating main index pattern: trascendence-logs-*"
+          curl -s -k -X POST "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/index-pattern/trascendence-logs-*" \
+            -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+            -H "Content-Type: application/json" \
+            -H "kbn-xsrf: true" \
+            -d '{
+              "attributes": {
+                "title": "trascendence-logs-*",
+                "timeFieldName": "@timestamp"
+              }
+            }' || echo "Main index pattern may already exist"
+          
+          # Create service-specific saved searches
+          for service in login chat user notifications pong frontend; do
+            echo "Creating service-specific view for: ${service}"
+            # Capitalize first letter of service for the title
+            SERVICE_TITLE=$(echo "$service" | sed 's/./\u&/')
+            curl -s -k -X POST "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/search/trascendence-${service}-logs" \
+              -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+              -H "Content-Type: application/json" \
+              -H "kbn-xsrf: true" \
+              -d "{
+                \"attributes\": {
+                  \"title\": \"Trascendence ${SERVICE_TITLE} Service Logs\",
+                  \"description\": \"Filtered view for ${service} service logs\",
+                  \"columns\": [\"@timestamp\", \"log_level\", \"service_name\", \"message\"],
+                  \"sort\": [[\"@timestamp\", \"desc\"]],
+                  \"kibanaSavedObjectMeta\": {
+                    \"searchSourceJSON\": \"{\\\"index\\\":\\\"trascendence-logs-*\\\",\\\"query\\\":{\\\"query\\\":\\\"service_name:'${service}'\\\",\\\"language\\\":\\\"kuery\\\"},\\\"filter\\\":[]}\"
+                  }
+                }
+              }" || echo "Search for ${service} may already exist"
+          done
+          
+          # Set Trascendence logs as default index pattern
+          echo "Setting trascendence-logs-* as default index pattern"
+          curl -s -k -X POST "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/kibana/settings" \
+            -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+            -H "Content-Type: application/json" \
+            -H "kbn-xsrf: true" \
+            -d '{
+              "changes": {
+                "defaultIndex": "trascendence-logs-*"
+              }
+            }' || echo "Could not set default index, it may already be set."
+
+          # Create a basic dashboard for Trascendence overview
+          echo "Creating Trascendence Overview Dashboard..."
+          curl -s -k -X POST "https://{{ (index .Values "eck-kibana").fullnameOverride }}-kb-http.{{ .Values.global.namespace.name }}.svc.cluster.local:5601/api/saved_objects/dashboard/trascendence-overview" \
+            -u "elastic:${ELASTICSEARCH_PASSWORD}" \
+            -H "Content-Type: application/json" \
+            -H "kbn-xsrf: true" \
+            -d '{
+              "attributes": {
+                "title": "Trascendence Services Overview",
+                "description": "Overview of all Trascendence microservices logs and metrics",
+                "version": 1,
+                "timeRestore": false,
+                "kibanaSavedObjectMeta": {
+                  "searchSourceJSON": "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}"
+                }
+              }
+            }' || echo "Dashboard may already exist"
+
+          echo "🎉 Kibana setup completed!"
+          echo "   📍 Index Pattern: trascendence-logs-*"
+          echo "   🔍 Default time field: @timestamp"
+          
+        env:
+        - name: ELASTICSEARCH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: eck-elasticsearch-es-elastic-user
+              key: elastic
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+{{- end }}
