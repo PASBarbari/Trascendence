@@ -1,21 +1,9 @@
 dependencies:
-- name: elasticsearch
-  repository: https://helm.elastic.co
-  version: 8.5.1
-- name: kibana
-  repository: https://helm.elastic.co
-  version: 8.5.1
-- name: logstash
-  repository: https://helm.elastic.co
-  version: 8.5.1
-- name: filebeat
-  repository: https://helm.elastic.co
-  version: 8.5.1
 - name: kube-prometheus-stack
   repository: https://prometheus-community.github.io/helm-charts
   version: 45.7.1
 - name: grafana
   repository: https://grafana.github.io/helm-charts
   version: 6.50.7
-digest: sha256:f9e6b160fe430b80f95615517a6a032895b888962affccee677fc7876752795f
-generated: "2025-07-16T10:18:09.311397439+02:00"
+digest: sha256:c4f776c2d1302b77640cd9d19d10529e417710d703a7ef55d117dd7fb1ee0afc
+generated: "2025-07-17T12:34:55.280362291+02:00"
