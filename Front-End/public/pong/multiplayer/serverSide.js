@@ -324,6 +324,12 @@ function syncMultiplayerWithLocalGame() {
 	state.isMultiplayer = true;
 	state.isStarted = false;
 	state.isPaused = true;
+	
+	// Disable local physics calculations for better performance
+	if (state.ball) {
+		state.ball.disableLocalPhysics = true;
+		state.ball.isMultiplayer = true;
+	}
 }
 
 const gameStateChecker = setInterval(() => {

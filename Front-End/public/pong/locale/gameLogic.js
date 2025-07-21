@@ -15,18 +15,23 @@ export function animate() {
 		if (state.stats) {
 			state.stats.update();
 		}
-		if (state.ball) {
+		
+		// Skip ball physics in multiplayer - server is authoritative
+		if (state.ball && !state.isMultiplayer) {
 			state.ball.update(deltaTime);
 		}
 
-		if (state.players[0]) {
-			state.players[0].move(state.p1_move_y);
-		}
+		// Skip player movement calculations in multiplayer - server controls positions
+		if (!state.isMultiplayer) {
+			if (state.players[0]) {
+				state.players[0].move(state.p1_move_y);
+			}
 
-		if (state.players[1] && state.IAisActive) {
-			moveIA();
-		} else if (state.players[1]) {
-			state.players[1].move(state.p2_move_y);
+			if (state.players[1] && state.IAisActive) {
+				moveIA();
+			} else if (state.players[1]) {
+				state.players[1].move(state.p2_move_y);
+			}
 		}
 
 		if (state.controls) {
