@@ -48,10 +48,11 @@ function renderPongInfo() {
 
 async function PongStatistic() {
 	try {
-		const { token, url_api } = getVariables();
+		const { token, url_api, userId } = getVariables();
+		console.log("[PongStatistic] Fetching player stats for user_id:", userId);
 		const response = await fetch(
 			// `${url_api}/user/user/user?user_id=15`,
-			`${url_api}/pong/player/stats`,
+			`${url_api}/pong/player/stats?user_id=${userId}`,
 			{
 				method: "GET",
 				headers: {
