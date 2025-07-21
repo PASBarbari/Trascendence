@@ -17,6 +17,61 @@
   width: 400px;
 }
 
+.profile-menu {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	z-index: 9999;
+	background: rgb(255, 255, 255);
+	border: 0px;
+	height: 300px;
+	overflow-y: hidden;
+	border-top: 1px solid #dfdfdf;
+}
+
+.profile-menu p {
+	padding: 0px;
+	margin: 0px;
+}
+
+.profile-menu b {
+  padding: 0px;
+	display: block;
+	margin-bottom: 5px;
+  overflow-y: auto;
+  max-height: 3em; /* o l'altezza che preferisci */
+  white-space: normal;
+}
+
+.chat-content.show-profile-menu {
+	height: 350px;
+	width: 100%;
+	position: relative;
+}
+
+.message.show-profile-menu {
+	max-width: 100%;
+	width: max-content;
+}
+
+.chat-content {
+	transition: height 0.3s ease;
+}
+
+.other-profile {
+	z-index: 10;
+  width: 100%;
+  background: #f8f8ff;
+  box-shadow: none;
+  padding: 16px;
+  margin-top: 10px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+	position: absolute;
+}
 
 .shake {
   animation: shake-anim 0.4s;
@@ -60,7 +115,8 @@
 }
 
 .scrollable-content {
-    height: 300px;
+	position: relative;
+    height: 500px;
     display: flex;
     flex-direction: column;
     flex: 1 1;
@@ -103,6 +159,9 @@
   width: 40px;
   margin-right: 10px;
   min-width: 40px;
+	border: none;
+	padding: 0;
+	background-color: transparent;
 }
 
 .avatar-placeholder {
@@ -139,6 +198,7 @@
 }
 
 .chat-bubble {
+	z-index: 20;
   display: flex;
   align-items: flex-start;
   margin-bottom: 10px;
@@ -147,6 +207,7 @@
 }
 
 .chat-bubble.true {
+	z-index: 20;
   display: flex;
   align-items: flex-end;
   flex-direction: column;
@@ -155,6 +216,7 @@
 }
 
 .chat-bubble.false {
+	z-index: 20;
   align-self: flex-start;
   margin-right: auto;
 }
