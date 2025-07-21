@@ -1,4 +1,5 @@
 import { getVariables, calculateInitials } from "../var.js";
+import { getCookie } from "../cookie.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -58,15 +59,15 @@ function renderChatBubble({ senderName, date, message, isSingleChat, type, sende
 	`;
 
 	gameInvitationButton(chatBubble, senderName, senderId);
-	showOtherProfile(chatBubble);
+	showOtherProfile(chatBubble, senderId);
 
 	return chatBubble;
 }
 
-function showOtherProfile(chatBubble) {
+async function showOtherProfile(chatBubble, senderId) {
     const avatarButton = chatBubble.querySelector(".avatar");
     if (avatarButton && chatBubble.classList.contains("false")) {
-        avatarButton.addEventListener("click", () => {
+        avatarButton.addEventListener("click", async () => {
             const messageDiv = chatBubble.querySelector('.message');
             if (messageDiv) {
                 // Rimuovi eventuale menu già presente
@@ -91,27 +92,23 @@ function showOtherProfile(chatBubble) {
                 span.textContent = '[][][][][][][][][][][][][][][][][][profilo][][][][][][][][][][][][][][][][]';
                 messageDiv.appendChild(span);
 
+								// Prendi i dati dell'utente
+								const dataOtherUser = await takeDatafromUserId(senderId);
+
                 // Crea il menu profilo
                 const menu = document.createElement('div');
                 menu.className = 'profile-menu';
-                menu.style.position = 'absolute';
-                menu.style.top = '0';
-                menu.style.left = '0';
-                menu.style.width = '100%';
-                menu.style.zIndex = '9999';
-                menu.style.background = 'rgba(255,255,255,0.95)';
-                menu.style.border = '1px solid #ccc';
-                menu.style.padding = '16px';
-                menu.style.borderRadius = '8px';
-                menu.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
                 menu.innerHTML = `
-                    <small>Visualizza profilo</small><br>
-										nome e cognome
-										email
-										userid
-										partite vinte
-										partite perse
-										partite giocate
+										<p>Name and Surname</p>
+										<b>${dataOtherUser.first_name || '-'} ${dataOtherUser.last_name || '-'}</b>
+										<p>Email</p>
+										<b>${dataOtherUser.email || '-'}</b>
+										<p>User ID</p>
+										<b>${dataOtherUser.user_id || '-'}</b>
+										<p>Birth Date</p>
+										<b>${dataOtherUser.birth_date || '-'}</b>
+										<p>Bio</p>
+										<b>${dataOtherUser.bio || '-'}</b>
                     <!--button class="btn btn-sm btn-secondary close-profile">Chiudi</button-->
                 `;
 
@@ -126,6 +123,30 @@ function showOtherProfile(chatBubble) {
             }
         });
     }
+}
+
+async function takeDatafromUserId(userId) {
+	try {
+		const { token, url_api } = getVariables();
+		console.log("[takeDatafromUserId] Fetching player info for user_id:", userId);
+		const response = await fetch(
+			`${url_api}/user/user/user?user_id=${userId}`,
+			// `${url_api}/pong/player/stats?user_id=${userId}`,
+			{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+					"X-CSRFToken": getCookie("csrftoken"),
+				},
+			}
+		);
+		const data = await response.json();
+		console.log("[takeDatafromUserId] API response:", data[0]);
+		return data[0] || {};
+	} catch (error) {
+		console.error("[takeDatafromUserId] API error:", error);
+	}
 }
 
 function gameInvitationButton (chatBubble, senderName, senderId) {
