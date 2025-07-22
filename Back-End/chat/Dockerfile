@@ -16,6 +16,10 @@ COPY --from=builder /usr/local /usr/local
 COPY . /app
 WORKDIR /app
 
+RUN mkdir -p /app/staticfiles
+RUN mkdir -p /app/static
+RUN mkdir -p /app/media
+
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
