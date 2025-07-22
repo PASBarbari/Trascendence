@@ -1,9 +1,0 @@
-.taskbox {
-	width: 100px;
-	height: 100%;
-	background-color:#f5f5f5f0;
-	border-radius: 8px;
-	flex-grow: 1;
-	max-height: 600px;
-	padding: 10px;
-}
