@@ -7,6 +7,7 @@ import * as SETUP from "../locale/setup.js";
 import * as UTILS from "../locale/utils.js";
 import { getCookie } from "../../cookie.js";
 import { showNotification } from "../pongContainer.js";
+import { updateScore } from "../locale/src/Score.js";
 
 let socket;
 
@@ -140,6 +141,14 @@ function hideAllMenusAndStartGame() {
 	// Start game animation if not already running
 	if (!state.animationFrameId) {
 		GAME.animate();
+	}
+
+	// Show mobile controls if on mobile device
+	if (window.initializeMobileControls) {
+		window.initializeMobileControls();
+		if (window.showMobileControls) {
+			window.showMobileControls();
+		}
 	}
 }
 
@@ -324,6 +333,12 @@ function syncMultiplayerWithLocalGame() {
 	state.isMultiplayer = true;
 	state.isStarted = false;
 	state.isPaused = true;
+
+	// Disable local physics calculations for better performance
+	if (state.ball) {
+		state.ball.disableLocalPhysics = true;
+		state.ball.isMultiplayer = true;
+	}
 }
 
 const gameStateChecker = setInterval(() => {
@@ -336,6 +351,11 @@ const gameStateChecker = setInterval(() => {
 // Clean up on page navigation
 window.addEventListener("hashchange", () => {
 	clearInterval(gameStateChecker);
+
+	// Remove mobile controls when navigating away from pong
+	if (typeof window.removeMobileControls === "function") {
+		window.removeMobileControls();
+	}
 });
 
 function updateGameState(gameStateData) {
@@ -344,10 +364,16 @@ function updateGameState(gameStateData) {
 	}
 
 	// Update state with backend values for consistency
-	if (gameStateData.player_1_score !== undefined)
+	if (gameStateData.player_1_score !== undefined) {
 		state.p1_score = gameStateData.player_1_score;
-	if (gameStateData.player_2_score !== undefined)
+		updateScore("p1");
+	}
+
+	if (gameStateData.player_2_score !== undefined) {
 		state.p2_score = gameStateData.player_2_score;
+		updateScore("p2");
+	}
+	// Update mobile score display
 
 	// Update ring dimensions only when provided (they're sent less frequently now for performance)
 	if (
@@ -464,28 +490,28 @@ function updateGameState(gameStateData) {
 	// BALL POSITION AND PHYSICS UPDATE - Use server authority with client-side prediction
 	if (gameStateData.ball_pos && state.ball?.mesh) {
 		const [ballX, ballY] = gameStateData.ball_pos;
-		
+
 		// Update ball position directly from server (authoritative)
 		state.ball.mesh.position.set(ballX, 0, ballY);
-		
+
 		// Update ball physics from server for client-side prediction
 		if (gameStateData.ball_speed !== undefined) {
 			state.ball_speed = gameStateData.ball_speed;
 		}
-		
+
 		if (gameStateData.angle !== undefined) {
 			state.angle = gameStateData.angle;
-			
+
 			// Update ball velocity based on server angle and speed for prediction
 			if (state.ball_speed > 0) {
 				const angleRad = (state.angle * Math.PI) / 180;
 				state.ball_velocity = {
 					x: state.ball_speed * Math.cos(angleRad),
-					y: state.ball_speed * -Math.sin(angleRad) // Negative because backend uses -sin
+					y: state.ball_speed * -Math.sin(angleRad), // Negative because backend uses -sin
 				};
 			}
 		}
-		
+
 		// Enable client-side prediction flag
 		state.ball.isMultiplayer = true;
 	}
@@ -531,6 +557,11 @@ function updateOpponentStatus(status) {
 function handleGameOver() {
 	state.isStarted = false;
 	state.isPaused = true;
+
+	// Remove mobile controls
+	if (typeof window.removeMobileControls === "function") {
+		window.removeMobileControls();
+	}
 
 	// Determine winner
 	const winner = state.p1_score >= state.maxScore ? "Player 1" : "Player 2";

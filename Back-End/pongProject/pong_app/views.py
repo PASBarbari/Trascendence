@@ -259,13 +259,15 @@ class UserStatistics(APIView):
 			user_id (int): The id of the user. (optional, if not provided, the authenticated user will be used)
 	"""
 	permission_classes = (IsAuthenticatedUserProfile,)
-	authentication_classes = [JWTAuth]
+	authentication_classes = [JWTAuth] 
 	
 	def get(self, request, *args, **kwargs):
 		user_id = request.query_params.get('user_id', request.user.user_id)
 
 		if not user_id:
 			return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+		elif not isinstance(user_id, int):
+			return Response({'error': 'user_id must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
 		try:
 			user = get_object_or_404(UserProfile, user_id=user_id)
 			games_stats = Game.objects.filter(

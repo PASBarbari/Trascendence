@@ -133,7 +133,6 @@ async function initializeMultiplayerGame(
 	try {
 		// Setup the game scene (same as local pong)
 		SETUP.setupGame();
-		console.table(state);
 
 		// Set multiplayer specific state
 		state.isMultiplayer = true;

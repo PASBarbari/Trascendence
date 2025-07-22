@@ -136,14 +136,15 @@ const locationHandler = async () => {
 
 	// Check if the route exists (without query parameters)
 	if (!routes[location]) {
-		console.log(
-			`Route "${location}" non trovata, reindirizzamento a login`
-		);
+		console.log(`Route "${location}" non trovata, reindirizzamento a login`);
 		window.location.hash = "login";
 		return;
 	}
 
-	if (currentRoute === "pong" && location !== "pong") {
+	if (
+		(currentRoute === "pong" && location !== "pong") ||
+		(currentRoute === "pongmulti" && location !== "pongmulti")
+	) {
 		console.log("Navigando via da Pong, eseguo cleanup...");
 		cleanupPong();
 	}
@@ -166,11 +167,7 @@ const locationHandler = async () => {
 			const renderFunction = await route.module();
 			renderFunction();
 		} catch (error) {
-			console.error(
-				"Errore nel caricamento del modulo %s:",
-				location,
-				error
-			);
+			console.error("Errore nel caricamento del modulo %s:", location, error);
 		}
 	} else if (route.template) {
 		const html = await fetch(route.template).then((response) =>
@@ -219,9 +216,7 @@ const initializeApp = async () => {
 		renderExpandableSidebar();
 	}
 
-	const toggleSettingsButton = document.getElementById(
-		"toggleSettingsButton"
-	);
+	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
 	if (toggleSettingsButton) {
 		toggleSettingsButton.addEventListener("click", (event) => {
 			event.preventDefault();

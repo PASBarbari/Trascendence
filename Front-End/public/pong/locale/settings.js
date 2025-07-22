@@ -79,6 +79,11 @@ function startOnePlayerGame() {
 	state.IAisActive = true;
 	state.isStarted = true;
 	state.isPaused = false;
+	
+	// Initialize mobile controls if on touch device
+	if (typeof window.initializeMobileControls === 'function') {
+		window.initializeMobileControls();
+	}
 }
 
 function startTwoPlayerGame() {
@@ -86,6 +91,11 @@ function startTwoPlayerGame() {
 	state.IAisActive = false;
 	state.isStarted = true;
 	state.isPaused = false;
+	
+	// Initialize mobile controls if on touch device
+	if (typeof window.initializeMobileControls === 'function') {
+		window.initializeMobileControls();
+	}
 }
 
 function resumeGame() {
@@ -96,6 +106,11 @@ function resumeGame() {
 
 export function cleanupPong() {
 	console.log("Starting complete cleanup...");
+
+	// Remove mobile controls first
+	if (typeof window.removeMobileControls === 'function') {
+		window.removeMobileControls();
+	}
 
 	resetPongMenuState();
 
@@ -194,6 +209,11 @@ function exitGame() {
 	state.isStarted = false;
 	state.isPaused = true;
 	state.IAisActive = false;
+
+	// Hide mobile controls
+	if (typeof window.hideMobileControls === 'function') {
+		window.hideMobileControls();
+	}
 
 	cleanupPong();
 
