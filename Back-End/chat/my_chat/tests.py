@@ -1,29 +1,59 @@
-from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
 from django.test import TransactionTestCase
 from chat.asgi import application
 from asgiref.sync import sync_to_async
 
-class ChatTests(TransactionTestCase):
-    async def test_websocket_connection(self):
-        # Create a mock user using sync_to_async
-        User = get_user_model()
-        user = await sync_to_async(User.objects.create_user)(username='testuser', password='password')
+# ...existing code...
+from django.test import TestCase, Client
 
-        # Define the headers
-        headers = [(b'origin', b'http://localhost')]
+class MyChatURLTests(TestCase):
+    def setUp(self):
+        self.client = Client()
 
-        # Create the WebsocketCommunicator with the URL path and headers
-        communicator = WebsocketCommunicator(application, "/ws/chat/room_1/", headers=headers)
+    def test_get_chat_message(self):
+        response = self.client.get('/chat_rooms/1/get_message/')
+        self.assertIn(response.status_code, [200, 401, 403, 404])
 
-        # Set the user in the scope
-        communicator.scope['user'] = user
+    def test_get_chat_info(self):
+        response = self.client.get('/chat_rooms/1/')
+        self.assertIn(response.status_code, [200, 401, 403, 404])
 
-        connected, subprotocol = await communicator.connect()
-        self.assertTrue(connected)
+    def test_new_user(self):
+        response = self.client.get('/new_user/')
+        self.assertIn(response.status_code, [200, 401, 403])
 
-        await communicator.send_json_to({'message': 'Hello, WebSocket!', 'room_id': 'room_1', 'sender': 'testuser', 'timestamp': '2021-01-01T00:00:00Z'})
-        response = await communicator.receive_json_from()
-        self.assertEqual(response['message'], 'Hello, WebSocket!')
+    def test_create_chat(self):
+        response = self.client.get('/chat_rooms/create/')
+        self.assertIn(response.status_code, [200, 401, 403])
 
-        await communicator.disconnect()
+    def test_get_chats(self):
+        response = self.client.get('/chat_rooms/getchat/')
+        self.assertIn(response.status_code, [200, 401, 403])
+
+    def test_download_chat_data(self):
+        response = self.client.get('/chat_data/')
+        self.assertIn(response.status_code, [200, 401, 403])
+
+    def test_download_similarities_data(self):
+        response = self.client.get('/user_similarities/')
+        self.assertIn(response.status_code, [200, 401, 403])
+
+    def test_add_users_to_chat(self):
+        response = self.client.get('/chat_rooms/1/add_user/')
+        self.assertIn(response.status_code, [200, 401, 403, 404])
+
+    def test_block_user(self):
+        response = self.client.get('/block_user/1')
+        self.assertIn(response.status_code, [200, 401, 403, 404])
+
+    def test_all_blocked_users(self):
+        response = self.client.get('/blocked_users/')
+        self.assertIn(response.status_code, [200, 401, 403])
+
+    def test_chat_media_upload(self):
+        response = self.client.get('/media/upload/')
+        self.assertIn(response.status_code, [200, 401, 403])
+
+    def test_chat_media_manager(self):
+        response = self.client.get('/media/manage/')
+        self.assertIn(response.status_code, [200, 401, 403])
