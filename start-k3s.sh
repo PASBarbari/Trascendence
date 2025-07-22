@@ -40,8 +40,11 @@ sudo apt install -y curl git wget
 # Step 2: Install K3s if not already installed
 if ! command -v k3s &> /dev/null; then
     print_status "Installing K3s..."
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik" sh -
-    
+    sudo mkdir -p /home/$USER/data/k3s
+    sudo chown root:root /home/$USER/data/k3s
+
+    # Install K3s with custom data directory
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--data-dir=/home/$USER/data/k3s" sh -
     # Configure kubectl for current user
     mkdir -p ~/.kube
     sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
@@ -83,12 +86,46 @@ print_status "Adding Helm repositories..."
 
 # Essential repositories for the project
 helm repo add jetstack https://charts.jetstack.io                    # cert-manager
-helm repo add elastic https://helm.elastic.co                        # Elasticsearch, Kibana
+# helm repo add elastic https://helm.elastic.co                        # Elasticsearch, Kibana
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # Prometheus, Grafana
 helm repo add grafana https://grafana.github.io/helm-charts          # Grafana
 helm repo add bitnami https://charts.bitnami.com/bitnami            # Redis, PostgreSQL
 helm repo add minio https://helm.min.io/                            # MinIO
+# Install Traefik CRDs directly
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
 
+# Wait for CRDs to be ready
+kubectl wait --for condition=established --timeout=60s crd/ingressroutes.traefik.io
+kubectl wait --for condition=established --timeout=60s crd/middlewares.traefik.io
+echo "Installing Custom Resource Definitions..."
+          
+          # cert-manager CRDs
+echo "Installing cert-manager CRDs..."
+kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.13.3/cert-manager.crds.yaml || true
+
+# Traefik CRDs
+echo "Installing Traefik CRDs..."
+kubectl apply -f https://raw.githubusercontent.com/traefik/traefik/v3.3/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml || true
+
+# Prometheus Operator CRDs
+echo "Installing Prometheus Operator CRDs..."
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheusrules.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_prometheuses.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagers.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_thanosrulers.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_alertmanagerconfigs.yaml || true
+kubectl apply -f https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.70.0/example/prometheus-operator-crd/monitoring.coreos.com_scrapeconfigs.yaml || true
+
+# Wait for CRDs to be established
+echo "Waiting for CRDs to be established..."
+sleep 10
+kubectl wait --for condition=established --timeout=60s crd/middlewares.traefik.io || true
+kubectl wait --for condition=established --timeout=60s crd/serverstransports.traefik.io || true
+kubectl wait --for condition=established --timeout=60s crd/servicemonitors.monitoring.coreos.com || true
+kubectl wait --for condition=established --timeout=60s crd/prometheusrules.monitoring.coreos.com || true
 # Update all repositories
 helm repo update
 
@@ -104,17 +141,17 @@ kubectl create namespace logging --dry-run=client -o yaml | kubectl apply -f -
 
 # Note: Application namespaces (login, front-end, chat, etc.) will be created by the Helm umbrella chart
 
-Step 8: Install CRDs via Helm chart
+#Step 8: Install CRDs via Helm chart
 print_status "Installing Custom Resource Definitions..."
-cd helm-charts/my-umbrella
-if helm list -A | grep -q "crds-only"; then
-     print_status "Upgrading existing deployment..."
-     helm upgrade crds-only . --timeout=15m --wait --debug --namespace default --create-namespace
-else
-     print_status "Installing new deployment..."
-     helm install crds-only . --timeout=15m --wait --debug --namespace default --create-namespace
-fi
-cd ../..
+# cd helm-charts/crds-chart
+# if helm list -A | grep -q "crds-only"; then
+#      print_status "Upgrading existing deployment..."
+#      helm upgrade crds-only . --timeout=15m --wait --debug --namespace default --create-namespace
+# else
+#      print_status "Installing new deployment..."
+#      helm install crds-only . --timeout=15m --wait --debug --namespace default --create-namespace
+# fi
+# cd ../..
 
 print_success "CRDs installed successfully"
 
