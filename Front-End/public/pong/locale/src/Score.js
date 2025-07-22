@@ -38,10 +38,7 @@ export function updateScore(player) {
 	const scoreValue = player === "p1" ? state.p1_score : state.p2_score;
 	const scoreMesh = player === "p1" ? state.scoreMesh.p1 : state.scoreMesh.p2;
 
-	// Update mobile score display
-	// if (typeof window.updateMobileScore === 'function') {
-	// 	window.updateMobileScore(state.p1_score, state.p2_score);
-	// }
+	// TODO: Implement mobile score display update functionality if required.
 
 	// Don't proceed if the score mesh isn't created yet
 	if (!scoreMesh) {
