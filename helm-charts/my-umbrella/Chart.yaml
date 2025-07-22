@@ -85,3 +85,9 @@ dependencies:
     condition: traefik.enabled
     tags:
       - traefik
+  - name: observability-chart
+    repository: file://charts/observability-chart
+    version: 0.1.0
+    condition: observability.enabled
+    tags:
+      - observability

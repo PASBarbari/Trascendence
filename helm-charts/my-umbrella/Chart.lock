@@ -23,9 +23,6 @@ dependencies:
 - name: api-docs-service-chart
   repository: file://charts/api-docs-service-chart
   version: 0.1.0
-- name: observability-chart
-  repository: file://charts/observability-chart
-  version: 0.1.0
 - name: redis-chart
   repository: file://charts/redis-chart
   version: 0.1.0
@@ -35,5 +32,8 @@ dependencies:
 - name: traefik-chart
   repository: file://charts/traefik-chart
   version: 0.1.0
-digest: sha256:5375f6c9dadb65d53b03f1e9c72614770dbb9913de76b3bbcd92ba200f629d0f
-generated: "2025-07-17T12:36:35.604657547+02:00"
+- name: observability-chart
+  repository: file://charts/observability-chart
+  version: 0.1.0
+digest: sha256:de0d011ff52775bc30ec3c31a048678c29a8ec22c424c09558c219600ac31a37
+generated: "2025-07-22T16:33:00.724942931+02:00"
