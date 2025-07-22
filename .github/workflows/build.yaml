@@ -13,11 +13,11 @@ jobs:
     strategy:
       matrix:
         service:
-          - Back-End/task_user/user_app
-          - Back-End/Notifications/my_notifications
-          - Back-End/pongProject/pong_app
-          - Back-End/login/my_login
-          - Back-End/chat/my_chat
+          - Back-End/task_user
+          - Back-End/Notifications
+          - Back-End/pongProject
+          - Back-End/login
+          - Back-End/chat
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
