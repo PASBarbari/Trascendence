@@ -353,7 +353,7 @@ uritemplate==4.1.1
     #   -r Back-End/requirements.in
     #   coreapi
     #   drf-yasg
-urllib3==2.2.3
+urllib3>=2.5.0
     # via
     #   -r Back-End/requirements.in
     #   requests

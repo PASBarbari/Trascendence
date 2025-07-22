@@ -36,7 +36,7 @@ sqlparse==0.5.3
 twisted[tls]==24.11.0
 txaio==23.1.1
 typing_extensions==4.12.2
-urllib3==2.3.0
+urllib3>=2.5.0
 zope-interface==7.2
 django-prometheus==2.3.1
 prometheus-client==0.21.1
