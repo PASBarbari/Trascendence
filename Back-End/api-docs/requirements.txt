@@ -1,4 +1,4 @@
-Django==4.2.22
+django==5.2.4
 djangorestframework==3.14.0
 drf-yasg==1.21.7
 django-cors-headers==4.3.1
