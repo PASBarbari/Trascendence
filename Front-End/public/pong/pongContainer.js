@@ -500,7 +500,13 @@ function attachMobileControlEvents() {
 	
 	if (!upBtn || !downBtn) return;
 	
-	// Simulate keyboard events for 'w' and 's' keys
+	/**
+	 * Simulates a keyboard event for the specified key and event type.
+	 * This is used to mimic 'w' (KeyW) and 's' (KeyS) key presses for mobile controls.
+	 *
+	 * @param {string} key - The key to simulate ('w' or 's').
+	 * @param {string} type - The type of keyboard event ('keydown' or 'keyup').
+	 */
 	function simulateKeyEvent(key, type) {
 		const event = new KeyboardEvent(type, {
 			key: key,
