@@ -518,7 +518,7 @@ class Setup2FAView(APIView):
 			)
 		
 			if response.status_code == 200:
-				return redirect('https://trascendence.42firenze.it/oauth-callback.html')
+				return redirect('/#home')
 			else:
 				return Response({"error": "Failed to update 2FA status"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		else:
@@ -690,7 +690,7 @@ class Disable2FAView(APIView):
 			)
 			
 			if response.status_code == 200:
-				return redirect('https://trascendence.42firenze.it/oauth-callback.html')
+				return redirect('/#home')
 			else:
 				# If the user service update fails, we should revert our local change
 				user.has_two_factor_auth = True
