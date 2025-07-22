@@ -374,9 +374,6 @@ function updateGameState(gameStateData) {
 		updateScore("p2");
 	}
 	// Update mobile score display
-	// if (typeof window.updateMobileScore === 'function') {
-	// 	window.updateMobileScore(state.p1_score, state.p2_score);
-	// }
 
 	// Update ring dimensions only when provided (they're sent less frequently now for performance)
 	if (
