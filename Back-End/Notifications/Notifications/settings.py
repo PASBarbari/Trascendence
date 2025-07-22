@@ -23,15 +23,15 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-kp7qs)0l1ie$%muo93+829po%p
 API_KEY = os.getenv('API_KEY', '123')
 
 def arise(exception):
-	raise(exception)
+    raise(exception)
 
 # Simple microservices definition
 Microservices = {
-	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
-	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
+    'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+    'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+    'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+    'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
@@ -42,13 +42,13 @@ K8S_SERVICE_HOSTS_RAW = os.getenv('K8S_SERVICE_HOSTS', '').split(',') if os.gete
 # For ALLOWED_HOSTS: hostnames only (strip schemes/ports)
 K8S_SERVICE_HOSTS_CLEAN = []
 for host in K8S_SERVICE_HOSTS_RAW:
-	if host:
-		# Remove http:// or https:// if present
-		clean_host = host.replace('http://', '').replace('https://', '')
-		# Remove port if present
-		if ':' in clean_host:
-			clean_host = clean_host.split(':')[0]
-		K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
+    if host:
+        # Remove http:// or https:// if present
+        clean_host = host.replace('http://', '').replace('https://', '')
+        # Remove port if present
+        if ':' in clean_host:
+            clean_host = clean_host.split(':')[0]
+        K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
 
 # For CORS: full URLs with schemes
 K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_RAW if host]
@@ -103,7 +103,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://172.18.*',
     'https://172.18.*',
     # Continua per tutti i range 172.16.x.x fino a 172.31.x.x
-	'http://localhost:8443',
+    'http://localhost:8443',
     'http://127.0.0.1:8443',
     'http://10.0.2.15:8443',
     'http://10.0.2.15.xip.io:8443',
@@ -116,38 +116,38 @@ CSRF_TRUSTED_ORIGINS = [
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 
 CORS_ALLOW_HEADERS = [
-	'accept',
-	'accept-encoding',
-	'authorization',
-	'content-type',
-	'dnt',
-	'origin',
-	'user-agent',
-	'x-csrftoken',
-	'x-requested-with',
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 # Application definition
 
 INSTALLED_APPS = [
-	'django_prometheus', 
-	'daphne',
+    'django_prometheus', 
+    'daphne',
   'django.contrib.admin',
   'django.contrib.auth',
   'django.contrib.contenttypes',
   'django.contrib.sessions',
   'django.contrib.messages',
   'django.contrib.staticfiles',
-	'oauth2_provider',
-	'corsheaders',
-	'channels',
-	'celery',
-	'django_redis',
-	'django_filters',
-	'drf_yasg',
-	'my_notifications',
-	'rest_framework',
-	'redis',
+    'oauth2_provider',
+    'corsheaders',
+    'channels',
+    'celery',
+    'django_redis',
+    'django_filters',
+    'drf_yasg',
+    'my_notifications',
+    'rest_framework',
+    'redis',
 ]
 
 MIDDLEWARE = [
@@ -160,12 +160,12 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',  # Add at the end
 ]
 
 REST_FRAMEWORK = {
-	'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 ROOT_URLCONF = 'Notifications.urls'
@@ -189,46 +189,54 @@ TEMPLATES = [
 # WSGI_APPLICATION = 'Notifications.wsgi.application'
 ASGI_APPLICATION = 'Notifications.asgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-	'default': {
-	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': os.getenv('POSTGRES_DB', 'notification_db'),
-	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
-	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
-	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5438'),
-	},
-	'backup': {
-	'ENGINE': 'django.db.backends.sqlite3',
-	'NAME': str(BASE_DIR / 'db.sqlite3'),
-	}
-}
+# Use SQLite for tests, PostgreSQL otherwise
+import sys
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'db.sqlite3'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'notifications_db'),
+            'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5440'),
+        },
+        'backup': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'db.sqlite3'),
+        }
+    }
 
 oauth2_settings = {
-	'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
-	'CLIENT_ID': secrets.token_urlsafe(32),
-	'CLIENT_SECRET': secrets.token_urlsafe(64),
-	'TOKEN': '',
-	'REFRESH_TOKEN': '',
-	'EXPIRES': '',
-	'token_type': '',
-	'scope': '',
-	'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
+    'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
+    'CLIENT_ID': secrets.token_urlsafe(32),
+    'CLIENT_SECRET': secrets.token_urlsafe(64),
+    'TOKEN': '',
+    'REFRESH_TOKEN': '',
+    'EXPIRES': '',
+    'token_type': '',
+    'scope': '',
+    'SERVICE_PASSWORD': '123', ## TODO: Change this to a more secure password
 }
 
 REST_FRAMEWORK = {
-	'DEFAULT_AUTHENTICATION_CLASSES': [
-		'my_notifications.middleware.JWTAuth',
-	],
-	'DEFAULT_PERMISSION_CLASSES': [
-		'rest_framework.permissions.IsAuthenticated',
-	],
-	'DEFAULT_FILTER_BACKENDS': [
-		'django_filters.rest_framework.DjangoFilterBackend'
-	]
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'my_notifications.middleware.JWTAuth',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+    ]
 }
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'my-umbrella-redis-chart-service.redis-namespace.svc.cluster.local')
@@ -237,24 +245,24 @@ REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '2')  # Notifications: DB 2
 REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '9')  # Notifications: Channel DB 9
 
 CACHES = {
-	'default': {
-		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
-		'OPTIONS': {
-			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-			'KEY_PREFIX': 'notifications:',  # Service prefix for data isolation
-		}
-	}
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'KEY_PREFIX': 'notifications:',  # Service prefix for data isolation
+        }
+    }
 }
 
 CHANNEL_LAYERS = {
-	'default': {
-		'BACKEND': 'channels_redis.core.RedisChannelLayer',
-		'CONFIG': {
-			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
-			'prefix': 'notifications',  # Channel prefix
-		},
-	}
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
+            'prefix': 'notifications',  # Channel prefix
+        },
+    }
 }
 
 # CELERY_BROKER_URL = 'redis://localhost:6701/0'
@@ -311,16 +319,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Microservices
 Types = {
-	'IM' : 'Immediate',
-	'QU' : 'Queued',
-	'SC' : 'Scheduled',
-	'SE' : 'Sent',
+    'IM' : 'Immediate',
+    'QU' : 'Queued',
+    'SC' : 'Scheduled',
+    'SE' : 'Sent',
 }
 
 ADMIN = {
-	'username': os.getenv('ADMIN_USERNAME', 'admin'),
-	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
-	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+    'username': os.getenv('ADMIN_USERNAME', 'admin'),
+    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
 # ELK-Optimized Logging Configuration for notifications service

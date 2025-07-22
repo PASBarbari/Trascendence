@@ -28,16 +28,16 @@ DEBUG = os.getenv('DEBUG', True)
 
 # Simple microservices definition
 Microservices = {
-	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
-	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
-	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
-	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
+    'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+    'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+    'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+    'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
+    'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+    'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+    'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+    'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
@@ -48,13 +48,13 @@ K8S_SERVICE_HOSTS_RAW = os.getenv('K8S_SERVICE_HOSTS', '').split(',') if os.gete
 # For ALLOWED_HOSTS: hostnames only (strip schemes/ports)
 K8S_SERVICE_HOSTS_CLEAN = []
 for host in K8S_SERVICE_HOSTS_RAW:
-	if host:
-		# Remove http:// or https:// if present
-		clean_host = host.replace('http://', '').replace('https://', '')
-		# Remove port if present
-		if ':' in clean_host:
-			clean_host = clean_host.split(':')[0]
-		K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
+    if host:
+        # Remove http:// or https:// if present
+        clean_host = host.replace('http://', '').replace('https://', '')
+        # Remove port if present
+        if ':' in clean_host:
+            clean_host = clean_host.split(':')[0]
+        K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
 
 # For CORS: full URLs with schemes
 K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_RAW if host]
@@ -66,13 +66,13 @@ K8S_SERVICE_HOSTS_RAW = os.getenv('K8S_SERVICE_HOSTS', '').split(',') if os.gete
 # For ALLOWED_HOSTS: hostnames only (strip schemes/ports)
 K8S_SERVICE_HOSTS_CLEAN = []
 for host in K8S_SERVICE_HOSTS_RAW:
-	if host:
-		# Remove http:// or https:// if present
-		clean_host = host.replace('http://', '').replace('https://', '')
-		# Remove port if present
-		if ':' in clean_host:
-			clean_host = clean_host.split(':')[0]
-		K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
+    if host:
+        # Remove http:// or https:// if present
+        clean_host = host.replace('http://', '').replace('https://', '')
+        # Remove port if present
+        if ':' in clean_host:
+            clean_host = clean_host.split(':')[0]
+        K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
 
 # For CORS: full URLs with schemes
 K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_RAW if host]
@@ -127,7 +127,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://172.18.*',
     'https://172.18.*',
     # Continua per tutti i range 172.16.x.x fino a 172.31.x.x
-	'http://localhost:8443',
+    'http://localhost:8443',
     'http://127.0.0.1:8443',
     'http://10.0.2.15:8443',
     'http://10.0.2.15.xip.io:8443',
@@ -140,123 +140,130 @@ CSRF_TRUSTED_ORIGINS = [
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 
 CORS_ALLOW_HEADERS = [
-	'accept',
-	'accept-encoding',
-	'authorization',
-	'content-type',
-	'dnt',
-	'origin',
-	'user-agent',
-	'x-csrftoken',
-	'x-requested-with',
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 # Application definition
 
 INSTALLED_APPS = [
-	'django_prometheus', 
-	'daphne',
-	'django.contrib.admin',
-	'django.contrib.auth',
-	'django.contrib.contenttypes',
-	'django.contrib.sessions',
-	'django.contrib.messages',
-	'django.contrib.staticfiles',
-	'rest_framework',
-	'rest_framework_simplejwt',
-	'my_chat',
-	'oauth2_provider',
-	'django_filters',
-	'corsheaders',
-	'channels',
-	'celery',
-	'redis',
-	'drf_yasg',
+    'django_prometheus', 
+    'daphne',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'my_chat',
+    'oauth2_provider',
+    'django_filters',
+    'corsheaders',
+    'channels',
+    'celery',
+    'redis',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
-	'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
-	'my_chat.middleware.HealthCheckMiddleware',
-	'corsheaders.middleware.CorsMiddleware',
-	'django.middleware.security.SecurityMiddleware',
-	'django.contrib.sessions.middleware.SessionMiddleware',
-	'django.middleware.common.CommonMiddleware',
-	'django.middleware.csrf.CsrfViewMiddleware',
-	'django.contrib.auth.middleware.AuthenticationMiddleware',
-	'django.contrib.messages.middleware.MessageMiddleware',
-	'django.middleware.clickjacking.XFrameOptionsMiddleware',
-	'my_chat.middleware.ErrorLoggingMiddleware',
-	'django_prometheus.middleware.PrometheusAfterMiddleware',  # Add at the end
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
+    'my_chat.middleware.HealthCheckMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'my_chat.middleware.ErrorLoggingMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',  # Add at the end
 ]
-	# 'oauth2_provider.middleware.OAuth2TokenMiddleware',
+    # 'oauth2_provider.middleware.OAuth2TokenMiddleware',
 
 ROOT_URLCONF = 'chat.urls'
 
 TEMPLATES = [
-	{
-		'BACKEND': 'django.template.backends.django.DjangoTemplates',
-		'DIRS': [],
-		'APP_DIRS': True,
-		'OPTIONS': {
-			'context_processors': [
-				'django.template.context_processors.debug',
-				'django.template.context_processors.request',
-				'django.contrib.auth.context_processors.auth',
-				'django.contrib.messages.context_processors.messages',
-			],
-		},
-	},
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
 ]
 
 # WSGI_APPLICATION = 'chat.wsgi.application'
 ASGI_APPLICATION = 'chat.asgi.application'
 
 oauth2_settings = {
-	'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
-	'CLIENT_ID': secrets.token_urlsafe(32),
-	'CLIENT_SECRET': secrets.token_urlsafe(64),
-	'TOKEN': '',
-	'REFRESH_TOKEN': '',
-	'EXPIRES': '',
-	'token_type': '',
-	'scope': '',
-	'SERVICE_PASSWORD': os.getenv('SERVICE_PASSWORD', '123'),
+    'OAUTH2_INTROSPECTION_URL': 'http://localhost:8000/o/introspect/',
+    'CLIENT_ID': secrets.token_urlsafe(32),
+    'CLIENT_SECRET': secrets.token_urlsafe(64),
+    'TOKEN': '',
+    'REFRESH_TOKEN': '',
+    'EXPIRES': '',
+    'token_type': '',
+    'scope': '',
+    'SERVICE_PASSWORD': os.getenv('SERVICE_PASSWORD', '123'),
 }
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-DATABASES = {
-	'default': {
-	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': os.getenv('POSTGRES_DB', 'chat_db'),
-	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
-	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
-	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5432'),
-	},
-	'backup': {
-	'ENGINE': 'django.db.backends.sqlite3',
-	'NAME': str(BASE_DIR / 'db.sqlite3'),
-	}
-}
+# Use SQLite for tests, PostgreSQL otherwise
+import sys
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'db.sqlite3'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'chat_db'),
+            'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5438'),
+        },
+        'backup': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'db.sqlite3'),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-	{
-		'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-	},
-	{
-		'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-	},
-	{
-		'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-	},
-	{
-		'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-	},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 # BUFET_URL = os.getenv('bufet_url', 'http://localhost:8003/task/bufet')
@@ -306,33 +313,33 @@ REDIS_CACHE_DB = os.getenv('REDIS_CACHE_DB', '0')  # Chat: DB 0
 REDIS_CHANNEL_DB = os.getenv('REDIS_CHANNEL_DB', '8')  # Chat: Channel DB 8
 
 CACHES = {
-	'default': {
-		'BACKEND': 'django_redis.cache.RedisCache',
-		'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
-		'OPTIONS': {
-			'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-			'KEY_PREFIX': 'chat:',  # Service prefix for data isolation
-		}
-	}
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'KEY_PREFIX': 'chat:',  # Service prefix for data isolation
+        }
+    }
 }
 
 CHANNEL_LAYERS = {
-	'default': {
-		'BACKEND': 'channels_redis.core.RedisChannelLayer',
-		'CONFIG': {
-			"hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
-			'prefix': 'chat',  # Channel prefix
-		},
-	}
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
+            'prefix': 'chat',  # Channel prefix
+        },
+    }
 }
 
 REST_FRAMEWORK = {
-	'DEFAULT_AUTHENTICATION_CLASSES': [
-		'my_chat.middleware.JWTAuth',
-		],
-		'DEFAULT_FILTER_BACKENDS': [
-			'django_filters.rest_framework.DjangoFilterBackend',
-		],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'my_chat.middleware.JWTAuth',
+        ],
+        'DEFAULT_FILTER_BACKENDS': [
+            'django_filters.rest_framework.DjangoFilterBackend',
+        ],
 }
 
 # Get environment specifics

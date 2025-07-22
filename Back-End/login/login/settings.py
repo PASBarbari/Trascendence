@@ -32,11 +32,11 @@ DEBUG = os.getenv('DEBUG', True)
 
 # Simple microservices definition
 Microservices = {
-	'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
-	'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
-	'Users': os.getenv('USER_URL', 'http://localhost:8002'),
-	'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
-	'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
+    'Login': os.getenv('LOGIN_URL', 'http://localhost:8000'),
+    'Chat': os.getenv('CHAT_URL', 'http://localhost:8001'),
+    'Users': os.getenv('USER_URL', 'http://localhost:8002'),
+    'Notifications': os.getenv('NOTIFICATIONS_URL', 'http://localhost:8003'),
+    'Pong': os.getenv('PONG_URL', 'http://localhost:8004'),
 }
 
 K8S_ALLOWED_HOSTS = os.environ.get('K8S_ALLOWED_HOSTS', '10.0.0.0/8,172.16.0.0/12,192.168.0.0/16').split(',')
@@ -47,13 +47,13 @@ K8S_SERVICE_HOSTS_RAW = os.getenv('K8S_SERVICE_HOSTS', '').split(',') if os.gete
 # For ALLOWED_HOSTS: hostnames only (strip schemes/ports)
 K8S_SERVICE_HOSTS_CLEAN = []
 for host in K8S_SERVICE_HOSTS_RAW:
-	if host:
-		# Remove http:// or https:// if present
-		clean_host = host.replace('http://', '').replace('https://', '')
-		# Remove port if present
-		if ':' in clean_host:
-			clean_host = clean_host.split(':')[0]
-		K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
+    if host:
+        # Remove http:// or https:// if present
+        clean_host = host.replace('http://', '').replace('https://', '')
+        # Remove port if present
+        if ':' in clean_host:
+            clean_host = clean_host.split(':')[0]
+        K8S_SERVICE_HOSTS_CLEAN.append(clean_host)
 
 # For CORS: full URLs with schemes
 K8S_SERVICE_HOSTS_WITH_SCHEME = [f"http://{host}" for host in K8S_SERVICE_HOSTS_RAW if host]
@@ -113,7 +113,7 @@ CSRF_TRUSTED_ORIGINS = [
     'http://172.18.*',
     'https://172.18.*',
     # Continua per tutti i range 172.16.x.x fino a 172.31.x.x
-	'http://localhost:8443',
+    'http://localhost:8443',
     'http://127.0.0.1:8443',
     'http://10.0.2.15:8443',
     'http://10.0.2.15.xip.io:8443',
@@ -126,46 +126,46 @@ CSRF_TRUSTED_ORIGINS = [
 ]  + K8S_SERVICE_HOSTS_WITH_SCHEME
 
 CORS_ALLOW_HEADERS = [
-	'accept',
-	'accept-encoding',
-	'authorization',
-	'content-type',
-	'dnt',
-	'origin',
-	'user-agent',
-	'x-csrftoken',
-	'x-requested-with',
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
 
 # Application definition
 
 INSTALLED_APPS = [
-	'django_prometheus', 
-	'django.contrib.admin',
-	'django.contrib.auth',
-	'django.contrib.contenttypes',
-	'django.contrib.sessions',
-	'django.contrib.messages',
-	'django.contrib.staticfiles',
-	'rest_framework',
-	'rest_framework_simplejwt',
-	'drf_yasg',
-	'my_login',
-	'corsheaders',
-	'oauth2_provider',
+    'django_prometheus', 
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'drf_yasg',
+    'my_login',
+    'corsheaders',
+    'oauth2_provider',
 ]
 
 MIDDLEWARE = [
-	'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
-	'my_login.middleware.HealthCheckMiddleware',
-	'django.middleware.security.SecurityMiddleware',
-	'django.contrib.sessions.middleware.SessionMiddleware',
-	'django.middleware.common.CommonMiddleware',
-	'corsheaders.middleware.CorsMiddleware',
-	'django.middleware.csrf.CsrfViewMiddleware',
-	'django.contrib.auth.middleware.AuthenticationMiddleware',
-	'django.contrib.messages.middleware.MessageMiddleware',
-	'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',  # Add at the top
+    'my_login.middleware.HealthCheckMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 # Add at the end of middleware list
@@ -174,100 +174,107 @@ MIDDLEWARE.append('django_prometheus.middleware.PrometheusAfterMiddleware')
 ROOT_URLCONF = 'login.urls'
 
 TEMPLATES = [
-	{
-		'BACKEND': 'django.template.backends.django.DjangoTemplates',
-		'DIRS': [],
-		'APP_DIRS': True,
-		'OPTIONS': {
-			'context_processors': [
-				'django.template.context_processors.debug',
-				'django.template.context_processors.request',
-				'django.contrib.auth.context_processors.auth',
-				'django.contrib.messages.context_processors.messages',
-			],
-		},
-	},
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
 ]
 
 WSGI_APPLICATION = 'login.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {
-	'default': {
-	'ENGINE': 'django.db.backends.postgresql',
-	'NAME': os.getenv('POSTGRES_DB', 'login_db'),
-	'USER': os.getenv('POSTGRES_USER', 'pasquale'),
-	'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
-	'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-	'PORT': os.getenv('POSTGRES_PORT', '5435'),
-	},
-	'backup': {
-	'ENGINE': 'django.db.backends.sqlite3',
-	'NAME': str(BASE_DIR / 'db.sqlite3'),
-	}
-}
+# Use SQLite for tests, PostgreSQL otherwise
+import sys
+if 'test' in sys.argv:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'db.sqlite3'),
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'login_db'),
+            'USER': os.getenv('POSTGRES_USER', 'pasquale'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', '123'),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5437'),
+        },
+        'backup': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': str(BASE_DIR / 'db.sqlite3'),
+        }
+    }
 
 #user model
 AUTH_USER_MODEL = 'my_login.AppUser'
 
 REST_FRAMEWORK = {
-	'DEFAULT_AUTHENTICATION_CLASSES': (
-		'rest_framework_simplejwt.authentication.JWTAuthentication',
-		'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-	),
-	'DEFAULT_PERMISSION_CLASSES': (
-		'rest_framework.permissions.IsAuthenticated',
-	),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
 }
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-	{
-		'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-	},
-	{
-		'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-	},
-	{
-		'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-	},
-	{
-		'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-	},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
 ]
 
 OAUTH2_PROVIDER = {
-	'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
-	'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
-	'REFRESH_TOKEN_EXPIRE_SECONDS': 36000,
-	'ROTATE_REFRESH_TOKENS': True,
-	'SCOPES': {
-		'read': 'Read scope',
-		'write': 'Write scope',
-		'groups': 'Access to your groups',
-	},
-	# 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
-	'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,
+    'AUTHORIZATION_CODE_EXPIRE_SECONDS': 600,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 36000,
+    'ROTATE_REFRESH_TOKENS': True,
+    'SCOPES': {
+        'read': 'Read scope',
+        'write': 'Write scope',
+        'groups': 'Access to your groups',
+    },
+    # 'OAUTH2_VALIDATOR_CLASS': 'oauth2_provider.oauth2_validators.OAuth2Validator',
+    'OAUTH2_VALIDATOR_CLASS': 'my_login.validations.CustomOAuth2Validator',
 }
 
 SIMPLE_JWT = {
-	'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-	'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-	'ROTATE_REFRESH_TOKENS': True,
-	'BLACKLIST_AFTER_ROTATION': True,
-	'ALGORITHM': 'HS256',
-	# 'ISSUER': 'login',
-	'SIGNING_KEY': SECRET_KEY,
-	'VERIFYING_KEY': None,
-	'AUTH_HEADER_TYPES': ('Bearer',),
-	'USER_ID_FIELD': 'user_id',
-	'USER_ID_CLAIM': 'user_id',
-	'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-	'TOKEN_TYPE_CLAIM': 'token_type',
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    # 'ISSUER': 'login',
+    'SIGNING_KEY': SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'user_id',
+    'USER_ID_CLAIM': 'user_id',
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
 }
 
 # Internationalization
@@ -282,8 +289,8 @@ USE_I18N = True
 USE_TZ = True
 
 client = {
-	'CLIENT_ID' : os.getenv('CLIENT_ID', ''),
-	'CLIENT_SECRET' : os.getenv('CLIENT_SECRET', ''),
+    'CLIENT_ID' : os.getenv('CLIENT_ID', ''),
+    'CLIENT_SECRET' : os.getenv('CLIENT_SECRET', ''),
 }
 
 # Static files (CSS, JavaScript, Images)
@@ -303,30 +310,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SERVICE_PASSWORD = os.getenv('SERVICE_PASSWORD','123') # this is the password that the service will use to authenticate itself to the OAuth2 server
 
 ADMIN = {
-	'username': os.getenv('ADMIN_USERNAME', 'admin'),
-	'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
-	'password': os.getenv('ADMIN_PASSWORD', 'admin'),
+    'username': os.getenv('ADMIN_USERNAME', 'admin'),
+    'email': os.getenv('ADMIN_EMAIL', 'admin@admin.com'),
+    'password': os.getenv('ADMIN_PASSWORD', 'admin'),
 }
 
 OAUTH2_PROVIDERS = {
-	'GOOGLE' : {
-		'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/google/',
-		'authorization_url': "https://accounts.google.com/o/oauth2/v2/auth",
-		'token_url': "https://oauth2.googleapis.com/token",
-		'scope': "openid email profile",
-		'user_info_url': "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
-		'client_id': os.getenv('GOOGLE_CLIENT_ID', 'pippo'),
-		'client_secret': os.getenv('GOOGLE_CLIENT_SECRET', 'moltosegreto'),
-	},
-	'42' : {
-		'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/42/',
-		'authorization_url': "https://api.intra.42.fr/oauth/authorize",
-		'token_url': "https://api.intra.42.fr/oauth/token",
-		'scope': "public",
-		'user_info_url': "https://api.intra.42.fr/v2/me",
-		'client_id': os.getenv('42_CLIENT_ID', 'pippo'),
-		'client_secret': os.getenv('42_CLIENT_SECRET', 'moltosegreto'),
-	},
+    'GOOGLE' : {
+        'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/google/',
+        'authorization_url': "https://accounts.google.com/o/oauth2/v2/auth",
+        'token_url': "https://oauth2.googleapis.com/token",
+        'scope': "openid email profile",
+        'user_info_url': "https://www.googleapis.com/oauth2/v1/userinfo?alt=json",
+        'client_id': os.getenv('GOOGLE_CLIENT_ID', 'pippo'),
+        'client_secret': os.getenv('GOOGLE_CLIENT_SECRET', 'moltosegreto'),
+    },
+    '42' : {
+        'redirect_uri': 'http://trascendence.42firenze.it/api/login/login/oauth/callback/42/',
+        'authorization_url': "https://api.intra.42.fr/oauth/authorize",
+        'token_url': "https://api.intra.42.fr/oauth/token",
+        'scope': "public",
+        'user_info_url': "https://api.intra.42.fr/v2/me",
+        'client_id': os.getenv('42_CLIENT_ID', 'pippo'),
+        'client_secret': os.getenv('42_CLIENT_SECRET', 'moltosegreto'),
+    },
 }
 
 # ELK-Optimized Logging Configuration for login service
