@@ -291,7 +291,7 @@ redis==5.1.1
     #   -r Back-End/requirements.in
     #   channels-redis
     #   django-redis
-requests==2.32.3
+requests>=2.32.4
     # via
     #   -r Back-End/requirements.in
     #   coreapi
