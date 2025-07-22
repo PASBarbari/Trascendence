@@ -577,13 +577,7 @@ function attachMobileControlEvents() {
 	});
 }
 
-// function updateMobileScore(p1Score, p2Score) {
-// 	const p1ScoreElement = document.getElementById('mobileP1Score');
-// 	const p2ScoreElement = document.getElementById('mobileP2Score');
-	
-// 	if (p1ScoreElement) p1ScoreElement.textContent = p1Score || 0;
-// 	if (p2ScoreElement) p2ScoreElement.textContent = p2Score || 0;
-// }
+// TODO: Implement a function to update the mobile score display if required in the future.
 
 function showMobileControls() {
 	const controls = document.getElementById('mobile-pong-controls');
