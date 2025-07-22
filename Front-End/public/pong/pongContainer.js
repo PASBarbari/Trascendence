@@ -610,7 +610,20 @@ function removeMobileControls() {
 	}
 }
 
-// Check if device is mobile or has touch capability
+/**
+ * Detects if the current device is a mobile device or has touch capabilities.
+ * 
+ * This function uses the following methods to determine if the device is mobile:
+ * 1. Checks if the `ontouchstart` event is supported in the `window` object.
+ * 2. Checks if `navigator.maxTouchPoints` (number of touch points) is greater than 0.
+ * 3. Uses a regular expression to match common mobile device user agents in `navigator.userAgent`.
+ * 
+ * Note: This detection method is not foolproof and may produce false positives or negatives.
+ * For example, some desktop devices with touch screens may be detected as mobile devices,
+ * and some mobile devices with unusual user agents may not be detected.
+ * 
+ * @returns {boolean} True if the device is detected as mobile or touch-capable, false otherwise.
+ */
 function isMobileDevice() {
 	return 'ontouchstart' in window || 
 		   navigator.maxTouchPoints > 0 || 
