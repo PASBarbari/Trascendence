@@ -6,45 +6,45 @@ class MyLoginURLTests(TestCase):
         self.client = Client()
 
     def test_register(self):
-        response = self.client.get('/register')
+        response = self.client.get('/login/register')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_login(self):
-        response = self.client.get('/login')
+        response = self.client.get('/login/login')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_logout(self):
-        response = self.client.get('/logout')
+        response = self.client.get('/login/logout')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_user(self):
-        response = self.client.get('/user')
+        response = self.client.get('/login/user')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_get_csrf_token(self):
-        response = self.client.get('/get_csrf_token')
+        response = self.client.get('/login/get_csrf_token')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_serviceregister(self):
-        response = self.client.get('/Serviceregister')
+        response = self.client.get('/login/Serviceregister')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_oauth_login(self):
-        response = self.client.get('/oauth/testprovider/')
+        response = self.client.get('/login/oauth/testprovider/')
         self.assertIn(response.status_code, [200, 401, 403, 404])
 
     def test_oauth_callback(self):
-        response = self.client.get('/oauth/callback/testprovider/')
+        response = self.client.get('/login/oauth/callback/testprovider/')
         self.assertIn(response.status_code, [200, 401, 403, 404])
 
     def test_setup_2fa(self):
-        response = self.client.get('/2fa/setup/')
+        response = self.client.get('/login/2fa/setup/')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_verify_2fa(self):
-        response = self.client.get('/2fa/verify/')
+        response = self.client.get('/login/2fa/verify/')
         self.assertIn(response.status_code, [200, 401, 403])
 
     def test_disable_2fa(self):
-        response = self.client.get('/2fa/disable/')
+        response = self.client.get('/login/2fa/disable/')
         self.assertIn(response.status_code, [200, 401, 403])
