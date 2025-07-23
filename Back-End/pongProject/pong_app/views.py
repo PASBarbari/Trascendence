@@ -17,7 +17,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.views.decorators.csrf import csrf_exempt
 import logging
 
-logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger('pong_app')
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
 		"""
@@ -224,7 +224,7 @@ class TournamentGen(generics.ListCreateAPIView):
 		if initial_partecipants:
 			for user_id in initial_partecipants:
 				try:
-					participant = UserProfile.objects.get(user_id=user_id)
+					participant = UserProfile.objects.get(user_id=int(user_id))
 					# Avoid adding duplicates (in case creator is in the list)
 					# if not participant.tournaments.filter(id=tournament.id).exists():
 					participant.tournaments.add(tournament)
