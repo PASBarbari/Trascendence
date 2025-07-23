@@ -34,39 +34,49 @@ async def send_user_notification(user_id, notification):
 
 	serialized_notification = UniversalNotificationSerializer(notification, model=model).data
 	print(f'Sending notification to user {user_id}')
-		
-	try:
-		await channel_layer.group_send(
-			f'user_notifications_{user_id}',
-			{
-				'type': 'send_notification',
-				'message': serialized_notification,
-			}
-		)
-		print(f"Notification sent to user {user_id}")
-		
-		# Creazione della SentNotification
-		await sync_to_async(SentNotification.objects.create)(
-			id=notification.id,
-			user_id=user_id,
-			group_id=None,
-			message=notification.message,
-			is_sent=True
-		)
-		
-		# Cancellazione della vecchia ImmediateNotification
-		await sync_to_async(notification.delete)()
-		return True
-	except Exception as e:
-		print(f"Error sending notification: {e}")
-		
-		# Creazione della QueuedNotification
+	
+	# Check if user is online
+	from .online_status import online_status_service
+	is_user_online = online_status_service.is_user_online(user_id)
+	
+	if is_user_online:
+		try:
+			await channel_layer.group_send(
+				f'user_notifications_{user_id}',
+				{
+					'type': 'send_notification',
+					'message': serialized_notification,
+				}
+			)
+			print(f"Notification sent to user {user_id}")
+			
+			# Creazione della SentNotification
+			await sync_to_async(SentNotification.objects.create)(
+				id=notification.id,
+				user_id=user_id,
+				group_id=None,
+				message=notification.message,
+				is_sent=True
+			)
+			
+			# Cancellazione della vecchia ImmediateNotification
+			await sync_to_async(notification.delete)()
+			return True
+		except Exception as e:
+			print(f"Error sending notification: {e}")
+			is_user_online = False  # Treat as offline if send fails
+	
+	if not is_user_online:
+		print(f"User {user_id} is offline, queuing notification")
+		# Create QueuedNotification
 		await sync_to_async(QueuedNotification.objects.create)(
 			user_id=user_id,
 			group_id=notification.group_id,
 			message=serialized_notification,
 			is_sent=False
 		)
+		# Delete the original notification
+		await sync_to_async(notification.delete)()
 		return False
 
 class NewUser(generics.CreateAPIView):

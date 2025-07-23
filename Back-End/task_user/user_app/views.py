@@ -14,6 +14,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
+from .online_status import online_status_service
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
 	"""
@@ -174,6 +175,21 @@ class UserSearch(generics.ListAPIView):
 		
 		# Order by username for consistent pagination
 		return queryset.order_by('username')
+	
+	def list(self, request, *args, **kwargs):
+		"""Override list to add online status to search results"""
+		response = super().list(request, *args, **kwargs)
+		
+		# Get user IDs from results and check their online status
+		if response.data and 'results' in response.data:
+			user_ids = [user['user_id'] for user in response.data['results']]
+			online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+			
+			# Add online status to each user
+			for user in response.data['results']:
+				user['is_online'] = online_statuses.get(user['user_id'], False)
+		
+		return response
 
 class FriendList(generics.ListAPIView):
     permission_classes = (IsAuthenticatedUserProfile,)
@@ -197,6 +213,35 @@ class FriendList(generics.ListAPIView):
             queryset = queryset.filter(accepted=False)
             
         return queryset
+    
+    def list(self, request, *args, **kwargs):
+        """Override list to add online status to friend_info"""
+        # Get the serialized data
+        response = super().list(request, *args, **kwargs)
+        
+        # Extract friend IDs from the friend_info
+        friend_ids = []
+        for friendship_data in response.data:
+            friend_info = friendship_data.get('friend_info')
+            if friend_info and 'user_id' in friend_info:
+                friend_ids.append(friend_info['user_id'])
+        
+        # Batch check online status
+        online_statuses = {}
+        if friend_ids:
+            try:
+                online_statuses = online_status_service.get_multiple_users_online_status(friend_ids)
+            except Exception as e:
+                print(f"Error getting online statuses: {e}")
+        
+        # Add online status to each friend_info
+        for friendship_data in response.data:
+            friend_info = friendship_data.get('friend_info')
+            if friend_info and 'user_id' in friend_info:
+                friend_id = friend_info['user_id']
+                friend_info['is_online'] = online_statuses.get(friend_id, False)
+        
+        return response
 
 class LevelUp(APIView):
 	""" Use this endpoint to add exp to a user.
@@ -276,6 +321,54 @@ class AddFriend(APIView):
 			return Response({
 				'error': str(e)
 			}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OnlineStatusView(APIView):
+	"""
+	Quick API endpoint to check online status of users.
+	
+	GET: Check online status of multiple users
+	Query Parameters:
+		user_ids: Comma-separated list of user IDs
+		
+	POST: Check online status of specific users
+	Body:
+		{
+			"user_ids": [1, 2, 3]
+		}
+	"""
+	permission_classes = (IsAuthenticatedUserProfile,)
+	authentication_classes = [JWTAuth]
+	
+	def get(self, request):
+		"""Check online status via query parameters"""
+		user_ids_str = request.query_params.get('user_ids', '')
+		if not user_ids_str:
+			return Response({'error': 'user_ids parameter required'}, status=400)
+		
+		try:
+			user_ids = [int(uid.strip()) for uid in user_ids_str.split(',') if uid.strip()]
+			online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+			
+			return Response({
+				'online_statuses': online_statuses,
+				'total_online': sum(1 for status in online_statuses.values() if status)
+			})
+		except ValueError:
+			return Response({'error': 'Invalid user_ids format'}, status=400)
+	
+	def post(self, request):
+		"""Check online status via POST body"""
+		user_ids = request.data.get('user_ids', [])
+		if not user_ids:
+			return Response({'error': 'user_ids required'}, status=400)
+		
+		online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+		
+		return Response({
+			'online_statuses': online_statuses,
+			'total_online': sum(1 for status in online_statuses.values() if status)
+		})
 
 	def patch(self, request):
 		try:

@@ -12,7 +12,12 @@ document.head.appendChild(link);
 let messageHistory = [];
 let socket;
 
-async function handleFriendRequest(str_method, receiver_id, receiver_username, index) {
+async function handleFriendRequest(
+	str_method,
+	receiver_id,
+	receiver_username,
+	index
+) {
 	// Pulisce l'input dopo aver inviato la richiesta
 	receiver_id = Number(receiver_id);
 	const friendInput = document.getElementById("friendID");
@@ -49,8 +54,10 @@ async function handleFriendRequest(str_method, receiver_id, receiver_username, i
 			if (index !== undefined && index !== null && index >= 0) {
 				messageHistory.splice(index, 1);
 			}
-			if (str_method === 'DELETE') {
-				messageHistory = messageHistory.filter(msg => msg.user_id !== receiver_id);
+			if (str_method === "DELETE") {
+				messageHistory = messageHistory.filter(
+					(msg) => msg.user_id !== receiver_id
+				);
 			}
 
 			const info = data.info;
@@ -88,8 +95,11 @@ async function handleFriendRequest(str_method, receiver_id, receiver_username, i
 	}
 }
 
-
-function renderSentFriendRequest(receiver_id, receiver_username, addToDOM = false) {
+function renderSentFriendRequest(
+	receiver_id,
+	receiver_username,
+	addToDOM = false
+) {
 	console.log("/***********renderSentFriendRequest************/");
 	console.log("Rendering sent friend request for ID:", receiver_id);
 	console.log("Rendering sent friend request for Username:", receiver_username);
@@ -147,10 +157,7 @@ async function getFriends() {
 			renderFriendsList(acceptedFriends);
 			renderFriendRequest2(pendingFriends);
 		} else {
-			console.error(
-				"Errore nella risposta del server:",
-				response.statusText
-			);
+			console.error("Errore nella risposta del server:", response.statusText);
 		}
 	} catch (error) {
 		console.error("Errore nella richiesta:", error);
@@ -180,15 +187,24 @@ function renderFriendsList(friends) {
 			const friendId = friendInfo.user_id || friend.friend_id;
 			const username = friendInfo.username || "Unknown";
 			const email = friendInfo.email || "";
+			const isOnline = friendInfo.is_online || false; // Use the is_online data from backend
 
 			const friend_initials = calculateInitials(username);
 
 			return `
 				<div class="friend-item d-flex align-items-center p-3 border rounded mb-2" id="friend-item-${index}">
-					<!-- Friend Avatar -->
-					<div class="friend-avatar me-3 d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
-						 style="width: 45px; height: 45px; font-weight: 600;">
-						${friend_initials}
+					<!-- Friend Avatar with Online Status -->
+					<div class="position-relative me-3">
+						<div class="friend-avatar d-flex align-items-center justify-content-center bg-primary text-white rounded-circle"
+							 style="width: 45px; height: 45px; font-weight: 600;">
+							${friend_initials}
+						</div>
+						<!-- Online Status Indicator -->
+						<div class="online-status-indicator ${isOnline ? 'bg-success' : 'bg-secondary'} rounded-circle position-absolute" 
+							 style="width: 12px; height: 12px; bottom: 2px; right: 2px; border: 2px solid white;"
+							 id="status-${friendId}"
+							 title="${isOnline ? 'Online' : 'Offline'}">
+						</div>
 					</div>
 
 					<!-- Friend Info -->
@@ -208,6 +224,21 @@ function renderFriendsList(friends) {
 			`;
 		})
 		.join("");
+}
+
+/**
+ * Update a single friend's online status indicator
+ */
+function updateFriendOnlineStatus(friendId, isOnline) {
+	const statusElement = document.getElementById(`status-${friendId}`);
+	if (statusElement) {
+		statusElement.className = `online-status-indicator rounded-circle position-absolute ${
+			isOnline ? 'bg-success' : 'bg-secondary'
+		}`;
+		statusElement.style.cssText = "width: 12px; height: 12px; bottom: 2px; right: 2px; border: 2px solid white;";
+		statusElement.title = isOnline ? "Online" : "Offline";
+		console.log(`Updated friend ${friendId} status to ${isOnline ? 'online' : 'offline'}`);
+	}
 }
 
 // Add these functions after the renderFriendsList function
@@ -302,9 +333,8 @@ function renderFriendRequest2(friends) {
 	const notificationContent = document.getElementById("notificationContent");
 	console.log("Friends:", friends);
 
-
-	const existingFriendIds = friends.map(f => f.friend_info.user_id);
-	messageHistory = messageHistory.filter(msg => {
+	const existingFriendIds = friends.map((f) => f.friend_info.user_id);
+	messageHistory = messageHistory.filter((msg) => {
 		// Mantieni solo i messaggi che esistono ancora come pending friends
 		return existingFriendIds.includes(msg.user_id);
 	});
@@ -373,7 +403,7 @@ function renderNotification() {
 	getFriends();
 	initFriendAutocomplete({
 		inputId: "friendID",
-		suggestionListId: "suggestionList"
+		suggestionListId: "suggestionList",
 	});
 }
 
@@ -461,7 +491,7 @@ const MESSAGE_HANDLERS = {
 
 	// String-based messages (legacy support)
 	string_message: handleStringMessage,
-
+	heartbeat_request: sendHeartBeat,
 	pong_invitation: handlePongInvitationMessage,
 
 	// Fallback handler
@@ -543,10 +573,7 @@ function showPongInvitationModal(inviterName, inviterId, roomId, gameUrl) {
 	}
 
 	// Show toast notification as well
-	showNotificationToast(
-		`🎮 ${inviterName} invited you to play Pong!`,
-		"info"
-	);
+	showNotificationToast(`🎮 ${inviterName} invited you to play Pong!`, "info");
 }
 
 // Add these global functions
@@ -735,9 +762,7 @@ function showGameInvitationModal(inviterName, inviterId, gameId) {
 			}
 		}, 30000);
 	} else {
-		console.log(
-			"🎮 DEBUG: Bootstrap Modal not available, using fallback..."
-		);
+		console.log("🎮 DEBUG: Bootstrap Modal not available, using fallback...");
 		// Fallback if Bootstrap is not available
 		modal.style.display = "block";
 		modal.classList.add("show");
@@ -752,10 +777,7 @@ function showGameInvitationModal(inviterName, inviterId, gameId) {
 
 	// Show toast notification as well
 	console.log("🎮 DEBUG: Showing toast notification...");
-	showNotificationToast(
-		`🎮 ${inviterName} invited you to play Pong!`,
-		"info"
-	);
+	showNotificationToast(`🎮 ${inviterName} invited you to play Pong!`, "info");
 }
 
 // Add these global functions
@@ -969,6 +991,8 @@ function initializeWebSocket() {
 		if (window.wsReconnectAttempts) {
 			window.wsReconnectAttempts = 0;
 		}
+		startHeartbeat();
+		console.log("WebSocket heartbeat started");
 	};
 
 	socket.onclose = function (event) {
@@ -1114,9 +1138,7 @@ function handleFriendDeletedMessage(message) {
 		const userData = message.message.data;
 		console.log("User data:", userData);
 		showNotificationToast(
-			`${
-				userData.username || "Someone"
-			} removed you from their friends list`,
+			`${userData.username || "Someone"} removed you from their friends list`,
 			"warning"
 		);
 	} else {
@@ -1373,6 +1395,32 @@ function getCurrentChatRoomId() {
 	// Implement this based on your chat system
 	// For example, check URL parameters or global state
 	return null; // Placeholder
+}
+
+function startHeartbeat() {
+	if (!socket || socket.readyState !== WebSocket.OPEN) {
+		console.warn("WebSocket is not open, cannot start heartbeat");
+		return;
+	}
+
+	console.log("Starting WebSocket heartbeat...");
+	sendHeartBeat();
+	// Send a heartbeat request every 25 seconds
+	setInterval(() => {
+		sendHeartBeat();
+	}, 25000);
+}
+
+function sendHeartBeat() {
+	if (!socket || socket.readyState !== WebSocket.OPEN) {
+		console.warn("WebSocket is not open, cannot send heartbeat");
+		return;
+	}
+	try {
+		socket.send(JSON.stringify({ type: "heartbeat" }));
+	} catch (error) {
+		console.error("Failed to send heartbeat request:", error);
+	}
 }
 
 // Enhanced Message Handler Functions (existing ones updated)
