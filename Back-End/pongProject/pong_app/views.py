@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Q, Count, Case, When, IntegerField
 from django.utils import timezone
 from datetime import timedelta
+from psycopg import logger
 from rest_framework import permissions, status, generics, filters
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -203,7 +204,7 @@ class TournamentGen(generics.ListCreateAPIView):
 		
 		# Get initial partecipants from request data (if any)
 		initial_partecipants = self.request.data.get('partecipants', [])
-		
+		logger.info(f"Creating tournament with initial partecipants: {initial_partecipants}")
 		# Calculate the number of partecipants (creator + initial partecipants)
 		participant_count = 1  # Start with creator
 		if initial_partecipants:
@@ -225,8 +226,8 @@ class TournamentGen(generics.ListCreateAPIView):
 				try:
 					participant = UserProfile.objects.get(user_id=user_id)
 					# Avoid adding duplicates (in case creator is in the list)
-					if not participant.tournaments.filter(id=tournament.id).exists():
-						participant.tournaments.add(tournament)
+					# if not participant.tournaments.filter(id=tournament.id).exists():
+					participant.tournaments.add(tournament)
 				except UserProfile.DoesNotExist:
 					# Log the error but don't fail the entire creation
 					logging.warning(f"User with ID {user_id} not found, skipping from tournament {tournament.id}")

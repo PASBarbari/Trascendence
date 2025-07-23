@@ -805,6 +805,7 @@ def create_tournament(sender, instance, created, **kwargs):
 			logger.error(f'❌ Failed to send tournament notification to creator (ID: {instance.creator.user_id}): {str(e)}')
 			print(f"❌ Error sending notification to creator: {str(e)}")
 
+		logger.info(f'🏆 Tournament {instance.id} has these players {list(instance.player.all().values_list("user_id", flat=True))}')
 		# Send notifications to all participants (using the correct relationship)
 		for player in instance.player.all():
 			if player.user_id == instance.creator.user_id:
