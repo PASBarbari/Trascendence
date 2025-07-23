@@ -504,7 +504,7 @@ class TournamentState:
 				'round_data': {
 					'round_number': self.current_round,
 					'duration_minutes': 5,
-					'participants': len(self.partecipants) if hasattr(self, 'partecipants') else len(self.players)
+					'partecipants': len(self.partecipants) if hasattr(self, 'partecipants') else len(self.players)
 				},
 				'games': self._get_current_games(),
 				'creator': self.creator_id
@@ -591,7 +591,7 @@ class TournamentState:
 					},
 					'next_round_info': {
 						'round_number': self.current_round + 1,
-						'participants': len(self.next_round),
+						'partecipants': len(self.next_round),
 						'status': 'waiting_for_ready'
 					},
 					'creator': self.creator_id
@@ -606,7 +606,7 @@ class TournamentState:
 					'message': 'Get ready for the next round!',
 					'round_info': {
 						'next_round': self.current_round + 1,
-						'participants': len(self.next_round),
+						'partecipants': len(self.next_round),
 						'brackets': self._get_next_round_brackets()
 					},
 					'sender': 'system'
@@ -620,7 +620,7 @@ class TournamentState:
 
 	def _process_round_results(self):
 		"""Process current round results and create new brackets"""
-		# Move current next_round to participants for next round
+		# Move current next_round to partecipants for next round
 		if hasattr(self, 'partecipants'):
 			eliminated = [p for p in self.partecipants if p not in self.next_round and p != 0]
 			self.partecipants = self.next_round.copy()
@@ -772,3 +772,56 @@ def start_game(sender, instance, created, **kwargs):
 
 	else:
 		logger.debug(f'🔄 Game {instance.id} updated (not created)')
+
+
+@receiver(post_save, sender=Tournament)
+def create_tournament(sender, instance, created, **kwargs):
+	from .notification import SendNotificationSync, ImmediateNotification
+	logger = logging.getLogger(__name__)
+
+	if created:
+		logger.info(f'🏆 Creating new tournament {instance.id}')
+
+		# Prepare notification data
+		notification_data = {
+			'type': 'tournament_created',
+			'tournament_id': instance.id,
+			'name': instance.name,
+			'max_players': instance.max_partecipants,
+			'creator_id': instance.creator.user_id,
+			'begin_date': instance.begin_date.isoformat() if instance.begin_date else None,
+		}
+
+		# Send notification to creator
+		try:
+			notification = ImmediateNotification(
+				Sender='Pong',
+				message=notification_data,
+				user_id=instance.creator.user_id
+			)
+			SendNotificationSync(notification)
+			logger.info(f'✅ Tournament notification sent to creator (ID: {instance.creator.user_id}) for tournament {instance.id}')
+		except Exception as e:
+			logger.error(f'❌ Failed to send tournament notification to creator (ID: {instance.creator.user_id}): {str(e)}')
+			print(f"❌ Error sending notification to creator: {str(e)}")
+
+		# Send notifications to all participants (using the correct relationship)
+		for player in instance.player.all():
+			if player.user_id == instance.creator.user_id:
+				continue
+
+			# Send notification to player
+			try:
+				notification = ImmediateNotification(
+					Sender='Pong',
+					message=notification_data,
+					user_id=player.user_id
+				)
+				SendNotificationSync(notification)
+				logger.info(f'✅ Tournament notification sent to player (ID: {player.user_id}) for tournament {instance.id}')
+			except Exception as e:
+				logger.error(f'❌ Failed to send tournament notification to player (ID: {player.user_id}): {str(e)}')
+				print(f"❌ Error sending notification to player {player.user_id}: {str(e)}")
+		logger.info(f'✅ Tournament {instance.id} created successfully')
+	else:
+		logger.debug(f'🔄 Tournament {instance.id} updated (not created)')

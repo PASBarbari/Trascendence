@@ -32,25 +32,50 @@ class gamesCreateSerializer(serializers.ModelSerializer):
 
 class TournamentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(max_length=255)
-    begin_date = serializers.DateTimeField(read_only=True, default=datetime.datetime.now)
-    level_required = serializers.IntegerField(min_value=0)
-    participants = serializers.IntegerField(min_value=0, default=0)
-    max_participants = serializers.IntegerField(min_value=4)
-    winner = serializers.IntegerField(min_value=0, default=0)
+    begin_date = serializers.DateTimeField(read_only=True)
+    partecipants = serializers.IntegerField(min_value=0, default=0, read_only=True)
+    max_partecipants = serializers.IntegerField(min_value=2, help_text="Will be adjusted to nearest power of 2 (4, 8, 16, 32, 64)")
+    winner = serializers.SerializerMethodField(read_only=True)
+    creator = serializers.SerializerMethodField(read_only=True)
+
+    def get_creator(self, obj):
+        """Return creator information"""
+        if obj.creator:
+            return {
+                'user_id': obj.creator.user_id,
+                'username': obj.creator.username
+            }
+        return None
+
+    def get_winner(self, obj):
+        """Return winner information"""
+        if obj.winner:
+            return {
+                'user_id': obj.winner.user_id,
+                'username': obj.winner.username
+            }
+        return None
 
     def validate_name(self, value):
         if len(str(value)) < 1:
             raise serializers.ValidationError('name is not valid')
         return value
     
-    def validate_participants(self, value):
+    def validate_partecipants(self, value):
         if value < 0:
-            raise serializers.ValidationError('participants is not valid')
+            raise serializers.ValidationError('partecipants is not valid')
+        return value
+    
+    def validate_max_partecipants(self, value):
+        if value < 2:
+            raise serializers.ValidationError('max_partecipants must be at least 2')
+        if value > 128:
+            raise serializers.ValidationError('max_partecipants cannot exceed 128')
         return value
 
     class Meta:
         model = Tournament
-        fields = '__all__'
+        fields = ['id', 'name', 'begin_date', 'partecipants', 'max_partecipants', 'winner', 'creator']
         
 class GameStateSerializer(serializers.Serializer):
     player_1_score = serializers.IntegerField()

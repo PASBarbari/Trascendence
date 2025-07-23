@@ -157,7 +157,7 @@ CREATE TABLE my_chat_userprofile_blockedUsers (
 ### ✅ Privacy Features
 1. **Silent Blocking**: Blocked users aren't notified they've been blocked
 2. **Invisible Messages**: Messages from blocked users simply don't appear
-3. **Chat Filtering**: Users don't see chats with only blocked participants
+3. **Chat Filtering**: Users don't see chats with only blocked partecipants
 
 ## Testing
 

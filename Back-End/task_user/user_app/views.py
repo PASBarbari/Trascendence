@@ -322,54 +322,6 @@ class AddFriend(APIView):
 				'error': str(e)
 			}, status=status.HTTP_400_BAD_REQUEST)
 
-
-class OnlineStatusView(APIView):
-	"""
-	Quick API endpoint to check online status of users.
-	
-	GET: Check online status of multiple users
-	Query Parameters:
-		user_ids: Comma-separated list of user IDs
-		
-	POST: Check online status of specific users
-	Body:
-		{
-			"user_ids": [1, 2, 3]
-		}
-	"""
-	permission_classes = (IsAuthenticatedUserProfile,)
-	authentication_classes = [JWTAuth]
-	
-	def get(self, request):
-		"""Check online status via query parameters"""
-		user_ids_str = request.query_params.get('user_ids', '')
-		if not user_ids_str:
-			return Response({'error': 'user_ids parameter required'}, status=400)
-		
-		try:
-			user_ids = [int(uid.strip()) for uid in user_ids_str.split(',') if uid.strip()]
-			online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
-			
-			return Response({
-				'online_statuses': online_statuses,
-				'total_online': sum(1 for status in online_statuses.values() if status)
-			})
-		except ValueError:
-			return Response({'error': 'Invalid user_ids format'}, status=400)
-	
-	def post(self, request):
-		"""Check online status via POST body"""
-		user_ids = request.data.get('user_ids', [])
-		if not user_ids:
-			return Response({'error': 'user_ids required'}, status=400)
-		
-		online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
-		
-		return Response({
-			'online_statuses': online_statuses,
-			'total_online': sum(1 for status in online_statuses.values() if status)
-		})
-
 	def patch(self, request):
 		try:
 			u1 = get_object_or_404(UserProfile, user_id=request.data.get('receiver'))
@@ -630,3 +582,117 @@ class Update2FAStatus(APIView):
 			
 		except Exception as e:
 			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class OnlineStatusView(APIView):
+    """
+    Quick API endpoint to check online status of users.
+    
+    GET: Check online status of multiple users
+    Query Parameters:
+        user_ids: Comma-separated list of user IDs (e.g., "1,2,3")
+        
+    POST: Check online status of specific users
+    Body:
+        {
+            "user_ids": [1, 2, 3]
+        }
+    
+    Returns:
+        {
+            "users": [
+                {"user_id": 1, "is_online": true},
+                {"user_id": 2, "is_online": false},
+                {"user_id": 3, "is_online": true}
+            ],
+            "summary": {
+                "total_users": 3,
+                "online_count": 2,
+                "offline_count": 1
+            }
+        }
+    """
+    permission_classes = (IsAuthenticatedUserProfile,)
+    authentication_classes = [JWTAuth]
+    
+    def get(self, request):
+        """Check online status via query parameters"""
+        user_ids_str = request.query_params.get('user_ids', '')
+        if not user_ids_str:
+            return Response({'error': 'user_ids parameter required'}, status=400)
+        
+        try:
+            user_ids = [int(uid.strip()) for uid in user_ids_str.split(',') if uid.strip()]
+            if not user_ids:
+                return Response({'error': 'No valid user_ids provided'}, status=400)
+                
+            online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+            
+            # Format response as list of user objects
+            users = []
+            online_count = 0
+            
+            for user_id in user_ids:
+                is_online = online_statuses.get(user_id, False)
+                users.append({
+                    'user_id': user_id,
+                    'is_online': is_online
+                })
+                if is_online:
+                    online_count += 1
+            
+            return Response({
+                'users': users,
+                'summary': {
+                    'total_users': len(user_ids),
+                    'online_count': online_count,
+                    'offline_count': len(user_ids) - online_count
+                }
+            })
+            
+        except ValueError:
+            return Response({'error': 'Invalid user_ids format. Use comma-separated integers.'}, status=400)
+        except Exception as e:
+            return Response({'error': f'Server error: {str(e)}'}, status=500)
+    
+    def post(self, request):
+        """Check online status via POST body"""
+        user_ids = request.data.get('user_ids', [])
+        if not user_ids:
+            return Response({'error': 'user_ids required'}, status=400)
+        
+        if not isinstance(user_ids, list):
+            return Response({'error': 'user_ids must be a list'}, status=400)
+        
+        try:
+            # Ensure all user_ids are integers
+            user_ids = [int(uid) for uid in user_ids]
+            
+            online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+            
+            # Format response as list of user objects
+            users = []
+            online_count = 0
+            
+            for user_id in user_ids:
+                is_online = online_statuses.get(user_id, False)
+                users.append({
+                    'user_id': user_id,
+                    'is_online': is_online
+                })
+                if is_online:
+                    online_count += 1
+            
+            return Response({
+                'users': users,
+                'summary': {
+                    'total_users': len(user_ids),
+                    'online_count': online_count,
+                    'offline_count': len(user_ids) - online_count
+                }
+            })
+            
+        except ValueError:
+            return Response({'error': 'All user_ids must be valid integers'}, status=400)
+        except Exception as e:
+            return Response({'error': f'Server error: {str(e)}'}, status=500)

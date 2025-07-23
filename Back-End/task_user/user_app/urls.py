@@ -1,6 +1,6 @@
 from django.urls import path
 from rest_framework import views
-from .views import UserGen, UserManage, FriendList, LevelUp, AddFriend, BlockUser, AvatarManager, Update2FAStatus, UserSearch
+from .views import OnlineStatusView, UserGen, UserManage, FriendList, LevelUp, AddFriend, BlockUser, AvatarManager, Update2FAStatus, UserSearch
 
 urlpatterns = [
 	path('avatar', AvatarManager.as_view(), name='avatar_gen'),
@@ -12,4 +12,5 @@ urlpatterns = [
 	path('block', BlockUser.as_view(), name='block_user'),
 	path('user/update-2fa/', Update2FAStatus.as_view(), name='update_2fa_status'),
 	path('search', UserSearch.as_view(), name='search_user'),
+	path('online-status', OnlineStatusView.as_view(), name='online_status'),
 ]

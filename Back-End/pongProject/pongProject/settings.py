@@ -146,6 +146,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'pong_app',
     'channels',
+    'drf_yasg',
     'django_redis',
     # 'rest_framework_simplejwt',  # Removed to avoid cross-service app dependencies
 ]

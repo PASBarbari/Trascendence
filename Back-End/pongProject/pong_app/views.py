@@ -18,8 +18,6 @@ import logging
 
 logging.basicConfig(level=logging.ERROR)
 
-
-
 class IsAuthenticatedUserProfile(permissions.BasePermission):
 		"""
 		Permesso personalizzato per il modello UserProfile.
@@ -141,12 +139,97 @@ class CheckPendingGames(APIView):
 			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class TournamentGen(generics.ListCreateAPIView):
+	"""
+	Tournament management endpoint.
+	
+	GET: List all tournaments with optional filtering
+	POST: Create a new tournament
+	
+	When creating a tournament:
+	- The authenticated user is automatically set as the creator
+	- The creator is automatically joined to the tournament
+	- max_partecipants is automatically adjusted to the nearest power of 2 (4, 8, 16, 32, 64)
+	- partecipants count starts at 1 (the creator)
+	
+	Example request body for creation:
+	{
+		"name": "Summer Championship",
+		"max_partecipants": 12,  // Will be adjusted to 16
+	}
+	"""
 	permission_classes = (IsAuthenticatedUserProfile,)
 	authentication_classes = [JWTAuth]
 	serializer_class = TournamentSerializer
 	filter_backends = [DjangoFilterBackend]
-	filterset_fields = ['name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
-	lookup_fields = ['id', 'name', 'partecipants__user_id', 'level_required', 'max_partecipants', 'winner__user_id']
+	filterset_fields = ['name', 'partecipants__user_id', 'max_partecipants', 'winner__user_id']
+	lookup_fields = ['id', 'name', 'partecipants__user_id', 'max_partecipants', 'winner__user_id']
+	
+	def get_nearest_power_of_2(self, num):
+		"""Get the nearest power of 2 for tournament partecipants"""
+		if num <= 0:
+			return 4  # Minimum tournament size
+		
+		# Find the nearest power of 2
+		import math
+		if num <= 4:
+			return 4
+		elif num <= 8:
+			return 8
+		elif num <= 16:
+			return 16
+		elif num <= 32:
+			return 32
+		elif num <= 64:
+			return 64
+		elif num <= 128:
+			return 128
+		else:
+			return 128 # Maximum tournament size
+	
+	def perform_create(self, serializer):
+		"""Override to auto-set creator and adjust max_partecipants to nearest power of 2"""
+		# Get or create the user profile for the creator
+		creator, created = UserProfile.objects.get_or_create(
+			user_id=self.request.user.user_id,
+			defaults={
+				'username': getattr(self.request.user, 'username', f'User_{self.request.user.user_id}'),
+				'email': getattr(self.request.user, 'email', f'user_{self.request.user.user_id}@example.com')
+			}
+		)
+		
+		# Get the requested max_partecipants and adjust to nearest power of 2
+		max_partecipants = serializer.validated_data.get('max_partecipants', 8)
+		adjusted_max_partecipants = self.get_nearest_power_of_2(max_partecipants)
+		
+		# Get initial partecipants from request data (if any)
+		initial_partecipants = self.request.data.get('partecipants', [])
+		
+		# Calculate the number of partecipants (creator + initial partecipants)
+		participant_count = 1  # Start with creator
+		if initial_partecipants:
+			participant_count += len(initial_partecipants)
+		
+		# Save the tournament with auto-set creator and adjusted max partecipants
+		tournament = serializer.save(
+			creator=creator,
+			max_partecipants=adjusted_max_partecipants,
+			partecipants=participant_count
+		)
+		
+		# Add the creator to the tournament partecipants
+		creator.tournaments.add(tournament)
+		
+		# Add initial partecipants if provided
+		if initial_partecipants:
+			for user_id in initial_partecipants:
+				try:
+					participant = UserProfile.objects.get(user_id=user_id)
+					# Avoid adding duplicates (in case creator is in the list)
+					if not participant.tournaments.filter(id=tournament.id).exists():
+						participant.tournaments.add(tournament)
+				except UserProfile.DoesNotExist:
+					# Log the error but don't fail the entire creation
+					logging.warning(f"User with ID {user_id} not found, skipping from tournament {tournament.id}")
 
 class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = (IsAuthenticatedUserProfile,)
@@ -169,16 +252,78 @@ class JoinTournament(APIView):
 		user_id = request.data.get('user_id')
 		if not tournament_id or not user_id:
 			return Response({'error': 'tournament_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+		
 		tournament = get_object_or_404(Tournament, id=tournament_id)
 		player = get_object_or_404(UserProfile, user_id=user_id)
+		
+		# Check if tournament is full
 		if tournament.partecipants >= tournament.max_partecipants:
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
-		if tournament.winner != 0:
+		
+		# Check if tournament is already finished
+		if tournament.winner:
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Check if player is already in the tournament
+		if player.tournaments.filter(id=tournament_id).exists():
+			return Response({'error': 'user is already in this tournament'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Add player to tournament
 		player.tournaments.add(tournament)
 		tournament.partecipants += 1
 		tournament.save()
-		return Response({'message': 'user joined tournament'}, status=status.HTTP_200_OK)
+		
+		return Response({
+			'message': 'user joined tournament',
+			'tournament_id': tournament_id,
+			'current_partecipants': tournament.partecipants,
+			'max_partecipants': tournament.max_partecipants
+		}, status=status.HTTP_200_OK)
+
+class LeaveTournament(APIView):
+	""" Use this endpoint to leave a tournament (only before it starts).
+
+		Args:
+			tournament_id (int): The id of the tournament.
+			user_id (int): The id of the player.
+	"""
+	permission_classes = (permissions.AllowAny,)
+	def post(self, request, *args, **kwargs):
+		tournament_id = request.data.get('tournament_id')
+		user_id = request.data.get('user_id')
+		if not tournament_id or not user_id:
+			return Response({'error': 'tournament_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		tournament = get_object_or_404(Tournament, id=tournament_id)
+		player = get_object_or_404(UserProfile, user_id=user_id)
+		
+		# Check if tournament has already started (has a winner or games in progress)
+		if tournament.winner:
+			return Response({'error': 'tournament has already finished'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Check if tournament has games (indicating it has started)
+		if tournament.game.exists():
+			return Response({'error': 'tournament has already started, cannot leave'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Check if player is actually in the tournament
+		if not player.tournaments.filter(id=tournament_id).exists():
+			return Response({'error': 'user is not in this tournament'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Check if user is the creator
+		if tournament.creator and tournament.creator.user_id == user_id:
+			return Response({'error': 'tournament creator cannot leave the tournament'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Remove player from tournament
+		player.tournaments.remove(tournament)
+		tournament.partecipants -= 1
+		tournament.save()
+		
+		return Response({
+			'message': 'user left tournament',
+			'tournament_id': tournament_id,
+			'current_partecipants': tournament.partecipants,
+			'max_partecipants': tournament.max_partecipants
+		}, status=status.HTTP_200_OK)
 
 class EndTournament(APIView):
 	""" Use this endpoint to end a tournament.
@@ -193,13 +338,30 @@ class EndTournament(APIView):
 		winner_id = request.data.get('winner_id')
 		if not tournament_id or not winner_id:
 			return Response({'error': 'tournament_id and winner_id are required'}, status=status.HTTP_400_BAD_REQUEST)
+		
 		tournament = get_object_or_404(Tournament, id=tournament_id)
 		winner = get_object_or_404(UserProfile, user_id=winner_id)
-		if tournament.winner != 0:
+		
+		# Check if tournament is already finished
+		if tournament.winner:
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
-		tournament.winner = winner.user_id
+		
+		# Check if winner is actually a participant in the tournament
+		if not winner.tournaments.filter(id=tournament_id).exists():
+			return Response({'error': 'winner must be a participant in the tournament'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Set the winner
+		tournament.winner = winner
 		tournament.save()
-		return Response({'message': 'tournament ended'}, status=status.HTTP_200_OK)
+		
+		return Response({
+			'message': 'tournament ended',
+			'tournament_id': tournament_id,
+			'winner': {
+				'user_id': winner.user_id,
+				'username': winner.username
+			}
+		}, status=status.HTTP_200_OK)
 
 
 

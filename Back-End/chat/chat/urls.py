@@ -38,7 +38,7 @@ schema_view = get_schema_view(
     authentication_classes=[],
 )
 
-# Custom view that serves Swagger UI with CDN resources
+# Custom view that serves Swagger UI with JWT authentication
 def custom_swagger_view(request):
     html = """<!DOCTYPE html>
 <html>
@@ -56,7 +56,7 @@ def custom_swagger_view(request):
     <script>
         window.onload = function() {
             const ui = SwaggerUIBundle({
-                url: "/api/chat/swagger.json",
+                url: "/swagger.json",
                 dom_id: '#swagger-ui',
                 deepLinking: true,
                 presets: [
@@ -66,31 +66,69 @@ def custom_swagger_view(request):
                 plugins: [
                     SwaggerUIBundle.plugins.DownloadUrl
                 ],
-                layout: "StandaloneLayout"
+                layout: "StandaloneLayout",
+                requestInterceptor: function(request) {
+                    const token = localStorage.getItem('jwt_token');
+                    if (token) {
+                        request.headers['Authorization'] = 'Bearer ' + token;
+                    }
+                    return request;
+                }
             });
             
-            // Add authentication helper
+            // Add JWT authentication helper
             const authWrapper = document.createElement('div');
-            authWrapper.style.cssText = 'padding: 15px; background: #f0f0f0; margin: 10px 0;';
+            authWrapper.style.cssText = 'padding: 15px; background: #f8f9fa; border: 1px solid #dee2e6; margin: 10px 0; border-radius: 5px;';
             authWrapper.innerHTML = `
-                <h3 style="margin-top: 0">JWT Authentication</h3>
-                <input type="text" id="auth_token" placeholder="Paste your JWT token here" style="width: 100%; padding: 8px;">
-                <button id="auth_button" style="margin-top: 10px; padding: 8px 15px;">Set Authentication Token</button>
+                <h4 style="margin-top: 0; color: #495057;">🔐 JWT Authentication</h4>
+                <div style="margin-bottom: 10px;">
+                    <input type="text" id="jwt_token" placeholder="Paste your JWT token here" 
+                           style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button id="set_token_button" style="padding: 8px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Set Token
+                    </button>
+                    <button id="clear_token_button" style="padding: 8px 15px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Clear Token
+                    </button>
+                    <span id="token_status" style="padding: 8px; color: #6c757d;"></span>
+                </div>
             `;
             
             document.getElementById('swagger-ui').prepend(authWrapper);
             
-            document.getElementById('auth_button').addEventListener('click', function() {
-                const token = document.getElementById('auth_token').value;
+            // Set token functionality
+            document.getElementById('set_token_button').addEventListener('click', function() {
+                const token = document.getElementById('jwt_token').value.trim();
                 if (token) {
-                    localStorage.setItem('auth_token', token);
-                    alert('Authentication token set!');
-                    window.location.reload();
+                    localStorage.setItem('jwt_token', token);
+                    document.getElementById('token_status').textContent = '✅ Token set successfully!';
+                    document.getElementById('token_status').style.color = '#28a745';
+                    // Authorize all endpoints
+                    ui.preauthorizeApiKey('Bearer', token);
+                } else {
+                    alert('Please enter a valid JWT token');
                 }
             });
             
-            // Add authentication to requests
-            ui.preauthorizeApiKey("Bearer", localStorage.getItem('auth_token') || "");
+            // Clear token functionality
+            document.getElementById('clear_token_button').addEventListener('click', function() {
+                localStorage.removeItem('jwt_token');
+                document.getElementById('jwt_token').value = '';
+                document.getElementById('token_status').textContent = '❌ Token cleared';
+                document.getElementById('token_status').style.color = '#dc3545';
+            });
+            
+            // Check if token exists and show status
+            const existingToken = localStorage.getItem('jwt_token');
+            if (existingToken) {
+                document.getElementById('jwt_token').value = existingToken;
+                document.getElementById('token_status').textContent = '✅ Token loaded from storage';
+                document.getElementById('token_status').style.color = '#28a745';
+                // Pre-authorize with existing token
+                ui.preauthorizeApiKey('Bearer', existingToken);
+            }
         }
     </script>
 </body>

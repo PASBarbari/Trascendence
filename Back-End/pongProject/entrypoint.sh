@@ -7,7 +7,7 @@ export DJANGO_SETTINGS_MODULE=pongProject.settings
 # mkdir -p /app/static
 # ln -sf /app/staticfiles/* /app/static/
 # # collect static files
-# python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput
 
 
 # migrations at startup

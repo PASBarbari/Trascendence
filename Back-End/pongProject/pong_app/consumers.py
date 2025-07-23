@@ -362,27 +362,59 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 
 		if not self.tournament_id in active_tournaments:
 			try:
-				name = data.get('name')
-				max_p = data.get('max_p')
-				logger.info(f"Creating new tournament: {name}, max_players={max_p}, creator={player_id}")
+				# Try to load tournament from database first
+				from .models import Tournament, UserProfile
+				tournament_db = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
+				
+				# Create TournamentState from database tournament
 				active_tournaments[self.tournament_id] = TournamentState(
-					tournament_id=self.tournament_id, 
-					name=name, 
-					max_p=max_p, 
-					player_id=player_id
+					tournament_id=self.tournament_id,
+					name=tournament_db.name,
+					max_p=tournament_db.max_partecipants,
+					player_id=tournament_db.creator.user_id if tournament_db.creator else player_id
 				)
+				
+				# Load existing partecipants from database
+				tournament_state = active_tournaments[self.tournament_id]
+				partecipants = await database_sync_to_async(list)(tournament_db.player.all())
+				tournament_state.players = [p.user_id for p in partecipants]
+				tournament_state.nbr_player = len(tournament_state.players)
+				
+				logger.info(f"Tournament {tournament_db.name} loaded from database with {tournament_state.nbr_player} players")
+				
 			except Exception as e:
-				logger.error(f"Tournament creation failed: {str(e)}", exc_info=True)
-				await self.send(text_data=json.dumps({
-					'type': 'error',
-					'error': f'Creation failed because {e}'
-				}))
-			else:
-				logger.info(f"Tournament {name} created successfully")
-				await self.send(text_data=json.dumps({
-					'type': 'success',
-					'success': f'Tournament {name} created'
-				}))
+				logger.error(f"Tournament loading failed: {str(e)}", exc_info=True)
+				# Fallback to creating new tournament state (legacy behavior)
+				try:
+					name = data.get('name', f'Tournament_{self.tournament_id}')
+					max_p = data.get('max_p', 8)
+					logger.info(f"Creating new tournament state: {name}, max_players={max_p}, creator={player_id}")
+					active_tournaments[self.tournament_id] = TournamentState(
+						tournament_id=self.tournament_id, 
+						name=name, 
+						max_p=max_p, 
+						player_id=player_id
+					)
+				except Exception as creation_error:
+					logger.error(f"Tournament creation failed: {str(creation_error)}", exc_info=True)
+					await self.send(text_data=json.dumps({
+						'type': 'error',
+						'error': f'Creation failed: {creation_error}'
+					}))
+					return
+			
+			# Send success message for tournament loading/creation
+			tournament_state = active_tournaments[self.tournament_id]
+			await self.send(text_data=json.dumps({
+				'type': 'success',
+				'success': f'Connected to tournament {tournament_state.name}',
+				'tournament_data': {
+					'name': tournament_state.name,
+					'current_players': tournament_state.nbr_player,
+					'max_players': tournament_state.max_p,
+					'creator_id': tournament_state.creator_id
+				}
+			}))
 		else:
 			logger.info(f"Player {player_id} joining existing tournament {self.tournament_id}")
 			try:
@@ -441,7 +473,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			if self.tournament_id in active_tournaments:
 				tournament = active_tournaments[self.tournament_id]
 				
-				# Broadcast get ready message to all tournament participants
+				# Broadcast get ready message to all tournament partecipants
 				await self.channel_layer.group_send(
 					self.room_name,  # Use room_name instead of channel_name
 					{
@@ -596,6 +628,54 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			'message': f"Game {event.get('game_id')} completed!"
 		}))
 
+	async def get_brackets(self, data):
+		"""Message handler for getting tournament brackets"""
+		logger.info(f"Get brackets request for tournament {self.tournament_id}")
+		
+		# Use authenticated user from connection
+		player_id = self.player_id
+		
+		try:
+			if self.tournament_id in active_tournaments:
+				tournament = active_tournaments[self.tournament_id]
+				
+				# Generate brackets data
+				brackets_data = {
+					'tournament_id': self.tournament_id,
+					'name': tournament.name,
+					'max_partecipants': tournament.max_p,
+					'current_partecipants': tournament.nbr_player,
+					'creator_id': tournament.creator_id,
+					'players': tournament.players,
+					'current_round': tournament.current_round,
+					'is_round_active': tournament.is_round_active,
+					'partecipants': getattr(tournament, 'partecipants', tournament.players),
+					'next_round': getattr(tournament, 'next_round', []),
+					'rounds_completed': tournament.current_round - 1 if tournament.current_round > 0 else 0
+				}
+				
+				# Add winner if tournament is finished
+				if hasattr(tournament, 'winner'):
+					brackets_data['winner'] = tournament.winner
+				
+				await self.send(text_data=json.dumps({
+					'type': 'brackets',
+					'brackets': brackets_data,
+					'message': 'Tournament brackets retrieved successfully'
+				}))
+			else:
+				await self.send(text_data=json.dumps({
+					'type': 'error',
+					'error': 'Tournament not found in active tournaments'
+				}))
+				
+		except Exception as e:
+			logger.error(f"Error getting tournament brackets: {str(e)}", exc_info=True)
+			await self.send(text_data=json.dumps({
+				'type': 'error',
+				'error': f'Error getting brackets: {str(e)}'
+			}))
+
 	async def tournament_auto_start(self, event):
 		"""Handle tournament auto-start notification"""
 		await self.send(text_data=json.dumps({
@@ -604,10 +684,20 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			'tournament_data': event.get('tournament_data', {})
 		}))
 
+	async def tournament_brackets_update(self, event):
+		"""Handle tournament brackets update broadcast"""
+		await self.send(text_data=json.dumps({
+			'type': 'brackets_update',
+			'message': event.get('message', 'Tournament brackets updated'),
+			'brackets': event.get('brackets', {}),
+			'round_info': event.get('round_info', {})
+		}))
+
 	# Message handlers dictionary
 	message_handlers = {
 		'join': join,
 		'get_ready': get_ready,
 		'start_round': start_round,
 		'end_round': end_round,
+		'get_brackets': get_brackets,
 	}
