@@ -8,7 +8,8 @@ class UserAppConfig(AppConfig):
 		try:
 			# from .authentications import register_self , user_register_self
 			from .admin import create_superuser
-
+			from .friend_status_pub import FriendStatusPublisher
+			FriendStatusPublisher().start_publisher()
 		except Exception as e:
             # Optionally log the exception
 			print(f"Error during registration: {e}")

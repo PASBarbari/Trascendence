@@ -469,6 +469,7 @@ const MESSAGE_HANDLERS = {
 	friendship_deleted: handleFriendDeletedMessage,
 	friend_blocked: handleFriendBlockedMessage,
 	friend_unblocked: handleFriendUnblockedMessage,
+	friend_status_change: handleFriendStatusUpdateMessage,
 
 	// Chat-related messages
 	chat_room_created: handleChatInviteMessage,
@@ -1177,6 +1178,36 @@ function handleFriendUnblockedMessage(message) {
 	} else {
 		showNotificationToast("You have been unblocked by a user", "info");
 	}
+}
+
+function handleFriendStatusUpdateMessage(message) {
+	console.log("Processing friend status update message:", message);
+
+	// Extract friend data from message
+	let friendUserId, isOnline;
+	
+	if (message.user_id !== undefined) {
+		// Direct format from Redis pub/sub (expected by OnlineStatusManager)
+		friendUserId = message.user_id;
+		isOnline = message.is_online;
+	} else if (message.message && message.message.user_id !== undefined) {
+		// Nested format
+		friendUserId = message.message.user_id;
+		isOnline = message.message.is_online;
+	} else {
+		console.warn("Friend status update message missing required data:", message);
+		return;
+	}
+
+	// Use OnlineStatusManager if available, otherwise fallback to direct update
+	if (window.onlineStatusManager) {
+		window.onlineStatusManager.updateUserStatus(friendUserId, isOnline);
+	} else {
+		// Fallback to direct UI update
+		updateFriendOnlineStatus(friendUserId, isOnline);
+	}
+	
+	console.log(`Updated friend ${friendUserId} status to ${isOnline ? 'online' : 'offline'}`);
 }
 
 // Chat-related message handlers

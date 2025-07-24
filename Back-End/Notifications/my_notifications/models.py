@@ -27,11 +27,11 @@ class SentNotification(models.Model):
 	id = models.IntegerField(primary_key=True)
 	user_id = models.IntegerField()
 	group_id = models.IntegerField(null=True, blank=True)
-	message = models.TextField()
+	message = models.JSONField()
 	is_sent = models.BooleanField(default=False)
 	created_at = models.DateTimeField(auto_now_add=True)
 	def __str__(self):
-		return f'Sent at {self.send_time} to {self.user_id} or {self.group_id}'
+		return f'Sent at {self.created_at} to {self.user_id} or {self.group_id}'
 
 class ImmediateNotification(UserNotification, GroupNotification):
 	pass		
@@ -43,8 +43,7 @@ class QueuedNotification(UserNotification, GroupNotification):
 				user_id=self.user_id,
 				group_id=self.group_id,
 				message=self.message,
-				is_read=self.is_read,
-				creation_time=self.creation_time
+				is_sent=True
 			)
 			self.delete()
 		else:
@@ -60,8 +59,7 @@ class ScheduledNotification(UserNotification, GroupNotification):
 				user_id=self.user_id,
 				group_id=self.group_id,
 				message=self.message,
-				is_read=self.is_read,
-				creation_time=self.creation_time
+				Sender=self.Sender
 			)
 			self.delete()
 		else:

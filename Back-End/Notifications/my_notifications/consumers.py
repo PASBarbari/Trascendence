@@ -92,8 +92,16 @@ class UserNotificationConsumer(AsyncWebsocketConsumer):
 
 	async def send_notification(self, event):
 		try:
-			await self.send(text_data=json.dumps(event['message']))
-			logger.info(f"Sent notification: {event['message']}")
+			message = event['message']
+			
+			# Handle friend status updates specifically
+			if isinstance(message, dict) and message.get('type') == 'friend_status_update':
+				await self.send(text_data=json.dumps(message))
+				logger.info(f"Sent friend status update: {message}")
+			else:
+				# Handle regular notifications
+				await self.send(text_data=json.dumps(message))
+				logger.info(f"Sent notification: {message}")
 		except Exception as e:
 			logger.error(f"Error in send_notification: {e}")
 
@@ -104,7 +112,7 @@ class UserNotificationConsumer(AsyncWebsocketConsumer):
 			logger.error(f"Error in check_online: {e}")
 
 	async def friend_status_update(self, event):
-		"""Handle friend coming online/offline"""
+		"""Handle friend coming online/offline - DEPRECATED: Use send_notification instead"""
 		try:
 			await self.send(text_data=json.dumps({
 				'type': 'friend_status_update',
