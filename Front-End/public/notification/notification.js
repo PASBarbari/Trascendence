@@ -1210,13 +1210,13 @@ function handleFriendStatusUpdateMessage(message) {
 	// Extract friend data from message
 	let friendUserId, isOnline;
 	
-	if (message.user_id !== undefined) {
+	if (message.friend_user_id !== undefined) {
 		// Direct format from Redis pub/sub (expected by OnlineStatusManager)
-		friendUserId = message.user_id;
+		friendUserId = message.friend_user_id;
 		isOnline = message.is_online;
-	} else if (message.message && message.message.user_id !== undefined) {
+	} else if (message.message && message.message.friend_user_id !== undefined) {
 		// Nested format
-		friendUserId = message.message.user_id;
+		friendUserId = message.message.friend_user_id;
 		isOnline = message.message.is_online;
 	} else {
 		console.warn("Friend status update message missing required data:", message);
