@@ -14,9 +14,9 @@ function Logout() {
     const webSocketInstances = window.activeWebSockets || [];
     if (webSocketInstances.length > 0) {
         webSocketInstances.forEach(socket => {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.close();
-            }
+						if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+								socket.close();
+						}
         });
         window.activeWebSockets = [];
     }
@@ -39,6 +39,8 @@ function Logout() {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     });
 
+		console.clear();
+		
     setVariables({
         token: null,
         refreshToken: null,

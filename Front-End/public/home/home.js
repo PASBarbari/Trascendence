@@ -63,8 +63,11 @@ function renderHome() {
 	renderTournament();
 }
 
-// [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" id=​"password" placeholder=​"Password" class=​"form-control" required>​
-
-// <input type="password" id="password" placeholder="Password" class="form-control" required=""></input>
+// 5notification.js:1473 WebSocket is not open, cannot send heartbeat
+// sendHeartBeat @ notification.js:1473
+// (anonymous) @ notification.js:1467
+// setInterval
+// startHeartbeat @ notification.js:1466
+// socket.onopen @ notification.js:1021Understand this warning
 
 export { renderHome, toggleProfile };
