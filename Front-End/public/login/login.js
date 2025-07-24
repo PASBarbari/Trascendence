@@ -16,10 +16,10 @@ function renderLogin() {
 				<div class="login_form">
 					<form class="login_form" id="loginForm">
 						<div class="mb-3">
-							<input type="email" id="email" placeholder="Email" class="form-control" required />
+							<input type="email" id="email" placeholder="Email" class="form-control" required autocomplete="email"/>
 						</div>
 						<div class="mb-3">
-							<input type="password" id="password" placeholder="Password" class="form-control" required />
+							<input type="password" id="password" placeholder="Password" class="form-control" required autocomplete="current-password"/>
 						</div>
 						<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
 						<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>

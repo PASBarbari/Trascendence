@@ -159,6 +159,8 @@ function initializeWebSocket(room_id, player1, player2) {
 	const wsUrl = `${wss_api}/pong/ws/pong/${room_id}/?token=${token}`;
 
 	socket = new WebSocket(wsUrl);
+	if (!window.activeWebSockets) window.activeWebSockets = [];
+		window.activeWebSockets.push(socket);
 
 	socket.onopen = function () {
 		updateConnectionStatus("connected", "Connected to game server");

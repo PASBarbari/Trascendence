@@ -2,6 +2,7 @@ import { getCookie } from "../cookie.js";
 import { getVariables } from "../var.js";
 import { initFriendAutocomplete } from "../notification/friendAutocomplete.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
+import { initializeWebSocket } from "../notification/notification.js";
 
 const pongContainerCSS = document.createElement("link");
 pongContainerCSS.rel = "stylesheet";
@@ -38,6 +39,8 @@ function renderTournament() {
 			buttonIcon.classList.add("bi-plus");
 		}
 	});
+
+	renderNewTournament({ message: "Torneo creato con successo!" });
 
 }
 
@@ -159,19 +162,117 @@ function createTournament() {
             }
         });
 
-    return createTournamentForm;
-}
+				return createTournamentForm;
+			}
+			
+let socket;
 
-function renderNewTournament(tournamentData) {
+async function renderNewTournament(tournamentData) {
     console.log("Rendering new tournament:", tournamentData.message);
+		const tournamentStat = await tournamentStats();
+		console.log("Tournament stats:", tournamentStat.results);
 
 		const createTournamentFormdiv = document.getElementById("createTournamentForm");
 		if (createTournamentFormdiv.innerHTML !== "") createTournamentFormdiv.innerHTML = "";
 
     const createTournamentForm = document.getElementById("createTournamentForm");
-    const div = document.createElement("div");
-    div.textContent = "ciao";
-    createTournamentForm.appendChild(div);
+		tournamentStat.results.forEach(tournament => {
+			const tournamentDiv = document.createElement("div");
+			tournamentDiv.className = "tournament-item";
+			tournamentDiv.innerHTML = `
+				<h5>${tournament.name}</h5>
+				<p>Max Partecipanti: ${tournament.max_partecipants}</p>
+				<p>Partecipanti: ${tournament.partecipants}</p>
+				<p>Stato: ${tournament.status}</p>
+				<p>Inizio: ${new Date(tournament.begin_date).toLocaleString()}</p>
+				<button class="btn btn-outline-primary" id="join-button" data-tournament-id="${tournament.id}">
+					join
+				</button>
+				<button class="btn btn-outline-secondary" id="start-button" data-tournament-id="${tournament.id}">
+					start
+				</button>
+			`;
+			createTournamentForm.appendChild(tournamentDiv);
+
+			const joinButton = tournamentDiv.querySelector("#join-button");
+			joinButton.addEventListener("click", async () => {
+				initializeWebSocketTournament(tournament.id);
+			});
+
+			const startButton = tournamentDiv.querySelector("#start-button");
+			startButton.addEventListener("click", async () => {
+				if (socket && socket.readyState === WebSocket.OPEN) {
+					socket.send(JSON.stringify({
+							type: "start_tournament",
+							message: "suca",
+							// puoi aggiungere altri dati se il backend li richiede
+					}));
+					console.log("Messaggio 'start_tournament' inviato via WebSocket");
+				} else {
+						showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, { asToast: true });
+				}
+			});
+		});
+}
+
+//se non ci sono abbastanza player, mandi errore error tournament need at least 2 type: error
+
+
+function initializeWebSocketTournament(room_id) {
+	const { token, wss_api } = getVariables();
+
+	const wsUrl = `${wss_api}/pong/ws/tournament/${room_id}/?token=${token}`;
+	console.log("Connecting to tournaments:", wsUrl);
+
+	socket = new WebSocket(wsUrl);
+	if (!window.activeWebSockets) window.activeWebSockets = [];
+		window.activeWebSockets.push(socket);
+
+	socket.onopen = function () {
+		console.log("WebSocket connection established for tournament:", room_id);
+	};
+
+	socket.onmessage = function (event) {
+		const message = JSON.parse(event.data);
+		console.log("WebSocket message received:", message);
+	};
+
+	socket.onerror = function (error) {
+		console.error("WebSocket error occurred:", error);
+	};
+
+	socket.onclose = function (event) {
+		console.error("WebSocket closed:", event);
+	};
+}
+	
+async function tournamentStats() {
+	// pong/pong/user-tournaments get -> history of tournaments. ?user_id per qualcunaltro ?current_only=true prende i tornei non completati. ?status=active per i tornei attivi, ?status=completed pending (no ready) active.
+	try {
+		const { token, url_api, userId } = getVariables();
+		console.log("[PongStatistic] Fetching player stats for user_id:", userId);
+		const response = await fetch(
+			`${url_api}/pong/user-tournaments`,
+			{
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+					"X-CSRFToken": getCookie("csrftoken"),
+				},
+			}
+		);
+		if (!response.ok) {
+			throw new Error(`HTTP error! status: ${response.status}`);
+		}
+		const data = await response.json();
+		console.log("[PongStatistic] API response:", data);
+		return data;
+
+
+	} catch (error) {
+		console.error("[PongStatistic] API error:", error);
+	}
 }
 
 export { renderTournament, renderNewTournament };
