@@ -46,7 +46,7 @@ class Game(models.Model):
 			('pending', 'Pending'),
 			('active', 'Active'),
 			('completed', 'Completed')
-	], max_length=10, default='Completed')
+	], max_length=10, default='pending')
 
 	@property
 	def winner(self):
@@ -79,3 +79,13 @@ class Game(models.Model):
 		"""Return the loser's user_id"""
 		loser = self.loser
 		return loser.user_id if loser else None
+	
+	@property
+	def is_finished(self):
+		"""Check if game is finished"""
+		return self.status == 'completed'
+	
+	@property
+	def is_active(self):
+		"""Check if game is currently active"""
+		return self.status == 'active'

@@ -165,6 +165,10 @@ class TournamentGen(generics.ListCreateAPIView):
 	filterset_fields = ['name', 'partecipants__user_id', 'max_partecipants', 'winner__user_id']
 	lookup_fields = ['id', 'name', 'partecipants__user_id', 'max_partecipants', 'winner__user_id']
 	
+	def get_queryset(self):
+		"""Override to include participants for efficient loading"""
+		return Tournament.objects.select_related('creator', 'winner').prefetch_related('player').order_by('-begin_date')
+	
 	def get_nearest_power_of_2(self, num):
 		"""Get the nearest power of 2 for tournament partecipants"""
 		if num <= 0:
@@ -257,7 +261,10 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	authentication_classes = [JWTAuth]
 	lookup_url_kwarg = 'id'
 	lookup_fields = ['id']
-	queryset = Tournament.objects.all()
+	
+	def get_queryset(self):
+		"""Override to include participants for efficient loading"""
+		return Tournament.objects.select_related('creator', 'winner').prefetch_related('player')
 
 
 

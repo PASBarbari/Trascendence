@@ -29,6 +29,7 @@ class TournamentSerializer(serializers.ModelSerializer):
 		max_partecipants = serializers.IntegerField(min_value=2, help_text="Will be adjusted to nearest power of 2 (4, 8, 16, 32, 64)")
 		winner = serializers.SerializerMethodField(read_only=True)
 		creator = serializers.SerializerMethodField(read_only=True)
+		current_participants = serializers.SerializerMethodField(read_only=True)
 		status = serializers.ReadOnlyField()
 		is_finished = serializers.ReadOnlyField()
 		is_active = serializers.ReadOnlyField()
@@ -51,6 +52,17 @@ class TournamentSerializer(serializers.ModelSerializer):
 						}
 				return None
 
+		def get_current_participants(self, obj):
+				"""Return list of current participants"""
+				participants = obj.player.all()
+				return [
+						{
+								'user_id': participant.user_id,
+								'username': participant.username
+						}
+						for participant in participants
+				]
+
 		def validate_name(self, value):
 				if len(str(value)) < 1:
 						raise serializers.ValidationError('name is not valid')
@@ -70,27 +82,17 @@ class TournamentSerializer(serializers.ModelSerializer):
 
 		class Meta:
 				model = Tournament
-				fields = ['id', 'name', 'begin_date', 'partecipants', 'max_partecipants', 'winner', 'creator', 'status', 'is_finished', 'is_active']
+				fields = ['id', 'name', 'begin_date', 'partecipants', 'max_partecipants', 'winner', 'creator', 'current_participants', 'status', 'is_finished', 'is_active']
 
 class GamesSerializer(serializers.ModelSerializer):
-    player_1 = PlayerSerializer(read_only=True)
-    player_2 = PlayerSerializer(read_only=True)
-    tournament_id = TournamentSerializer(read_only=True)
-    winner = serializers.ReadOnlyField(source='winner.user_id')
-    winner_id = serializers.ReadOnlyField()
-    loser_id = serializers.ReadOnlyField()
-    is_finished = serializers.ReadOnlyField()
-    is_active = serializers.ReadOnlyField()
-
+    def validate(self, data):
+        if data['player_1'] == data['player_2']:
+            raise serializers.ValidationError('player_1 and player_2 cannot be the same')
+        return data
     class Meta:
         model = Game
-        fields = [
-            'id', 'player_1', 'player_2', 'player_1_score', 'player_2_score', 
-            'begin_date', 'start_date', 'end_date', 'tournament_id', 
-            'status', 'winner', 'winner_id', 'loser_id', 'is_finished', 'is_active'
-        ]
-        read_only_fields = ['id', 'begin_date', 'start_date', 'end_date', 'winner', 'winner_id', 'loser_id']
-		
+        fields = '__all__'
+
 
 
 class GameStateSerializer(serializers.Serializer):

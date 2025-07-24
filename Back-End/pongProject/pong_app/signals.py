@@ -1,12 +1,11 @@
 # praticamente quando un modello viene creato ricveve il segnale e fa quello che gli chiedi
 import math
 import random
-from venv import logger
+import logging
 from django.shortcuts import render, get_object_or_404
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import *
-import logging
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 import time, asyncio
@@ -81,10 +80,9 @@ class GameState:
 			from django.utils import timezone
 			from asgiref.sync import sync_to_async
 			await sync_to_async(Game.objects.filter(id=self.game_id).update)(
-					status='active',
-					start_date=timezone.now()
+					status='active'
 			)
-			logger.info(f"Game {self.game_id} database updated: status=active, start_date set")
+			logger.info(f"Game {self.game_id} database updated: status=active")
 		except Exception as e:
 				logger.error(f"Failed to update game {self.game_id} start in database: {e}")
 		
@@ -126,12 +124,12 @@ class GameState:
 
 		# Save game to database asynchronously
 		try:
+			from django.utils import timezone
 			from asgiref.sync import sync_to_async
 			await sync_to_async(Game.objects.filter(id=self.game_id).update)(
 						player_1_score=self.player_1_score,
 						player_2_score=self.player_2_score,
-						status='completed',
-						end_date=time.timezone.now()
+						status='completed'
 				)
 			logger.info(f"Game {self.game_id} saved to database with scores P1:{self.player_1_score} P2:{self.player_2_score}")
 			
@@ -420,10 +418,11 @@ class TournamentState:
 		return 'Player added to the tournament'
 
 	def start(self):
-		if self.nbr_player < 3:
+		"""Initialize tournament brackets without starting games"""
+		if self.nbr_player < 2:
 			return {
 				"type": "error",
-				'error':'Not enough players'
+				'error':'Not enough players (minimum 2)'
 			}
 		
 		# 🆕 Update database when tournament starts
@@ -434,6 +433,7 @@ class TournamentState:
 		random.shuffle(shuffled_players)
 		self.players = shuffled_players
 		
+		# Set up tournament structure
 		self.max_p = len(self.players)
 		next_2pow = int(math.pow(2, math.ceil(math.log2(self.nbr_player))))
 		nbr_bye = next_2pow - self.nbr_player
@@ -455,7 +455,7 @@ class TournamentState:
 		
 		return {
 			'type' : 'success',
-			'success' : 'Tournament started'
+			'success' : 'Tournament initialized - ready to start first round'
 		}
 
 	def brackets(self, *args, **kwargs):
@@ -485,12 +485,26 @@ class TournamentState:
 		"""Save tournament completion to database"""
 		try:
 			t = get_object_or_404(Tournament, id=self.id)
-			t.winner = self.winner
+			t.winner_id = getattr(self, 'winner', None)
 			t.status = 'completed'	# Mark tournament as completed
 			t.save()
-			logger.info(f"Tournament {self.id} completed and saved to database with winner {self.winner}")
+			logger.info(f"Tournament {self.id} completed and saved to database with winner {getattr(self, 'winner', None)}")
 		except Exception as e:
 			logger.error(f"Error saving tournament {self.id} completion: {str(e)}")
+
+	def save_tournament_winner(self, winner_id):
+		"""Save tournament winner to database"""
+		try:
+			t = get_object_or_404(Tournament, id=self.id)
+			if winner_id:
+				winner_profile = get_object_or_404(UserProfile, user_id=winner_id)
+				t.winner = winner_profile
+			t.status = 'completed'
+			t.save()
+			self.winner = winner_id
+			logger.info(f"Tournament {self.id} completed with winner {winner_id}")
+		except Exception as e:
+			logger.error(f"Error saving tournament winner: {str(e)}")
 
 	def create_game(self, player_1, player_2):
 		channel_layer = get_channel_layer()
@@ -515,6 +529,7 @@ class TournamentState:
 		self.current_round += 1
 		self.is_round_active = True
 		self.round_results = {}
+		self.next_round = []  # Reset for new round
 		
 		logger = logging.getLogger(__name__)
 		logger.info(f"Starting round {self.current_round} for tournament {self.id}")
@@ -522,6 +537,41 @@ class TournamentState:
 		# Cancel any existing timer
 		if self.round_timer_task:
 			self.round_timer_task.cancel()
+		
+		# Create games for this round
+		if self.current_round == 1:
+			# First round: use original participants
+			half = len(self.partecipants) // 2
+			first_half = self.partecipants[:half]
+			second_half = self.partecipants[half:]
+		else:
+			# Subsequent rounds: use winners from previous round
+			if len(self.next_round) < 2:
+				# Tournament complete!
+				winner = self.next_round[0] if self.next_round else None
+				self.save_tournament_winner(winner)
+				return {
+					'type': 'success',
+					'success': f'Tournament completed! Winner: {winner}'
+				}
+			
+			# Pair up remaining players
+			half = len(self.next_round) // 2
+			first_half = self.next_round[:half]
+			second_half = self.next_round[half:]
+		
+		# Create games for this round
+		games_created = 0
+		for pair in zip(first_half, second_half):
+			if pair[0] == 0:
+				self.next_round.append(pair[1])  # Bye - advance automatically
+			elif pair[1] == 0:
+				self.next_round.append(pair[0])  # Bye - advance automatically
+			else:
+				self.create_game(pair[0], pair[1])
+				games_created += 1
+		
+		logger.info(f"Created {games_created} games for round {self.current_round}")
 		
 		# Start 5-minute timer
 		self.round_timer_task = asyncio.create_task(self._round_timer())
@@ -536,7 +586,7 @@ class TournamentState:
 				'round_data': {
 					'round_number': self.current_round,
 					'duration_minutes': 5,
-					'partecipants': len(self.partecipants) if hasattr(self, 'partecipants') else len(self.players)
+					'partecipants': len([p for p in self.partecipants if p != 0]) if hasattr(self, 'partecipants') else len(self.players)
 				},
 				'games': self._get_current_games(),
 				'creator': self.creator_id
@@ -545,7 +595,7 @@ class TournamentState:
 		
 		return {
 			'type': 'success',
-			'success': f'Round {self.current_round} started'
+			'success': f'Round {self.current_round} started with {games_created} games'
 		}
 
 	async def _round_timer(self):
@@ -754,7 +804,27 @@ class TournamentState:
 		logger = logging.getLogger(__name__)
 		logger.info(f"Game result registered: {winner_id} beat {loser_id} in tournament {self.id}")
 		
+		# Check if all games in current round are complete
+		expected_games = self._count_expected_games()
+		completed_games = len(self.round_results)
+		
+		logger.info(f"Round {self.current_round} progress: {completed_games}/{expected_games} games complete")
+		
+		if completed_games >= expected_games:
+			logger.info(f"All games complete in round {self.current_round}! Round can be ended.")
+		
 		return 'Game result registered successfully'
+
+	def _count_expected_games(self):
+		"""Count how many games should be in the current round"""
+		if self.current_round == 1:
+			# First round: count active players (not byes)
+			active_players = len([p for p in self.partecipants if p != 0])
+			return active_players // 2
+		else:
+			# Subsequent rounds: previous round winners (excluding byes)
+			active_players = len([p for p in self.partecipants if p != 0]) if hasattr(self, 'partecipants') else len(self.next_round)
+			return active_players // 2
 
 @receiver(post_save, sender=Game)
 def start_game(sender, instance, created, **kwargs):
@@ -763,6 +833,11 @@ def start_game(sender, instance, created, **kwargs):
 	logger = logging.getLogger(__name__)
 
 	if created:
+		# Check if both players are set
+		if not instance.player_1 or not instance.player_2:
+			logger.warning(f'🎮 Game {instance.id} created but missing players: player_1={instance.player_1}, player_2={instance.player_2}')
+			return
+
 		logger.info(f'🎮 Creating new game {instance.id} between player {instance.player_1.user_id} and player {instance.player_2.user_id}')
 
 		# Prepare notification data
@@ -771,7 +846,7 @@ def start_game(sender, instance, created, **kwargs):
 			'game_id': instance.id,
 			'player_1': PlayerSerializer(instance.player_1).data,
 			'player_2': PlayerSerializer(instance.player_2).data,
-			'tournament_id': getattr(instance, 'tournament_id', None)
+			'tournament_id': getattr(instance.tournament_id, 'id', None) if instance.tournament_id else None
 		}
 
 		# Send notification to player 1
@@ -784,7 +859,7 @@ def start_game(sender, instance, created, **kwargs):
 			SendNotificationSync(notification_p1)
 			logger.info(f'✅ Game notification sent to player 1 (ID: {instance.player_1.user_id}) for game {instance.id}')
 		except Exception as e:
-			logger.error(f'❌ Failed to send game notification to player 1 (ID: {instance.player_1.user_id}): {str(e)}')
+			logger.error(f'❌ Failed to send game notification to player 1 (ID: {instance.player_1.user_id if instance.player_1 else "None"}): {str(e)}')
 			print(f"❌ Error sending notification to player 1: {str(e)}")
 
 		# Send notification to player 2
@@ -797,7 +872,7 @@ def start_game(sender, instance, created, **kwargs):
 			SendNotificationSync(notification_p2)
 			logger.info(f'✅ Game notification sent to player 2 (ID: {instance.player_2.user_id}) for game {instance.id}')
 		except Exception as e:
-			logger.error(f'❌ Failed to send game notification to player 2 (ID: {instance.player_2.user_id}): {str(e)}')
+			logger.error(f'❌ Failed to send game notification to player 2 (ID: {instance.player_2.user_id if instance.player_2 else "None"}): {str(e)}')
 			print(f"❌ Error sending notification to player 2: {str(e)}")
 
 		logger.info(f'✅ Game {instance.id} created successfully')
@@ -837,27 +912,9 @@ def create_tournament(sender, instance, created, **kwargs):
 			logger.error(f'❌ Failed to send tournament notification to creator (ID: {instance.creator.user_id}): {str(e)}')
 			print(f"❌ Error sending notification to creator: {str(e)}")
 
-	# 	logger.info(f'🏆 Tournament {instance.id} has these players {list(instance.player.all().values_list("user_id", flat=True))}')
-	# 	# Send notifications to all participants (using the correct relationship)
-	# 	for player in instance.player.all():
-	# 		if player.user_id == instance.creator.user_id:
-	# 			continue
-
-	# 		# Send notification to player
-	# 		try:
-	# 			notification = ImmediateNotification(
-	# 				Sender='Pong',
-	# 				message=notification_data,
-	# 				user_id=player.user_id
-	# 			)
-	# 			SendNotificationSync(notification)
-	# 			logger.info(f'✅ Tournament notification sent to player (ID: {player.user_id}) for tournament {instance.id}')
-	# 		except Exception as e:
-	# 			logger.error(f'❌ Failed to send tournament notification to player (ID: {player.user_id}): {str(e)}')
-	# 			print(f"❌ Error sending notification to player {player.user_id}: {str(e)}")
-	# 	logger.info(f'✅ Tournament {instance.id} created successfully')
-	# else:
-	# 	logger.debug(f'🔄 Tournament {instance.id} updated (not created)')
+		logger.info(f'✅ Tournament {instance.id} created successfully')
+	else:
+		logger.debug(f'🔄 Tournament {instance.id} updated (not created)')
 
 # from django.db.models.signals import m2m_changed
 # from django.dispatch import receiver
