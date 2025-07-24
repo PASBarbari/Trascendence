@@ -12,6 +12,10 @@ function renderAddChat() {
 	const addChatContainer = document.createElement("div");
 	addChatContainer.className = "add-chat";
 	addChatContainer.innerHTML = `
+	<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
+		<h2>Create Chat</h2>
+		<i class="bi bi-envelope-plus fs-1" style="color: var(--bs-secondary-color) !important; margin-right: 1rem;"></i>
+	</div>
 		<form id="addChatForm" class="d-flex flex-column">
 			<input type="text" id="roomName" placeholder="Nome del gruppo" class="form-control mb-2" />
 			<input type="text" id="roomDescription" placeholder="Descrizione" class="form-control mb-2" />

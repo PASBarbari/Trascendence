@@ -6,6 +6,7 @@ import {
 } from "../notification/notification.js";
 import { renderPongInfo } from "../pong/pongContainer.js";
 import { initializeProfile, renderProfile } from "../profile/profile.js";
+import { renderTournament } from "../pong/tournament.js";
 
 const stylesheets = [
 	"home/home.css",
@@ -46,7 +47,10 @@ function renderHome() {
             <!-- <div class="task-container" id="taskAvailableContainer"></div> -->
             <!-- <div class="task-container" id="taskActiveContainer"></div> -->
             <div class="task-container" id="notificationContainer"></div>
-            <div class="task-container" id="pongContainer"></div>
+						<div class="task-double-container">
+							<div class="task-container gap" id="pongContainer"></div>
+							<div class="task-container" id="tournamentContainer"></div>
+						</div>
         </div>
     `;
 
@@ -56,6 +60,11 @@ function renderHome() {
 	initializeWebSocket();
 	renderPongInfo();
 	initializeProfile();
+	renderTournament();
 }
+
+// [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" id=​"password" placeholder=​"Password" class=​"form-control" required>​
+
+// <input type="password" id="password" placeholder="Password" class="form-control" required=""></input>
 
 export { renderHome, toggleProfile };

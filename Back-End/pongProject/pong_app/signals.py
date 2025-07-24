@@ -805,24 +805,52 @@ def create_tournament(sender, instance, created, **kwargs):
 			logger.error(f'❌ Failed to send tournament notification to creator (ID: {instance.creator.user_id}): {str(e)}')
 			print(f"❌ Error sending notification to creator: {str(e)}")
 
-		logger.info(f'🏆 Tournament {instance.id} has these players {list(instance.player.all().values_list("user_id", flat=True))}')
-		# Send notifications to all participants (using the correct relationship)
-		for player in instance.player.all():
-			if player.user_id == instance.creator.user_id:
-				continue
+	# 	logger.info(f'🏆 Tournament {instance.id} has these players {list(instance.player.all().values_list("user_id", flat=True))}')
+	# 	# Send notifications to all participants (using the correct relationship)
+	# 	for player in instance.player.all():
+	# 		if player.user_id == instance.creator.user_id:
+	# 			continue
 
-			# Send notification to player
-			try:
-				notification = ImmediateNotification(
-					Sender='Pong',
-					message=notification_data,
-					user_id=player.user_id
-				)
-				SendNotificationSync(notification)
-				logger.info(f'✅ Tournament notification sent to player (ID: {player.user_id}) for tournament {instance.id}')
-			except Exception as e:
-				logger.error(f'❌ Failed to send tournament notification to player (ID: {player.user_id}): {str(e)}')
-				print(f"❌ Error sending notification to player {player.user_id}: {str(e)}")
-		logger.info(f'✅ Tournament {instance.id} created successfully')
-	else:
-		logger.debug(f'🔄 Tournament {instance.id} updated (not created)')
+	# 		# Send notification to player
+	# 		try:
+	# 			notification = ImmediateNotification(
+	# 				Sender='Pong',
+	# 				message=notification_data,
+	# 				user_id=player.user_id
+	# 			)
+	# 			SendNotificationSync(notification)
+	# 			logger.info(f'✅ Tournament notification sent to player (ID: {player.user_id}) for tournament {instance.id}')
+	# 		except Exception as e:
+	# 			logger.error(f'❌ Failed to send tournament notification to player (ID: {player.user_id}): {str(e)}')
+	# 			print(f"❌ Error sending notification to player {player.user_id}: {str(e)}")
+	# 	logger.info(f'✅ Tournament {instance.id} created successfully')
+	# else:
+	# 	logger.debug(f'🔄 Tournament {instance.id} updated (not created)')
+
+# from django.db.models.signals import m2m_changed
+# from django.dispatch import receiver
+	
+# @receiver(m2m_changed, sender=UserProfile.tournaments.through)
+# def tournament_participants_changed(sender, instance, action, reverse, model, pk_set, **kwargs):
+# 		if action == "post_add":
+# 				from .notification import SendNotificationSync, ImmediateNotification
+# 				logger = logging.getLogger(__name__)
+# 				notification_data = {
+# 						'type': 'tournament_created',
+# 						'tournament_id': instance.id,
+# 						'name': instance.name,
+# 						'max_players': instance.max_partecipants,
+# 						'creator_id': instance.creator.user_id,
+# 						'begin_date': instance.begin_date.isoformat() if instance.begin_date else None,
+# 				}
+# 				for player in instance.player.all():
+# 						try:
+# 								notification = ImmediateNotification(
+# 										Sender='Pong',
+# 										message=notification_data,
+# 										user_id=player.user_id
+# 								)
+# 								SendNotificationSync(notification)
+# 								logger.info(f'✅ Tournament notification sent to player (ID: {player.user_id}) for tournament {instance.id}')
+# 						except Exception as e:
+# 								logger.error(f'❌ Failed to send tournament notification to player (ID: {player.user_id}): {str(e)}')
