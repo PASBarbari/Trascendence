@@ -66,8 +66,9 @@ const routes = {
 			const roomId = urlParams.get("room");
 			const opponentId = urlParams.get("opponent");
 			const opponentName = urlParams.get("opponentName");
+			const tournamentId = urlParams.get("tournamentId");
 
-			console.log("Route params:", { roomId, opponentId, opponentName });
+			console.log("Route params:", { roomId, opponentId, opponentName, tournamentId });
 
 			if (opponentId && opponentName) {
 				// Load multiplayer game with invitation data
@@ -78,7 +79,8 @@ const routes = {
 					renderMultiplayerPong(
 						opponentId,
 						decodeURIComponent(opponentName),
-						roomId || null
+						roomId || null,
+						tournamentId || null
 					);
 				} catch (error) {
 					console.error("Failed to load multiplayer pong:", error);

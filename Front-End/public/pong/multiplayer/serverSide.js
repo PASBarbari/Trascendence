@@ -29,7 +29,7 @@ function sendPlayerMovement(playerId, direction) {
 	return true;
 }
 
-async function createGame(player_1, player_2) {
+async function createGame(player_1, player_2, tournamentId = null) {
 	const { url_api, token } = getVariables();
 
 	if (!url_api || !token) {
@@ -40,6 +40,7 @@ async function createGame(player_1, player_2) {
 	const gameData = {
 		player_1: parseInt(player_1),
 		player_2: parseInt(player_2),
+		tournament_id: tournamentId ? parseInt(tournamentId) : null,
 	};
 
 	try {
