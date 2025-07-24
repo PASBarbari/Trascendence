@@ -155,7 +155,7 @@ class TournamentGen(generics.ListCreateAPIView):
 	Example request body for creation:
 	{
 		"name": "Summer Championship",
-		"max_partecipants": 12,  // Will be adjusted to 16
+		"max_partecipants": 12,	// Will be adjusted to 16
 	}
 	"""
 	permission_classes = (IsAuthenticatedUserProfile,)
@@ -168,7 +168,7 @@ class TournamentGen(generics.ListCreateAPIView):
 	def get_nearest_power_of_2(self, num):
 		"""Get the nearest power of 2 for tournament partecipants"""
 		if num <= 0:
-			return 4  # Minimum tournament size
+			return 4	# Minimum tournament size
 		
 		# Find the nearest power of 2
 		import math
@@ -206,7 +206,7 @@ class TournamentGen(generics.ListCreateAPIView):
 		initial_partecipants = self.request.data.get('partecipants', [])
 		logger.info(f"Creating tournament with initial partecipants: {initial_partecipants}")
 		# Calculate the number of partecipants (creator + initial partecipants)
-		participant_count = 1  # Start with creator
+		participant_count = 1	# Start with creator
 		if initial_partecipants:
 			participant_count += len(initial_partecipants)
 		
@@ -219,7 +219,7 @@ class TournamentGen(generics.ListCreateAPIView):
 		
 		# Add the creator to the tournament partecipants
 		creator.tournaments.add(tournament)
-		
+
 		# Add initial partecipants if provided
 		if initial_partecipants:
 			for user_id in initial_partecipants:
@@ -239,6 +239,9 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	lookup_url_kwarg = 'id'
 	lookup_fields = ['id']
 	queryset = Tournament.objects.all()
+
+
+
 
 class JoinTournament(APIView):
 	""" Use this endpoint to join a tournament.
@@ -261,8 +264,11 @@ class JoinTournament(APIView):
 		if tournament.partecipants >= tournament.max_partecipants:
 			return Response({'error': 'tournament is full'}, status=status.HTTP_400_BAD_REQUEST)
 		
-		# Check if tournament is already finished
-		if tournament.winner:
+		# Check if tournament has already started or is completed
+		if tournament.status == 'active':
+			return Response({'error': 'tournament has already started'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		if tournament.status == 'completed':
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Check if player is already in the tournament
@@ -298,13 +304,13 @@ class LeaveTournament(APIView):
 		tournament = get_object_or_404(Tournament, id=tournament_id)
 		player = get_object_or_404(UserProfile, user_id=user_id)
 		
-		# Check if tournament has already started (has a winner or games in progress)
-		if tournament.winner:
-			return Response({'error': 'tournament has already finished'}, status=status.HTTP_400_BAD_REQUEST)
-		
-		# Check if tournament has games (indicating it has started)
-		if tournament.game.exists():
+		# Check if tournament has already started or completed
+		if tournament.status == 'active':
 			return Response({'error': 'tournament has already started, cannot leave'}, status=status.HTTP_400_BAD_REQUEST)
+		
+		# Check if tournament is already completed
+		if tournament.status == 'completed':
+			return Response({'error': 'tournament has already finished'}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Check if player is actually in the tournament
 		if not player.tournaments.filter(id=tournament_id).exists():
@@ -343,16 +349,17 @@ class EndTournament(APIView):
 		tournament = get_object_or_404(Tournament, id=tournament_id)
 		winner = get_object_or_404(UserProfile, user_id=winner_id)
 		
-		# Check if tournament is already finished
-		if tournament.winner:
+		# Check if tournament is already completed
+		if tournament.status == 'completed':
 			return Response({'error': 'tournament is already finished'}, status=status.HTTP_400_BAD_REQUEST)
 		
 		# Check if winner is actually a participant in the tournament
 		if not winner.tournaments.filter(id=tournament_id).exists():
 			return Response({'error': 'winner must be a participant in the tournament'}, status=status.HTTP_400_BAD_REQUEST)
 		
-		# Set the winner
+		# Set the winner and mark tournament as completed
 		tournament.winner = winner
+		tournament.status = 'completed'
 		tournament.save()
 		
 		return Response({
@@ -415,6 +422,137 @@ class TournamentMatchHistory(APIView):
 		return Game.objects.filter(tournament_id=tournament_id).select_related('player_1', 'player_2').order_by('-begin_date')
 
 
+class UserTournaments(generics.ListAPIView):
+		"""
+		Get tournaments for a specific user.
+		
+		Query Parameters:
+		- user_id: User ID to get tournaments for (optional, defaults to authenticated user)
+		- current_only: Set to 'true' to get only active/pending tournaments (optional)
+		- status: Filter by tournament status - 'pending', 'active', 'finished' (optional)
+		
+		Examples:
+		- GET /api/user-tournaments/ - Get all tournaments for authenticated user
+		- GET /api/user-tournaments/?user_id=123 - Get all tournaments for user 123
+		- GET /api/user-tournaments/?current_only=true - Get only current tournaments
+		- GET /api/user-tournaments/?status=active - Get only active tournaments
+		"""
+		permission_classes = (IsAuthenticatedUserProfile,)
+		authentication_classes = [JWTAuth]
+		serializer_class = TournamentSerializer
+		pagination_class = GamePagination
+
+		def get_queryset(self):
+				# Get user_id from query params or use authenticated user
+				user_id = self.request.query_params.get('user_id', self.request.user.user_id)
+				current_only = self.request.query_params.get('current_only', '').lower() == 'true'
+				status_filter = self.request.query_params.get('status', '').lower()
+				
+				try:
+						# Get tournaments where user is a participant
+						queryset = Tournament.objects.filter(
+								player__user_id=user_id
+						).select_related('creator', 'winner').prefetch_related('player').order_by('-begin_date')
+						
+						# Apply filters
+						if current_only:
+								# Get only tournaments that are not completed
+								queryset = queryset.exclude(status='completed')
+						
+						if status_filter in ['pending', 'active', 'completed']:
+								queryset = queryset.filter(status=status_filter)
+						
+						return queryset
+						
+				except Exception as e:
+						logger.error(f"Error getting user tournaments: {str(e)}")
+						return Tournament.objects.none()
+
+		def list(self, request, *args, **kwargs):
+				"""Override to add extra metadata"""
+				queryset = self.get_queryset()
+				page = self.paginate_queryset(queryset)
+				
+				if page is not None:
+						serializer = self.get_serializer(page, many=True)
+						response_data = self.get_paginated_response(serializer.data)
+						
+						# Add summary statistics using status choices
+						total_tournaments = queryset.count()
+						pending_count = queryset.filter(status='pending').count()
+						active_count = queryset.filter(status='active').count()
+						completed_count = queryset.filter(status='completed').count()
+						
+						response_data.data['summary'] = {
+								'total_tournaments': total_tournaments,
+								'pending': pending_count,
+								'active': active_count,
+								'completed': completed_count
+						}
+						
+						return response_data
+				
+				serializer = self.get_serializer(queryset, many=True)
+				return Response({
+						'results': serializer.data,
+						'summary': {
+								'total_tournaments': queryset.count(),
+								'pending': queryset.filter(status='pending').count(),
+								'active': queryset.filter(status='active').count(),
+								'completed': queryset.filter(status='completed').count()
+						}
+				})
+
+class StartTournament(APIView):
+		"""
+		Start a tournament (only creator can start it).
+		
+		POST /api/start-tournament/
+		Body: {"tournament_id": 123}
+		"""
+		permission_classes = (IsAuthenticatedUserProfile,)
+		authentication_classes = [JWTAuth]
+		
+		def post(self, request, *args, **kwargs):
+				tournament_id = request.data.get('tournament_id')
+				if not tournament_id:
+						return Response({'error': 'tournament_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+				
+				try:
+						tournament = get_object_or_404(Tournament, id=tournament_id)
+						
+						# Check if user is the creator
+						if not tournament.creator or tournament.creator.user_id != request.user.user_id:
+								return Response({'error': 'Only tournament creator can start the tournament'}, status=status.HTTP_403_FORBIDDEN)
+						
+						# Check if tournament is already started
+						if tournament.status == 'active':
+								return Response({'error': 'Tournament has already started'}, status=status.HTTP_400_BAD_REQUEST)
+						
+						# Check if tournament is already finished
+						if tournament.status == 'completed':
+								return Response({'error': 'Tournament is already completed'}, status=status.HTTP_400_BAD_REQUEST)
+						
+						# Check if tournament has enough participants (minimum 2)
+						if tournament.partecipants < 2:
+								return Response({'error': 'Tournament needs at least 2 participants to start'}, status=status.HTTP_400_BAD_REQUEST)
+						
+						# Start the tournament by changing status to active
+						tournament.status = 'active'
+						tournament.save()
+						
+						# Serialize and return updated tournament
+						serializer = TournamentSerializer(tournament)
+						
+						return Response({
+								'message': 'Tournament started successfully',
+								'tournament': serializer.data
+						}, status=status.HTTP_200_OK)
+						
+				except Exception as e:
+						logger.error(f"Error starting tournament: {str(e)}")
+						return Response({'error': 'An error occurred while starting the tournament'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class UserStatistics(APIView):
 	""" Use this endpoint to get the statistics of a user.
 
@@ -429,10 +567,10 @@ class UserStatistics(APIView):
 
 		if not user_id:
 			return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-		elif not isinstance(user_id, int):
-			return Response({'error': 'user_id must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
+		# elif not isinstance(user_id, int):
+		# 	return Response({'error': 'user_id must be an integer'}, status=status.HTTP_400_BAD_REQUEST)
 		try:
-			user = get_object_or_404(UserProfile, user_id=user_id)
+			user = get_object_or_404(UserProfile, user_id=int(user_id))
 			games_stats = Game.objects.filter(
 						Q(player_1__user_id=user_id) | Q(player_2__user_id=user_id)
 				).aggregate(

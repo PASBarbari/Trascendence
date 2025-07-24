@@ -16,8 +16,8 @@ from .physics_integration import create_physics_manager
 logger = logging.getLogger('pong_app')
 
 # ✅ CRITICAL: Reduce tick rate to prevent lag and channel overflow
-tick_rate = 30  # Reduced from 60 to 30 FPS for better performance
-websocket_update_rate = 20  # Send WebSocket updates at 20 FPS (every 3rd frame)
+tick_rate = 30	# Reduced from 60 to 30 FPS for better performance
+websocket_update_rate = 20	# Send WebSocket updates at 20 FPS (every 3rd frame)
 
 # ring_size = [160 , 90]
 # self.ball_radius = 2.5
@@ -45,7 +45,7 @@ class GameState:
 		self.ball_radius = 2.5
 		self.ball_speed = 0.6
 		self.ring_length = 160
-		self.ring_height = 90  # Critical: Initialize to prevent division by zero
+		self.ring_height = 90	# Critical: Initialize to prevent division by zero
 		self.ring_width = 200
 		self.ring_thickness = 3
 		self.is_started = [0 , 0]
@@ -59,7 +59,7 @@ class GameState:
 		
 		# 🚀 NEW: Physics engine integration (can switch between legacy/modern)
 		# Set via environment variable or default to modern for better performance
-		engine_type = "modern"  # Using modern physics engine!
+		engine_type = "modern"	# Using modern physics engine!
 		self.physics = create_physics_manager(
 			engine_type=engine_type,
 			ring_length=self.ring_length,
@@ -77,9 +77,20 @@ class GameState:
 		else:
 			self.angle = random.uniform(110, 250)
 
+		try:
+			from django.utils import timezone
+			from asgiref.sync import sync_to_async
+			await sync_to_async(Game.objects.filter(id=self.game_id).update)(
+					status='active',
+					start_date=timezone.now()
+			)
+			logger.info(f"Game {self.game_id} database updated: status=active, start_date set")
+		except Exception as e:
+				logger.error(f"Failed to update game {self.game_id} start in database: {e}")
+		
 		logger.info(f"Game {self.game_id} starting with angle: {self.angle}")
 		# Wait a bit longer for game_init, but don't wait forever
-		await asyncio.sleep(1.5)  # Wait max 1.5 seconds for initialization
+		await asyncio.sleep(1.5)	# Wait max 1.5 seconds for initialization
 		
 		self.ball_speed = 1.0
 		
@@ -100,7 +111,7 @@ class GameState:
 			
 			frame_count += 1
 			# Log periodically to confirm game is running
-			if frame_count % (tick_rate * 10) == 0:  # Every 10 seconds
+			if frame_count % (tick_rate * 10) == 0:	# Every 10 seconds
 				logger.info(f"Game {self.game_id} running - Frame {frame_count}")
 			
 			start_time += tick_interval
@@ -117,9 +128,11 @@ class GameState:
 		try:
 			from asgiref.sync import sync_to_async
 			await sync_to_async(Game.objects.filter(id=self.game_id).update)(
-				player_1_score=self.player_1_score,
-				player_2_score=self.player_2_score
-			)
+						player_1_score=self.player_1_score,
+						player_2_score=self.player_2_score,
+						status='completed',
+						end_date=time.timezone.now()
+				)
 			logger.info(f"Game {self.game_id} saved to database with scores P1:{self.player_1_score} P2:{self.player_2_score}")
 			
 			# Get the updated game object to access properties
@@ -214,7 +227,7 @@ class GameState:
 			self.physics.engine.player_2_pos = self.player_2_pos.copy()
 			self.physics.engine.ball_pos = self.ball_pos.copy()
 			self.physics.engine.ball_speed = self.ball_speed
-		else:  # modern
+		else:	# modern
 			self.physics.engine.player_1_pos.x = self.player_1_pos[0]
 			self.physics.engine.player_1_pos.y = self.player_1_pos[1]
 			self.physics.engine.player_2_pos.x = self.player_2_pos[0]
@@ -241,7 +254,7 @@ class GameState:
 			self.reset_ball(random.uniform(70, -70))
 		
 		# Log physics stats occasionally for debugging
-		if self.frame_count % 300 == 0:  # Every 10 seconds
+		if self.frame_count % 300 == 0:	# Every 10 seconds
 			stats = self.physics.get_engine_stats()
 			logger.debug(f"Game {self.game_id} physics stats: {stats}")
 	
@@ -262,7 +275,7 @@ class GameState:
 		try:
 			serialized_data = GameStateSerializer(self.to_dict()).data
 			# Reduce logging verbosity - only log occasionally
-			if self.frame_count % 300 == 0:  # Log every 10 seconds at 30fps
+			if self.frame_count % 300 == 0:	# Log every 10 seconds at 30fps
 				logger.debug(f"Sending game state for game {self.game_id} (frame {self.frame_count})")
 			
 			await channel_layer.group_send(
@@ -299,13 +312,13 @@ class GameState:
 
 	def up(self, player):
 		if player == self.player_1.user_id:
-			self.player_1_move = -1  # Set movement state, not direct position
+			self.player_1_move = -1	# Set movement state, not direct position
 		elif player == self.player_2.user_id:
 			self.player_2_move = -1
 
 	def down(self, player):
 		if player == self.player_1.user_id:
-			self.player_1_move = 1  # Set movement state, not direct position
+			self.player_1_move = 1	# Set movement state, not direct position
 		elif player == self.player_2.user_id:
 			self.player_2_move = 1
 
@@ -333,8 +346,8 @@ class GameState:
 	
 	def to_percent(self, player_pos):
 		"""Convert player position to percentage (0 = top, 100 = bottom)"""
-		normalized_pos = player_pos[1] + (self.ring_height / 2)  # Shift from [-h/2, h/2] to [0, h]
-		percentage = (normalized_pos / self.ring_height) * 100   # Convert to percentage
+		normalized_pos = player_pos[1] + (self.ring_height / 2)	# Shift from [-h/2, h/2] to [0, h]
+		percentage = (normalized_pos / self.ring_height) * 100	 # Convert to percentage
 		
 		# Clamp percentage to valid range to prevent out-of-bounds values
 		percentage = max(0.0, min(100.0, percentage))
@@ -342,7 +355,7 @@ class GameState:
 		# Debug logging
 		logger.debug(f"Game {self.game_id}: pos_y={player_pos[1]}, ring_height={self.ring_height}, normalized={normalized_pos}, percentage={percentage}")
 		
-		return [player_pos[0], percentage]  # Return [x, percentage]
+		return [player_pos[0], percentage]	# Return [x, percentage]
 
 	def quit_game(self, player_id=None):
 		"""Handle game quit - can be called statically or as instance method"""
@@ -374,11 +387,21 @@ class TournamentState:
 		self.next_round = []
 		self.players.append(kwargs['player_id'])
 		self.creator = kwargs['player_id']
-		self.creator_id = kwargs['player_id']  # Add creator_id property for easier access
+		self.creator_id = kwargs['player_id']	# Add creator_id property for easier access
 		self.current_round = 0
 		self.round_timer_task = None
 		self.round_results = {}
 		self.is_round_active = False
+
+	def update_tournament_start_in_db(self):
+		"""Update the tournament status in the database when it starts"""
+		try:
+			tournament = get_object_or_404(Tournament, id=self.id)
+			tournament.status = 'active'
+			tournament.save()
+			logger.info(f"Tournament {self.id} status updated to 'active' in database")
+		except Exception as e:
+			logger.error(f"Error updating tournament {self.id} start in database: {str(e)}")
 
 	def add_player(self, player):
 		# Handle both dict and object formats for compatibility
@@ -402,6 +425,9 @@ class TournamentState:
 				"type": "error",
 				'error':'Not enough players'
 			}
+		
+		# 🆕 Update database when tournament starts
+		self.update_tournament_start_in_db()
 		
 		# Shuffle players for random brackets
 		shuffled_players = self.players.copy()
@@ -456,9 +482,15 @@ class TournamentState:
 
 
 	def save_tournament(self):
-		t = get_object_or_404(Tournament, id=self.id)
-		t.winner = self.winner
-		t.save()
+		"""Save tournament completion to database"""
+		try:
+			t = get_object_or_404(Tournament, id=self.id)
+			t.winner = self.winner
+			t.status = 'completed'	# Mark tournament as completed
+			t.save()
+			logger.info(f"Tournament {self.id} completed and saved to database with winner {self.winner}")
+		except Exception as e:
+			logger.error(f"Error saving tournament {self.id} completion: {str(e)}")
 
 	def create_game(self, player_1, player_2):
 		channel_layer = get_channel_layer()
@@ -519,7 +551,7 @@ class TournamentState:
 	async def _round_timer(self):
 		"""5-minute timer for tournament rounds"""
 		try:
-			await asyncio.sleep(300)  # 5 minutes = 300 seconds
+			await asyncio.sleep(300)	# 5 minutes = 300 seconds
 			await self.end_round_automatically()
 		except asyncio.CancelledError:
 			logger = logging.getLogger(__name__)

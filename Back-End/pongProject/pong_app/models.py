@@ -12,6 +12,21 @@ class Tournament(models.Model):
 	max_partecipants = models.IntegerField()
 	winner = models.ForeignKey('UserProfile', on_delete=models.SET_NULL, related_name='winner', null=True)
 	creator = models.ForeignKey('UserProfile', on_delete=models.SET_NULL, related_name='creator', null=True)
+	status= models.CharField(choices=[
+		('pending', 'Pending'),
+		('active', 'Active'),
+		('completed', 'Completed')
+	], max_length=10, default='pending')
+
+	@property
+	def is_finished(self):
+			"""Check if tournament is finished (completed status)"""
+			return self.status == 'completed'
+	
+	@property
+	def is_active(self):
+			"""Check if tournament is currently active"""
+			return self.status == 'active'
 
 class UserProfile(models.Model):
 	user_id = models.IntegerField(primary_key=True)
@@ -27,7 +42,12 @@ class Game(models.Model):
 	player_2_score = models.IntegerField(default=0)
 	begin_date = models.DateTimeField(auto_now_add=True)
 	tournament_id = models.ForeignKey(Tournament, on_delete=models.CASCADE, related_name='game', null=True)
-	
+	status = models.CharField(choices=[
+			('pending', 'Pending'),
+			('active', 'Active'),
+			('completed', 'Completed')
+	], max_length=10, default='Completed')
+
 	@property
 	def winner(self):
 		"""Return the winner of the game based on scores"""
@@ -36,7 +56,7 @@ class Game(models.Model):
 		elif self.player_2_score > self.player_1_score:
 			return self.player_2
 		else:
-			return None  # Tie or no scores yet
+			return None	# Tie or no scores yet
 	
 	@property
 	def winner_id(self):
@@ -52,20 +72,10 @@ class Game(models.Model):
 		elif self.player_2_score > self.player_1_score:
 			return self.player_1
 		else:
-			return None  # Tie or no scores yet
+			return None	# Tie or no scores yet
 	
 	@property
 	def loser_id(self):
 		"""Return the loser's user_id"""
 		loser = self.loser
 		return loser.user_id if loser else None
-	
-	@property
-	def status(self):
-		"""Return the current status of the game"""
-		if self.player_1_score == 0 and self.player_2_score == 0:
-			return 'pending'
-		elif self.player_1_score < 5 and self.player_2_score < 5:
-			return 'active'
-		else:
-			return 'completed'
