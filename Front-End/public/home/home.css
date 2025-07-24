@@ -71,6 +71,18 @@
   overflow: hidden;
 }
 
+.task-container.gap {
+	margin-bottom: 10px;
+}
+
+.task-double-container {
+	flex: 1 1 45%;
+	max-width: 100%;
+	min-width: 168px;
+	gap: 10px;
+}
+	
+
 .profile {
   flex: 1 1 100%;
   max-width: 100%;

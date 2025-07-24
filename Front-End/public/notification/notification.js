@@ -3,6 +3,7 @@ import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 import { initFriendAutocomplete } from "./friendAutocomplete.js";
+import { renderNewTournament } from "../pong/tournament.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -481,6 +482,7 @@ const MESSAGE_HANDLERS = {
 	game_started: handleGameStartedMessage,
 	game_ended: handleGameEndedMessage,
 	game_created: handleGameCreatedMessage,
+	tournament_created: handleTournamentCreatedMessage,
 	tournament_started: handleTournamentStartedMessage,
 	tournament_ended: handleTournamentEndedMessage,
 
@@ -492,11 +494,33 @@ const MESSAGE_HANDLERS = {
 	// String-based messages (legacy support)
 	string_message: handleStringMessage,
 	heartbeat_request: sendHeartBeat,
+	heartbeat_ack: handleHeartbeatAckMessage,
 	pong_invitation: handlePongInvitationMessage,
 
 	// Fallback handler
 	default: handleDefaultMessage,
 };
+
+// ping
+function handleHeartbeatAckMessage() {
+	return;
+}
+
+// tournaments
+function handleTournamentCreatedMessage(message) {
+	console.log("Processing tournament created message:", message);
+	showAlertForXSeconds(
+		`🏆 Tournament created: ${message.message.name}`,
+		"success",
+		3,
+		{ asToast: true }
+	);
+
+	renderNewTournament(message);
+}
+
+
+
 
 function handlePongInvitationMessage(message) {
 	console.log("Processing pong invitation message:", message);

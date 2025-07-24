@@ -222,12 +222,31 @@ class TournamentGen(generics.ListCreateAPIView):
 		
 		# Add initial partecipants if provided
 		if initial_partecipants:
+			from .notification import SendNotificationSync, ImmediateNotification
+			notification_data = {
+				'type': 'tournament_created',
+				'tournament_id': tournament.id,
+				'name': tournament.name,
+				'max_players': tournament.max_partecipants,
+				'creator_id': tournament.creator.user_id,
+				'begin_date': tournament.begin_date.isoformat() if tournament.begin_date else None,
+			}
 			for user_id in initial_partecipants:
 				try:
 					participant = UserProfile.objects.get(user_id=int(user_id))
 					# Avoid adding duplicates (in case creator is in the list)
-					# if not participant.tournaments.filter(id=tournament.id).exists():
-					participant.tournaments.add(tournament)
+					if not participant.tournaments.filter(id=tournament.id).exists():
+						participant.tournaments.add(tournament)
+						try:
+							notification = ImmediateNotification(
+								Sender='Pong',
+								message=notification_data,
+								user_id=participant.user_id
+							)
+							SendNotificationSync(notification)
+							logger.info(f'✅ Tournament notification sent to creator (ID: {tournament.creator.user_id}) for tournament {tournament.id}')
+						except Exception as e:
+							logger.error(f'❌ Failed to send tournament notification to creator (ID: {tournament.creator.user_id}): {str(e)}')
 				except UserProfile.DoesNotExist:
 					# Log the error but don't fail the entire creation
 					logging.warning(f"User with ID {user_id} not found, skipping from tournament {tournament.id}")

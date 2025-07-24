@@ -13,12 +13,14 @@ import { showNotification } from "../pongContainer.js";
 export function renderMultiplayerPong(
 	opponentId,
 	opponentName,
-	existingRoomId = null
+	existingRoomId = null,
+	tournamentId = null
 ) {
 	window.multiplayerGameInfo = {
 		opponentId,
 		opponentName,
 		roomId: existingRoomId,
+		tournamentId,
 	};
 
 	// Import locale pong CSS
@@ -121,14 +123,15 @@ export function renderMultiplayerPong(
 
 	// Initialize game after DOM is ready
 	setTimeout(() => {
-		initializeMultiplayerGame(opponentId, opponentName, existingRoomId);
+		initializeMultiplayerGame(opponentId, opponentName, existingRoomId, tournamentId);
 	}, 100);
 }
 
 async function initializeMultiplayerGame(
 	opponentId,
 	opponentName,
-	existingRoomId = null
+	existingRoomId = null,
+	tournamentId = null
 ) {
 	try {
 		// Setup the game scene (same as local pong)
@@ -156,7 +159,7 @@ async function initializeMultiplayerGame(
 		} else {
 			// Create new game session (fallback)
 			const { userId } = getVariables();
-			await createGame(parseInt(userId), parseInt(opponentId));
+			await createGame(parseInt(userId), parseInt(opponentId), tournamentId);
 		}
 
 		// Setup event listeners

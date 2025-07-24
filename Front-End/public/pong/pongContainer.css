@@ -44,3 +44,7 @@
     text-decoration: none;
     cursor: pointer;
 }
+
+.tournament {
+	padding: 10px;
+}
