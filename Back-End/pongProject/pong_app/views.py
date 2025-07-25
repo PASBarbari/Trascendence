@@ -261,7 +261,7 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	authentication_classes = [JWTAuth]
 	lookup_url_kwarg = 'id'
 	lookup_fields = ['id']
-	
+
 	def get_queryset(self):
 		"""Override to include participants for efficient loading"""
 		return Tournament.objects.select_related('creator', 'winner').prefetch_related('player')
