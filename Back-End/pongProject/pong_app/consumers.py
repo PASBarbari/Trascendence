@@ -2,7 +2,8 @@ import asyncio
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .signals import GameState, TournamentState
+from .signals import GameState
+from .tournament_manager import tournament_manager
 from .models import Game
 import logging
 from asgiref.sync import sync_to_async
@@ -12,7 +13,6 @@ logger = logging.getLogger('pong_app')
 websocket_logger = logging.getLogger('websockets')
 
 active_games = {}
-active_tournaments = {}
 player_ready = {}
 
 class GameTableConsumer(AsyncWebsocketConsumer):
@@ -362,37 +362,90 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		player_id = self.player_id
 		user = self.scope.get('user')
 
-		if not self.tournament_id in active_tournaments:
+		# Early check if player is already in tournament via database
+		try:
+			from .models import Tournament, UserProfile
+			tournament_db = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
+			
+			# Check if player is already in tournament in database
+			user_profile = await database_sync_to_async(UserProfile.objects.get_or_create)(
+				user_id=player_id,
+				defaults={'username': getattr(user, 'username', f'User_{player_id}'), 'email': f'user_{player_id}@example.com'}
+			)
+			is_already_joined = await database_sync_to_async(
+				user_profile[0].tournaments.filter(id=self.tournament_id).exists
+			)()
+			
+			if is_already_joined:
+				logger.info(f"Player {player_id} already in tournament {self.tournament_id}, connecting to existing tournament")
+				# Just connect to the tournament without trying to join again
+				tournament = await tournament_manager.get_tournament(self.tournament_id)
+				if not tournament:
+					# Load tournament from database if not in memory
+					tournament = await tournament_manager.create_tournament(
+						tournament_id=self.tournament_id,
+						name=tournament_db.name,
+						max_players=tournament_db.max_partecipants,
+						creator_id=tournament_db.creator.user_id if tournament_db.creator else player_id
+					)
+					
+					# Load existing partecipants from database
+					partecipants = await database_sync_to_async(list)(tournament_db.player.all())
+					tournament.players = [p.user_id for p in partecipants]
+					tournament.nbr_player = len(tournament.players)
+				
+				await self.send(text_data=json.dumps({
+					'type': 'success',
+					'success': f'Welcome back to tournament {tournament.name}',
+					'already_joined': True,
+					'tournament_data': {
+						'name': tournament.name,
+						'current_players': tournament.nbr_player,
+						'max_players': tournament.max_p,
+						'creator_id': tournament.creator_id,
+						'players': tournament.players,
+						'initialized': tournament.initialized,
+						'is_complete': tournament.is_complete
+					}
+				}))
+				return
+				
+		except Exception as e:
+			logger.warning(f"Failed to check existing tournament membership: {str(e)}")
+			# Continue with normal join flow
+
+		# Get or create tournament using tournament manager
+		tournament = await tournament_manager.get_tournament(self.tournament_id)
+		
+		if not tournament:
 			try:
 				# Try to load tournament from database first
-				from .models import Tournament, UserProfile
 				tournament_db = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
 				
-				# Create TournamentState from database tournament
-				active_tournaments[self.tournament_id] = TournamentState(
+				# Create tournament using manager
+				tournament = await tournament_manager.create_tournament(
 					tournament_id=self.tournament_id,
 					name=tournament_db.name,
-					max_p=tournament_db.max_partecipants,
-					player_id=tournament_db.creator.user_id if tournament_db.creator else player_id
+					max_players=tournament_db.max_partecipants,
+					creator_id=tournament_db.creator.user_id if tournament_db.creator else player_id
 				)
 				
-				# Load existing partecipants from database and override the default initialization
-				tournament_state = active_tournaments[self.tournament_id]
+				# Load existing partecipants from database
 				partecipants = await database_sync_to_async(list)(tournament_db.player.all())
 				# Clear the auto-added creator and load from database
-				tournament_state.players = [p.user_id for p in partecipants]
-				tournament_state.nbr_player = len(tournament_state.players)
+				tournament.players = [p.user_id for p in partecipants]
+				tournament.nbr_player = len(tournament.players)
 				
-				logger.info(f"Tournament {tournament_db.name} loaded from database with {tournament_state.nbr_player} players")
+				logger.info(f"Tournament {tournament_db.name} loaded from database with {tournament.nbr_player} players")
 				
 				# Check if current player is already in the tournament
-				if player_id not in tournament_state.players:
+				if player_id not in tournament.players:
 					# Add current player to tournament
 					user_dict = {
 						'user_id': player_id,
 						'username': getattr(user, 'username', f'User_{player_id}')
 					}
-					add_result = tournament_state.add_player(user_dict)
+					add_result = tournament.add_player(user_dict)
 					
 					if add_result == "Player added to the tournament":
 						# Also add to database
@@ -403,7 +456,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 							)
 							await database_sync_to_async(user_profile[0].tournaments.add)(tournament_db)
 							# Update partecipants count in tournament
-							tournament_db.partecipants = tournament_state.nbr_player
+							tournament_db.partecipants = tournament.nbr_player
 							await database_sync_to_async(tournament_db.save)()
 							logger.info(f"Player {player_id} added to tournament {self.tournament_id} in database")
 						except Exception as db_error:
@@ -423,11 +476,11 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					name = data.get('name', f'Tournament_{self.tournament_id}')
 					max_p = data.get('max_p', 8)
 					logger.info(f"Creating new tournament state: {name}, max_players={max_p}, creator={player_id}")
-					active_tournaments[self.tournament_id] = TournamentState(
-						tournament_id=self.tournament_id, 
-						name=name, 
-						max_p=max_p, 
-						player_id=player_id
+					tournament = await tournament_manager.create_tournament(
+						tournament_id=self.tournament_id,
+						name=name,
+						max_players=max_p,
+						creator_id=player_id
 					)
 				except Exception as creation_error:
 					logger.error(f"Tournament creation failed: {str(creation_error)}", exc_info=True)
@@ -438,27 +491,45 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					return
 			
 			# Send success message for tournament loading/creation
-			tournament_state = active_tournaments[self.tournament_id]
 			await self.send(text_data=json.dumps({
 				'type': 'success',
-				'success': f'Connected to tournament {tournament_state.name}',
+				'success': f'Connected to tournament {tournament.name}',
 				'tournament_data': {
-					'name': tournament_state.name,
-					'current_players': tournament_state.nbr_player,
-					'max_players': tournament_state.max_p,
-					'creator_id': tournament_state.creator_id,
-					'players': tournament_state.players
+					'name': tournament.name,
+					'current_players': tournament.nbr_player,
+					'max_players': tournament.max_p,
+					'creator_id': tournament.creator_id,
+					'players': tournament.players
 				}
 			}))
 		else:
 			logger.info(f"Player {player_id} joining existing tournament {self.tournament_id}")
+			
+			# Double-check if already in tournament (in-memory check)
+			if player_id in tournament.players:
+				await self.send(text_data=json.dumps({
+					'type': 'success',
+					'success': f'Welcome back to tournament {tournament.name}',
+					'already_joined': True,
+					'tournament_data': {
+						'name': tournament.name,
+						'current_players': tournament.nbr_player,
+						'max_players': tournament.max_p,
+						'creator_id': tournament.creator_id,
+						'players': tournament.players,
+						'initialized': tournament.initialized,
+						'is_complete': tournament.is_complete
+					}
+				}))
+				return
+			
 			try:
 				# Create user dict format expected by add_player
 				user_dict = {
 					'user_id': player_id,
 					'username': getattr(user, 'username', f'User_{player_id}')
 				}
-				ret = await sync_to_async(active_tournaments[self.tournament_id].add_player)(user_dict)
+				ret = tournament.add_player(user_dict)
 				if ret != "Player added to the tournament":
 					logger.warning(f"Player join failed: {ret}")
 					await self.send(text_data=json.dumps({
@@ -478,7 +549,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 						)
 						await database_sync_to_async(user_profile[0].tournaments.add)(tournament_db)
 						# Update partecipants count in tournament
-						tournament_db.partecipants = active_tournaments[self.tournament_id].nbr_player
+						tournament_db.partecipants = tournament.nbr_player
 						await database_sync_to_async(tournament_db.save)()
 						logger.info(f"Player {player_id} added to tournament {self.tournament_id} in database")
 					except Exception as db_error:
@@ -487,15 +558,15 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					await self.send(text_data=json.dumps({
 						'type': 'success',
 						'success': ret,
+						'newly_joined': True,
 						'tournament_data': {
-							'current_players': active_tournaments[self.tournament_id].nbr_player,
-							'max_players': active_tournaments[self.tournament_id].max_p,
-							'players': active_tournaments[self.tournament_id].players
+							'current_players': tournament.nbr_player,
+							'max_players': tournament.max_p,
+							'players': tournament.players
 						}
 					}))
 					
 					# Check if tournament is ready to start (all slots filled)
-					tournament = active_tournaments[self.tournament_id]
 					if tournament.nbr_player >= tournament.max_p:
 						logger.info(f"Tournament {self.tournament_id} is full, ready for creator to start")
 						await self.channel_layer.group_send(
@@ -526,9 +597,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		player_id = self.player_id
 		
 		try:
-			if self.tournament_id in active_tournaments:
-				tournament = active_tournaments[self.tournament_id]
-				
+			tournament = await tournament_manager.get_tournament(self.tournament_id)
+			if tournament:
 				# Broadcast get ready message to all tournament partecipants
 				await self.channel_layer.group_send(
 					self.room_name,  # Use room_name instead of channel_name
@@ -561,9 +631,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		player_id = self.player_id
 		
 		try:
-			if self.tournament_id in active_tournaments:
-				tournament = active_tournaments[self.tournament_id]
-				
+			tournament = await tournament_manager.get_tournament(self.tournament_id)
+			if tournament:
 				# Check if this player is the tournament creator
 				if tournament.creator_id == player_id:
 					# Call the tournament's start method to initialize brackets
@@ -577,12 +646,12 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 							self.room_name,
 							{
 								'type': 'tournament_initialized',
-								'message': 'Tournament brackets have been initialized! Ready to start rounds.',
+								'message': 'Tournament brackets have been initialized! Rounds will start automatically.',
 								'tournament_data': {
 									'players': tournament.players,
 									'max_players': tournament.max_p,
 									'initialized': True,
-									'ready_for_rounds': True
+									'auto_rounds': True
 								}
 							}
 						)
@@ -614,93 +683,22 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			}))
 
 	async def start_round(self, data):
-		"""Message handler for creator to start tournament round"""
-		logger.info(f"Start round request for tournament {self.tournament_id}")
+		"""Message handler for creator to start tournament round (legacy - now auto-started)"""
+		logger.info(f"Manual start round request for tournament {self.tournament_id} (rounds are now auto-started)")
 		
-		# Use authenticated user from connection
-		player_id = self.player_id
-		
-		try:
-			if self.tournament_id in active_tournaments:
-				tournament = active_tournaments[self.tournament_id]
-				
-				# Check if this player is the tournament creator
-				if tournament.creator_id == player_id:
-					# Call the tournament's start_round method
-					result = await tournament.start_round()
-					
-					if result['type'] == 'success':
-						logger.info(f"Round started successfully by creator {player_id} in tournament {self.tournament_id}")
-						await self.send(text_data=json.dumps({
-							'type': 'success',
-							'success': result['success']
-						}))
-					else:
-						await self.send(text_data=json.dumps({
-							'type': 'error',
-							'error': result['error']
-						}))
-				else:
-					await self.send(text_data=json.dumps({
-						'type': 'error',
-						'error': 'Only tournament creator can start rounds'
-					}))
-			else:
-				await self.send(text_data=json.dumps({
-					'type': 'error',
-					'error': 'Tournament not found'
-				}))
-		except Exception as e:
-			logger.error(f"Error in start_round: {str(e)}", exc_info=True)
-			await self.send(text_data=json.dumps({
-				'type': 'error',
-				'error': f'Error starting round: {str(e)}'
-			}))
+		await self.send(text_data=json.dumps({
+			'type': 'info',
+			'message': 'Rounds start automatically in this tournament system'
+		}))
 
 	async def end_round(self, data):
-		"""Message handler for ending tournament round"""
-		logger.info(f"End round message for tournament {self.tournament_id}")
+		"""Message handler for ending tournament round (legacy - now auto-ended)"""
+		logger.info(f"Manual end round request for tournament {self.tournament_id} (rounds end automatically)")
 		
-		# Use authenticated user from connection
-		player_id = self.player_id
-		
-		try:
-			if self.tournament_id in active_tournaments:
-				tournament = active_tournaments[self.tournament_id]
-				
-				# Check if this player is the tournament creator
-				if tournament.creator_id == player_id:
-					# Call the tournament's end_round method
-					result = await tournament.end_round(auto_ended=False)
-					
-					if result['type'] == 'success':
-						logger.info(f"Round ended successfully by creator {player_id} in tournament {self.tournament_id}")
-						await self.send(text_data=json.dumps({
-							'type': 'success',
-							'success': result['success'],
-							'winner': result.get('winner')
-						}))
-					else:
-						await self.send(text_data=json.dumps({
-							'type': 'error',
-							'error': result['error']
-						}))
-				else:
-					await self.send(text_data=json.dumps({
-						'type': 'error',
-						'error': 'Only tournament creator can end rounds'
-					}))
-			else:
-				await self.send(text_data=json.dumps({
-					'type': 'error',
-					'error': 'Tournament not found'
-				}))
-		except Exception as e:
-			logger.error(f"Error in end_round: {str(e)}", exc_info=True)
-			await self.send(text_data=json.dumps({
-				'type': 'error',
-				'error': f'Error ending round: {str(e)}'
-			}))
+		await self.send(text_data=json.dumps({
+			'type': 'info',
+			'message': 'Rounds end automatically when all games complete in this tournament system'
+		}))
 
 	# Channel layer message handlers (these handle group_send messages)
 	async def tournament_get_ready(self, event):
@@ -752,27 +750,10 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		player_id = self.player_id
 		
 		try:
-			if self.tournament_id in active_tournaments:
-				tournament = active_tournaments[self.tournament_id]
-				
-				# Generate brackets data
-				brackets_data = {
-					'tournament_id': self.tournament_id,
-					'name': tournament.name,
-					'max_partecipants': tournament.max_p,
-					'current_partecipants': tournament.nbr_player,
-					'creator_id': tournament.creator_id,
-					'players': tournament.players,
-					'current_round': tournament.current_round,
-					'is_round_active': tournament.is_round_active,
-					'partecipants': getattr(tournament, 'partecipants', tournament.players),
-					'next_round': getattr(tournament, 'next_round', []),
-					'rounds_completed': tournament.current_round - 1 if tournament.current_round > 0 else 0
-				}
-				
-				# Add winner if tournament is finished
-				if hasattr(tournament, 'winner'):
-					brackets_data['winner'] = tournament.winner
+			tournament = await tournament_manager.get_tournament(self.tournament_id)
+			if tournament:
+				# Generate brackets data using the new method
+				brackets_data = tournament.get_brackets()
 				
 				await self.send(text_data=json.dumps({
 					'type': 'brackets',
@@ -815,6 +796,15 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			'message': event.get('message', 'Tournament brackets updated'),
 			'brackets': event.get('brackets', {}),
 			'round_info': event.get('round_info', {})
+		}))
+
+	async def tournament_complete(self, event):
+		"""Handle tournament completion notification"""
+		await self.send(text_data=json.dumps({
+			'type': 'tournament_complete',
+			'message': event['message'],
+			'winner': event.get('winner'),
+			'tournament_data': event.get('tournament_data', {})
 		}))
 
 	async def create_game(self, event):
