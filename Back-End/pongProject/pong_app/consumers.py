@@ -458,7 +458,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					'user_id': player_id,
 					'username': getattr(user, 'username', f'User_{player_id}')
 				}
-				ret = active_tournaments[self.tournament_id].add_player(user_dict)
+				ret = await sync_to_async(active_tournaments[self.tournament_id].add_player)(user_dict)
 				if ret != "Player added to the tournament":
 					logger.warning(f"Player join failed: {ret}")
 					await self.send(text_data=json.dumps({
@@ -497,21 +497,19 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					# Check if tournament is ready to start (all slots filled)
 					tournament = active_tournaments[self.tournament_id]
 					if tournament.nbr_player >= tournament.max_p:
-						logger.info(f"Tournament {self.tournament_id} is full, initializing tournament structure")
-						start_result = tournament.start()
-						if start_result['type'] == 'success':
-							await self.channel_layer.group_send(
-								self.room_name,
-								{
-									'type': 'tournament_auto_start',
-									'message': 'Tournament is full! Creator can now start the first round.',
-									'tournament_data': {
-										'players': tournament.players,
-										'max_players': tournament.max_p,
-										'ready_to_start': True
-									}
+						logger.info(f"Tournament {self.tournament_id} is full, ready for creator to start")
+						await self.channel_layer.group_send(
+							self.room_name,
+							{
+								'type': 'tournament_auto_start',
+								'message': 'Tournament is full! Creator can now start the tournament.',
+								'tournament_data': {
+									'players': tournament.players,
+									'max_players': tournament.max_p,
+									'ready_to_start': True
 								}
-							)
+							}
+						)
 						
 			except Exception as e:
 				logger.error(f"Error adding player to tournament: {str(e)}", exc_info=True)
@@ -553,6 +551,66 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			await self.send(text_data=json.dumps({
 				'type': 'error',
 				'error': f'Error preparing round: {str(e)}'
+			}))
+
+	async def start_tournament(self, data):
+		"""Message handler for creator to initialize tournament brackets"""
+		logger.info(f"Start tournament request for tournament {self.tournament_id}")
+		
+		# Use authenticated user from connection
+		player_id = self.player_id
+		
+		try:
+			if self.tournament_id in active_tournaments:
+				tournament = active_tournaments[self.tournament_id]
+				
+				# Check if this player is the tournament creator
+				if tournament.creator_id == player_id:
+					# Call the tournament's start method to initialize brackets
+					result = tournament.start()
+					
+					if result['type'] == 'success':
+						logger.info(f"Tournament initialized successfully by creator {player_id} in tournament {self.tournament_id}")
+						
+						# Notify all players that tournament has been initialized
+						await self.channel_layer.group_send(
+							self.room_name,
+							{
+								'type': 'tournament_initialized',
+								'message': 'Tournament brackets have been initialized! Ready to start rounds.',
+								'tournament_data': {
+									'players': tournament.players,
+									'max_players': tournament.max_p,
+									'initialized': True,
+									'ready_for_rounds': True
+								}
+							}
+						)
+						
+						await self.send(text_data=json.dumps({
+							'type': 'success',
+							'success': result['success']
+						}))
+					else:
+						await self.send(text_data=json.dumps({
+							'type': 'error',
+							'error': result['error']
+						}))
+				else:
+					await self.send(text_data=json.dumps({
+						'type': 'error',
+						'error': 'Only tournament creator can start the tournament'
+					}))
+			else:
+				await self.send(text_data=json.dumps({
+					'type': 'error',
+					'error': 'Tournament not found'
+				}))
+		except Exception as e:
+			logger.error(f"Error in start_tournament: {str(e)}", exc_info=True)
+			await self.send(text_data=json.dumps({
+				'type': 'error',
+				'error': f'Error starting tournament: {str(e)}'
 			}))
 
 	async def start_round(self, data):
@@ -742,6 +800,14 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 			'tournament_data': event.get('tournament_data', {})
 		}))
 
+	async def tournament_initialized(self, event):
+		"""Handle tournament initialization notification"""
+		await self.send(text_data=json.dumps({
+			'type': 'tournament_initialized',
+			'message': event['message'],
+			'tournament_data': event.get('tournament_data', {})
+		}))
+
 	async def tournament_brackets_update(self, event):
 		"""Handle tournament brackets update broadcast"""
 		await self.send(text_data=json.dumps({
@@ -806,6 +872,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 	message_handlers = {
 		'join': join,
 		'get_ready': get_ready,
+		'start_tournament': start_tournament,
 		'start_round': start_round,
 		'end_round': end_round,
 		'get_brackets': get_brackets,

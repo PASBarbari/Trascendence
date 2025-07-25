@@ -461,14 +461,20 @@ class TournamentState:
 	def brackets(self, *args, **kwargs):
 		try:
 			winner_id = kwargs.get('winner')
-			if winner_id not in self.partecipants:
-				return 'Player not in the tournament'
+			
+			# Check if winner is in tournament (use partecipants if available, otherwise players)
+			if hasattr(self, 'partecipants'):
+				if winner_id not in self.partecipants and winner_id not in self.players:
+					return 'Player not in the tournament'
+			else:
+				if winner_id not in self.players:
+					return 'Player not in the tournament'
 			
 			# Register the game result
 			result = self.register_game_result(winner_id, kwargs.get('loser', 'unknown'))
 			
 			# Check if all games in current round are complete
-			expected_games = len([p for p in self.partecipants if p != 0]) // 2
+			expected_games = self._count_expected_games()
 			completed_games = len(self.round_results)
 			
 			if completed_games >= expected_games:
@@ -540,7 +546,15 @@ class TournamentState:
 		
 		# Create games for this round
 		if self.current_round == 1:
-			# First round: use original participants
+			# First round: ensure tournament is initialized or use players directly
+			if not hasattr(self, 'partecipants'):
+				# Initialize tournament brackets if not already done
+				logger.info(f"Initializing tournament brackets for round 1")
+				init_result = self.start()
+				if init_result['type'] == 'error':
+					return init_result
+			
+			# Use initialized participants
 			half = len(self.partecipants) // 2
 			first_half = self.partecipants[:half]
 			second_half = self.partecipants[half:]
@@ -705,11 +719,11 @@ class TournamentState:
 		# Move current next_round to partecipants for next round
 		if hasattr(self, 'partecipants'):
 			eliminated = [p for p in self.partecipants if p not in self.next_round and p != 0]
-			self.partecipants = self.next_round.copy()
 		else:
-			eliminated = []
-			self.partecipants = self.next_round.copy()
+			# If partecipants not initialized, use players list
+			eliminated = [p for p in self.players if p not in self.next_round]
 		
+		self.partecipants = self.next_round.copy()
 		self.next_round = []
 		
 		# Check if tournament is complete
@@ -819,11 +833,18 @@ class TournamentState:
 		"""Count how many games should be in the current round"""
 		if self.current_round == 1:
 			# First round: count active players (not byes)
-			active_players = len([p for p in self.partecipants if p != 0])
+			if hasattr(self, 'partecipants'):
+				active_players = len([p for p in self.partecipants if p != 0])
+			else:
+				# Fallback to using players list if partecipants not initialized
+				active_players = len(self.players)
 			return active_players // 2
 		else:
 			# Subsequent rounds: previous round winners (excluding byes)
-			active_players = len([p for p in self.partecipants if p != 0]) if hasattr(self, 'partecipants') else len(self.next_round)
+			if hasattr(self, 'partecipants'):
+				active_players = len([p for p in self.partecipants if p != 0])
+			else:
+				active_players = len(self.next_round)
 			return active_players // 2
 
 @receiver(post_save, sender=Game)
