@@ -12,7 +12,7 @@ function renderRegister() {
 	contentDiv.innerHTML = `
         <div class="register">
             <div class="login_box">
-                <h1>Register</h1>
+                <h1 style="display: flex; justify-content: center; align-items: center;">Register</h1>
                 <div class="login_form">
                     <form class="login_form" id="registerForm">
                         <div class="mb-3">

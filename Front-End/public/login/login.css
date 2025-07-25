@@ -1,13 +1,12 @@
-.login
-{
+.login {
     height: 100%;
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-		border-radius: 12px;
-		
-	}
+    border-radius: 12px;
+    position: absolute;
+}
 	/* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
 
 .register
@@ -22,18 +21,20 @@
 	}
 	/* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
 
-.login_box
-{
-    height: 600px;
-    width: 400px;
-    background-color: #62ff0027;
-    border-radius: 20px;
+.login_box {
     display: flex;
-		border: none !important;
+    background-color: #fefefe;
+    /* padding: 20px; */
+    border: 1px solid #888;
+    width: 80%;
+    height: 80%;
+    max-width: 400px;
+    border-radius: 8px;
+    position: relative;
+    /* overflow-y: scroll; */
     flex-direction: column;
+    flex-wrap: wrap;
     justify-content: center;
-    align-items: center;
-		box-shadow: 4px 8px 16px rgba(0, 0, 0, 0.25);
 }
 
 .login_form
@@ -42,7 +43,8 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-	gap: 10px;
+		gap: 10px;
+		flex-wrap: wrap;
 	}
 
 .empty

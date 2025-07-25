@@ -20,7 +20,7 @@
     background-color: rgba(0, 0, 0, 0.5);
 }
 
-.login_box {
+/* .login_box {
     background-color: #fefefe;
     padding: 20px;
     border: 1px solid #888;
@@ -28,7 +28,7 @@
     max-width: 400px;
     border-radius: 8px;
     position: relative;
-}
+} */
 
 .close-button {
     color: #aaa;
