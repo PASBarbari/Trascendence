@@ -987,6 +987,8 @@ function initializeWebSocket() {
 
 	// Create WebSocket with token in query string
 	socket = new WebSocket(wsUrl);
+	if (!window.activeWebSockets) window.activeWebSockets = [];
+			window.activeWebSockets.push(socket);
 
 	socket.onmessage = function (event) {
 		console.log("/----websocket notification.js----\\");

@@ -16,13 +16,13 @@ function renderRegister() {
                 <div class="login_form">
                     <form class="login_form" id="registerForm">
                         <div class="mb-3">
-                            <input type="text" id="username" placeholder="Username" class="form-control" required />
+                            <input type="text" id="username" placeholder="Username" class="form-control" required autocomplete="username" />
                         </div>
                         <div class="mb-3">
-                            <input type="email" id="email" placeholder="Email" class="form-control" required />
+                            <input type="email" id="email" placeholder="Email" class="form-control" required autocomplete="email" />
                         </div>
                         <div class="mb-3">
-                            <input type="password" id="password" placeholder="Password" class="form-control" required />
+                            <input type="password" id="password" placeholder="Password" class="form-control" required autocomplete="new-password" />
                         </div>
                         <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
                         <button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>

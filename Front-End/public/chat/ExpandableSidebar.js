@@ -254,6 +254,9 @@ function renderChatItem(chat) {
 			const { token, wss_api } = getVariables();
 			socket = new WebSocket(`${wss_api}/chat/chat?room_id=${chat.id}&token=${token}`);
 			console.log(socket);
+			if (!window.activeWebSockets) window.activeWebSockets = [];
+				window.activeWebSockets.push(socket);
+
 			socket.onopen = () => {
 				console.log(`WebSocket connection opened for chat room ${chat.id}`);
 			};
