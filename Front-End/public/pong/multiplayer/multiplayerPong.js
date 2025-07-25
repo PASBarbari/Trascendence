@@ -123,7 +123,12 @@ export function renderMultiplayerPong(
 
 	// Initialize game after DOM is ready
 	setTimeout(() => {
-		initializeMultiplayerGame(opponentId, opponentName, existingRoomId, tournamentId);
+		initializeMultiplayerGame(
+			opponentId,
+			opponentName,
+			existingRoomId,
+			tournamentId
+		);
 	}, 100);
 }
 

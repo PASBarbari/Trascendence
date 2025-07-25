@@ -191,6 +191,12 @@ async function renderNewTournament(tournamentData) {
 						<button class="btn btn-outline-secondary" id="start-button" data-tournament-id="${tournament.id}">
 								start
 						</button>
+						<button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${tournament.id}">
+								get_brackets
+						</button>
+						<button class="btn btn-outline-danger" id="tournamentDelete" data-tournament-id="${tournament.id}">
+								delete
+						</button>
 				`;
 				tournamentListDiv.appendChild(tournamentDiv);
 
@@ -212,22 +218,102 @@ async function renderNewTournament(tournamentData) {
 						showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, { asToast: true });
 				}
 			});
+
+			const tournamentStatsButton = tournamentDiv.querySelector("#tournamentStatsButton");
+			tournamentStatsButton.addEventListener("click", async () => {
+				if (socket && socket.readyState === WebSocket.OPEN) {
+					socket.send(JSON.stringify({
+						type: "get_brackets",
+						message: "suca2",
+					}));
+					console.warn("Messaggio 'get_brackets' inviato via WebSocket");
+				} else {
+					showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, { asToast: true });
+				}
+			});
+
+			const tournamentDeleteButton = tournamentDiv.querySelector("#tournamentDelete");
+			tournamentDeleteButton.addEventListener("click", async () => {
+				httpTournamentRequest("DELETE", tournament.id)
+			});
+
 		});
+}
+
+function httpTournamentRequest(method, tournamentId) {
+	const { token, url_api } = getVariables();
+	const url = `${url_api}/pong/tournament/${tournamentId}/`;
+	fetch(url, {
+		method: method,
+		headers: {
+			"Content-Type": "application/json",
+			"X-CSRFToken": getCookie("csrftoken"),
+			"Authorization": `Bearer ${token}`,
+		},
+	})
+	.then(response => {
+		if (response.ok) {
+			console.warn(`Torneo ${method === "DELETE" ? "eliminato" : "aggiornato"} con successo!`);
+			showAlertForXSeconds(`Torneo ${method === "DELETE" ? "eliminato" : "aggiornato"} con successo!`, "success", 3, { asToast: true });
+			renderNewTournament({ message: "Torneo aggiornato con successo!" });
+		} else {
+			return response.json().then(data => {
+				console.error(`Errore nella richiesta ${method}:`, data);
+			});
+		}
+	})
+	.catch(error => {
+		console.error(`Errore nella richiesta ${method}:`, error);
+	});
 }
 
 //se non ci sono abbastanza player, mandi errore error tournament need at least 2 type: error
 //type: success
+const handledGameIds = new Set();
 
 function messageHandlerTournament(message) {
+
 	if (message.type === "error") {
-		console.error("Errore nel torneo:", message.error);
+		console.error("(Handler) Errore nel torneo:", message.error);
 		showAlertForXSeconds(message.error, "error", 3, { asToast: true });
 		return;
+	} else if (message.type === "success") {
+		console.warn("(Handler) Messaggio torneo:", message);
+	} else if (message.type === "tournament_connection_success") {
+		console.warn("(Handler) Torneo iniziato:", message); //rendere pulsante start premibile se sei il creatore del torneo
+	} else if (message.type === "tournament_initialized") {
+		console.warn("(Handler) Torneo inizializzato:", message);
+	} else if (message.type === "game_created") { //arriva 2 volte al creatore
+		// se arriva 2 volte la stessa notifica, non fare nulla. salvato globalmente message
+		const gameId = message.game_data.game_id;
+		if (handledGameIds.has(gameId)) {
+			console.error("(Handler) Gioco già gestito:", gameId);
+			return;
+		}
+		handledGameIds.add(gameId);
+		console.warn("(Handler) Gioco creato:", message);
+
+		const myId = getVariables().userId;
+		const player1Id = message.game_data.player_1.user_id;
+		const player2Id = message.game_data.player_2.user_id;
+		const player1Name = message.game_data.player_1.username;
+		const player2Name = message.game_data.player_2.username;
+		const friendId = player1Id === myId ? player2Id : player1Id;
+		const friendName = player1Id === myId ? player2Name : player1Name;
+		console.log("Friend ID:", friendId, "Friend Name:", friendName, "room Id:", message.game_data.game_id, "tournament Id:", message.game_data.tournament_id);
+		window.navigateTo(`#pongmulti?room=${message.game_data.game_id}&opponent=${friendId}&opponentName=${encodeURIComponent(friendName)}&tournamentId=${message.game_data.tournament_id}`);
+	} else if (message.type === "start_round") { //arriva 2 volte al creatore
+		console.warn("(Handler) round partito:", message);
+	} else if (message.type === "brackets") {
+		console.warn("(Handler) Brackets ricevuti:", message.brackets);
+		console.table(message.brackets);
 	} else {
-		console.warn("Messaggio torneo:", message);
-		
+		console.error("(Handler) Messaggio torneo non riconosciuto:", message);
+		return;
 	}
 }
+
+// game_created
 
 function initializeWebSocketTournament(room_id) {
 	const { token, wss_api } = getVariables();
@@ -245,7 +331,6 @@ function initializeWebSocketTournament(room_id) {
 
 	socket.onmessage = function (event) {
 		const message = JSON.parse(event.data);
-		console.warn("WebSocket message received:", message);
 		messageHandlerTournament(message);
 
 	};
