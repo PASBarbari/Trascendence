@@ -10,19 +10,20 @@ pongContainerCSS.href = "/pongContainer/pongContainer.css";
 document.head.appendChild(pongContainerCSS);
 
 function renderTournament() {
-	console.log("/***********tournamentContainer************/");
+	console.warn("/***********tournamentContainer************/");
 
 	const tournamentContainer = document.getElementById("tournamentContainer");
 	tournamentContainer.innerHTML = `
-		<div class="tournament">
-			<div class="d-flex justify-content-between align-items-center mb-3">
-				<h5>Tournaments</h5>
+			<div class="tournament">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+							<h5>Tournaments</h5>
+					</div>
+					<button id="createTournamentButton" class="btn btn-outline-primary mb-3">
+							<i class="bi bi-plus"></i>
+					</button>
+					<div id="createTournamentForm"></div>
+					<div id="tournamentList"></div>
 			</div>
-			<button id="createTournamentButton" class="btn btn-outline-primary mb-3">
-				<i class="bi bi-plus"></i>
-			</button>
-			<div id="createTournamentForm"></div>
-		</div>
 	`;
 
 	const createTournamentButton = document.getElementById("createTournamentButton");
@@ -117,9 +118,9 @@ function createTournament() {
 								return;
 						}
 
-            console.log("Utenti torneo:", userIdsArray);
-						console.log("Nome torneo:", tournamentName);
-						console.log("Max partecipanti:", maxParticipantsValue);
+            console.warn("Utenti torneo:", userIdsArray);
+						console.warn("Nome torneo:", tournamentName);
+						console.warn("Max partecipanti:", maxParticipantsValue);
 
             try {
                 const response = await fetch(
@@ -141,7 +142,7 @@ function createTournament() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log("Torneo creato:", data);
+                    console.warn("Torneo creato:", data);
 
 										//clean form
 										document.getElementById("tournamentName").value = "";
@@ -168,31 +169,30 @@ function createTournament() {
 let socket;
 
 async function renderNewTournament(tournamentData) {
-    console.log("Rendering new tournament:", tournamentData.message);
+    console.warn("Rendering new tournament:", tournamentData.message);
 		const tournamentStat = await tournamentStats();
-		console.log("Tournament stats:", tournamentStat.results);
+		console.warn("Tournament stats:", tournamentStat.results);
 
-		const createTournamentFormdiv = document.getElementById("createTournamentForm");
-		if (createTournamentFormdiv.innerHTML !== "") createTournamentFormdiv.innerHTML = "";
+		const tournamentListDiv = document.getElementById("tournamentList");
+		tournamentListDiv.innerHTML = "";
 
-    const createTournamentForm = document.getElementById("createTournamentForm");
 		tournamentStat.results.forEach(tournament => {
-			const tournamentDiv = document.createElement("div");
-			tournamentDiv.className = "tournament-item";
-			tournamentDiv.innerHTML = `
-				<h5>${tournament.name}</h5>
-				<p>Max Partecipanti: ${tournament.max_partecipants}</p>
-				<p>Partecipanti: ${tournament.partecipants}</p>
-				<p>Stato: ${tournament.status}</p>
-				<p>Inizio: ${new Date(tournament.begin_date).toLocaleString()}</p>
-				<button class="btn btn-outline-primary" id="join-button" data-tournament-id="${tournament.id}">
-					join
-				</button>
-				<button class="btn btn-outline-secondary" id="start-button" data-tournament-id="${tournament.id}">
-					start
-				</button>
-			`;
-			createTournamentForm.appendChild(tournamentDiv);
+				const tournamentDiv = document.createElement("div");
+				tournamentDiv.className = "tournament-item";
+				tournamentDiv.innerHTML = `
+						<h5>${tournament.name}</h5>
+						<p>Max Partecipanti: ${tournament.max_partecipants}</p>
+						<p>Partecipanti: ${tournament.partecipants}</p>
+						<p>Stato: ${tournament.status}</p>
+						<p>Inizio: ${new Date(tournament.begin_date).toLocaleString()}</p>
+						<button class="btn btn-outline-primary" id="join-button" data-tournament-id="${tournament.id}">
+								join
+						</button>
+						<button class="btn btn-outline-secondary" id="start-button" data-tournament-id="${tournament.id}">
+								start
+						</button>
+				`;
+				tournamentListDiv.appendChild(tournamentDiv);
 
 			const joinButton = tournamentDiv.querySelector("#join-button");
 			joinButton.addEventListener("click", async () => {
@@ -207,7 +207,7 @@ async function renderNewTournament(tournamentData) {
 							message: "suca",
 							// puoi aggiungere altri dati se il backend li richiede
 					}));
-					console.log("Messaggio 'start_tournament' inviato via WebSocket");
+					console.warn("Messaggio 'start_tournament' inviato via WebSocket");
 				} else {
 						showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, { asToast: true });
 				}
@@ -216,25 +216,38 @@ async function renderNewTournament(tournamentData) {
 }
 
 //se non ci sono abbastanza player, mandi errore error tournament need at least 2 type: error
+//type: success
 
+function messageHandlerTournament(message) {
+	if (message.type === "error") {
+		console.error("Errore nel torneo:", message.error);
+		showAlertForXSeconds(message.error, "error", 3, { asToast: true });
+		return;
+	} else {
+		console.warn("Messaggio torneo:", message);
+		
+	}
+}
 
 function initializeWebSocketTournament(room_id) {
 	const { token, wss_api } = getVariables();
 
 	const wsUrl = `${wss_api}/pong/ws/tournament/${room_id}/?token=${token}`;
-	console.log("Connecting to tournaments:", wsUrl);
+	console.warn("Connecting to tournaments:", wsUrl);
 
 	socket = new WebSocket(wsUrl);
 	if (!window.activeWebSockets) window.activeWebSockets = [];
 		window.activeWebSockets.push(socket);
 
 	socket.onopen = function () {
-		console.log("WebSocket connection established for tournament:", room_id);
+		console.warn("WebSocket connection established for tournament:", room_id);
 	};
 
 	socket.onmessage = function (event) {
 		const message = JSON.parse(event.data);
-		console.log("WebSocket message received:", message);
+		console.warn("WebSocket message received:", message);
+		messageHandlerTournament(message);
+
 	};
 
 	socket.onerror = function (error) {
@@ -250,7 +263,7 @@ async function tournamentStats() {
 	// pong/pong/user-tournaments get -> history of tournaments. ?user_id per qualcunaltro ?current_only=true prende i tornei non completati. ?status=active per i tornei attivi, ?status=completed pending (no ready) active.
 	try {
 		const { token, url_api, userId } = getVariables();
-		console.log("[PongStatistic] Fetching player stats for user_id:", userId);
+		console.warn("[PongStatistic] Fetching player stats for user_id:", userId);
 		const response = await fetch(
 			`${url_api}/pong/user-tournaments`,
 			{
@@ -266,7 +279,7 @@ async function tournamentStats() {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
-		console.log("[PongStatistic] API response:", data);
+		console.warn("[PongStatistic] API response:", data);
 		return data;
 
 

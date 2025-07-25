@@ -14,13 +14,13 @@
 {
     height: 100%;
     width: 100%;
-	background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%);
     display: flex;
     justify-content: center;
     align-items: center;
-	border-radius: 12px;
-
-}
+		border-radius: 12px;
+		
+	}
+	/* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
 
 .login_box
 {

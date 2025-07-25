@@ -46,7 +46,9 @@ function renderHome() {
             <div class="profile" id="profile" style="display: block;"></div>
             <!-- <div class="task-container" id="taskAvailableContainer"></div> -->
             <!-- <div class="task-container" id="taskActiveContainer"></div> -->
-            <div class="task-container" id="notificationContainer"></div>
+						<div style="min-width: 40%">
+            	<div class="task-container" id="notificationContainer"></div>
+						</div>
 						<div class="task-double-container">
 							<div class="task-container gap" id="pongContainer"></div>
 							<div class="task-container" id="tournamentContainer"></div>
