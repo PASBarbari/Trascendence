@@ -348,7 +348,7 @@ async function tournamentStats() {
 	// pong/pong/user-tournaments get -> history of tournaments. ?user_id per qualcunaltro ?current_only=true prende i tornei non completati. ?status=active per i tornei attivi, ?status=completed pending (no ready) active.
 	try {
 		const { token, url_api, userId } = getVariables();
-		console.warn("[PongStatistic] Fetching player stats for user_id:", userId);
+		console.warn("[PongTournament] Fetching player stats for user_id:", userId);
 		const response = await fetch(
 			`${url_api}/pong/user-tournaments`,
 			{
@@ -364,12 +364,12 @@ async function tournamentStats() {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
-		console.warn("[PongStatistic] API response:", data);
+		console.warn("[PongTournament] API response:", data);
 		return data;
 
 
 	} catch (error) {
-		console.error("[PongStatistic] API error:", error);
+		console.error("[PongTournament] API error:", error);
 	}
 }
 
