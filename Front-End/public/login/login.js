@@ -1,4 +1,5 @@
 import { setVariables, getVariables, calculateInitials } from "../var.js";
+import { removeExpandableSidebar } from "../index.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 
@@ -8,25 +9,28 @@ link.href = "/login/login.css";
 document.head.appendChild(link);
 
 function renderLogin() {
+	// Rimuovi sidebar se presente
+	if (typeof removeExpandableSidebar === "function") {
+		removeExpandableSidebar();
+	}
+	// Nascondi pulsante impostazioni se presente
+	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
+	if (toggleSettingsButton) toggleSettingsButton.style.display = "none";
+
 	const contentDiv = document.getElementById("content");
 	contentDiv.innerHTML = `
 		<div class="login">
 			<div class="login_box">
-				<h1>Login</h1>
-				<div class="login_form">
-					<form class="login_form" id="loginForm">
-						<div class="mb-3">
-							<input type="email" id="email" placeholder="Email" class="form-control" required autocomplete="email"/>
-						</div>
-						<div class="mb-3">
-							<input type="password" id="password" placeholder="Password" class="form-control" required autocomplete="current-password"/>
-						</div>
-						<button type="submit" class="btn btn-primary w-100" style="height: 40px;">Login</button>
-						<button type="button" id="registerButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Register</button>
-						<button type="button" id="loginGoogle" class="btn btn-danger w-100 mt-2" style="height: 40px;">Login with Google</button>
-						<button type="button" id="login42" class="btn btn-primary w-100 mt-2" style="height: 40px;">Login with 42</button>
+			<h1 style="display: flex; justify-content: center; align-items: center;">Login</h1>
+			<form class="login_form" id="loginForm">
+
+						<input type="email" id="email" placeholder="Email" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="email"/>
+						<input type="password" id="password" placeholder="Password" class="form-control" style="min-width: 50px; max-width: 300px;" required autocomplete="current-password"/>
+						<button type="submit" class="btn btn-primary" style="border-radius: 0.4rem; min-width: 50px; max-width: 300px; width: 100%;">Login</button>
+						<button type="button" id="registerButton" class="btn btn-outline-secondary" style="min-width: 50px; max-width: 300px; width: 100%;">Register</button>
+						<!--<button type="button" id="loginGoogle" class="btn btn-outline-danger">Login with Google</button>
+						<button type="button" id="login42" class="btn btn-outline-primary">Login with 42</button>-->
 					</form>
-				</div>
 			</div>
 		</div>
 	`;
@@ -55,13 +59,13 @@ function renderLogin() {
 			window.navigateTo("#register");
 		});
 
-	document
-		.getElementById("loginGoogle")
-		.addEventListener("click", () => handleOAuthLogin("google"));
+	// document
+	// 	.getElementById("loginGoogle")
+	// 	.addEventListener("click", () => handleOAuthLogin("google"));
 
-	document
-		.getElementById("login42")
-		.addEventListener("click", () => handleOAuthLogin("42"));
+	// document
+	// 	.getElementById("login42")
+	// 	.addEventListener("click", () => handleOAuthLogin("42"));
 }
 
 /**

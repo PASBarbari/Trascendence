@@ -21,6 +21,11 @@ function Logout() {
         window.activeWebSockets = [];
     }
     
+		if (window.notificationHeartbeatInterval) {
+				clearInterval(window.notificationHeartbeatInterval);
+				window.notificationHeartbeatInterval = null;
+		}
+
     // Rimuove contenuto di chatContainer
     const chatContainer = document.querySelector('#chatContainer');
     if (chatContainer) {

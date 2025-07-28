@@ -15,12 +15,12 @@ function renderTournament() {
 	const tournamentContainer = document.getElementById("tournamentContainer");
 	tournamentContainer.innerHTML = `
 			<div class="tournament">
-					<div class="d-flex justify-content-between align-items-center mb-3">
+					<div class="d-flex justify-content-between align-items-center mb-2">
 							<h5>Tournaments</h5>
+							<button id="createTournamentButton" class="btn btn-outline-secondary	">
+									<i class="bi bi-plus"></i>
+							</button>
 					</div>
-					<button id="createTournamentButton" class="btn btn-outline-primary mb-3">
-							<i class="bi bi-plus"></i>
-					</button>
 					<div id="createTournamentForm"></div>
 					<div id="tournamentList"></div>
 			</div>
@@ -56,10 +56,10 @@ function createTournament() {
                 <input type="text" id="userIdsInput" placeholder="Aggiungi membri con Username" class="form-control" autocomplete="off"/>
                 <div id="suggestionListTournament" class="list-group" style="display:none; position:absolute; left:0; right:0; top:100%; z-index:1000;"></div>
             </div>
-            <div id="selectedUserIds" class="mb-2"></div>
+            <div id="selectedUserIds" class="mb-1"></div>
             <div class="right-button">
-                <button type="submit" class="btn btn-outline-primary">
-                    <i class="bi bi-plus"></i>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-nintendo-switch me-2"></i>Create
                 </button>
             </div>
         </form>
@@ -171,6 +171,10 @@ let socket;
 async function renderNewTournament(tournamentData) {
     console.warn("Rendering new tournament:", tournamentData.message);
 		const tournamentStat = await tournamentStats();
+		if (!tournamentStat || !tournamentStat.results || tournamentStat.results.length === 0) {
+			console.warn("Nessun torneo trovato.");
+			return;
+		}
 		console.warn("Tournament stats:", tournamentStat.results);
 
 		const tournamentListDiv = document.getElementById("tournamentList");
@@ -348,7 +352,7 @@ async function tournamentStats() {
 	// pong/pong/user-tournaments get -> history of tournaments. ?user_id per qualcunaltro ?current_only=true prende i tornei non completati. ?status=active per i tornei attivi, ?status=completed pending (no ready) active.
 	try {
 		const { token, url_api, userId } = getVariables();
-		console.warn("[PongStatistic] Fetching player stats for user_id:", userId);
+		console.warn("[PongTournament] Fetching player stats for user_id:", userId);
 		const response = await fetch(
 			`${url_api}/pong/user-tournaments`,
 			{
@@ -364,12 +368,12 @@ async function tournamentStats() {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
-		console.warn("[PongStatistic] API response:", data);
+		console.warn("[PongTournament] API response:", data);
 		return data;
 
 
 	} catch (error) {
-		console.error("[PongStatistic] API error:", error);
+		console.error("[PongTournament] API error:", error);
 	}
 }
 

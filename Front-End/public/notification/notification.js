@@ -1460,12 +1460,16 @@ function startHeartbeat() {
 		return;
 	}
 
-	console.log("Starting WebSocket heartbeat...");
-	sendHeartBeat();
-	// Send a heartbeat request every 25 seconds
-	setInterval(() => {
+	window.notificationHeartbeatInterval = setInterval(() => {
+		console.log("Sending WebSocket heartbeat...");
 		sendHeartBeat();
 	}, 25000);
+	// console.log("Starting WebSocket heartbeat...");
+	// sendHeartBeat();
+	// // Send a heartbeat request every 25 seconds
+	// setInterval(() => {
+	// 	sendHeartBeat();
+	// }, 25000);
 }
 
 function sendHeartBeat() {

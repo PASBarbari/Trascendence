@@ -10,27 +10,20 @@ document.head.appendChild(link);
 function renderRegister() {
 	const contentDiv = document.getElementById("content");
 	contentDiv.innerHTML = `
-        <div class="register">
-            <div class="login_box">
-                <h1>Register</h1>
-                <div class="login_form">
-                    <form class="login_form" id="registerForm">
-                        <div class="mb-3">
-                            <input type="text" id="username" placeholder="Username" class="form-control" required autocomplete="username" />
-                        </div>
-                        <div class="mb-3">
-                            <input type="email" id="email" placeholder="Email" class="form-control" required autocomplete="email" />
-                        </div>
-                        <div class="mb-3">
-                            <input type="password" id="password" placeholder="Password" class="form-control" required autocomplete="new-password" />
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100" style="height: 40px;">Register</button>
-                        <button type="button" id="loginButton" class="btn btn-secondary w-100 mt-2" style="height: 40px;">Login</button>
-                    </form>
-                </div>
-            </div>
+    <div class="register">
+      <div class="login_box">
+        <h1 style="display: flex; justify-content: center; align-items: center;">Register</h1>
+        <form class="login_form" id="registerForm">
+          <input type="text" id="username" placeholder="Username" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="username" />
+          <input type="email" id="email" placeholder="Email" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="email" />
+          <input type="password" id="password" placeholder="Password" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="new-password" />
+          <button type="submit" class="btn btn-primary" style="border-radius: 0.4rem; min-width: 50px; max-width: 300px; width: 100%;">Register</button>
+          <button type="button" id="loginButton" class="btn btn-outline-secondary" style="min-width: 50px; max-width: 300px; width: 100%;">Login</button>
+        </form>
         </div>
-    `;
+      </div>
+    </div>
+  `;
 
 	document
 		.getElementById("registerForm")

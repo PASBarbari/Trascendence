@@ -48,8 +48,11 @@ function renderPongInfo() {
 					<i class="fas fa-gamepad me-2"></i>statistic
 				</button>
 			</div>
+			
 		</div>
 	`;
+
+	matchHistory();
 }
 
 async function PongStatistic() {
@@ -203,20 +206,20 @@ function showNotification(message, type = "info") {
 
 
 	const notificationHTML = `
-        <div class="unified-notification ${type}">
-            <div class="unified-notification-header">
-                <span class="unified-notification-icon">${typeIcons[type]}</span>
-                <span class="unified-notification-title">${typeNames[type]}</span>
-                <button class="unified-notification-close" onclick="this.parentElement.parentElement.remove()">
-                    ×
-                </button>
-            </div>
-            <div class="unified-notification-body">
-                ${message}
-            </div>
-            <div class="unified-notification-progress" style="width: 100%;"></div>
-        </div>
-    `;
+		<div class="unified-notification ${type}">
+			<div class="unified-notification-header">
+				<span class="unified-notification-icon">${typeIcons[type]}</span>
+				<span class="unified-notification-title">${typeNames[type]}</span>
+				<button class="unified-notification-close" onclick="this.parentElement.parentElement.remove()">
+					×
+				</button>
+			</div>
+			<div class="unified-notification-body">
+				${message}
+			</div>
+			<div class="unified-notification-progress" style="width: 100%;"></div>
+		</div>
+	`;
 
 
 	document.body.insertAdjacentHTML("beforeend", notificationHTML);
