@@ -50,13 +50,13 @@ function renderLogin() {
 			window.navigateTo("#register");
 		});
 
-	document
-		.getElementById("loginGoogle")
-		.addEventListener("click", () => handleOAuthLogin("google"));
+	// document
+	// 	.getElementById("loginGoogle")
+	// 	.addEventListener("click", () => handleOAuthLogin("google"));
 
-	document
-		.getElementById("login42")
-		.addEventListener("click", () => handleOAuthLogin("42"));
+	// document
+	// 	.getElementById("login42")
+	// 	.addEventListener("click", () => handleOAuthLogin("42"));
 }
 
 /**
