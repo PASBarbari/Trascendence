@@ -223,8 +223,27 @@ class TournamentGen(generics.ListCreateAPIView):
 		
 		# Add the creator to the tournament partecipants
 		creator.tournaments.add(tournament)
-
-		# Add initial partecipants if provided
+		try:	
+			from .notification import SendNotificationSync, ImmediateNotification
+			notification_data = {
+					'type': 'tournament_created',
+					'tournament_id': tournament.id,
+					'name': tournament.name,
+					'max_players': tournament.max_partecipants,
+					'creator_id': tournament.creator.user_id,
+					'begin_date': tournament.begin_date.isoformat() if tournament.begin_date else None,
+			}
+			SendNotificationSync(
+				ImmediateNotification(
+					Sender='Pong',
+					message=notification_data,
+					user_id=creator.user_id
+				)
+			)
+			logger.info(f'✅ Tournament notification sent to creator (ID: {creator.user_id}) for tournament {tournament.id}')
+		except Exception as e:
+			logger.error(f'❌ Failed to send tournament notification to creator (ID: {creator.user_id}): {str(e)}')
+				# Add initial partecipants if provided
 		if initial_partecipants:
 			from .notification import SendNotificationSync, ImmediateNotification
 			notification_data = {
@@ -414,7 +433,7 @@ class PlayerMatchHistory(generics.ListAPIView):
 		"""
 		permission_classes = (IsAuthenticatedUserProfile,)
 		authentication_classes = [JWTAuth]
-		serializer_class = GamesSerializer
+		serializer_class = GameHistorySerializer
 		pagination_class = GamePagination
 		
 		def get_queryset(self):

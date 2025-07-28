@@ -93,7 +93,40 @@ class GamesSerializer(serializers.ModelSerializer):
         model = Game
         fields = '__all__'
 
+class GameHistorySerializer(serializers.ModelSerializer):
+		player_1 = PlayerSerializer(read_only=True)
+		player_2 = PlayerSerializer(read_only=True)
+		tournament_id = TournamentSerializer(read_only=True)
+		winner = serializers.SerializerMethodField()
 
+		def get_winner(self, obj):
+				"""Return winner information"""
+				if obj.player_1_score > obj.player_2_score:
+						return {
+								'user_id': obj.player_1.user_id,
+								'username': obj.player_1.username
+						}
+				elif obj.player_2_score > obj.player_1_score:
+						return {
+								'user_id': obj.player_2.user_id,
+								'username': obj.player_2.username
+						}
+				else:
+						# If scores are equal, return None or a message indicating no winner
+						return None
+		class Meta:
+				model = Game
+				fields = [
+			'id',
+			'player_1',
+			'player_2',
+			'player_1_score',
+			'player_2_score',
+			'begin_date',
+			'tournament_id',
+			'status',
+			'winner'
+		]
 
 class GameStateSerializer(serializers.Serializer):
 		player_1_score = serializers.IntegerField()

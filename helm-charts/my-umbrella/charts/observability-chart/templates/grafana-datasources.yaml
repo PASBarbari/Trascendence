@@ -1,29 +1,29 @@
-{{- if .Values.grafana.enabled }}
----
-# Grafana Datasource Configuration
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-grafana-datasources
-  namespace: {{ .Release.Namespace }}
-  labels:
-    grafana_datasource: "1"
-data:
-  datasources.yaml: |
-    apiVersion: 1
-    datasources:
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://{{ .Release.Name }}-prometheus-prometheus:9090
-        isDefault: true
-        editable: true
-        jsonData:
-          httpMethod: POST
-          manageAlerts: true
-          prometheusType: Prometheus
-          prometheusVersion: 2.42.0
-                    cacheLevel: 'High'
-          disableRecordingRules: false
-          incrementalQueryOverlapWindow: 10m
-{{- end }}
+# {{- if .Values.grafana.enabled }}
+# ---
+# # Grafana Datasource Configuration
+# apiVersion: v1
+# kind: ConfigMap
+# metadata:
+#   name: {{ .Release.Name }}-grafana-datasources
+#   namespace: {{ .Release.Namespace }}
+#   labels:
+#     grafana_datasource: "1"
+# data:
+#   datasources.yaml: |
+#     apiVersion: 1
+#     datasources:
+#       - name: Prometheus
+#         type: prometheus
+#         access: proxy
+#         url: http://{{ .Release.Name }}-prometheus-prometheus:9090
+#         isDefault: true
+#         editable: true
+#         jsonData:
+#           httpMethod: POST
+#           manageAlerts: true
+#           prometheusType: Prometheus
+#           prometheusVersion: 2.42.0
+#                     cacheLevel: 'High'
+#           disableRecordingRules: false
+#           incrementalQueryOverlapWindow: 10m
+# {{- end }}

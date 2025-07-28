@@ -7,7 +7,7 @@
 | Django                 | 1      | ✅       | [Django](#django) |
 | Bootstrap              | 0.5    | ⏳       | [Bootstrap](#bootstrap) |
 | Postgres               | 0.5    | ⏳       | [Postgres](#postgres) |
-| Standard User Mgmt     | 1      | ✅       | [Standard User Management](#standardusermanagement) |
+| Standard User Mgmt     | 1      | ✅       | [Standard User Management](#standard-user-management) |
 | Remote Auth            | 1      | ⏳       | [Remote Auth](#remote-auth) |
 | Remote Players         | 1      | ✅       | [Remote Players](#remote-players) |
 | Multiple Players       | 1      | ⏳       | [Multiple Players](#multiple-players) |

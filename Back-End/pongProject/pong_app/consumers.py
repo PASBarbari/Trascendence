@@ -32,7 +32,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		# Store authenticated user info
 		self.player_id = user.user_id
 		websocket_logger.info(f"Authenticated user {self.player_id} connected to game {self.room_id}")
-		
+
 		# Join room group
 		await self.channel_layer.group_add(
 			self.room_name,
@@ -479,14 +479,15 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		try:
 			from .models import Tournament, UserProfile
 			tournament_db = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
-			user_profile = await database_sync_to_async(UserProfile.objects.get_or_create)(
+			user_profile_result = await database_sync_to_async(UserProfile.objects.get_or_create)(
 				user_id=self.player_id,
 				defaults={
-					'username': getattr(user, 'username', f'User_{self.player_id}'), 
+					'username': getattr(user, 'username', f'User_{self.player_id}'),
 					'email': f'user_{self.player_id}@example.com'
 				}
 			)
-			await database_sync_to_async(user_profile[0].tournaments.add)(tournament_db)
+			user_profile = user_profile_result[0]
+			await database_sync_to_async(user_profile.tournaments.add)(tournament_db)
 			tournament_db.partecipants = tournament.nbr_player
 			await database_sync_to_async(tournament_db.save)()
 			logger.info(f"Player {self.player_id} added to tournament {self.tournament_id} in database")
@@ -770,8 +771,8 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 						player_1 = await database_sync_to_async(UserProfile.objects.get)(user_id=player_1_id)
 						player_2 = await database_sync_to_async(UserProfile.objects.get)(user_id=player_2_id)
 						
-						player_1_username = player_1.username
-						player_2_username = player_2.username
+						player_1_username = await database_sync_to_async(lambda: player_1.username)()
+						player_2_username = await database_sync_to_async(lambda: player_2.username)()
 				except Exception:
 						player_1_username = f"Player_{player_1_id}"
 						player_2_username = f"Player_{player_2_id}"

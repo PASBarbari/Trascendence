@@ -25,25 +25,24 @@ spec:
     prefixes:
       - /grafana
 ---
-# Grafana IngressRoute
+# Grafana HTTPS IngressRoute
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: {{ include "observability-chart.fullname" . }}-grafana
+  name: {{ include "observability-chart.fullname" . }}-grafana-https
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "observability-chart.labels" . | nindent 4 }}
     app.kubernetes.io/component: grafana
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
     - match: PathPrefix(`/grafana`)
       kind: Rule
       priority: 1000
       services:
-        - name: {{ .Release.Name }}-grafana
+        - name: {{ .Release.Name }}-prometheus-grafana
           port: 80
       middlewares:
         - name: {{ include "observability-chart.fullname" . }}-grafana-strip-prefix
@@ -70,9 +69,7 @@ spec:
       middlewares:
         - name: {{ include "observability-chart.fullname" . }}-redirect-https
           namespace: {{ .Release.Namespace }}
-        - name: {{ include "observability-chart.fullname" . }}-grafana-strip-prefix
-          namespace: {{ .Release.Namespace }}
       services:
-        - name: {{ .Release.Name }}-grafana
+        - name: {{ .Release.Name }}-prometheus-grafana
           port: 80
 {{- end }}

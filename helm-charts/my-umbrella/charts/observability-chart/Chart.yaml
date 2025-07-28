@@ -7,11 +7,7 @@ appVersion: "1.0.0"
 
 dependencies:
   - name: kube-prometheus-stack
-    version: 45.7.1
+    version: 75.14.0
     repository: https://prometheus-community.github.io/helm-charts
     condition: prometheus.enabled
     alias: prometheus
-  - name: grafana
-    version: 6.50.7
-    repository: https://grafana.github.io/helm-charts
-    condition: grafana.enabled

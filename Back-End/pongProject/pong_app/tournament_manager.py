@@ -147,6 +147,7 @@ class TournamentState:
 				self.nbr_player = 0
 				self.initialized = False
 				self.is_complete = False
+				self.status = 'pending'	# Initialize with pending status
 				
 				# Round management
 				self.current_round = 0
@@ -186,13 +187,24 @@ class TournamentState:
 				try:
 						from .models import Tournament
 						tournament_db = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
-						participants = await database_sync_to_async(list)(tournament_db.player.all())
-						
+						participants = await database_sync_to_async(
+						lambda: list(tournament_db.player.all())
+						)()
 						# Update in-memory state
 						self.players = [p.user_id for p in participants]
 						self.nbr_player = len(self.players)
 						
-						logger.info(f"Loaded {self.nbr_player} players from database for tournament {self.tournament_id}: {self.players}")
+						# Load tournament status and other fields
+						self.status = tournament_db.status
+						if tournament_db.winner:
+								self.winner = tournament_db.winner.user_id
+								self.is_complete = True
+						
+						# Set initialized flag based on status
+						if self.status in ['active', 'completed']:
+								self.initialized = True
+								
+						logger.info(f"Loaded tournament {self.tournament_id} from database: {self.nbr_player} players, status: {self.status}")
 						return True
 				except Exception as e:
 						logger.error(f"Failed to load players from database for tournament {self.tournament_id}: {e}")
@@ -211,11 +223,16 @@ class TournamentState:
 				self.next_round = self.players.copy()
 				self.current_round = 0
 				self.initialized = True
+				self.status = 'active'	# Set tournament status to active
 				
 				# Create initial bracket structure
 				self.brackets[0] = self.players.copy()
 				
 				logger.info(f"Tournament {self.tournament_id} initialized with {self.nbr_player} players")
+				
+				# Update tournament status in database
+				asyncio.create_task(self._update_tournament_status_in_db('active'))
+				
 				return {'type': 'success', 'success': 'Tournament initialized successfully'}
 		
 		def can_start_next_round(self) -> bool:
@@ -343,6 +360,7 @@ class TournamentState:
 								logger.info(f"Tournament {self.tournament_id} completed!")
 								if self.next_round:
 										winner = self.next_round[0]
+										self.winner = winner	# Set the winner
 										logger.info(f"Tournament winner: {winner}")
 										await self._broadcast_tournament_complete(winner)
 								else:
@@ -350,6 +368,7 @@ class TournamentState:
 								
 								# Mark tournament as complete
 								self.status = 'completed'
+								self.is_complete = True
 								self.completion_time = datetime.now()
 								
 								# Update database
@@ -538,19 +557,36 @@ class TournamentState:
 				try:
 						from .models import Tournament
 						
-						tournament_obj = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
-						tournament_obj.status = self.status
-						if hasattr(self, 'winner') and self.winner:
-								# Get the winner UserProfile
-								from .models import UserProfile
-								winner_obj = await database_sync_to_async(UserProfile.objects.get)(user_id=self.winner)
-								tournament_obj.winner = winner_obj
+						def update_tournament():
+								tournament_obj = Tournament.objects.get(id=self.tournament_id)
+								tournament_obj.status = self.status
+								if hasattr(self, 'winner') and self.winner:
+										from .models import UserProfile
+										winner_obj = UserProfile.objects.get(user_id=self.winner)
+										tournament_obj.winner = winner_obj
+								tournament_obj.save()
+								return tournament_obj
 						
-						await database_sync_to_async(tournament_obj.save)()
+						tournament_obj = await database_sync_to_async(update_tournament)()
+						
+						# await database_sync_to_async(tournament_obj.save)()
 						logger.info(f"Tournament {self.tournament_id} updated in database with status: {self.status}")
 						
 				except Exception as e:
 						logger.error(f"Failed to update tournament {self.tournament_id} in database: {e}")
+
+		async def _update_tournament_status_in_db(self, status: str):
+				"""Update tournament status in database"""
+				try:
+						from .models import Tournament
+						
+						tournament_obj = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
+						tournament_obj.status = status
+						await database_sync_to_async(tournament_obj.save)()
+						logger.info(f"Tournament {self.tournament_id} status updated to '{status}' in database")
+						
+				except Exception as e:
+						logger.error(f"Failed to update tournament {self.tournament_id} status in database: {e}")
 		
 		def get_brackets(self) -> Dict[str, Any]:
 				"""Get tournament brackets data for frontend"""
