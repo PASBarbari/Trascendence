@@ -7,6 +7,7 @@ import {
 import { renderPongInfo } from "../pong/pongContainer.js";
 import { initializeProfile, renderProfile } from "../profile/profile.js";
 import { renderTournament } from "../pong/tournament.js";
+import { renderMatchHistory } from "../pong/matchHistory.js";
 
 const stylesheets = [
 	"home/home.css",
@@ -49,9 +50,11 @@ function renderHome() {
 						<div style="min-width: 40%">
             	<div class="task-container" id="notificationContainer"></div>
 						</div>
-						<div class="task-double-container">
-							<div class="task-container gap" id="pongContainer"></div>
-							<div class="task-container" id="tournamentContainer"></div>
+						<div class="task-container" id="tournamentContainer"></div>
+						<div class="task-container" id="pongContainer"></div>
+
+						<div style="min-width: 40%">
+							<div class="task-container" id="matchHistoryContainer"></div>
 						</div>
         </div>
     `;
@@ -63,6 +66,7 @@ function renderHome() {
 	renderPongInfo();
 	initializeProfile();
 	renderTournament();
+	renderMatchHistory();
 }
 
 // 5notification.js:1473 WebSocket is not open, cannot send heartbeat
