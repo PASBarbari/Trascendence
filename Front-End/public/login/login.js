@@ -1,4 +1,5 @@
 import { setVariables, getVariables, calculateInitials } from "../var.js";
+import { removeExpandableSidebar } from "../index.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 
@@ -8,6 +9,14 @@ link.href = "/login/login.css";
 document.head.appendChild(link);
 
 function renderLogin() {
+	// Rimuovi sidebar se presente
+	if (typeof removeExpandableSidebar === "function") {
+		removeExpandableSidebar();
+	}
+	// Nascondi pulsante impostazioni se presente
+	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
+	if (toggleSettingsButton) toggleSettingsButton.style.display = "none";
+
 	const contentDiv = document.getElementById("content");
 	contentDiv.innerHTML = `
 		<div class="login">

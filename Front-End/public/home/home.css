@@ -51,6 +51,26 @@
     inset -2px -2px 4px rgba(240, 237, 237, 0.7); /* Luce in basso a destra (interno) */
 }
 
+.content-home::-webkit-scrollbar {
+  width: 10px;
+  background: #00000000;
+  border-radius: 8px;
+}
+.content-home::-webkit-scrollbar-thumb {
+  background: #00000000;
+  border-radius: 8px;
+}
+.content-home::-webkit-scrollbar-thumb:hover {
+  background: #00000000;
+}
+
+/* Firefox */
+.content-home {
+  scrollbar-width: thin;
+  scrollbar-color: #9a9a9a #00000000;
+}
+
+
 .btn-square {
     width: 40px; /* Imposta una larghezza fissa */
     height: 40px; /* Imposta un'altezza fissa */

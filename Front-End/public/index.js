@@ -3,8 +3,21 @@ import { renderRegister } from "./register/register.js";
 import { renderHome } from "./home/home.js";
 import { renderPong } from "./pong/locale/pong.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
+
+function removeExpandableSidebar() {
+	// Rimuovi sidebar chat
+	const sidebarContainer = document.querySelector('.expandable-sidebar-container');
+	if (sidebarContainer) {
+		sidebarContainer.innerHTML = '';
+	}
+	// Rimuovi pulsante impostazioni
+	const toggleSettingsButton = document.getElementById('toggleSettingsButton');
+	if (toggleSettingsButton) {
+		toggleSettingsButton.style.display = 'none';
+	}
+}
 //import { renderProfile } from './profile/profile.js';
-import { settingsPopup, Logout } from "./settings/settings.js";
+import { settingsPopup, Logout as OriginalLogout } from "./settings/settings.js";
 import { cleanupPong } from "./pong/locale/settings.js";
 import { getVariables, setVariables } from "./var.js";
 
@@ -94,9 +107,16 @@ const routes = {
 	},
 };
 
+
 const navigateTo = (path) => {
 	window.location.hash = path;
 };
+
+// Override Logout to also remove sidebar
+function Logout() {
+	removeExpandableSidebar();
+	OriginalLogout();
+}
 
 import { processOAuthRedirect } from "./var.js";
 let currentRoute = "";
@@ -151,9 +171,12 @@ const locationHandler = async () => {
 		cleanupPong();
 	}
 
-	if (routes[location]?.protected && checkAuth()) {
-		renderExpandableSidebar();
-	}
+if (routes[location]?.protected && checkAuth()) {
+	renderExpandableSidebar();
+	// Mostra il pulsante impostazioni se presente
+	const toggleSettingsButton = document.getElementById('toggleSettingsButton');
+	if (toggleSettingsButton) toggleSettingsButton.style.display = '';
+}
 
 	currentRoute = location;
 
@@ -214,9 +237,11 @@ const initializeApp = async () => {
 
 	preloadPongCSS();
 
-	if (checkAuth()) {
-		renderExpandableSidebar();
-	}
+
+
+if (checkAuth()) {
+	renderExpandableSidebar();
+}
 
 	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
 	if (toggleSettingsButton) {
@@ -249,9 +274,13 @@ function checkAuth() {
 	return false;
 }
 
+
 window.addEventListener("hashchange", locationHandler);
 window.addEventListener("load", initializeApp);
 window.navigateTo = navigateTo;
+window.removeExpandableSidebar = removeExpandableSidebar;
+// Esporta anche per uso esterno
+export { removeExpandableSidebar, Logout };
 
 export function getBaseUrl() {
 	const hostname = window.location.hostname;
