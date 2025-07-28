@@ -13,12 +13,13 @@ function renderRegister() {
     <div class="register">
       <div class="login_box">
         <h1 style="display: flex; justify-content: center; align-items: center;">Register</h1>
-        <div class="login_form" id="registerForm">
+        <form class="login_form" id="registerForm">
           <input type="text" id="username" placeholder="Username" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="username" />
           <input type="email" id="email" placeholder="Email" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="email" />
           <input type="password" id="password" placeholder="Password" class="form-control" required style="min-width: 50px; max-width: 300px;" autocomplete="new-password" />
           <button type="submit" class="btn btn-primary" style="border-radius: 0.4rem; min-width: 50px; max-width: 300px; width: 100%;">Register</button>
           <button type="button" id="loginButton" class="btn btn-outline-secondary" style="min-width: 50px; max-width: 300px; width: 100%;">Login</button>
+        </form>
         </div>
       </div>
     </div>

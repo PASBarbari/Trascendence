@@ -135,7 +135,7 @@ function createTournament() {
                         body: JSON.stringify({
                             name: tournamentName,
                             max_partecipants: maxParticipantsValue,
-                            partecipants: [3],
+                            partecipants: userIdsArray,
                         }),
                     }
                 );
