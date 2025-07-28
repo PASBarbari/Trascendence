@@ -50,5 +50,19 @@ body {
 		margin-right: 10px;
 		box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(240, 237, 237, 0.7);
 		min-height: 200px;
+		margin: 12% 41% 15% 38%;
 	}
 	/* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
+
+@keyframes animateMarginToZero {
+  from {
+    margin: 12% 41% 15% 38%;
+  }
+  to {
+	margin: 0 10px 10px 0;
+  }
+}
+
+.animate-margin {
+  animation: animateMarginToZero 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

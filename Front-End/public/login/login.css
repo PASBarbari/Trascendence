@@ -31,8 +31,8 @@
     height: 100%;
     border-radius: 8px;
     position: relative;
-    /* overflow-y: scroll; */
-    flex-direction: column;
+    overflow-y: scroll;
+    flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
 		padding: 10px;

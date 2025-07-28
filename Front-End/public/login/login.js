@@ -230,7 +230,12 @@ async function onHandleSubmit(e, email, password) {
 		const csrftoken = getCookie("csrftoken");
 		const loginSuccess = await loginUser(email, password, csrftoken, true);
 		if (loginSuccess) {
-			window.navigateTo("#home");
+            const contentDiv = document.getElementById("content");
+            contentDiv.classList.add("animate-margin");
+            contentDiv.addEventListener("animationend", function handler() {
+                contentDiv.removeEventListener("animationend", handler);
+                window.navigateTo("#home");
+            });
 		}
 	} else {
 		showAlertForXSeconds(
