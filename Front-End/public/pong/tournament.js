@@ -171,6 +171,10 @@ let socket;
 async function renderNewTournament(tournamentData) {
     console.warn("Rendering new tournament:", tournamentData.message);
 		const tournamentStat = await tournamentStats();
+		if (!tournamentStat || !tournamentStat.results || tournamentStat.results.length === 0) {
+			console.warn("Nessun torneo trovato.");
+			return;
+		}
 		console.warn("Tournament stats:", tournamentStat.results);
 
 		const tournamentListDiv = document.getElementById("tournamentList");
