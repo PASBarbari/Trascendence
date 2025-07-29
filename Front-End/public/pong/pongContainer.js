@@ -3,6 +3,7 @@ import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
 import { renderPong } from "./locale/pong.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 // Load CSS files
 const pongContainerCSS = document.createElement("link");
@@ -96,9 +97,11 @@ async function loadFriendListTemplate() {
 		return await response.text();
 	} catch (error) {
 		console.error("Error loading friend list template:", error);
-		showNotification(
+		showAlertForXSeconds(
 			"Failed to load friend list. Please try again.",
-			"error"
+			"error",
+			5,
+			{ asToast: true , game: true }
 		);
 		return null;
 	}
@@ -168,7 +171,7 @@ async function inviteToGame(friendId, friendName) {
 		window.navigateTo(`#pongmulti?opponent=${friendId}&opponentName=${encodeURIComponent(friendName)}`);
 	} catch (error) {
 		console.error("💥 Error starting multiplayer game:", error);
-		showNotification("❌ Failed to start multiplayer game", "error");
+		showAlertForXSeconds("❌ Failed to start multiplayer game", "error", 5, {asToast: true, game: true});
 
 
 		// Reset button state
@@ -179,80 +182,6 @@ async function inviteToGame(friendId, friendName) {
 			inviteBtn.innerHTML = '<i class="fas fa-gamepad me-1"></i>Invite';
 			inviteBtn.disabled = false;
 		}
-	}
-}
-
-// Show Bootstrap toast notification
-function showNotification(message, type = "info") {
-	// Remove existing notifications
-	const existingNotifications = document.querySelectorAll(
-		".unified-notification"
-	);
-	existingNotifications.forEach((notification) => notification.remove());
-
-	const typeIcons = {
-		success: "✅",
-		error: "❌",
-		info: "ℹ️",
-		warning: "⚠️",
-	};
-
-	const typeNames = {
-		success: "Success",
-		error: "Error",
-		info: "Information",
-		warning: "Warning",
-	};
-
-
-	const notificationHTML = `
-		<div class="unified-notification ${type}">
-			<div class="unified-notification-header">
-				<span class="unified-notification-icon">${typeIcons[type]}</span>
-				<span class="unified-notification-title">${typeNames[type]}</span>
-				<button class="unified-notification-close" onclick="this.parentElement.parentElement.remove()">
-					×
-				</button>
-			</div>
-			<div class="unified-notification-body">
-				${message}
-			</div>
-			<div class="unified-notification-progress" style="width: 100%;"></div>
-		</div>
-	`;
-
-
-	document.body.insertAdjacentHTML("beforeend", notificationHTML);
-
-	const notificationElement = document.querySelector(
-		".unified-notification:last-child"
-	);
-
-	// Show with animation
-	setTimeout(() => {
-		notificationElement.classList.add("show");
-	}, 100);
-
-	// Auto-dismiss after 5 seconds
-	setTimeout(() => {
-		if (notificationElement.parentNode) {
-			notificationElement.classList.remove("show");
-			notificationElement.classList.add("hide");
-			setTimeout(() => {
-				if (notificationElement.parentNode) {
-					notificationElement.remove();
-				}
-			}, 300);
-		}
-	}, 5000);
-
-	// Animate progress bar
-	const progressBar = notificationElement.querySelector(
-		".unified-notification-progress"
-	);
-	if (progressBar) {
-		progressBar.style.transition = "width 5000ms linear";
-		progressBar.style.width = "0%";
 	}
 }
 
@@ -657,6 +586,6 @@ window.addEventListener('beforeunload', () => {
 	}
 });
 
-export { renderPongInfo, showNotification };
+export { renderPongInfo };
 
 // Initialize the pong container

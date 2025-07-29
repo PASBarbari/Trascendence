@@ -6,9 +6,9 @@ import * as GAME from "../locale/gameLogic.js";
 import * as SETUP from "../locale/setup.js";
 import * as UTILS from "../locale/utils.js";
 import { getCookie } from "../../cookie.js";
-import { showNotification } from "../pongContainer.js";
+import { showAlertForXSeconds } from "../../alert/alert.js";
 import { updateScore } from "../locale/src/Score.js";
-
+import { escapeHTML } from "../../var.js";
 let socket;
 
 // Throttling to prevent too frequent updates
@@ -221,13 +221,13 @@ function initializeWebSocket(room_id, player1, player2) {
 				// Wait a moment for initialization to process
 				setTimeout(() => {
 					hideAllMenusAndStartGame();
-					showNotification("Game Started! Good luck!", "success");
+					showAlertForXSeconds("Game Started! Good luck!", "success", 5, { asToast: true, game: true });
 				}, 200);
 			} catch (error) {
 				console.error("Failed to initialize game:", error);
 				// Still try to start the game
 				hideAllMenusAndStartGame();
-				showNotification("Game Started! Good luck!", "success");
+				showAlertForXSeconds("Game Started! Good luck!", "success", 5, { asToast: true, game: true });
 			}
 		} else if (message.message === "Waiting for players to be ready...") {
 			updateOpponentStatus("waiting");
@@ -235,7 +235,7 @@ function initializeWebSocket(room_id, player1, player2) {
 			// Remove game-active class
 			document.body.classList.remove("game-active");
 
-			showNotification(message.message, "warning");
+			showAlertForXSeconds(message.message, "warning", 5, { asToast: true, game: true });
 
 			// Stop the game and show ready screen
 			state.isStarted = false;
@@ -569,8 +569,9 @@ function handleGameOver() {
 	// Determine winner
 	const winner = state.p1_score >= state.maxScore ? "Player 1" : "Player 2";
 
+	const safeWinner = escapeHTML(winner);
 	// Show game over with multiplayer context
-	showNotification(`Game Over! ${winner} wins!`, "info");
+	showAlertForXSeconds(`Game Over! ${safeWinner} wins!`, "info", 5, { asToast: true, game: true });
 
 	window.navigateTo("#home");
 	// Show ready screen for potential rematch

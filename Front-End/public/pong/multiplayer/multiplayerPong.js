@@ -8,7 +8,7 @@ import {
 	sendPlayerMovement,
 } from "./serverSide.js";
 import { getVariables } from "../../var.js";
-import { showNotification } from "../pongContainer.js";
+import { showAlertForXSeconds } from "../../alert/alert.js";
 
 export function renderMultiplayerPong(
 	opponentId,
@@ -253,10 +253,10 @@ function handlePlayerReady() {
 		try {
 			const playerId = window.multiplayerInfo?.playerId || 0;
 			sendPlayerReady(playerId);
-			showNotification("You are ready! Waiting for opponent...", "info");
+			showAlertForXSeconds("You are ready! Waiting for opponent...", "info", 5, { asToast: true, game: true });
 		} catch (error) {
 			console.error("Failed to send ready signal:", error);
-			showNotification("Failed to send ready signal. Try again.", "error");
+			showAlertForXSeconds("Failed to send ready signal. Try again.", "error", 5, { asToast: true, game: true });
 
 			// Revert UI
 			readyBtn.disabled = false;
@@ -310,14 +310,14 @@ function togglePause() {
 	state.isPaused = !state.isPaused;
 
 	if (state.isPaused) {
-		showNotification("Game Paused", "info");
+		showAlertForXSeconds("Game Paused", "info", 5, { asToast: true, game: true });
 		// Show controls info when paused
 		const controlsInfo = document.getElementById("controls-info");
 		if (controlsInfo) {
 			controlsInfo.style.display = "block";
 		}
 	} else {
-		showNotification("Game Resumed", "info");
+		showAlertForXSeconds("Game Resumed", "info", 5, { asToast: true, game: true });
 		// Hide controls info when resumed
 		const controlsInfo = document.getElementById("controls-info");
 		if (controlsInfo) {
@@ -365,7 +365,7 @@ function exitMultiplayerGame() {
 	// Navigate back to home
 	window.navigateTo("#home");
 
-	showNotification("Left multiplayer game", "info");
+	showAlertForXSeconds("Left multiplayer game", "info", 5, { asToast: true, game: true });
 }
 
 function showGameError(message) {
