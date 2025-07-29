@@ -15,6 +15,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.filters import SearchFilter
 from rest_framework.pagination import PageNumberPagination
 from .online_status import online_status_service
+import logging
+
+logger = logging.getLogger('user_app')
+
 
 class IsAuthenticatedUserProfile(permissions.BasePermission):
 	"""
@@ -46,33 +50,22 @@ class IsOwnUserProfile(permissions.BasePermission):
 			
 		return False
 
-class MultipleFieldLookupMixin:
-	"""
-	Apply this mixin to any view or viewset to get multiple field filtering
-	based on a `lookup_fields` attribute, instead of the default single field filtering.
-	"""
-	def get_object(self):
-		queryset = self.get_queryset()
-		queryset = self.filter_queryset(queryset)	# Apply any filter backends
-		filter = {}
-		for field in self.lookup_fields:
-			if self.kwargs.get(field): # Ignore empty fields.
-				filter[field] = self.kwargs[field]
-		obj = get_object_or_404(queryset, **filter)	# Lookup the object
-		self.check_object_permissions(self.request, obj)
-		return obj
+# class MultipleFieldLookupMixin:
+# 	"""
+# 	Apply this mixin to any view or viewset to get multiple field filtering
+# 	based on a `lookup_fields` attribute, instead of the default single field filtering.
+# 	"""
+# 	def get_object(self):
+# 		queryset = self.get_queryset()
+# 		queryset = self.filter_queryset(queryset)	# Apply any filter backends
+# 		filter = {}
+# 		for field in self.lookup_fields:
+# 			if self.kwargs.get(field): # Ignore empty fields.
+# 				filter[field] = self.kwargs[field]
+# 		obj = get_object_or_404(queryset, **filter)	# Lookup the object
+# 		self.check_object_permissions(self.request, obj)
+# 		return obj
 
-# class AvatarGen(generics.ListCreateAPIView):
-# 	permission_classes = (IsAuthenticatedUserProfile,)
-# 	serializer_class = AvatarsSerializer
-# 	queryset = Avatars.objects.all()
-
-# class AvatarManage(generics.RetrieveUpdateDestroyAPIView):
-# 	permission_classes = (IsAuthenticatedUserProfile,)
-# 	serializer_class = AvatarsSerializer
-# 	lookup_url_kwarg = 'id'
-# 	queryset = Avatars.objects.all()
-# cazzo
 
 class UserGen(generics.ListCreateAPIView):
 	serializer_class = UsersSerializer
@@ -94,16 +87,16 @@ class UserManage(generics.RetrieveUpdateDestroyAPIView):
 	authentication_classes = [JWTAuth]
 	serializer_class = UsersSerializer
 	queryset = UserProfile.objects.all()
-    
+		
 	def get_object(self):
 		return self.request.user
 
 class UserSearchPagination(PageNumberPagination):
 	"""Custom pagination for user search results."""
-	page_size = 10  # Number of users per page
-	page_size_query_param = 'page_size'  # Allow client to override page size
-	max_page_size = 50  # Maximum allowed page size
-	page_query_param = 'page'  # URL parameter name for page number
+	page_size = 10	# Number of users per page
+	page_size_query_param = 'page_size'	# Allow client to override page size
+	max_page_size = 50	# Maximum allowed page size
+	page_query_param = 'page'	# URL parameter name for page number
 
 class UserSearch(generics.ListAPIView):
 	"""
@@ -192,56 +185,56 @@ class UserSearch(generics.ListAPIView):
 		return response
 
 class FriendList(generics.ListAPIView):
-    permission_classes = (IsAuthenticatedUserProfile,)
-    authentication_classes = [JWTAuth]
-    serializer_class = FriendshipsSerializer
-        
-    def get_queryset(self):
-        user = self.request.user
-        
-        status_filter = self.request.query_params.get('status')
-        
-        # Base query - all relationships involving current user
-        queryset = Friendships.objects.filter(
-            Q(user_1=user) | Q(user_2=user)
-        )
-        
-        # Filter by acceptance status if requested
-        if status_filter == 'accepted':
-            queryset = queryset.filter(accepted=True)
-        elif status_filter == 'pending':
-            queryset = queryset.filter(accepted=False)
-            
-        return queryset
-    
-    def list(self, request, *args, **kwargs):
-        """Override list to add online status to friend_info"""
-        # Get the serialized data
-        response = super().list(request, *args, **kwargs)
-        
-        # Extract friend IDs from the friend_info
-        friend_ids = []
-        for friendship_data in response.data:
-            friend_info = friendship_data.get('friend_info')
-            if friend_info and 'user_id' in friend_info:
-                friend_ids.append(friend_info['user_id'])
-        
-        # Batch check online status
-        online_statuses = {}
-        if friend_ids:
-            try:
-                online_statuses = online_status_service.get_multiple_users_online_status(friend_ids)
-            except Exception as e:
-                print(f"Error getting online statuses: {e}")
-        
-        # Add online status to each friend_info
-        for friendship_data in response.data:
-            friend_info = friendship_data.get('friend_info')
-            if friend_info and 'user_id' in friend_info:
-                friend_id = friend_info['user_id']
-                friend_info['is_online'] = online_statuses.get(friend_id, False)
-        
-        return response
+		permission_classes = (IsAuthenticatedUserProfile,)
+		authentication_classes = [JWTAuth]
+		serializer_class = FriendshipsSerializer
+				
+		def get_queryset(self):
+				user = self.request.user
+				
+				status_filter = self.request.query_params.get('status')
+				
+				# Base query - all relationships involving current user
+				queryset = Friendships.objects.filter(
+						Q(user_1=user) | Q(user_2=user)
+				)
+				
+				# Filter by acceptance status if requested
+				if status_filter == 'accepted':
+						queryset = queryset.filter(accepted=True)
+				elif status_filter == 'pending':
+						queryset = queryset.filter(accepted=False)
+						
+				return queryset
+		
+		def list(self, request, *args, **kwargs):
+				"""Override list to add online status to friend_info"""
+				# Get the serialized data
+				response = super().list(request, *args, **kwargs)
+				
+				# Extract friend IDs from the friend_info
+				friend_ids = []
+				for friendship_data in response.data:
+						friend_info = friendship_data.get('friend_info')
+						if friend_info and 'user_id' in friend_info:
+								friend_ids.append(friend_info['user_id'])
+				
+				# Batch check online status
+				online_statuses = {}
+				if friend_ids:
+						try:
+								online_statuses = online_status_service.get_multiple_users_online_status(friend_ids)
+						except Exception as e:
+								print(f"Error getting online statuses: {e}")
+				
+				# Add online status to each friend_info
+				for friendship_data in response.data:
+						friend_info = friendship_data.get('friend_info')
+						if friend_info and 'user_id' in friend_info:
+								friend_id = friend_info['user_id']
+								friend_info['is_online'] = online_statuses.get(friend_id, False)
+				
+				return response
 
 class LevelUp(APIView):
 	""" Use this endpoint to add exp to a user.
@@ -318,9 +311,10 @@ class AddFriend(APIView):
 				'info': 'friend request sent'
 			}, status=status.HTTP_200_OK)
 		except Exception as e:
+			logger.error(f"Error sending friend request: {str(e)}")
 			return Response({
-				'error': str(e)
-			}, status=status.HTTP_400_BAD_REQUEST)
+				'error': 'Internal server error'
+			}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 	def patch(self, request):
 		try:
@@ -386,9 +380,10 @@ class AddFriend(APIView):
 							'error': 'friendship not found'
 					}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
+			logger.error(f"Error deleting friendship: {str(e)}")
 			return Response({
-					'errors': str(e)
-			}, status=status.HTTP_400_BAD_REQUEST)
+					'error': 'Internal server error'
+			}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class BlockUser(APIView):
@@ -485,8 +480,9 @@ class AvatarManager(APIView):
 			}, status=status.HTTP_200_OK)
 			
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-		
+			logger.error(f"Error uploading avatar: {str(e)}")
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 	def get(self, request):
 		avatar_id = request.query_params.get('avatar_id')
 		if avatar_id:
@@ -529,7 +525,8 @@ class AvatarManager(APIView):
 			return Response({'message': 'Avatar deleted successfully'}, status=status.HTTP_200_OK)
 			
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			logger.error(f"Error deleting avatar: {str(e)}")
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Update2FAStatus(APIView):
 	"""
@@ -581,118 +578,121 @@ class Update2FAStatus(APIView):
 			)
 			
 		except Exception as e:
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			logger.error(f"Error updating 2FA status for user {user_id}: {str(e)}")
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class OnlineStatusView(APIView):
-    """
-    Quick API endpoint to check online status of users.
-    
-    GET: Check online status of multiple users
-    Query Parameters:
-        user_ids: Comma-separated list of user IDs (e.g., "1,2,3")
-        
-    POST: Check online status of specific users
-    Body:
-        {
-            "user_ids": [1, 2, 3]
-        }
-    
-    Returns:
-        {
-            "users": [
-                {"user_id": 1, "is_online": true},
-                {"user_id": 2, "is_online": false},
-                {"user_id": 3, "is_online": true}
-            ],
-            "summary": {
-                "total_users": 3,
-                "online_count": 2,
-                "offline_count": 1
-            }
-        }
-    """
-    permission_classes = (IsAuthenticatedUserProfile,)
-    authentication_classes = [JWTAuth]
-    
-    def get(self, request):
-        """Check online status via query parameters"""
-        user_ids_str = request.query_params.get('user_ids', '')
-        if not user_ids_str:
-            return Response({'error': 'user_ids parameter required'}, status=400)
-        
-        try:
-            user_ids = [int(uid.strip()) for uid in user_ids_str.split(',') if uid.strip()]
-            if not user_ids:
-                return Response({'error': 'No valid user_ids provided'}, status=400)
-                
-            online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
-            
-            # Format response as list of user objects
-            users = []
-            online_count = 0
-            
-            for user_id in user_ids:
-                is_online = online_statuses.get(user_id, False)
-                users.append({
-                    'user_id': user_id,
-                    'is_online': is_online
-                })
-                if is_online:
-                    online_count += 1
-            
-            return Response({
-                'users': users,
-                'summary': {
-                    'total_users': len(user_ids),
-                    'online_count': online_count,
-                    'offline_count': len(user_ids) - online_count
-                }
-            })
-            
-        except ValueError:
-            return Response({'error': 'Invalid user_ids format. Use comma-separated integers.'}, status=400)
-        except Exception as e:
-            return Response({'error': f'Server error: {str(e)}'}, status=500)
-    
-    def post(self, request):
-        """Check online status via POST body"""
-        user_ids = request.data.get('user_ids', [])
-        if not user_ids:
-            return Response({'error': 'user_ids required'}, status=400)
-        
-        if not isinstance(user_ids, list):
-            return Response({'error': 'user_ids must be a list'}, status=400)
-        
-        try:
-            # Ensure all user_ids are integers
-            user_ids = [int(uid) for uid in user_ids]
-            
-            online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
-            
-            # Format response as list of user objects
-            users = []
-            online_count = 0
-            
-            for user_id in user_ids:
-                is_online = online_statuses.get(user_id, False)
-                users.append({
-                    'user_id': user_id,
-                    'is_online': is_online
-                })
-                if is_online:
-                    online_count += 1
-            
-            return Response({
-                'users': users,
-                'summary': {
-                    'total_users': len(user_ids),
-                    'online_count': online_count,
-                    'offline_count': len(user_ids) - online_count
-                }
-            })
-            
-        except ValueError:
-            return Response({'error': 'All user_ids must be valid integers'}, status=400)
-        except Exception as e:
-            return Response({'error': f'Server error: {str(e)}'}, status=500)
+		"""
+		Quick API endpoint to check online status of users.
+		
+		GET: Check online status of multiple users
+		Query Parameters:
+				user_ids: Comma-separated list of user IDs (e.g., "1,2,3")
+				
+		POST: Check online status of specific users
+		Body:
+				{
+						"user_ids": [1, 2, 3]
+				}
+		
+		Returns:
+				{
+						"users": [
+								{"user_id": 1, "is_online": true},
+								{"user_id": 2, "is_online": false},
+								{"user_id": 3, "is_online": true}
+						],
+						"summary": {
+								"total_users": 3,
+								"online_count": 2,
+								"offline_count": 1
+						}
+				}
+		"""
+		permission_classes = (IsAuthenticatedUserProfile,)
+		authentication_classes = [JWTAuth]
+		
+		def get(self, request):
+				"""Check online status via query parameters"""
+				user_ids_str = request.query_params.get('user_ids', '')
+				if not user_ids_str:
+						return Response({'error': 'user_ids parameter required'}, status=400)
+				
+				try:
+						user_ids = [int(uid.strip()) for uid in user_ids_str.split(',') if uid.strip()]
+						if not user_ids:
+								return Response({'error': 'No valid user_ids provided'}, status=400)
+								
+						online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+						
+						# Format response as list of user objects
+						users = []
+						online_count = 0
+						
+						for user_id in user_ids:
+								is_online = online_statuses.get(user_id, False)
+								users.append({
+										'user_id': user_id,
+										'is_online': is_online
+								})
+								if is_online:
+										online_count += 1
+						
+						return Response({
+								'users': users,
+								'summary': {
+										'total_users': len(user_ids),
+										'online_count': online_count,
+										'offline_count': len(user_ids) - online_count
+								}
+						})
+						
+				except ValueError:
+						return Response({'error': 'Invalid user_ids format. Use comma-separated integers.'}, status=400)
+				except Exception as e:
+						logger.error(f"Error checking online status: {str(e)}")
+						return Response({'error': 'Internal server error'}, status=500)
+
+		def post(self, request):
+				"""Check online status via POST body"""
+				user_ids = request.data.get('user_ids', [])
+				if not user_ids:
+						return Response({'error': 'user_ids required'}, status=400)
+				
+				if not isinstance(user_ids, list):
+						return Response({'error': 'user_ids must be a list'}, status=400)
+				
+				try:
+						# Ensure all user_ids are integers
+						user_ids = [int(uid) for uid in user_ids]
+						
+						online_statuses = online_status_service.get_multiple_users_online_status(user_ids)
+						
+						# Format response as list of user objects
+						users = []
+						online_count = 0
+						
+						for user_id in user_ids:
+								is_online = online_statuses.get(user_id, False)
+								users.append({
+										'user_id': user_id,
+										'is_online': is_online
+								})
+								if is_online:
+										online_count += 1
+						
+						return Response({
+								'users': users,
+								'summary': {
+										'total_users': len(user_ids),
+										'online_count': online_count,
+										'offline_count': len(user_ids) - online_count
+								}
+						})
+						
+				except ValueError:
+						return Response({'error': 'All user_ids must be valid integers'}, status=400)
+				except Exception as e:
+						logger.error(f"Error checking online status: {str(e)}")
+						return Response({'error': 'Internal server error'}, status=500)

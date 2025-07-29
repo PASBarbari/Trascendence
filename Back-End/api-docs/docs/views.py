@@ -21,8 +21,7 @@ def index(request):
 def service_docs(request, service_name):
     """
     Display Swagger UI for a specific service
-    """
-    if service_name not in settings.MICROSERVICES:
+    """if service_name not in settings.MICROSERVICES:
         return HttpResponse('Service not found', status=404)
     
     service_url = settings.MICROSERVICES[service_name]
@@ -80,7 +79,7 @@ def swagger_json(request, service_name):
         }, status=404)
         
     except Exception as e:
-        return Response({'error': f'Service unavailable: {str(e)}'}, status=503)
+        return Response({'error': 'Service unavailable'}, status=503)
 
 
 @api_view(['GET'])
@@ -169,7 +168,7 @@ def proxy_api(request, service_name, path=''):
         )
         
     except requests.RequestException as e:
-        return Response({'error': f'Service unavailable: {str(e)}'}, status=503)
+        return Response({'error': 'Service unavailable'}, status=503)
 
 
 def service_status(request):

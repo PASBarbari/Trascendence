@@ -349,15 +349,15 @@ class ExceptionMiddleware:
             extra={'request': request}
         )
 
-        if settings.DEBUG:
-            # In modalità debug, restituisci i dettagli dell'errore
-            return JsonResponse({
-                'error': str(exception),
-                'traceback': traceback.format_exc(),
-                'request_path': request.path,
-                'request_method': request.method,
-                'request_data': getattr(request, 'data', {})
-            }, status=500)
+        # if settings.DEBUG:
+        #     # In modalità debug, restituisci i dettagli dell'errore
+        #     return JsonResponse({
+        #         'error': str(exception),
+        #         'traceback': traceback.format_exc(),
+        #         'request_path': request.path,
+        #         'request_method': request.method,
+        #         'request_data': getattr(request, 'data', {})
+        #     }, status=500)
         
         return None  # Lascia che Django gestisca la risposta in produzione
 	
