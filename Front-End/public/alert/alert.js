@@ -1,4 +1,9 @@
-import { escapeHTML } from "../var";
+import { escapeHTML } from "../var.js";
+
+const link = document.createElement("link");
+link.rel = "stylesheet";
+link.href = "/alert/alert.css";
+document.head.appendChild(link);
 
 export function renderAlert(message, type) {
 	const wrapper = document.createElement("div");

@@ -1,6 +1,6 @@
-import { updateChatList } from "../../chat/ExpandableSidebar";
-import { showAlertForXSeconds } from "../../alert/alert";
-import { getVariables } from "../../var";
+import { updateChatList } from "../../chat/ExpandableSidebar.js";
+import { showAlertForXSeconds } from "../../alert/alert.js";
+import { getVariables } from "../../var.js";
 // Chat-related message handlers
 export function handleChatRoomCreatedMessage(message) {
 	console.log("Processing chat room created message:", message);
