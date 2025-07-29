@@ -1,9 +1,11 @@
+
 import { escapeHTML } from "../var.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
 link.href = "/alert/alert.css";
 document.head.appendChild(link);
+
 
 export function renderAlert(message, type) {
 	const wrapper = document.createElement("div");
@@ -31,6 +33,7 @@ export function showAlertForXSeconds(message, type, seconds, options = {}) {
 		// Use the notification system for game alerts
 		showNotification(message, type, seconds);
 		return;
+
 	} else if (notification) {
 		// Use the notification system for general alerts
 		showNotificationToast(message, type, seconds);
@@ -165,6 +168,7 @@ export function showNotification(message, type = "info", seconds = 5) {
 	progress.style.transition = `width ${seconds * 1000}ms linear`;
 	progress.style.width = "0%";
 }
+
 
 export function showNotificationToast(message, type = "info", seconds = 5) {
 	// Create a simple toast notification
