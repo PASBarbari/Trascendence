@@ -9,6 +9,24 @@ link.href = "/login/login.css";
 document.head.appendChild(link);
 
 function renderLogin() {
+	// Animazione logout solo se arrivo da una route protetta
+	if (
+		window.previousRoute === "home" ||
+		window.previousRoute === "pong" ||
+		window.previousRoute === "pongmulti"
+	) {
+		const contentDiv = document.getElementById("content");
+		if (contentDiv) {
+			contentDiv.classList.remove("animate-margin");
+			contentDiv.classList.add("animate-margin-logout");
+			contentDiv.addEventListener("animationend", function handler() {
+				contentDiv.removeEventListener("animationend", handler);
+				contentDiv.classList.remove("animate-margin-logout");
+				contentDiv.style.margin = "12% 41% 15% 38%";
+			});
+		}
+		window.previousRoute = "";
+	}
 	// Rimuovi sidebar se presente
 	if (typeof removeExpandableSidebar === "function") {
 		removeExpandableSidebar();
@@ -230,7 +248,12 @@ async function onHandleSubmit(e, email, password) {
 		const csrftoken = getCookie("csrftoken");
 		const loginSuccess = await loginUser(email, password, csrftoken, true);
 		if (loginSuccess) {
-			window.navigateTo("#home");
+			const contentDiv = document.getElementById("content");
+			contentDiv.classList.add("animate-margin");
+			contentDiv.addEventListener("animationend", function handler() {
+				contentDiv.removeEventListener("animationend", handler);
+				window.navigateTo("#home");
+			});
 		}
 	} else {
 		showAlertForXSeconds(

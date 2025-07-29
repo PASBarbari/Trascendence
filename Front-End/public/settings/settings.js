@@ -14,17 +14,17 @@ function Logout() {
     const webSocketInstances = window.activeWebSockets || [];
     if (webSocketInstances.length > 0) {
         webSocketInstances.forEach(socket => {
-						if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
-								socket.close();
-						}
+                        if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+                                socket.close();
+                        }
         });
         window.activeWebSockets = [];
     }
     
-		if (window.notificationHeartbeatInterval) {
-				clearInterval(window.notificationHeartbeatInterval);
-				window.notificationHeartbeatInterval = null;
-		}
+        if (window.notificationHeartbeatInterval) {
+                clearInterval(window.notificationHeartbeatInterval);
+                window.notificationHeartbeatInterval = null;
+        }
 
     // Rimuove contenuto di chatContainer
     const chatContainer = document.querySelector('#chatContainer');
@@ -44,8 +44,8 @@ function Logout() {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     });
 
-		console.clear();
-		
+        console.clear();
+        
     setVariables({
         token: null,
         refreshToken: null,
@@ -63,7 +63,20 @@ function Logout() {
         multiplayer_username: null,
         multiplayer_id: null
     });
-    navigateTo('#login');
+
+    // Animazione logout inversa
+    // const contentDiv = document.getElementById("content");
+    // if (contentDiv) {
+    //     contentDiv.classList.remove("animate-margin");
+    //     contentDiv.classList.add("animate-margin-logout");
+    //     contentDiv.addEventListener("animationend", function handler() {
+    //         contentDiv.removeEventListener("animationend", handler);
+    //         contentDiv.classList.remove("animate-margin-logout");
+    //         navigateTo('#login');
+    //     });
+    // } else {
+        navigateTo('#login');
+    // }
 }
 
 function settingsPopup(event) {

@@ -109,6 +109,7 @@ const routes = {
 
 
 const navigateTo = (path) => {
+	window.previousRoute = currentRoute;
 	window.location.hash = path;
 };
 
@@ -120,6 +121,7 @@ function Logout() {
 
 import { processOAuthRedirect } from "./var.js";
 let currentRoute = "";
+let previousRoute = "";
 
 const locationHandler = async () => {
 	const wasOAuthRedirect = processOAuthRedirect();
@@ -178,6 +180,7 @@ if (routes[location]?.protected && checkAuth()) {
 	if (toggleSettingsButton) toggleSettingsButton.style.display = '';
 }
 
+	previousRoute = currentRoute;
 	currentRoute = location;
 
 	if (wasOAuthRedirect && location === "home") {
