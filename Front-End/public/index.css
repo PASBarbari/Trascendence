@@ -1,3 +1,16 @@
+@keyframes animateMarginToBig {
+  from {
+    margin: 0 10px 10px 0;
+  }
+  to {
+    margin: 12% 41% 15% 38%;
+  }
+}
+
+.animate-margin-logout {
+  animation: animateMarginToBig 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 body {
     margin: 0;
     padding: 0;
@@ -10,8 +23,8 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-		min-width: 200px;
-		min-height: 350px;
+    min-width: 200px;
+    min-height: 350px;
 }
 .logo-image {
     cursor: pointer;
@@ -42,24 +55,25 @@ body {
     min-width: 60px;
 }
 .content {
-		background-color: rgb(221 223 237);
+    background-color: rgb(221 223 237);
     width: 100%;
     border-radius: 12px;
     position: relative;
-		margin-bottom: 10px;
-		margin-right: 10px;
-		box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(240, 237, 237, 0.7);
-		min-height: 200px;
-		margin: 12% 41% 15% 38%;
-	}
-	/* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
+    margin-bottom: 10px;
+    margin-right: 10px;
+    box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.2), inset -2px -2px 4px rgba(240, 237, 237, 0.7);
+    min-height: 200px;
+    min-width: 200px;
+    margin: 12% 41% 15% 38%;
+  }
+  /* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
 
 @keyframes animateMarginToZero {
   from {
     margin: 12% 41% 15% 38%;
   }
   to {
-	margin: 0 10px 10px 0;
+  margin: 0 10px 10px 0;
   }
 }
 
