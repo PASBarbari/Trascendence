@@ -1,9 +1,10 @@
 # praticamente quando un modello viene creato ricveve il segnale e fa quello che gli chiedi
 import math
+from pdb import post_mortem
 import random
 import logging
 from django.shortcuts import render, get_object_or_404
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import *
 from channels.layers import get_channel_layer
@@ -457,3 +458,31 @@ def create_tournament(sender, instance, created, **kwargs):
 		logger.info(f'✅ Tournament {instance.id} created successfully')
 	else:
 		logger.debug(f'🔄 Tournament {instance.id} updated (not created)')
+
+@receiver(post_delete, sender=Tournament)
+def delete_tournament(sender, instance, **kwargs):
+	from .notification import SendNotificationSync, ImmediateNotification
+	logger = logging.getLogger(__name__)
+
+	logger.info(f'🏆 Deleting tournament {instance.id}')
+
+	# Prepare notification data
+	notification_data = {
+		'type': 'tournament_deleted',
+		'tournament_id': instance.id,
+	}
+
+	# Send notification to creator
+	try:
+		notification = ImmediateNotification(
+			Sender='Pong',
+			message=notification_data,
+			user_id=instance.creator.user_id
+		)
+		SendNotificationSync(notification)
+		logger.info(f'✅ Tournament deletion notification sent to creator (ID: {instance.creator.user_id}) for tournament {instance.id}')
+	except Exception as e:
+		logger.error(f'❌ Failed to send tournament deletion notification to creator (ID: {instance.creator.user_id}): {str(e)}')
+		print(f"❌ Error sending notification to creator: {str(e)}")
+
+	logger.info(f'✅ Tournament {instance.id} deleted successfully')

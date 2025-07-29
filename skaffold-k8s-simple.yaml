@@ -8,6 +8,7 @@ build:
       context: Front-End
       docker:
         dockerfile: Dockerfile
+        target: dev
       sync:
         manual:
           - src: '**/*'

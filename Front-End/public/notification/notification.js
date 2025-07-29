@@ -4,13 +4,33 @@ import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 import { initFriendAutocomplete } from "./friendAutocomplete.js";
 import { renderNewTournament } from "../pong/tournament.js";
+import {
+	handleFriendAcceptedMessage,
+	handleFriendBlockedMessage,
+	handleFriendDeletedMessage,
+	handleFriendRequestMessage,
+	handleFriendStatusUpdateMessage,
+	handleFriendUnblockedMessage,
+} from "./handlers/friends.js";
+import {
+	handleChatInviteMessage,
+	handleChatRoomLeftMessage,
+} from "./handlers/chat.js";
+import {
+	handleGameInvitationMessage,
+	handleGameStartedMessage,
+	handleGameEndedMessage,
+	handleGameCreatedMessage,
+	handlePongInvitationMessage,
+} from "./handlers/game.js";
+import { handleTournamentCreatedMessage, handleTournamentDeletedMessage } from "./handlers/tournament.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
 link.href = "/notification/notification.css";
 document.head.appendChild(link);
 
-let messageHistory = [];
+export let messageHistory = [];
 let socket;
 
 async function handleFriendRequest(
@@ -201,10 +221,12 @@ function renderFriendsList(friends) {
 							${friend_initials}
 						</div>
 						<!-- Online Status Indicator -->
-						<div class="online-status-indicator ${isOnline ? 'bg-success' : 'bg-secondary'} rounded-circle position-absolute" 
+						<div class="online-status-indicator ${
+							isOnline ? "bg-success" : "bg-secondary"
+						} rounded-circle position-absolute" 
 							 style="width: 12px; height: 12px; bottom: 2px; right: 2px; border: 2px solid white;"
 							 id="status-${friendId}"
-							 title="${isOnline ? 'Online' : 'Offline'}">
+							 title="${isOnline ? "Online" : "Offline"}">
 						</div>
 					</div>
 
@@ -230,15 +252,18 @@ function renderFriendsList(friends) {
 /**
  * Update a single friend's online status indicator
  */
-function updateFriendOnlineStatus(friendId, isOnline) {
+export function updateFriendOnlineStatus(friendId, isOnline) {
 	const statusElement = document.getElementById(`status-${friendId}`);
 	if (statusElement) {
 		statusElement.className = `online-status-indicator rounded-circle position-absolute ${
-			isOnline ? 'bg-success' : 'bg-secondary'
+			isOnline ? "bg-success" : "bg-secondary"
 		}`;
-		statusElement.style.cssText = "width: 12px; height: 12px; bottom: 2px; right: 2px; border: 2px solid white;";
+		statusElement.style.cssText =
+			"width: 12px; height: 12px; bottom: 2px; right: 2px; border: 2px solid white;";
 		statusElement.title = isOnline ? "Online" : "Offline";
-		console.log(`Updated friend ${friendId} status to ${isOnline ? 'online' : 'offline'}`);
+		console.log(
+			`Updated friend ${friendId} status to ${isOnline ? "online" : "offline"}`
+		);
 	}
 }
 
@@ -269,36 +294,26 @@ async function inviteToGame(friendId, friendName) {
 		});
 
 		if (response.ok) {
-			showNotificationToast(
+			showAlertForXSeconds(
 				`🎮 Game invitation sent to ${friendName}!`,
-				"success"
+				"success",
+				5,
+				{ asToast: false, game: false, notification: true }
 			);
 		} else {
 			throw new Error("Failed to send invitation");
 		}
 	} catch (error) {
 		console.error("Error sending game invitation:", error);
-		showNotificationToast("❌ Failed to send game invitation", "error");
+		showAlertForXSeconds("❌ Failed to send game invitation", "error", 5, {
+			asToast: false,
+			game: false,
+			notification: true,
+		});
 	}
 }
 
-/**
- * Open chat with a friend
- */
-function openChatWithFriend(friendId, friendName) {
-	console.log(`Opening chat with ${friendName} (ID: ${friendId})`);
-
-	// TODO: Implement chat opening logic
-	// This could navigate to chat page or open a chat modal
-	// Example:
-	// window.navigateTo(`#chat/${friendId}`);
-	// or
-	// openChatModal(friendId, friendName);
-
-	showNotificationToast(`💬 Opening chat with ${friendName}`, "info");
-}
-
-function renderFriendRequest() {
+export function renderFriendRequest() {
 	console.log("/***********renderFriendRequest************/");
 	const { userId } = getVariables();
 	const notificationContent = document.getElementById("notificationContent");
@@ -409,7 +424,7 @@ function renderNotification() {
 }
 
 // Message validation utilities
-function validateFriendRequestData(userData) {
+export function validateFriendRequestData(userData) {
 	const requiredFields = ["user_id", "username"];
 	const missingFields = requiredFields.filter((field) => !userData[field]);
 
@@ -421,7 +436,7 @@ function validateFriendRequestData(userData) {
 	return true;
 }
 
-function normalizeUserData(userData) {
+export function normalizeUserData(userData) {
 	return {
 		...userData,
 		user_id: userData.user_id || 0,
@@ -476,7 +491,6 @@ const MESSAGE_HANDLERS = {
 	chat_room_created: handleChatInviteMessage,
 	chat_room_joined: handleChatInviteMessage,
 	chat_room_left: handleChatRoomLeftMessage,
-	chat_message: handleChatMessage,
 
 	// Game-related messages
 	game_invitation: handleGameInvitationMessage,
@@ -486,14 +500,10 @@ const MESSAGE_HANDLERS = {
 	tournament_created: handleTournamentCreatedMessage,
 	tournament_started: handleTournamentStartedMessage,
 	tournament_ended: handleTournamentEndedMessage,
-
-	// System messages
-	system_notification: handleSystemNotificationMessage,
-	maintenance_mode: handleMaintenanceModeMessage,
-	user_status_changed: handleUserStatusChangedMessage,
+	tournament_deleted: handleTournamentDeletedMessage,
 
 	// String-based messages (legacy support)
-	string_message: handleStringMessage,
+	// string_message: handleStringMessage,
 	heartbeat_request: sendHeartBeat,
 	heartbeat_ack: handleHeartbeatAckMessage,
 	pong_invitation: handlePongInvitationMessage,
@@ -507,212 +517,7 @@ function handleHeartbeatAckMessage() {
 	return;
 }
 
-// tournaments
-function handleTournamentCreatedMessage(message) {
-	console.log("Processing tournament created message:", message);
-	showAlertForXSeconds(
-		`🏆 Tournament created: ${message.message.name}`,
-		"success",
-		3,
-		{ asToast: true }
-	);
-
-	renderNewTournament(message);
-}
-
-
-
-
-function handlePongInvitationMessage(message) {
-	console.log("Processing pong invitation message:", message);
-
-	const gameData = message.message?.data || message.data || {};
-	const inviterName = gameData.inviter_name || gameData.username || "Someone";
-	const inviterId = gameData.inviter_id || gameData.user_id;
-	const roomId = gameData.room_id || gameData.game_id;
-	const gameUrl = gameData.game_url;
-
-	// Show invitation modal
-	showPongInvitationModal(inviterName, inviterId, roomId, gameUrl);
-}
-
-function showPongInvitationModal(inviterName, inviterId, roomId, gameUrl) {
-	// Remove any existing invitation modals
-	const existingModal = document.getElementById("pongInvitationModal");
-	if (existingModal) {
-		existingModal.remove();
-	}
-
-	const modalHTML = `
-        <div class="modal fade" id="pongInvitationModal" tabindex="-1" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-table-tennis me-2"></i>Pong Invitation
-                        </h5>
-                    </div>
-                    <div class="modal-body text-center">
-                        <div class="mb-3">
-                            <i class="fas fa-gamepad fa-3x text-primary mb-3"></i>
-                            <h6>${inviterName} wants to play Pong with you!</h6>
-                            <p class="text-muted">Do you want to join the game?</p>
-                            <div class="small text-info">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Game Room: ${roomId}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="modal-footer justify-content-center">
-                        <button type="button" class="btn btn-secondary me-2" onclick="declinePongInvitation()">
-                            <i class="fas fa-times me-1"></i>Maybe Later
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="acceptPongInvitation('${gameUrl}')">
-                            <i class="fas fa-play me-1"></i>Join Game
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-	document.body.insertAdjacentHTML("beforeend", modalHTML);
-
-	// Show the modal
-	const modal = document.getElementById("pongInvitationModal");
-	if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
-		const bsModal = new bootstrap.Modal(modal);
-		bsModal.show();
-
-		// Auto-decline after 30 seconds
-		setTimeout(() => {
-			if (document.getElementById("pongInvitationModal")) {
-				bsModal.hide();
-				modal.remove();
-			}
-		}, 30000);
-	} else {
-		// Fallback if Bootstrap is not available
-		modal.style.display = "block";
-		modal.classList.add("show");
-	}
-
-	// Show toast notification as well
-	showNotificationToast(`🎮 ${inviterName} invited you to play Pong!`, "info");
-}
-
-// Add these global functions
-window.acceptPongInvitation = function (gameUrl) {
-	console.log(`Accepting pong invitation: ${gameUrl}`);
-
-	// Close the modal
-	const modal = document.getElementById("pongInvitationModal");
-	if (modal) {
-		if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
-			const bsModal = bootstrap.Modal.getInstance(modal);
-			if (bsModal) bsModal.hide();
-		}
-		modal.remove();
-	}
-
-	// Navigate to multiplayer game
-	window.location.hash = gameUrl;
-
-	showNotificationToast("Joining Pong game...", "success");
-};
-
-window.declinePongInvitation = function () {
-	console.log("Declining pong invitation");
-
-	// Close the modal
-	const modal = document.getElementById("pongInvitationModal");
-	if (modal) {
-		if (typeof bootstrap !== "undefined" && bootstrap.Modal) {
-			const bsModal = bootstrap.Modal.getInstance(modal);
-			if (bsModal) bsModal.hide();
-		}
-		modal.remove();
-	}
-
-	showNotificationToast("Game invitation declined", "info");
-};
-
-//chat
-function handleChatInviteMessage(message) {
-	console.log("Processing chat invite message:", message);
-
-	console.log("test: ", message.message.data);
-
-	const chatData = message.message?.data || {};
-	const roomName = chatData.room_name || "a chat room";
-	const creatorName = chatData.creator_name || "Someone";
-	const roomId = chatData.room_id;
-
-	// Mostra notifica toast
-	if (creatorName != getVariables().userUsername) {
-		showAlertForXSeconds(
-			`You have been invited to join "${roomName}" by ${creatorName}`,
-			"success",
-			5,
-			{ asToast: true }
-		);
-	}
-
-	// Aggiorna la lista delle chat
-	if (typeof updateChatList === "function") {
-		updateChatList();
-	}
-}
-
-//pong
-function handleGameCreatedMessage(message) {
-	console.log("🚀 DEBUG: handleGameCreatedMessage called!");
-	console.log("🚀 DEBUG: Full message:", JSON.stringify(message, null, 2));
-
-	const gameData = message?.message || {};
-	const gameId = gameData.game_id;
-	const player1Data = gameData.player_1 || {};
-	const player2Data = gameData.player_2 || {};
-
-	console.log("🚀 DEBUG: gameData:", gameData);
-	console.log("🚀 DEBUG: gameId:", gameId);
-	console.log("🚀 DEBUG: player1Data:", player1Data);
-	console.log("🚀 DEBUG: player2Data:", player2Data);
-
-	const { userId } = getVariables();
-	const currentUserId = parseInt(userId);
-
-	console.log("🚀 DEBUG: currentUserId:", currentUserId);
-	console.log("🚀 DEBUG: player1Data.user_id:", player1Data.user_id);
-	console.log("🚀 DEBUG: player2Data.user_id:", player2Data.user_id);
-
-	// Determine if this user is the inviter or the invited player
-	const isPlayer1 = player1Data.user_id === currentUserId;
-	const isPlayer2 = player2Data.user_id === currentUserId;
-
-	console.log("🚀 DEBUG: isPlayer1:", isPlayer1);
-	console.log("🚀 DEBUG: isPlayer2:", isPlayer2);
-
-	if (isPlayer2) {
-		// This user is the invited player (player 2) - show invitation modal
-		const inviterName = player1Data.username || "Someone";
-		const inviterId = player1Data.user_id;
-
-		console.log("🚀 DEBUG: Player 2 detected! Showing invitation modal");
-		console.log("🚀 DEBUG: inviterName:", inviterName);
-		console.log("🚀 DEBUG: inviterId:", inviterId);
-		console.log("🚀 DEBUG: gameId:", gameId);
-
-		// Show the invitation modal
-		showGameInvitationModal(inviterName, inviterId, gameId);
-	} else if (isPlayer1) {
-		console.log("🚀 DEBUG: Player 1 detected! (Game creator)");
-	} else {
-		console.log("🚀 DEBUG: Neither player 1 nor player 2!");
-	}
-}
-
-function showGameInvitationModal(inviterName, inviterId, gameId) {
+export function showGameInvitationModal(inviterName, inviterId, gameId) {
 	console.log("🎮 DEBUG: showGameInvitationModal called!");
 	console.log("🎮 DEBUG: inviterName:", inviterName);
 	console.log("🎮 DEBUG: inviterId:", inviterId);
@@ -802,7 +607,16 @@ function showGameInvitationModal(inviterName, inviterId, gameId) {
 
 	// Show toast notification as well
 	console.log("🎮 DEBUG: Showing toast notification...");
-	showNotificationToast(`🎮 ${inviterName} invited you to play Pong!`, "info");
+	showAlertForXSeconds(
+		`🎮 ${inviterName} invited you to play Pong!`,
+		"info",
+		5,
+		{
+			asToast: true,
+			game: false,
+			notification: true,
+		}
+	);
 }
 
 // Add these global functions
@@ -827,7 +641,11 @@ window.acceptGameInvitation = function (gameId, opponentId, opponentName) {
 		opponentName
 	)}`;
 	window.navigateTo(gameUrl);
-	showNotificationToast(`Joining game with ${opponentName}...`, "success");
+	showAlertForXSeconds(`Joining game with ${opponentName}...`, "success", 5, {
+		asToast: true,
+		game: false,
+		notification: true,
+	});
 };
 
 window.declineGameInvitation = function () {
@@ -843,7 +661,11 @@ window.declineGameInvitation = function () {
 		modal.remove();
 	}
 
-	showNotificationToast("Game invitation declined", "info");
+	showAlertForXSeconds("Game invitation declined", "info", 5, {
+		asToast: true,
+		game: false,
+		notification: true,
+	});
 };
 
 /**
@@ -872,40 +694,6 @@ function getMessageType(message) {
 		return message.type;
 	}
 
-	// Handle string-based messages (legacy support)
-	if (typeof message.message === "string") {
-		const stringMessage = message.message.toLowerCase();
-
-		// Map string patterns to specific message types
-		const stringTypeMapping = {
-			"accepted your friend request": "friend_accepted",
-			"deleted friendship with": "friend_deleted",
-			"blocked you": "friend_blocked",
-			"unblocked you": "friend_unblocked",
-			"chat room": "chat_room_created",
-			"joined chat room": "chat_room_joined",
-			"left chat room": "chat_room_left",
-			"game invitation": "game_invitation",
-			"game started": "game_started",
-			"game ended": "game_ended",
-			tournament: "tournament_started",
-			maintenance: "maintenance_mode",
-		};
-
-		// Find matching string pattern
-		for (const [pattern, type] of Object.entries(stringTypeMapping)) {
-			if (stringMessage.includes(pattern)) {
-				console.log(
-					`Detected string message type: ${type} (pattern: ${pattern})`
-				);
-				return type;
-			}
-		}
-
-		console.log("Detected generic string message");
-		return "string_message";
-	}
-
 	// Log unhandled message types for debugging
 	console.log("Unhandled message type:", message);
 	return "default";
@@ -923,60 +711,9 @@ function handleMessageError(error, message) {
 	handleDefaultMessage();
 }
 
-// Message Handler Functions
-function handleFriendRequestMessage(message) {
-	const userData = message.message.data;
-
-	// Validate friend request data
-	if (!validateFriendRequestData(userData)) {
-		console.error("Invalid friend request data received");
-		return;
-	}
-
-	console.log("Processing friend request message:");
-	console.log(`User avatar: ${userData.current_avatar_url}`);
-	console.log(`User status: ${userData.first_name} ${userData.last_name}`);
-	console.log(`User level: ${userData.level}`);
-	console.log(`User ID: ${userData.user_id}`);
-	console.log(`Friend request from: ${userData.username}`);
-
-	// Store message in history with normalized data
-	messageHistory.push({
-		user_id: userData.user_id,
-		type: "friend_request",
-		userData: normalizeUserData(userData),
-	});
-
-	renderFriendRequest();
-}
-
-function handleStringMessage(message) {
-	const info = message.message;
-
-	console.log("Processing string message:", info);
-
-	// Route string messages based on content
-	const stringMessageActions = {
-		"accepted your friend request": () => getFriends(),
-		"deleted friendship with": () => getFriends(),
-		"Chat Room": () => updateChatList(),
-	};
-
-	// Find matching action or default to renderFriendRequest
-	const matchedAction = Object.keys(stringMessageActions).find((key) =>
-		info.includes(key)
-	);
-
-	if (matchedAction) {
-		stringMessageActions[matchedAction]();
-	} else {
-		renderFriendRequest();
-	}
-}
-
 function handleDefaultMessage(message = null) {
 	console.log("Processing default/unknown message:", message);
-	renderFriendRequest();
+	// renderFriendRequest();
 }
 
 function initializeWebSocket() {
@@ -988,7 +725,7 @@ function initializeWebSocket() {
 	// Create WebSocket with token in query string
 	socket = new WebSocket(wsUrl);
 	if (!window.activeWebSockets) window.activeWebSockets = [];
-			window.activeWebSockets.push(socket);
+	window.activeWebSockets.push(socket);
 
 	socket.onmessage = function (event) {
 		console.log("/----websocket notification.js----\\");
@@ -1133,223 +870,17 @@ function testMessageHandler(messageType, sampleMessage) {
 	}
 }
 
-// ==================== MESSAGE PROCESSING UTILITIES ====================
-
-// Friend-related message handlers
-function handleFriendAcceptedMessage(message) {
-	console.log("Processing friend accepted message:", message);
-
-	// Update friends list to reflect new friendship
-	getFriends();
-
-	// Show notification if user data is available
-	if (message.message && message.message.data) {
-		const userData = message.message.data;
-		showNotificationToast(
-			`${userData.username || "Someone"} accepted your friend request!`,
-			"success"
-		);
-	} else {
-		showNotificationToast("Your friend request was accepted!", "success");
-	}
-}
-
-function handleFriendDeletedMessage(message) {
-	console.log("Processing friend deleted message:", message);
-
-	// Update friends list to reflect removed friendship
-	getFriends();
-
-	// Show notification
-	if (message.message && message.message.data) {
-		const userData = message.message.data;
-		console.log("User data:", userData);
-		showNotificationToast(
-			`${userData.username || "Someone"} removed you from their friends list`,
-			"warning"
-		);
-	} else {
-		showNotificationToast("A friendship was removed", "warning");
-	}
-}
-
-function handleFriendBlockedMessage(message) {
-	console.log("Processing friend blocked message:", message);
-
-	// Update friends list and remove any ongoing interactions
-	getFriends();
-
-	// Show notification
-	if (message.message && message.message.data) {
-		const userData = message.message.data;
-		showNotificationToast(
-			`${userData.username || "Someone"} blocked you`,
-			"error"
-		);
-	} else {
-		showNotificationToast("You have been blocked by a user", "error");
-	}
-}
-
-function handleFriendUnblockedMessage(message) {
-	console.log("Processing friend unblocked message:", message);
-
-	// Show notification
-	if (message.message && message.message.data) {
-		const userData = message.message.data;
-		showNotificationToast(
-			`${userData.username || "Someone"} unblocked you`,
-			"info"
-		);
-	} else {
-		showNotificationToast("You have been unblocked by a user", "info");
-	}
-}
-
-function handleFriendStatusUpdateMessage(message) {
-	console.log("Processing friend status update message:", message);
-
-	// Extract friend data from message
-	let friendUserId, isOnline;
-	
-	if (message.friend_user_id !== undefined) {
-		// Direct format from Redis pub/sub (expected by OnlineStatusManager)
-		friendUserId = message.friend_user_id;
-		isOnline = message.is_online;
-	} else if (message.message && message.message.friend_user_id !== undefined) {
-		// Nested format
-		friendUserId = message.message.friend_user_id;
-		isOnline = message.message.is_online;
-	} else {
-		console.warn("Friend status update message missing required data:", message);
-		return;
-	}
-
-	// Use OnlineStatusManager if available, otherwise fallback to direct update
-	if (window.onlineStatusManager) {
-		window.onlineStatusManager.updateUserStatus(friendUserId, isOnline);
-	} else {
-		// Fallback to direct UI update
-		updateFriendOnlineStatus(friendUserId, isOnline);
-	}
-	
-	console.log(`Updated friend ${friendUserId} status to ${isOnline ? 'online' : 'offline'}`);
-}
-
-// Chat-related message handlers
-function handleChatRoomCreatedMessage(message) {
-	console.log("Processing chat room created message:", message);
-
-	// Update chat list to show new room
-	updateChatList();
-
-	// Show notification
-	const roomData = message.message?.data || {};
-	const roomName = roomData.room_name || "A new chat room";
-	showNotificationToast(`${roomName} was created`, "info");
-}
-
-function handleChatRoomJoinedMessage(message) {
-	console.log("Processing chat room joined message:", message);
-
-	// Update chat list
-	updateChatList();
-
-	// Show notification
-	const roomData = message.message?.data || {};
-	const roomName = roomData.room_name || "a chat room";
-	const userName = roomData.user_name || "Someone";
-	showNotificationToast(`${userName} joined ${roomName}`, "info");
-}
-
-function handleChatRoomLeftMessage(message) {
-	console.log("Processing chat room left message:", message);
-
-	// Update chat list
-	updateChatList();
-
-	// Show notification
-	const roomData = message.message?.data || {};
-	const roomName = roomData.room_name || "a chat room";
-	const userName = roomData.user_name || "Someone";
-	showNotificationToast(`${userName} left ${roomName}`, "info");
-}
-
-function handleChatMessage(message) {
-	console.log("Processing chat message:", message);
-
-	// Handle real-time chat message (if chat is open)
-	const messageData = message.message?.data || {};
-	const senderName = messageData.sender_name || "Someone";
-	const roomName = messageData.room_name || "a chat room";
-
-	// Only show notification if user is not currently in that chat room
-	if (!isUserInChatRoom(messageData.room_id)) {
-		showNotificationToast(
-			`New message from ${senderName} in ${roomName}`,
-			"info"
-		);
-	}
-}
-
-// Game-related message handlers
-function handleGameInvitationMessage(message) {
-	console.log("Processing game invitation message:", message);
-
-	const gameData = message.message?.data || {};
-	const inviterName = gameData.inviter_name || "Someone";
-	const gameType = gameData.game_type || "a game";
-
-	// Store invitation in message history for user action
-	messageHistory.push({
-		user_id: gameData.inviter_id || 0,
-		type: "game_invitation",
-		userData: gameData,
-		invitation_id: gameData.invitation_id,
-	});
-
-	renderFriendRequest(); // Reuse existing notification rendering
-	showNotificationToast(
-		`${inviterName} invited you to play ${gameType}`,
-		"info"
-	);
-}
-
-function handleGameStartedMessage(message) {
-	console.log("Processing game started message:", message);
-
-	const gameData = message.message?.data || {};
-	const gameType = gameData.game_type || "game";
-
-	showNotificationToast(`Your ${gameType} has started!`, "success");
-
-	// Redirect to game if needed
-	if (gameData.game_url) {
-		setTimeout(() => {
-			window.location.href = gameData.game_url;
-		}, 2000);
-	}
-}
-
-function handleGameEndedMessage(message) {
-	console.log("Processing game ended message:", message);
-
-	const gameData = message.message?.data || {};
-	const result = gameData.result || "completed";
-	const gameType = gameData.game_type || "game";
-
-	showNotificationToast(`Your ${gameType} has ${result}`, "info");
-}
-
 function handleTournamentStartedMessage(message) {
 	console.log("Processing tournament started message:", message);
 
 	const tournamentData = message.message?.data || {};
 	const tournamentName = tournamentData.tournament_name || "tournament";
 
-	showNotificationToast(
+	showAlertForXSeconds(
 		`Tournament "${tournamentName}" has started!`,
-		"success"
+		"success",
+		5,
+		{ asToast: true, game: false, notification: true }
 	);
 }
 
@@ -1365,93 +896,11 @@ function handleTournamentEndedMessage(message) {
 		notificationText += `. You finished in ${placement} place!`;
 	}
 
-	showNotificationToast(notificationText, "info");
-}
-
-// System message handlers
-function handleSystemNotificationMessage(message) {
-	console.log("Processing system notification:", message);
-
-	const notificationData = message.message?.data || {};
-	const notificationText =
-		notificationData.text || message.message || "System notification";
-	const priority = notificationData.priority || "info";
-
-	showNotificationToast(notificationText, priority);
-}
-
-function handleMaintenanceModeMessage(message) {
-	console.log("Processing maintenance mode message:", message);
-
-	const maintenanceData = message.message?.data || {};
-	const startTime = maintenanceData.start_time;
-	const duration = maintenanceData.duration || "unknown duration";
-
-	let notificationText = "Maintenance mode scheduled";
-	if (startTime) {
-		notificationText += ` starting at ${startTime}`;
-	}
-	notificationText += ` (${duration})`;
-
-	showNotificationToast(notificationText, "warning");
-}
-
-function handleUserStatusChangedMessage(message) {
-	console.log("Processing user status changed message:", message);
-
-	const statusData = message.message?.data || {};
-	const userName = statusData.username || "A friend";
-	const newStatus = statusData.status || "changed status";
-
-	// Only show for friends who come online/offline
-	if (statusData.is_friend && ["online", "offline"].includes(newStatus)) {
-		showNotificationToast(`${userName} is now ${newStatus}`, "info");
-	}
-}
-
-// Utility Functions
-function showNotificationToast(message, type = "info") {
-	console.log(`${type.toUpperCase()}: ${message}`);
-
-	// Create a simple toast notification
-	const toast = document.createElement("div");
-	toast.className = `alert alert-${
-		type === "error" ? "danger" : type
-	} toast-notification`;
-	toast.style.cssText = `
-		position: fixed;
-		top: 20px;
-		right: 20px;
-		z-index: 9999;
-		max-width: 300px;
-		opacity: 0;
-		transition: opacity 0.3s ease;
-	`;
-	toast.textContent = message;
-
-	document.body.appendChild(toast);
-
-	// Fade in
-	setTimeout(() => (toast.style.opacity = "1"), 100);
-
-	// Fade out and remove
-	setTimeout(() => {
-		toast.style.opacity = "0";
-		setTimeout(() => document.body.removeChild(toast), 300);
-	}, 5000);
-}
-
-function isUserInChatRoom(roomId) {
-	// Check if user is currently viewing this chat room
-	// This would need to be implemented based on your chat system
-	const currentRoomId = getCurrentChatRoomId(); // You'll need to implement this
-	return currentRoomId === roomId;
-}
-
-function getCurrentChatRoomId() {
-	// Implement this based on your chat system
-	// For example, check URL parameters or global state
-	return null; // Placeholder
+	showAlertForXSeconds(notificationText, "info", 5, {
+		asToast: true,
+		game: false,
+		notification: true,
+	});
 }
 
 function startHeartbeat() {
@@ -1464,12 +913,6 @@ function startHeartbeat() {
 		console.log("Sending WebSocket heartbeat...");
 		sendHeartBeat();
 	}, 25000);
-	// console.log("Starting WebSocket heartbeat...");
-	// sendHeartBeat();
-	// // Send a heartbeat request every 25 seconds
-	// setInterval(() => {
-	// 	sendHeartBeat();
-	// }, 25000);
 }
 
 function sendHeartBeat() {
@@ -1495,7 +938,11 @@ function sendHeartBeat() {
  * -----------------------------------------------
  * registerMessageHandler('custom_notification', function(message) {
  *     console.log('Custom notification received:', message);
- *     showNotificationToast(message.message?.text || 'Custom notification', 'info');
+ *     showAlertForXSeconds(message.message?.text || 'Custom notification', 'info', 5, {
+ *         asToast: true,
+ *         game: false,
+ *         notification: true
+ *     });
  * });
  *
  * Example 2: Add a complex handler with validation
@@ -1511,9 +958,11 @@ function sendHeartBeat() {
  *     const currency = paymentData.currency || 'USD';
  *     const status = paymentData.status || 'completed';
  *
- *     showNotificationToast(
+ *     showAlertForXSeconds(
  *         `Payment ${status}: ${amount} ${currency}`,
- *         status === 'completed' ? 'success' : 'warning'
+ *         status === 'completed' ? 'success' : 'warning',
+ *         5,
+ *         { asToast: true, game: false, notification: true }
  *     );
  * });
  *

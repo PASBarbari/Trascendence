@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM node:lts-alpine as dev
 WORKDIR /app
 
 # Copy package files and install dependencies
@@ -23,15 +23,15 @@ USER node
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000", "--force"]
 
 # Production build stage
-# FROM node:lts-alpine AS build
-# WORKDIR /app
-# COPY package*.json ./
-# RUN npm install
-# COPY . .
-# RUN npm run build
+FROM node:lts-alpine AS build
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
 # Production runtime
-# FROM nginx:alpine AS prod
-# COPY --from=build /app/dist /usr/share/nginx/html
-# EXPOSE 80
-# CMD ["nginx", "-g", "daemon off;"]
+FROM nginx:alpine AS prod
+COPY --from=build /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

@@ -284,7 +284,31 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	def get_queryset(self):
 		"""Override to include participants for efficient loading"""
 		return Tournament.objects.select_related('creator', 'winner').prefetch_related('player')
+	def perform_destroy(self, instance):
+		"""Override to handle deletion of tournaments"""
+		notification_data = {
+		'type': 'tournament_deleted',
+		'tournament_id': instance.id,
+		'name': instance.name,
+		}
 
+		try:
+			from .notification import SendNotificationSync, ImmediateNotification
+			# Notify all participants about the tournament deletion
+			for participant in instance.player.all():
+				notification = ImmediateNotification(
+					Sender='Pong',
+					message=notification_data,
+					user_id=participant.user_id
+				)
+				SendNotificationSync(notification)
+				logger.info(f'✅ Tournament deletion notification sent to participant (ID: {participant.user_id}) for tournament {instance.id}')
+		except Exception as e:
+			logger.error(f'❌ Failed to send tournament deletion notification for tournament {instance.id}: {str(e)}')
+		# Remove all participants from the tournament
+		
+		# Call the superclass method to perform the actual deletion
+		return super().perform_destroy(instance)
 
 
 
