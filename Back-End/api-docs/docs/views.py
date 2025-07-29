@@ -21,7 +21,8 @@ def index(request):
 def service_docs(request, service_name):
     """
     Display Swagger UI for a specific service
-    """if service_name not in settings.MICROSERVICES:
+    """
+    if service_name not in settings.MICROSERVICES:
         return HttpResponse('Service not found', status=404)
     
     service_url = settings.MICROSERVICES[service_name]
