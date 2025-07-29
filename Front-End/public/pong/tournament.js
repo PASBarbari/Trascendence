@@ -198,37 +198,33 @@ async function renderNewTournament(tournamentData) {
 		const tournamentDiv = document.createElement("div");
 		tournamentDiv.className = "tournament-item";
 		tournamentDiv.id = `tournament-${tournament.id}`;
+		const isCreator = String(tournament.creator_id) === String(getVariables().userId);
+console.error("Is creator:", isCreator, "User ID:", getVariables().userId, "Tournament Creator ID:", tournamentData.message.creator_id);
 		tournamentDiv.innerHTML = `
-						<h5>${tournament.name}</h5>
-						<p>Max Partecipanti: ${tournament.max_partecipants}</p>
-						<p>Partecipanti: ${tournament.partecipants}</p>
-						<p>Stato: ${tournament.status}</p>
-						<p>Inizio: ${new Date(tournament.begin_date).toLocaleString()}</p>
-						<button class="btn btn-outline-primary" id="join-button" data-tournament-id="${
-							tournament.id
-						}">
-								join
-						</button>
-						<button class="btn btn-outline-secondary" id="start-button" data-tournament-id="${
-							tournament.id
-						}">
-								start
-						</button>
-						<button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${
-							tournament.id
-						}">
-								get_brackets
-						</button>
-						<button class="btn btn-outline-danger" id="tournamentDelete" data-tournament-id="${
-							tournament.id
-						}">
-								delete
-						</button>
-				`;
+			<h5>${tournament.name}</h5>
+			<p>Max Partecipanti: ${tournament.max_partecipants}</p>
+			<p>Partecipanti: ${tournament.partecipants}</p>
+			<p>Stato: ${tournament.status}</p>
+			<p>Inizio: ${new Date(tournament.begin_date).toLocaleString()}</p>
+			<button class="btn btn-outline-primary" id="join-button" data-tournament-id="${tournament.id}">
+				join
+			</button>
+			<button class="btn btn-outline-secondary" id="start-button" data-tournament-id="${tournament.id}" ${isCreator ? "" : "disabled"}>
+				start
+			</button>
+			<button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${tournament.id}">
+				get_brackets
+			</button>
+			<button class="btn btn-outline-danger" id="tournamentDelete" data-tournament-id="${tournament.id}">
+				delete
+			</button>
+		`;
 		tournamentListDiv.appendChild(tournamentDiv);
 
 		const joinButton = tournamentDiv.querySelector("#join-button");
 		joinButton.addEventListener("click", async () => {
+			//disabilita il pulsante per evitare click multipli
+			joinButton.disabled = true;
 			initializeWebSocketTournament(tournament.id);
 		});
 

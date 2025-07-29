@@ -70,17 +70,21 @@ async function matchHistory(page = 1) {
 			const scores = `${myScore} - ${opponentScore}`;
 			const status = match.status || "Unknown";
 			const tournament = match.tournament_id == null ? "" : "tournament: " + match.tournament_id;
+			const winnerColor = match.winner == null ? "text-bg-secondary" : match.winner.user_id == userId ? "text-bg-success" : "text-bg-danger";
 
 			const matchItem = document.createElement("div");
 			matchItem.className = "match-history-item";
 			matchItem.innerHTML = `
-				<div class="d-flex justify-content-between align-items-center">
-					<span class="match-date">${new Date(match.begin_date).toLocaleDateString()}</span>
-					<span class="match-result">winner: ${winner}</span>
+				<div class="match-details">
+					<h6 style="margin: 0; font-size: 0.9em; color: #6c757d;">
+						<i class="bi bi-calendar-event" style="color: var(--bs-secondary-color) !important; margin-right: 0.5rem;"></i> 
+						${new Date(match.begin_date).toLocaleDateString()}
+					</h6>
+					<h6 style="margin: 0;">winner: <span class="badge ${winnerColor}">${winner}</span></h6>
 				</div>
 				<div class="match-details">
-					<span class="match-opponent">Score: ${scores} | ${opponent.username || "Unknown"}</span>
-					<span class="match-result">${tournament}</span>
+					<h6 style="margin: 0;">Score: <span class="badge text-bg-primary">${scores}</span> vs ${opponent.username || "Unknown"}</h6>
+					<h6 style="margin: 0;">${tournament}</h6>
 				</div>
 				<hr class="my-2">
 			`;
