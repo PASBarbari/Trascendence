@@ -67,6 +67,13 @@ function renderHome() {
 	initializeProfile();
 	renderTournament();
 	renderMatchHistory();
+
+	// Se esiste un elemento .content, resetta il margine e rimuovi classi di animazione
+	const animatedContent = document.querySelector('.content');
+	if (animatedContent) {
+		animatedContent.classList.remove('animate-margin', 'animate-margin-logout');
+		animatedContent.style.margin = '0 10px 10px 0';
+	}
 }
 
 // 5notification.js:1473 WebSocket is not open, cannot send heartbeat

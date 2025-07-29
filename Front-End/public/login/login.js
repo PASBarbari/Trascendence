@@ -22,6 +22,7 @@ function renderLogin() {
 			contentDiv.addEventListener("animationend", function handler() {
 				contentDiv.removeEventListener("animationend", handler);
 				contentDiv.classList.remove("animate-margin-logout");
+				contentDiv.style.margin = "12% 41% 15% 38%";
 			});
 		}
 		window.previousRoute = "";
