@@ -1,3 +1,5 @@
+import { escapeHTML } from "../var";
+
 export function renderAlert(message, type) {
 	const wrapper = document.createElement("div");
 	wrapper.className = `alert alert-${type} alert-dismissible fade show`;
@@ -19,10 +21,14 @@ export function renderAlert(message, type) {
 }
 
 export function showAlertForXSeconds(message, type, seconds, options = {}) {
-	const { asToast = false, game = false } = options;
+	const { asToast = false, game = false, notification = false } = options;
 	if (game) {
 		// Use the notification system for game alerts
 		showNotification(message, type, seconds);
+		return;
+	} else if (notification) {
+		// Use the notification system for general alerts
+		showNotificationToast(message, type, seconds);
 		return;
 	}
 	let container;
@@ -154,3 +160,31 @@ export function showNotification(message, type = "info", seconds = 5) {
 	progress.style.transition = `width ${seconds * 1000}ms linear`;
 	progress.style.width = "0%";
 }
+
+export function showNotificationToast(message, type = "info", seconds = 5) {
+	// Create a simple toast notification
+	const toast = document.createElement("div");
+	toast.className = `alert alert-${type === "error" ? "danger" : type} toast-notification`;
+	toast.style.cssText = `
+		position: fixed;
+		top: 20px;
+		right: 20px;
+		z-index: 9999;
+		max-width: 300px;
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	`;
+	toast.textContent = escapeHTML(message);
+
+	document.body.appendChild(toast);
+
+	// Fade in
+	setTimeout(() => (toast.style.opacity = "1"), 100);
+
+	// Fade out and remove
+	setTimeout(() => {
+		toast.style.opacity = "0";
+		setTimeout(() => document.body.removeChild(toast), 300);
+	}, seconds * 1000);
+}
+
