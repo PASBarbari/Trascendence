@@ -64,14 +64,23 @@ export function processOAuthRedirect() {
 }
 
 export function calculateInitials(username) {
-    if (!username || typeof username !== 'string') {
-        return '';
-    }
+	if (!username || typeof username !== "string") {
+		return "";
+	}
 
-    return username
-        .split(" ")
-        .map((word) => word.charAt(0))
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
+	return username
+		.split(" ")
+		.map((word) => word.charAt(0))
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
+}
+
+export function escapeHTML(str) {
+	return String(str)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
 }

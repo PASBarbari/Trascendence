@@ -281,22 +281,3 @@ window.navigateTo = navigateTo;
 window.removeExpandableSidebar = removeExpandableSidebar;
 // Esporta anche per uso esterno
 export { removeExpandableSidebar, Logout };
-
-export function getBaseUrl() {
-	const hostname = window.location.hostname;
-	const port = window.location.port || "8443";
-
-	if (
-		hostname === "localhost" ||
-		hostname === "127.0.0.1" ||
-		hostname === "10.0.2.15"
-	) {
-		return `http://localhost.xip.io:${port}`;
-	} else if (hostname.startsWith("10.11.")) {
-		return `http://${hostname}.xip.io:${port}`;
-	} else if (hostname.includes(".xip.io")) {
-		return `http://${hostname}:${port}`;
-	} else {
-		return `http://${hostname}.xip.io:${port}`;
-	}
-}
