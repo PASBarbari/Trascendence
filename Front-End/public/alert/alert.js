@@ -1,15 +1,21 @@
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = '/alert/alert.css';
-document.head.appendChild(link);
-
 export function renderAlert(message, type) {
-	return `
-	<div class="alert ${type}">
-		${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">&times;</button>
-	</div>
-	`;
+	const wrapper = document.createElement("div");
+	wrapper.className = `alert ${type}`;
+
+	const msgSpan = document.createElement("span");
+	msgSpan.textContent = message; // Safe: escapes HTML
+
+	const closeBtn = document.createElement("button");
+	closeBtn.type = "button";
+	closeBtn.className = "btn-close";
+	closeBtn.setAttribute("data-bs-dismiss", "alert");
+	closeBtn.setAttribute("aria-label", "Close");
+	closeBtn.innerHTML = "&times;";
+
+	wrapper.appendChild(msgSpan);
+	wrapper.appendChild(closeBtn);
+
+	return wrapper;
 }
 
 export function showAlertForXSeconds(message, type, seconds, options = {}) {
@@ -17,33 +23,30 @@ export function showAlertForXSeconds(message, type, seconds, options = {}) {
 	let container;
 
 	if (asToast) {
-		container = document.getElementById('toast-container');
+		container = document.getElementById("toast-container");
 		if (!container) {
-			container = document.createElement('div');
-			container.id = 'toast-container';
-			container.style.position = 'fixed';
-			container.style.bottom = '20px';
-			container.style.left = '20px';
-			container.style.zIndex = '9999';
-			container.style.display = 'flex';
-			container.style.flexDirection = 'column';
-			container.style.gap = '10px';
+			container = document.createElement("div");
+			container.id = "toast-container";
+			container.style.position = "fixed";
+			container.style.bottom = "20px";
+			container.style.left = "20px";
+			container.style.zIndex = "9999";
+			container.style.display = "flex";
+			container.style.flexDirection = "column";
+			container.style.gap = "10px";
 			document.body.appendChild(container);
 		}
 	} else {
-		container = document.getElementById('alert-container');
+		container = document.getElementById("alert-container");
 		if (!container) {
 			console.error("Alert container not found");
 			return;
 		}
 	}
 
-	const alertHTML = renderAlert(message, type);
-	const wrapper = document.createElement('div');
-	wrapper.innerHTML = alertHTML;
+	const alertElement = renderAlert(message, type);
 
 	if (asToast) {
-		const alertElement = wrapper.firstElementChild;
 		container.appendChild(alertElement);
 		setTimeout(() => {
 			if (alertElement.parentNode) {
@@ -51,9 +54,10 @@ export function showAlertForXSeconds(message, type, seconds, options = {}) {
 			}
 		}, seconds * 1000);
 	} else {
-		container.innerHTML = alertHTML;
+		container.innerHTML = ""; // Clear previous
+		container.appendChild(alertElement);
 		setTimeout(() => {
-			container.innerHTML = '';
+			container.innerHTML = "";
 		}, seconds * 1000);
 	}
 }
