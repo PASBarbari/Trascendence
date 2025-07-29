@@ -7,7 +7,7 @@ export function handleTournamentCreatedMessage(message) {
 		`🏆 Tournament created: ${message.message.name}`,
 		"success",
 		3,
-		{ asToast: true }
+		{ asToast: true , game: true, notification: false }
 	);
 
 	renderNewTournament(message);
@@ -15,17 +15,17 @@ export function handleTournamentCreatedMessage(message) {
 
 export function handleTournamentDeletedMessage(message) {
 	console.log("Processing tournament deleted message:", message);
-	if (!message.message || !message.tournament_id || !message.message.name) {
+	if (!message.message || !message.message.tournament_id || !message.message.name) {
 		console.error("Invalid tournament deletion message format");
 		return;
 	}
 
-	deleteTournamentDiv(message.tournament_id);
+	deleteTournamentDiv(message.message.tournament_id);
 	// console.log("Tournament deleted:", message.tournament_id);
 
 	showAlertForXSeconds(
 		`🏆 Tournament deleted: ${message.message.name}`,
-		"error",
+		"info",
 		3,
 		{ asToast: true, game: true, notification: false }
 	);

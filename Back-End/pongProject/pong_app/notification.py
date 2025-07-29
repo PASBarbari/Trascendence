@@ -1,8 +1,12 @@
+from venv import logger
 from django.db import models
 import os
 import asyncio
 # import aiohttp
 from pongProject.settings import Microservices
+import logging
+
+logger = logging.getLogger('pong_app')
 
 Types = {
 	'IM' : 'Immediate',
@@ -68,8 +72,9 @@ def SendNotificationSync(notification):
 					'X-API-KEY': os.getenv('API_KEY', "123")
 							 }
 				response = requests.post(notification_url,headers=headers, json=serialized_notification)
-				print(f"response.json(): {response.json()}")
+				if response.status_code != 200 and response.status_code != 201:
+					logger.error(f"Failed to send notification: {response.status_code} - {response.text}")
 				return response.status_code
 		except requests.RequestException as e:
-				print(f"Error sending notification: {e}")
+				logger.error(f"Error sending notification: {e}")
 				return None

@@ -284,6 +284,8 @@ class TournamentManage(generics.RetrieveUpdateDestroyAPIView):
 	def get_queryset(self):
 		"""Override to include participants for efficient loading"""
 		return Tournament.objects.select_related('creator', 'winner').prefetch_related('player')
+	
+	
 	def perform_destroy(self, instance):
 		"""Override to handle deletion of tournaments"""
 		notification_data = {

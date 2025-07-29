@@ -154,6 +154,7 @@ class GameState:
 			try:
 				from .tournament_manager import tournament_manager
 				tournament = await tournament_manager.get_tournament(self.tournament_id)
+				logger.info(f"Registering tournament result for game {self.game_id} with winner {winner_id} and loser {loser_id}")
 				if tournament:
 					await tournament.register_game_result(self.game_id, winner_id, loser_id)
 					logger.info(f"Tournament game result registered for game {self.game_id}")

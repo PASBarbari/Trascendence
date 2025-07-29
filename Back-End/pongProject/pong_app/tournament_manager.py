@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from sre_constants import SUCCESS
 from typing import Dict, List, Optional, Any
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
@@ -52,12 +53,16 @@ class TournamentManager:
 										tournament_id=tournament_id,
 										name=tournament_db.name,
 										max_p=tournament_db.max_partecipants,
-										creator_id=tournament_db.creator.user_id if tournament_db.creator else None,
+										creator_id=await database_sync_to_async(lambda: tournament_db.creator.user_id if tournament_db.creator else None)(),
 										manager=self
 								)
 								
+						except Exception as e:
+								logger.warning(f"Failed to load tournament {tournament_id} from database: {e}")
+								return None
+						try:
 								# Load players from database
-								await tournament.load_players_from_db()
+								success = await database_sync_to_async(tournament.load_players_from_db)()
 								
 								# Add to active tournaments but don't start management task for completed tournaments
 								self.active_tournaments[tournament_id] = tournament
@@ -182,28 +187,23 @@ class TournamentState:
 				logger.info(f"Player {player_id} added to tournament {self.tournament_id}. Players: {self.nbr_player}/{self.max_p}")
 				return "Player added to the tournament"
 		
-		async def load_players_from_db(self):
-				"""Load players from database and sync with in-memory state"""
+		def load_players_from_db(self):
+				"""Load players from database and sync with in-memory state (sync version)"""
 				try:
 						from .models import Tournament
-						tournament_db = await database_sync_to_async(Tournament.objects.get)(id=self.tournament_id)
-						participants = await database_sync_to_async(
-						lambda: list(tournament_db.player.all())
-						)()
+						tournament_db = Tournament.objects.get(id=self.tournament_id)
+						participants = list(tournament_db.player.all())
 						# Update in-memory state
 						self.players = [p.user_id for p in participants]
 						self.nbr_player = len(self.players)
-						
 						# Load tournament status and other fields
 						self.status = tournament_db.status
 						if tournament_db.winner:
 								self.winner = tournament_db.winner.user_id
 								self.is_complete = True
-						
 						# Set initialized flag based on status
 						if self.status in ['active', 'completed']:
 								self.initialized = True
-								
 						logger.info(f"Loaded tournament {self.tournament_id} from database: {self.nbr_player} players, status: {self.status}")
 						return True
 				except Exception as e:

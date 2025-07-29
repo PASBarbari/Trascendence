@@ -287,7 +287,7 @@ class ModernPhysicsEngine:
             math.cos(math.radians(angle)),
             math.sin(math.radians(angle))
         ) * self.ball_speed
-    
+        self.ball_speed = 1.0
     def get_stats(self) -> dict:
         """Get performance statistics"""
         return {

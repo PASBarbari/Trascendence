@@ -1,4 +1,4 @@
-import { setVariables, getVariables, calculateInitials } from "../var.js";
+import { setVariables, getVariables, calculateInitials, escapeHTML } from "../var.js";
 import { updateChatList } from "../chat/ExpandableSidebar.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
