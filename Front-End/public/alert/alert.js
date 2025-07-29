@@ -1,21 +1,21 @@
 export function renderAlert(message, type) {
-	const wrapper = document.createElement("div");
-	wrapper.className = `alert ${type}`;
+    const wrapper = document.createElement("div");
+    wrapper.className = `alert alert-${type} alert-dismissible fade show`;
+    wrapper.setAttribute("role", "alert");
 
-	const msgSpan = document.createElement("span");
-	msgSpan.textContent = message; // Safe: escapes HTML
+    const msgSpan = document.createElement("span");
+    msgSpan.textContent = message; // Safe: escapes HTML
 
-	const closeBtn = document.createElement("button");
-	closeBtn.type = "button";
-	closeBtn.className = "btn-close";
-	closeBtn.setAttribute("data-bs-dismiss", "alert");
-	closeBtn.setAttribute("aria-label", "Close");
-	closeBtn.innerHTML = "&times;";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "btn-close";
+    closeBtn.setAttribute("data-bs-dismiss", "alert");
+    closeBtn.setAttribute("aria-label", "Close");
 
-	wrapper.appendChild(msgSpan);
-	wrapper.appendChild(closeBtn);
+    wrapper.appendChild(msgSpan);
+    wrapper.appendChild(closeBtn);
 
-	return wrapper;
+    return wrapper;
 }
 
 export function showAlertForXSeconds(message, type, seconds, options = {}) {
@@ -26,7 +26,7 @@ export function showAlertForXSeconds(message, type, seconds, options = {}) {
 		container = document.getElementById("toast-container");
 		if (!container) {
 			container = document.createElement("div");
-			container.id = "toast-container";
+			container.id = 'toast-container';
 			container.style.position = "fixed";
 			container.style.bottom = "20px";
 			container.style.left = "20px";
