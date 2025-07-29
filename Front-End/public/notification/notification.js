@@ -126,14 +126,16 @@ function renderSentFriendRequest(
 	console.log("Rendering sent friend request for Username:", receiver_username);
 
 	const notificationContent = document.getElementById("notificationContent");
+	const safeReceiverUsername = escapeHTML(receiver_username);
+	const safeReceiverId = escapeHTML(receiver_id);
 
 	// Create the HTML
 	const htmlToAdd = `
-		<div class="card mb-3" id="notification-card-${receiver_username}">
+		<div class="card mb-3" id="notification-card-${safeReceiverUsername}">
 			<div class="card-body" style="display: flex; align-items: center;">
-				<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request sent to <b>${receiver_username}</b></p>
+				<p class="card-text" style="flex-grow: 1; margin: 0;">Friend request sent to <b>${safeReceiverUsername}</b></p>
 				<button class="btn btn-outline-danger" type="button"
-					onclick="handleFriendRequest('DELETE', ${receiver_id}, '${receiver_username}')">
+					onclick="handleFriendRequest('DELETE', ${safeReceiverId}, '${safeReceiverUsername}')">
 					<i class="bi bi-eraser-fill"></i>
 				</button>
 			</div>

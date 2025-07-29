@@ -589,8 +589,8 @@ class ChatMediaUpload(APIView):
 			
 		except Exception as e:
 			logger.error(f"Error uploading chat media: {str(e)}")
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-	
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 	def get(self, request):
 		"""
 		Get media file by message_id for download/viewing
@@ -623,10 +623,10 @@ class ChatMediaUpload(APIView):
 					
 			except ChatMessage.DoesNotExist:
 				return Response({'error': 'Message not found'}, status=status.HTTP_404_NOT_FOUND)
-				
+
 		except Exception as e:
 			logger.error(f"Error retrieving chat media: {str(e)}")
-			return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class ChatMediaManager(APIView):
 	"""

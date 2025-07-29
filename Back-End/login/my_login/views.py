@@ -50,7 +50,7 @@ import json
 
 OAUTH2_PROVIDERS = settings.OAUTH2_PROVIDERS
 
-logger = logging.getLogger('light_login')
+logger = logging.getLogger('my_login')
 
 def get_jwt_token_for_user(user):
 	refresh = RefreshToken.for_user(user)
@@ -659,7 +659,7 @@ class Verify2FALoginView(APIView):
 						  status=status.HTTP_404_NOT_FOUND)
 		except Exception as e:
 			logger.error(f"Error during 2FA verification: {str(e)}")
-			return Response({"error": str(e)}, 
+			return Response({"error": 'Internal server error'},
 						  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Disable2FAView(APIView):
@@ -757,11 +757,11 @@ class UserRegister(APIView):
 					}, status=status.HTTP_201_CREATED)
 					
 		except Exception as e:
-			return Response(
-				{'error': str(e)}, 
-				status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST)
-			)
-			
+			logger.error(f"User registration error: {str(e)}", exc_info=True)
+			return Response({
+				'error': 'Internal server error'
+			}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 
 # Update the UserLogin class to work with both email/password and OAuth users
@@ -812,7 +812,8 @@ class UserLogin(APIView):
 				'email': user.email
 			}, status=status.HTTP_200_OK)
 		except Exception as e:
-			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+			logger.error(f"User login error: {str(e)}", exc_info=True)
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 			# headers = {
 			# 	'Content-Type': 'application/x-www-form-urlencoded',
@@ -875,7 +876,8 @@ class ServiceRegister(APIView):
 			else:
 				return Response({'error': 'Invalid service password'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
-			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+			logger.error(f"Service registration error: {str(e)}", exc_info=True)
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -892,7 +894,8 @@ class UserLogout(APIView):
 		except AccessToken.DoesNotExist:
 			return Response({'error': 'invalid token'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
-			return Response({'error': str(e)}, status=error_codes.get(str(e), status.HTTP_400_BAD_REQUEST))
+			logger.error(f"Error during logout: {str(e)}")
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 		return Response(status=status.HTTP_400_BAD_REQUEST)
 		
 
