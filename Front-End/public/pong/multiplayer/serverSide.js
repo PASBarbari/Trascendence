@@ -56,7 +56,7 @@ async function createGame(player_1, player_2, tournamentId = null) {
 		// Extract room_id and initialize WebSocket
 		const room_id = data.room_id || data.id;
 		if (room_id) {
-			initializeWebSocket(room_id, player_1, player_2);
+			initializeWebSocket(room_id);
 		} else {
 			throw new Error("No room_id received from server");
 		}

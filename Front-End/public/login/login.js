@@ -375,7 +375,7 @@ function showOTPVerificationForm(tempToken, email) {
 			e.preventDefault();
 			const otpCode = document.getElementById("otpCode").value;
 			if (otpCode) {
-				const verified = await verifyOTP(tempToken, otpCode, email);
+				const verified = await verifyOTP(tempToken, otpCode);
 				if (verified) {
 					window.navigateTo("#home");
 				} else {

@@ -1,9 +1,7 @@
 import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
-// console.log("Profile script loaded");
 import * as QRCode from "qrcode";
-// console.log(QRCode);
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -119,7 +117,7 @@ function renderProfile() {
 		initials,
 	} = getVariables();
 	let edit = false;
-
+	console.log("[has_two_factor_auth]", has_two_factor_auth);
 	const profileDiv = document.getElementById("profile");
 	profileDiv.innerHTML = `
 		<div class="profile-card">
@@ -272,6 +270,7 @@ function renderProfile() {
 	const toggle2FAButton = document.getElementById("toggle2FAButton");
 	toggle2FAButton.addEventListener("click", async function (e) {
 		e.preventDefault();
+		console.log("[toggle2FAButton] Clicked, has_two_factor_auth:", has_two_factor_auth);
 		if (has_two_factor_auth) {
 			// Disable 2FA
 			try {
@@ -285,6 +284,7 @@ function renderProfile() {
 						},
 					}
 				);
+				console.log("[toggle2FAButton] Response:", response);
 				if (response.ok) {
 					setVariables({
 						has_two_factor_auth: false,
@@ -381,6 +381,7 @@ function renderProfile() {
 						);
 
 						if (response.ok) {
+							console.log("[toggle2FAButton] 2FA setup successful");
 							setVariables({
 								has_two_factor_auth: true,
 							});
