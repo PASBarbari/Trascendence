@@ -98,16 +98,13 @@ async function handleOAuthLogin(provider) {
 	let storageCheckInterval;
 
 	try {
-		const response = await fetch(
-			`${url_api}/login/login/oauth/${provider}/`,
-			{
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"X-CSRFToken": csrftoken,
-				},
-			}
-		);
+		const response = await fetch(`${url_api}/login/login/oauth/${provider}/`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": csrftoken,
+			},
+		});
 
 		if (response.ok) {
 			const data = await response.json();
@@ -159,10 +156,7 @@ async function handleOAuthLogin(provider) {
 						if (result.type === "OAUTH_SUCCESS") {
 							// Verifica che i dati ci siano
 							if (!result.access_token || !result.refresh_token) {
-								console.error(
-									"Token mancanti nel risultato:",
-									result
-								);
+								console.error("Token mancanti nel risultato:", result);
 								showAlertForXSeconds(
 									"OAuth authentication failed: missing tokens",
 									"error",
@@ -188,12 +182,9 @@ async function handleOAuthLogin(provider) {
 							window.navigateTo("#home");
 
 							// Mostra messaggio di successo
-							showAlertForXSeconds(
-								"OAuth login successful!",
-								"success",
-								3,
-								{ asToast: true }
-							);
+							showAlertForXSeconds("OAuth login successful!", "success", 3, {
+								asToast: true,
+							});
 						} else if (result.type === "OAUTH_ERROR") {
 							showAlertForXSeconds(
 								`OAuth login failed: ${result.error}`,
@@ -219,14 +210,14 @@ async function handleOAuthLogin(provider) {
 						popup.close();
 					}
 				} catch (e) {
-					console.log("Popup già chiuso o non accessibile");
+					console.log(`Popup già chiuso o non accessibile, ${e}`);
 				}
 				localStorage.removeItem("oauth_result");
 			}, 300000); // 5 minuti
 		} else {
 			const errorData = await response.json();
 			showAlertForXSeconds(
-				"Authentication error. Please try again.",
+				`Authentication error. Please try again. Error: ${errorData.error}`,
 				"error",
 				3,
 				{ asToast: true }
@@ -234,7 +225,7 @@ async function handleOAuthLogin(provider) {
 		}
 	} catch (error) {
 		showAlertForXSeconds(
-			"Connection error during authentication.",
+			`Connection error during authentication. Error: ${error}`,
 			"error",
 			3,
 			{ asToast: true }
@@ -256,12 +247,9 @@ async function onHandleSubmit(e, email, password) {
 			});
 		}
 	} else {
-		showAlertForXSeconds(
-			"Please enter both email and password.",
-			"error",
-			3,
-			{ asToast: true }
-		);
+		showAlertForXSeconds("Please enter both email and password.", "error", 3, {
+			asToast: true,
+		});
 	}
 }
 
@@ -288,11 +276,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 				const data = await response.json();
 
 				// Check if 2FA verification is needed
-				if (
-					data.temp_token &&
-					data.message &&
-					data.message.includes("2FA")
-				) {
+				if (data.temp_token && data.message && data.message.includes("2FA")) {
 					// Show OTP verification form
 					showOTPVerificationForm(data.temp_token, email);
 					return false;
@@ -334,17 +318,14 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 					}
 				}
 
-				showAlertForXSeconds(
-					`Login failed: ${errorMessage}`,
-					"error",
-					3,
-					{ asToast: true }
-				);
+				showAlertForXSeconds(`Login failed: ${errorMessage}`, "error", 3, {
+					asToast: true,
+				});
 				return false;
 			}
 		} catch (error) {
 			showAlertForXSeconds(
-				"Connection error during login. Please try again later.",
+				`Connection error during login. Please try again later. error: ${error}`,
 				"error",
 				3,
 				{ asToast: true }
@@ -441,7 +422,7 @@ function showOTPVerificationForm(tempToken, email) {
 		});
 }
 
-async function verifyOTP(tempToken, otpCode, email) {
+async function verifyOTP(tempToken, otpCode) {
 	const { url_api } = getVariables();
 	const csrftoken = getCookie("csrftoken");
 

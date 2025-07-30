@@ -1,4 +1,4 @@
-FROM node:lts-alpine as dev
+FROM node:lts-alpine AS dev
 WORKDIR /app
 
 # Copy package files and install dependencies

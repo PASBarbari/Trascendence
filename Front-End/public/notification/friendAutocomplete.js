@@ -4,10 +4,14 @@ import { blockUser } from "../chat/blockUser.js";
 
 let debounceTimeout = null;
 
-export function initFriendAutocomplete({ inputId = "friendID", suggestionListId = "suggestionList", handlerOnSelect = null } = {}) {
+export function initFriendAutocomplete({
+	inputId = "friendID",
+	suggestionListId = "suggestionList",
+	handlerOnSelect = null,
+} = {}) {
 	const friendInput = document.getElementById(inputId);
 	const suggestionList = document.getElementById(suggestionListId);
-	const inputGroup = friendInput?.closest('.input-group');
+	const inputGroup = friendInput?.closest(".input-group");
 	const { url_api, token } = getVariables();
 	if (friendInput && suggestionList && inputGroup) {
 		suggestionList.style.width = inputGroup.offsetWidth + "px";
@@ -24,7 +28,7 @@ export function initFriendAutocomplete({ inputId = "friendID", suggestionListId 
 			suggestionList.style.zIndex = "9999";
 			if (spaceBelow < listHeight && spaceAbove > listHeight) {
 				// Mostra sopra
-				suggestionList.style.top = (inputRect.top - listHeight) + "px";
+				suggestionList.style.top = inputRect.top - listHeight + "px";
 				suggestionList.style.bottom = "auto";
 			} else {
 				// Mostra sotto
@@ -50,7 +54,12 @@ export function initFriendAutocomplete({ inputId = "friendID", suggestionListId 
 				suggestionList.style.display = "block";
 				searchUsers(url_api, token, friendInput.value)
 					.then((results) => {
-						updateSuggestionList(suggestionList, results, friendInput, handlerOnSelect);
+						updateSuggestionList(
+							suggestionList,
+							results,
+							friendInput,
+							handlerOnSelect
+						);
 						positionSuggestionList();
 					})
 					.catch((error) => {
@@ -63,39 +72,51 @@ export function initFriendAutocomplete({ inputId = "friendID", suggestionListId 
 		window.addEventListener("scroll", positionSuggestionList, true);
 
 		friendInput.addEventListener("blur", () => {
-			setTimeout(() => suggestionList.style.display = "none", 150);
+			setTimeout(() => (suggestionList.style.display = "none"), 150);
 		});
 	}
 }
 
-export function updateSuggestionList(suggestionList, results, friendInput, handlerOnSelect) {
+export function updateSuggestionList(
+	suggestionList,
+	results,
+	friendInput,
+	handlerOnSelect
+) {
 	if (!results || results.length === 0) {
 		suggestionList.innerHTML = `<a class="list-group-item list-group-item-action disabled">Nessun risultato</a>`;
 		return;
 	}
 	const isBlockUser = friendInput.id === "blockUserInput";
-	suggestionList.innerHTML = results.map(user =>
-		`<a type="button" class="list-group-item list-group-item-action" data-userid="${user.user_id}">${user.username} 
-			<i class="bi ${isBlockUser ? "bi-lock-fill text-danger" : "bi-cart-plus text-success"} float-end"></i>
+	suggestionList.innerHTML = results
+		.map(
+			(user) =>
+				`<a type="button" class="list-group-item list-group-item-action" data-userid="${
+					user.user_id
+				}">${user.username} 
+			<i class="bi ${
+				isBlockUser ? "bi-lock-fill text-danger" : "bi-cart-plus text-success"
+			} float-end"></i>
 		</a>`
-	).join('');
+		)
+		.join("");
 
-	suggestionList.querySelectorAll("a[data-userid]").forEach(item => {
-		item.addEventListener("mousedown", function(e) {
+	suggestionList.querySelectorAll("a[data-userid]").forEach((item) => {
+		item.addEventListener("mousedown", function () {
 			const userId = Number(this.getAttribute("data-userid"));
 			const username = this.textContent.trim();
 			if (typeof handlerOnSelect === "function") {
 				handlerOnSelect(friendInput, userId, this);
 			} else if (friendInput.id === "blockUserInput") {
-			// Chiamata diretta per il blocco utenti
-			blockUser(userId, username);
-			suggestionList.style.display = "none";
-			if (friendInput) {
-				friendInput.value = "";
-				friendInput.dataset.userid = "";
+				// Chiamata diretta per il blocco utenti
+				blockUser(userId, username);
+				suggestionList.style.display = "none";
+				if (friendInput) {
+					friendInput.value = "";
+					friendInput.dataset.userid = "";
 				}
 			} else {
-				handleFriendRequest('POST', userId, username);
+				handleFriendRequest("POST", userId, username);
 				suggestionList.style.display = "none";
 				if (friendInput) friendInput.value = "";
 			}
@@ -105,13 +126,16 @@ export function updateSuggestionList(suggestionList, results, friendInput, handl
 }
 
 export async function searchUsers(url_api, token, query) {
-	const response = await fetch(`${url_api}/user/user/search?search=${query}&page=1&page_size=4`, {
-		method: "GET",
-		headers: {
-			"Content-Type": "application/json",
-			"Authorization": `Bearer ${token}`
-		},
-	});
+	const response = await fetch(
+		`${url_api}/user/user/search?search=${query}&page=1&page_size=4`,
+		{
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+		}
+	);
 
 	if (response.ok) {
 		const data = await response.json();

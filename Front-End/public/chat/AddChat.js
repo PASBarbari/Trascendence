@@ -35,6 +35,7 @@ function renderAddChat() {
 	document.body.appendChild(addChatContainer);
 
 
+// eslint-disable-next-line no-unused-vars
 const userIdsInput = addChatContainer.querySelector("#userIdsInput");
 const badgeContainer = addChatContainer.querySelector("#selectedUserIds");
 let selectedUsers = [];

@@ -1,9 +1,8 @@
-import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { loginUser } from "../login/login.js";
 import { registerUser } from "../register/register.js";
-import { renderPong } from "./locale/pong.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
+import { getVariables } from "../var.js";
 
 // Load CSS files
 const pongContainerCSS = document.createElement("link");
@@ -100,7 +99,7 @@ async function loadFriendListTemplate() {
 			"Failed to load friend list. Please try again.",
 			"error",
 			5,
-			{ asToast: true , game: true }
+			{ asToast: true, game: true }
 		);
 		return null;
 	}
@@ -167,11 +166,17 @@ async function inviteToGame(friendId, friendName) {
 		// Close friend list
 		closeFriendList();
 
-		window.navigateTo(`#pongmulti?opponent=${friendId}&opponentName=${encodeURIComponent(friendName)}`);
+		window.navigateTo(
+			`#pongmulti?opponent=${friendId}&opponentName=${encodeURIComponent(
+				friendName
+			)}`
+		);
 	} catch (error) {
 		console.error("💥 Error starting multiplayer game:", error);
-		showAlertForXSeconds("❌ Failed to start multiplayer game", "error", 5, {asToast: true, game: true});
-
+		showAlertForXSeconds("❌ Failed to start multiplayer game", "error", 5, {
+			asToast: true,
+			game: true,
+		});
 
 		// Reset button state
 		const inviteBtn = document.querySelector(
@@ -407,10 +412,10 @@ window.inviteToGame = inviteToGame;
 function createMobileControls() {
 	// Remove existing controls
 	removeMobileControls();
-	
-	const mobileControls = document.createElement('div');
-	mobileControls.id = 'mobile-pong-controls';
-	mobileControls.className = 'mobile-pong-controls';
+
+	const mobileControls = document.createElement("div");
+	mobileControls.id = "mobile-pong-controls";
+	mobileControls.className = "mobile-pong-controls";
 	mobileControls.innerHTML = `
 		<div class="mobile-controls-left">
 			<button class="mobile-btn mobile-btn-up" id="mobileUpBtn">
@@ -421,17 +426,17 @@ function createMobileControls() {
 			</button>
 		</div>
 	`;
-	
+
 	document.body.appendChild(mobileControls);
 	attachMobileControlEvents();
 }
 
 function attachMobileControlEvents() {
-	const upBtn = document.getElementById('mobileUpBtn');
-	const downBtn = document.getElementById('mobileDownBtn');
-	
+	const upBtn = document.getElementById("mobileUpBtn");
+	const downBtn = document.getElementById("mobileDownBtn");
+
 	if (!upBtn || !downBtn) return;
-	
+
 	/**
 	 * Simulates a keyboard event for the specified key and event type.
 	 * This is used to mimic 'w' (KeyW) and 's' (KeyS) key presses for mobile controls.
@@ -442,68 +447,68 @@ function attachMobileControlEvents() {
 	function simulateKeyEvent(key, type) {
 		const event = new KeyboardEvent(type, {
 			key: key,
-			code: key === 'w' ? 'KeyW' : 'KeyS',
-			keyCode: key === 'w' ? 87 : 83,
-			which: key === 'w' ? 87 : 83,
-			bubbles: true
+			code: key === "w" ? "KeyW" : "KeyS",
+			keyCode: key === "w" ? 87 : 83,
+			which: key === "w" ? 87 : 83,
+			bubbles: true,
 		});
 		document.dispatchEvent(event);
 	}
-	
+
 	// Up button (W key)
-	upBtn.addEventListener('touchstart', (e) => {
+	upBtn.addEventListener("touchstart", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('w', 'keydown');
-		upBtn.classList.add('active');
+		simulateKeyEvent("w", "keydown");
+		upBtn.classList.add("active");
 	});
-	
-	upBtn.addEventListener('touchend', (e) => {
+
+	upBtn.addEventListener("touchend", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('w', 'keyup');
-		upBtn.classList.remove('active');
+		simulateKeyEvent("w", "keyup");
+		upBtn.classList.remove("active");
 	});
-	
+
 	// Down button (S key)
-	downBtn.addEventListener('touchstart', (e) => {
+	downBtn.addEventListener("touchstart", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('s', 'keydown');
-		downBtn.classList.add('active');
+		simulateKeyEvent("s", "keydown");
+		downBtn.classList.add("active");
 	});
-	
-	downBtn.addEventListener('touchend', (e) => {
+
+	downBtn.addEventListener("touchend", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('s', 'keyup');
-		downBtn.classList.remove('active');
+		simulateKeyEvent("s", "keyup");
+		downBtn.classList.remove("active");
 	});
-	
+
 	// Mouse events for testing on desktop
-	upBtn.addEventListener('mousedown', (e) => {
+	upBtn.addEventListener("mousedown", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('w', 'keydown');
-		upBtn.classList.add('active');
+		simulateKeyEvent("w", "keydown");
+		upBtn.classList.add("active");
 	});
-	
-	upBtn.addEventListener('mouseup', (e) => {
+
+	upBtn.addEventListener("mouseup", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('w', 'keyup');
-		upBtn.classList.remove('active');
+		simulateKeyEvent("w", "keyup");
+		upBtn.classList.remove("active");
 	});
-	
-	downBtn.addEventListener('mousedown', (e) => {
+
+	downBtn.addEventListener("mousedown", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('s', 'keydown');
-		downBtn.classList.add('active');
+		simulateKeyEvent("s", "keydown");
+		downBtn.classList.add("active");
 	});
-	
-	downBtn.addEventListener('mouseup', (e) => {
+
+	downBtn.addEventListener("mouseup", (e) => {
 		e.preventDefault();
-		simulateKeyEvent('s', 'keyup');
-		downBtn.classList.remove('active');
+		simulateKeyEvent("s", "keyup");
+		downBtn.classList.remove("active");
 	});
-	
+
 	// Prevent context menu
-	[upBtn, downBtn].forEach(btn => {
-		btn.addEventListener('contextmenu', (e) => {
+	[upBtn, downBtn].forEach((btn) => {
+		btn.addEventListener("contextmenu", (e) => {
 			e.preventDefault();
 		});
 	});
@@ -512,25 +517,25 @@ function attachMobileControlEvents() {
 // TODO: Implement a function to update the mobile score display if required in the future.
 
 function showMobileControls() {
-	const controls = document.getElementById('mobile-pong-controls');
+	const controls = document.getElementById("mobile-pong-controls");
 	if (controls) {
-		controls.style.display = 'flex';
-		controls.classList.add('show');
+		controls.style.display = "flex";
+		controls.classList.add("show");
 	} else {
 		createMobileControls();
 	}
 }
 
 function hideMobileControls() {
-	const controls = document.getElementById('mobile-pong-controls');
+	const controls = document.getElementById("mobile-pong-controls");
 	if (controls) {
-		controls.style.display = 'none';
-		controls.classList.remove('show');
+		controls.style.display = "none";
+		controls.classList.remove("show");
 	}
 }
 
 function removeMobileControls() {
-	const existingControls = document.getElementById('mobile-pong-controls');
+	const existingControls = document.getElementById("mobile-pong-controls");
 	if (existingControls) {
 		existingControls.remove();
 	}
@@ -538,22 +543,26 @@ function removeMobileControls() {
 
 /**
  * Detects if the current device is a mobile device or has touch capabilities.
- * 
+ *
  * This function uses the following methods to determine if the device is mobile:
  * 1. Checks if the `ontouchstart` event is supported in the `window` object.
  * 2. Checks if `navigator.maxTouchPoints` (number of touch points) is greater than 0.
  * 3. Uses a regular expression to match common mobile device user agents in `navigator.userAgent`.
- * 
+ *
  * Note: This detection method is not foolproof and may produce false positives or negatives.
  * For example, some desktop devices with touch screens may be detected as mobile devices,
  * and some mobile devices with unusual user agents may not be detected.
- * 
+ *
  * @returns {boolean} True if the device is detected as mobile or touch-capable, false otherwise.
  */
 function isMobileDevice() {
-	return 'ontouchstart' in window || 
-		   navigator.maxTouchPoints > 0 || 
-		   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+	return (
+		"ontouchstart" in window ||
+		navigator.maxTouchPoints > 0 ||
+		/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+			navigator.userAgent
+		)
+	);
 }
 
 // Auto-show mobile controls when game starts (call this from your game initialization)
@@ -572,15 +581,15 @@ window.removeMobileControls = removeMobileControls;
 window.initializeMobileControls = initializeMobileControls;
 
 // Global cleanup function for pong
-window.cleanupMobileControls = function() {
-	if (typeof window.removeMobileControls === 'function') {
+window.cleanupMobileControls = function () {
+	if (typeof window.removeMobileControls === "function") {
 		window.removeMobileControls();
 	}
 };
 
 // Clean up mobile controls on page unload
-window.addEventListener('beforeunload', () => {
-	if (typeof window.removeMobileControls === 'function') {
+window.addEventListener("beforeunload", () => {
+	if (typeof window.removeMobileControls === "function") {
 		window.removeMobileControls();
 	}
 });

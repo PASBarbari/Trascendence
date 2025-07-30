@@ -89,7 +89,6 @@ export default class Ball extends THREE.EventDispatcher {
 
 		// Check collision with helper mesh
 		if (target && target.mesh) {
-			const helperMesh = target.mesh.children[0];
 
 			// Get paddle dimensions
 			const paddleWidth = state.p.width + state.ball_radius;
@@ -105,27 +104,20 @@ export default class Ball extends THREE.EventDispatcher {
 			// Inner face X position (facing the playing field)
 			const innerFaceX =
 				playerIndex === 0 ? paddleHalfWidth : -paddleHalfWidth;
-			// Bottom edge Z position
-			const bottomEdgeZ = -paddleHalfHeight;
 
 			// Distance from inner face and bottom edge
 			const distFromInnerFace = Math.abs(relativePos.x - innerFaceX);
-			const distFromBottom = Math.abs(relativePos.z - bottomEdgeZ);
 
 			// Check if ball is in front of the inner face or above/below the bottom edge
 			const isInFrontOfInnerFace =
 				(playerIndex === 0 && relativePos.x > innerFaceX) ||
 				(playerIndex === 1 && relativePos.x < innerFaceX);
-			const isNearBottom =
-				Math.abs(relativePos.z - bottomEdgeZ) < this.radius;
+			
 
 			// Check if the ball is within the paddle's height range (for inner face collision)
 			const isWithinPaddleHeight =
 				Math.abs(relativePos.z) <= paddleHalfHeight;
 
-			// Check if the ball is within the paddle's width range (for bottom edge collision)
-			const isWithinPaddleWidth =
-				Math.abs(relativePos.x) <= paddleHalfWidth;
 
 			// Collision with inner face
 			if (

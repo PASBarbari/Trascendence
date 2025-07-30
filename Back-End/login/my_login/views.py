@@ -1,5 +1,6 @@
 from math import log
 import stat
+from urllib import response
 from urllib.parse import urlencode
 from django.contrib.auth import get_user_model, login, logout
 from django.utils.decorators import method_decorator
@@ -368,113 +369,114 @@ class OAuthCallbackView(APIView):
 			
 		except Exception as e:
 			logger.error(f'OAuth callback error: {str(e)}', exc_info=True)
-			return self.handle_popup_response(error='callback_failed')
+			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 	
-	def handle_popup_response(self, access_token=None, refresh_token=None, 
-							 user_id=None, username=None, email=None, error=None):
-		"""
-		Restituisce una pagina HTML che comunica con la finestra parent e si chiude
-		"""
-		if error:
-			# SANITIZZA l'errore per HTML
-			error_escaped = html.escape(str(error))
+	# def handle_popup_response(self, access_token=None, refresh_token=None, 
+	# 						 user_id=None, username=None, email=None, error=None):
+	# 	"""
+	# 	Restituisce una pagina HTML che comunica con la finestra parent e si chiude
+	# 	"""
+	# 	if error:
+	# 		# SANITIZZA l'errore per HTML
+	# 		error_escaped = html.escape(str(error))
 			
-			html_content = f"""
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<title>OAuth Error</title>
-				<style>
-					body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }}
-					.error {{ color: #dc3545; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-				</style>
-			</head>
-			<body>
-				<div class="error">
-					<h2>Authentication Error</h2>
-					<p>Error: {error_escaped}</p>
-					<p>This window will close automatically...</p>
-				</div>
-				<script>
-					console.log('OAuth Error in popup');
+	# 		html_content = f"""
+	# 		<!DOCTYPE html>
+	# 		<html>
+	# 		<head>
+	# 			<title>OAuth Error</title>
+	# 			<style>
+	# 				body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }}
+	# 				.error {{ color: #dc3545; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+	# 			</style>
+	# 		</head>
+	# 		<body>
+	# 			<div class="error">
+	# 				<h2>Authentication Error</h2>
+	# 				<p>Error: {error_escaped}</p>
+	# 				<p>This window will close automatically...</p>
+	# 			</div>
+	# 			<script>
+	# 				console.log('OAuth Error in popup');
 					
-					// JSON.stringify per sanitizzazione automatica
-					try {{
-						const errorData = {{
-							type: 'OAUTH_ERROR',
-							error: {json.dumps(str(error))},
-							timestamp: Date.now()
-						}};
+	# 				// JSON.stringify per sanitizzazione automatica
+	# 				try {{
+	# 					const errorData = {{
+	# 						type: 'OAUTH_ERROR',
+	# 						error: {json.dumps(str(error))},
+	# 						timestamp: Date.now()
+	# 					}};
 						
-						console.log('Saving error to localStorage:', errorData);
-						localStorage.setItem('oauth_result', JSON.stringify(errorData));
+	# 					console.log('Saving error to localStorage:', errorData);
+	# 					localStorage.setItem('oauth_result', JSON.stringify(errorData));
 						
-						console.log('Error saved to localStorage');
-					}} catch (e) {{
-						console.error('Error saving to localStorage:', e);
-					}}
+	# 					console.log('Error saved to localStorage');
+	# 				}} catch (e) {{
+	# 					console.error('Error saving to localStorage:', e);
+	# 				}}
 					
-					setTimeout(() => {{
-						console.log('Closing popup window');
-						window.close();
-					}}, 2000);
-				</script>
-			</body>
-			</html>
-			"""
-		else:
-			# SANITIZZA tutti i dati per HTML
-			username_html = html.escape(str(username)) if username else ''
+	# 				setTimeout(() => {{
+	# 					console.log('Closing popup window');
+	# 					window.close();
+	# 				}}, 2000);
+	# 			</script>
+	# 		</body>
+	# 		</html>
+	# 		"""
+	# 	else:
+	# 		# SANITIZZA tutti i dati per HTML
+	# 		username_html = html.escape(str(username)) if username else ''
 			
-			html_content = f"""
-			<!DOCTYPE html>
-			<html>
-			<head>
-				<title>OAuth Success</title>
-				<style>
-					body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }}
-					.success {{ color: #28a745; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-				</style>
-			</head>
-			<body>
-				<div class="success">
-					<h2>Authentication Successful!</h2>
-					<p>Welcome, {username_html}!</p>
-					<p>This window will close automatically...</p>
-				</div>
-				<script>
-					console.log('OAuth Success in popup');
+	# 		html_content = f"""
+	# 		<!DOCTYPE html>
+	# 		<html>
+	# 		<head>
+	# 			<title>OAuth Success</title>
+	# 			<style>
+	# 				body {{ font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f8f9fa; }}
+	# 				.success {{ color: #28a745; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+	# 			</style>
+	# 		</head>
+	# 		<body>
+	# 			<div class="success">
+	# 				<h2>Authentication Successful!</h2>
+	# 				<p>Welcome, {username_html}!</p>
+	# 				<p>This window will close automatically...</p>
+	# 			</div>
+	# 			<script>
+	# 				console.log('OAuth Success in popup');
 					
-					// JSON.stringify per sanitizzazione completa
-					try {{
-						const successData = {{
-							type: 'OAUTH_SUCCESS',
-							access_token: {json.dumps(str(access_token)) if access_token else 'null'},
-							refresh_token: {json.dumps(str(refresh_token)) if refresh_token else 'null'},
-							user_id: {json.dumps(str(user_id)) if user_id else 'null'},
-							username: {json.dumps(str(username)) if username else 'null'},
-							email: {json.dumps(str(email)) if email else 'null'},
-							timestamp: Date.now()
-						}};
+	# 				// JSON.stringify per sanitizzazione completa
+	# 				try {{
+	# 					const successData = {{
+	# 						type: 'OAUTH_SUCCESS',
+	# 						access_token: {json.dumps(str(access_token)) if access_token else 'null'},
+	# 						refresh_token: {json.dumps(str(refresh_token)) if refresh_token else 'null'},
+	# 						user_id: {json.dumps(str(user_id)) if user_id else 'null'},
+	# 						username: {json.dumps(str(username)) if username else 'null'},
+	# 						email: {json.dumps(str(email)) if email else 'null'},
+	# 						timestamp: Date.now()
+	# 					}};
 						
-						console.log('Saving success data to localStorage:', successData);
-						localStorage.setItem('oauth_result', JSON.stringify(successData));
+	# 					console.log('Saving success data to localStorage:', successData);
+	# 					localStorage.setItem('oauth_result', JSON.stringify(successData));
 						
-						console.log('Success data saved to localStorage');
-					}} catch (e) {{
-						console.error('Error saving to localStorage:', e);
-					}}
+	# 					console.log('Success data saved to localStorage');
+	# 				}} catch (e) {{
+	# 					console.error('Error saving to localStorage:', e);
+	# 				}}
 					
-					setTimeout(() => {{
-						console.log('Closing popup window');
-						window.close();
-					}}, 2000);
-				</script>
-			</body>
-			</html>
-			"""
+	# 				setTimeout(() => {{
+	# 					console.log('Closing popup window');
+	# 					window.close();
+	# 				}}, 2000);
+	# 			</script>
+	# 		</body>
+	# 		</html>
+	# 		"""
 		
-		return HttpResponse(html_content, content_type='text/html')
+	# 	return HttpResponse(html_content, content_type='text/html')
 
 @method_decorator(ratelimit(key='user', rate='50/m', method='GET'), name='get')
 class Setup2FAView(APIView):

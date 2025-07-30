@@ -1,19 +1,11 @@
-import * as THREE from "three";
 import { state } from "../locale/state.js";
 import { getVariables } from "../../var.js";
-import { renderPong } from "../locale/pong.js";
 import * as GAME from "../locale/gameLogic.js";
 import * as SETUP from "../locale/setup.js";
-import * as UTILS from "../locale/utils.js";
-import { getCookie } from "../../cookie.js";
 import { showAlertForXSeconds } from "../../alert/alert.js";
 import { updateScore } from "../locale/src/Score.js";
 import { escapeHTML } from "../../var.js";
 let socket;
-
-// Throttling to prevent too frequent updates
-let lastGameStateUpdate = 0;
-const GAME_STATE_THROTTLE = 20; // Minimum 50ms between game state updates (20fps max)
 
 function sendPlayerMovement(playerId, direction) {
 	if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -153,14 +145,14 @@ function hideAllMenusAndStartGame() {
 	}
 }
 
-function initializeWebSocket(room_id, player1, player2) {
+function initializeWebSocket(room_id) {
 	const { token, wss_api } = getVariables();
 
 	const wsUrl = `${wss_api}/pong/ws/pong/${room_id}/?token=${token}`;
 
 	socket = new WebSocket(wsUrl);
 	if (!window.activeWebSockets) window.activeWebSockets = [];
-		window.activeWebSockets.push(socket);
+	window.activeWebSockets.push(socket);
 
 	socket.onopen = function () {
 		updateConnectionStatus("connected", "Connected to game server");
@@ -223,13 +215,19 @@ function initializeWebSocket(room_id, player1, player2) {
 				// Wait a moment for initialization to process
 				setTimeout(() => {
 					hideAllMenusAndStartGame();
-					showAlertForXSeconds("Game Started! Good luck!", "success", 5, { asToast: true, game: true });
+					showAlertForXSeconds("Game Started! Good luck!", "success", 5, {
+						asToast: true,
+						game: true,
+					});
 				}, 200);
 			} catch (error) {
 				console.error("Failed to initialize game:", error);
 				// Still try to start the game
 				hideAllMenusAndStartGame();
-				showAlertForXSeconds("Game Started! Good luck!", "success", 5, { asToast: true, game: true });
+				showAlertForXSeconds("Game Started! Good luck!", "success", 5, {
+					asToast: true,
+					game: true,
+				});
 			}
 		} else if (message.message === "Waiting for players to be ready...") {
 			console.log("Waiting for players to be ready...:", message);
@@ -239,7 +237,10 @@ function initializeWebSocket(room_id, player1, player2) {
 			console.log("Game quit by server:", message);
 			document.body.classList.remove("game-active");
 
-			showAlertForXSeconds(message.message, "warning", 5, { asToast: true, game: true });
+			showAlertForXSeconds(message.message, "warning", 5, {
+				asToast: true,
+				game: true,
+			});
 
 			// Stop the game and show ready screen
 			state.isStarted = false;
@@ -258,7 +259,7 @@ function initializeWebSocket(room_id, player1, player2) {
 		console.error("WebSocket error occurred:", error);
 	};
 
-	socket.onclose = function (event) {
+	socket.onclose = function () {
 		updateConnectionStatus("disconnected", "Connection closed");
 	};
 }
@@ -576,7 +577,10 @@ function handleGameOver() {
 
 	const safeWinner = escapeHTML(winner);
 	// Show game over with multiplayer context
-	showAlertForXSeconds(`Game Over! ${safeWinner} wins!`, "info", 5, { asToast: true, game: true });
+	showAlertForXSeconds(`Game Over! ${safeWinner} wins!`, "info", 5, {
+		asToast: true,
+		game: true,
+	});
 
 	window.navigateTo("#home");
 	// Show ready screen for potential rematch

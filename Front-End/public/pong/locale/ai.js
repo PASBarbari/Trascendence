@@ -636,17 +636,10 @@ export function moveIA() {
 	const ai = state.players[1];
 	const ball = state.ball;
 
-	// Debug basic checks
-	if (!ai || !ai.mesh) {
-		console.log(`❌ moveIA: AI player not found or missing mesh`);
-		return;
-	}
-
-	if (!ball || !ball.mesh) {
-		console.log(`❌ moveIA: Ball not found or missing mesh`);
-		return;
-	}
-
+	if (!ai || !ai.mesh || !ball || !ball.mesh) return;
+// 	const aiZ = ai.mesh.position.z;
+// 	const ballZ = ball.mesh.position.z;
+// 	const moveDistance = ballZ - aiZ;
 	let moveAmount = 0;
 
 	if (!aiOpponent) {

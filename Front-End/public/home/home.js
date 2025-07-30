@@ -1,11 +1,9 @@
-import { renderTaskAvaiable } from "../task/taskAvaiable.js";
-import { renderTaskActive } from "../task/taskActive.js";
 import {
 	renderNotification,
 	initializeWebSocket,
 } from "../notification/notification.js";
 import { renderPongInfo } from "../pong/pongContainer.js";
-import { initializeProfile, renderProfile } from "../profile/profile.js";
+import { initializeProfile } from "../profile/profile.js";
 import { renderTournament } from "../pong/tournament.js";
 import { renderMatchHistory } from "../pong/matchHistory.js";
 
@@ -41,8 +39,8 @@ async function toggleProfile() {
 }
 
 function renderHome() {
-    const contentDiv = document.getElementById('content');
-    contentDiv.innerHTML = `
+	const contentDiv = document.getElementById("content");
+	contentDiv.innerHTML = `
         <div class="content-home">
             <div class="profile" id="profile" style="display: block;"></div>
             <!-- <div class="task-container" id="taskAvailableContainer"></div> -->
@@ -69,10 +67,10 @@ function renderHome() {
 	renderMatchHistory();
 
 	// Se esiste un elemento .content, resetta il margine e rimuovi classi di animazione
-	const animatedContent = document.querySelector('.content');
+	const animatedContent = document.querySelector(".content");
 	if (animatedContent) {
-		animatedContent.classList.remove('animate-margin', 'animate-margin-logout');
-		animatedContent.style.margin = '0 10px 10px 0';
+		animatedContent.classList.remove("animate-margin", "animate-margin-logout");
+		animatedContent.style.margin = "0 10px 10px 0";
 	}
 }
 

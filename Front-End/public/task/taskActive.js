@@ -1,4 +1,4 @@
-import { setVariables, getVariables } from '../var.js';
+import { getVariables } from '../var.js';
 import { getCookie } from '../cookie.js';
 
 const link = document.createElement('link');
