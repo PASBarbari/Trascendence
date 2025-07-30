@@ -3,9 +3,9 @@ import { renderRegister } from "./register/register.js";
 import { renderHome } from "./home/home.js";
 import { renderPong } from "./pong/locale/pong.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
-
-import "./profile/profile.js"; // if this file uses qrcode
-import "./pong/pongContainer.js"; // if this file uses three
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
+// import "./profile/profile.js"; // if this file uses qrcode
+// import "./pong/pongContainer.js"; // if this file uses three
 
 function removeExpandableSidebar() {
 	// Rimuovi sidebar chat

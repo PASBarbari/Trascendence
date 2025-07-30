@@ -13,7 +13,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "bootstrap": "^5.3.3",
+    "bootstrap": "^5.3.7",
     "qrcode": "^1.5.4",
     "stats.js": "^0.17.0",
     "statsjs": "^1.0.7",
