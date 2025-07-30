@@ -278,7 +278,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 				// Check if 2FA verification is needed
 				if (data.temp_token && data.message && data.message.includes("2FA")) {
 					// Show OTP verification form
-					showOTPVerificationForm(data.temp_token, email);
+					showOTPVerificationForm(data.temp_token);
 					return false;
 				}
 
@@ -337,7 +337,7 @@ async function loginUser(email, password, csrftoken, isBaseLogin) {
 	}
 }
 
-function showOTPVerificationForm(tempToken, email) {
+function showOTPVerificationForm(tempToken) {
 	const contentDiv = document.getElementById("content");
 	// Save the original content to restore if needed
 	const originalContent = contentDiv.innerHTML;
