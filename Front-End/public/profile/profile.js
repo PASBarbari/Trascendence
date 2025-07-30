@@ -1,6 +1,9 @@
 import { setVariables, getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
+// console.log("Profile script loaded");
+import * as QRCode from "qrcode";
+// console.log(QRCode);
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -27,11 +30,15 @@ async function PatchProfile(name, surname, birthdate, bio) {
 		});
 
 		if (response.ok) {
-			showAlertForXSeconds("Profile updated successfully", "success", 3, { asToast: true });
+			showAlertForXSeconds("Profile updated successfully", "success", 3, {
+				asToast: true,
+			});
 		} else {
 			const errorData = await response.json();
 			console.error("Server response error:", errorData);
-			showAlertForXSeconds("Error updating profile", "error", 3, { asToast: true });
+			showAlertForXSeconds("Error updating profile", "error", 3, {
+				asToast: true,
+			});
 		}
 	} catch (error) {
 		console.error("Request error:", error);
@@ -40,7 +47,7 @@ async function PatchProfile(name, surname, birthdate, bio) {
 }
 
 async function GetProfile() {
-	const { userId, token, url_api } = getVariables();
+	const { token, url_api } = getVariables();
 	try {
 		const response = await fetch(`${url_api}/user/user/me`, {
 			method: "GET",
@@ -58,7 +65,7 @@ async function GetProfile() {
 
 			// Handle current_avatar object structure
 			if (data.current_avatar && data.current_avatar.image_url) {
-				profileImageUrl = url_api + '/user' + data.current_avatar.image_url;
+				profileImageUrl = url_api + "/user" + data.current_avatar.image_url;
 			}
 
 			setVariables({
@@ -71,7 +78,6 @@ async function GetProfile() {
 				profileImageUrl: profileImageUrl,
 				has_two_factor_auth: data.has_two_factor_auth || false,
 			});
-
 		} else {
 			const errorData = await response.json();
 			console.error("Error fetching profile:", errorData);
@@ -110,7 +116,7 @@ function renderProfile() {
 		exp,
 		profileImageUrl,
 		has_two_factor_auth,
-		initials
+		initials,
 	} = getVariables();
 	let edit = false;
 
@@ -166,13 +172,14 @@ function renderProfile() {
 				<div class="profile-card-image-container">
 					<button class="profile-image-circle ">
 
-            ${profileImageUrl
-              ? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" />`
-              : `<div class="friend-avatar"
+            ${
+							profileImageUrl
+								? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" />`
+								: `<div class="friend-avatar"
                    style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
-                  ${initials || userUsername?.charAt(0).toUpperCase() || '?'}
+                  ${initials || userUsername?.charAt(0).toUpperCase() || "?"}
                  </div>`
-            }
+						}
 
 						<div class="edit-icon-overlay">
 							<i class="bi bi-pencil"></i>
@@ -203,12 +210,14 @@ function renderProfile() {
 		e.preventDefault();
 		edit = !edit;
 		if (edit) {
-			form.querySelectorAll(
-				'input:not([id="username"]):not([id="user_id"]):not([id="email"]):not([id="level"]):not([id="exp"]), textarea'
-			).forEach((input) => {
-				input.removeAttribute("readonly");
-				input.classList.remove("readonly-input");
-			});
+			form
+				.querySelectorAll(
+					'input:not([id="username"]):not([id="user_id"]):not([id="email"]):not([id="level"]):not([id="exp"]), textarea'
+				)
+				.forEach((input) => {
+					input.removeAttribute("readonly");
+					input.classList.remove("readonly-input");
+				});
 			profileImageContainer.classList.add("edit-mode");
 
 			const birthdateInput = document.getElementById("birthdate");
@@ -261,23 +270,28 @@ function renderProfile() {
 	expInput.style.setProperty("--value", `${expInput.value}%`);
 
 	const toggle2FAButton = document.getElementById("toggle2FAButton");
-	toggle2FAButton.addEventListener("click", async function(e) {
+	toggle2FAButton.addEventListener("click", async function (e) {
 		e.preventDefault();
 		if (has_two_factor_auth) {
 			// Disable 2FA
 			try {
-				const response = await fetch(`${getVariables().url_api}/login/login/2fa/disable/`, {
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-						"Authorization": `Bearer ${getVariables().token}`
-						}
-					});
+				const response = await fetch(
+					`${getVariables().url_api}/login/login/2fa/disable/`,
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: `Bearer ${getVariables().token}`,
+						},
+					}
+				);
 				if (response.ok) {
 					setVariables({
-						has_two_factor_auth: false
+						has_two_factor_auth: false,
 					});
-					showAlertForXSeconds("2FA disabled successfully", "success", 3, { asToast: true });
+					showAlertForXSeconds("2FA disabled successfully", "success", 3, {
+						asToast: true,
+					});
 					toggle2FAButton.innerText = "Enable 2FA";
 					renderProfile();
 				} else {
@@ -285,18 +299,25 @@ function renderProfile() {
 					alert(data.error || "Error disabling 2FA");
 				}
 			} catch (error) {
-				alert("Error disabling 2FA");
+				showAlertForXSeconds(
+					`Network error while disabling 2FA: ${error.message}`,
+					"error",
+					3,
+					{ asToast: true }
+				);
 			}
-		}
-		else {
+		} else {
 			try {
 				// Fetch the OTP URI from the server
-				const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
-					method: "GET",
-					headers: {
-						"Authorization": `Bearer ${getVariables().token}`
+				const response = await fetch(
+					`${getVariables().url_api}/login/login/2fa/setup/`,
+					{
+						method: "GET",
+						headers: {
+							Authorization: `Bearer ${getVariables().token}`,
+						},
 					}
-				});
+				);
 
 				if (!response.ok) {
 					throw new Error("Failed to fetch 2FA setup");
@@ -327,12 +348,13 @@ function renderProfile() {
 				document.body.appendChild(qrModal);
 
 				// Genera il QR code usando la libreria
-				const qrCodeContainer = qrModal.querySelector("#qrCodeContainer");
-				new QRCode(qrCodeContainer, {
-					text: otpUri,
-					width: 200,
-					height: 200,
-					correctLevel: QRCode.CorrectLevel.H
+				const qrCodeContainer = document.getElementById("qrCodeContainer");
+				const canvas = document.createElement("canvas");
+				qrCodeContainer.appendChild(canvas);
+
+				QRCode.toCanvas(canvas, otpUri, { width: 200 }, function (error) {
+					if (error) console.error(error);
+					else console.log("QR code generated!");
 				});
 
 				const closeQrModalBtn = qrModal.querySelector("#closeQrModal");
@@ -342,34 +364,48 @@ function renderProfile() {
 
 				const setup2FAForm = qrModal.querySelector("#setup2FAForm");
 				setup2FAForm.addEventListener("submit", async function (event) {
-				event.preventDefault();
-				const otpCode = qrModal.querySelector("#otpCode").value;
+					event.preventDefault();
+					const otpCode = qrModal.querySelector("#otpCode").value;
 
-				try {
-					const response = await fetch(`${getVariables().url_api}/login/login/2fa/setup/`, {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-							"Authorization": `Bearer ${getVariables().token}`
-						},
-						body: JSON.stringify({ otp_code: otpCode })
-					});
+					try {
+						const response = await fetch(
+							`${getVariables().url_api}/login/login/2fa/setup/`,
+							{
+								method: "POST",
+								headers: {
+									"Content-Type": "application/json",
+									Authorization: `Bearer ${getVariables().token}`,
+								},
+								body: JSON.stringify({ otp_code: otpCode }),
+							}
+						);
 
-					if (response.ok) {
-						setVariables({
-							has_two_factor_auth: true
-						});
-						toggle2FAButton.innerText = "Disable 2FA";
-						showAlertForXSeconds("2FA setup successful", "success", 3, { asToast: true });
-						document.body.removeChild(qrModal);
-					} else {
-						showAlertForXSeconds("Invalid OTP code. Please try again.", "error", 3, { asToast: true });
+						if (response.ok) {
+							setVariables({
+								has_two_factor_auth: true,
+							});
+							toggle2FAButton.innerText = "Disable 2FA";
+							showAlertForXSeconds("2FA setup successful", "success", 3, {
+								asToast: true,
+							});
+							document.body.removeChild(qrModal);
+						} else {
+							showAlertForXSeconds(
+								"Invalid OTP code. Please try again.",
+								"error",
+								3,
+								{ asToast: true }
+							);
+						}
+					} catch (error) {
+						showAlertForXSeconds(
+							`Network error during OTP verification: ${error.message}`,
+							"error",
+							3,
+							{ asToast: true }
+						);
 					}
-				} catch (error) {
-					showAlertForXSeconds("Network error during OTP verification", "error", 3, { asToast: true });
-				}
-			});
-
+				});
 			} catch (error) {
 				console.error("Error during 2FA setup:", error);
 			}
@@ -389,13 +425,14 @@ function renderProfile() {
 		<div class="login_box">
 			<h1>Select an image</h1>
 			<div class="profile-image-preview">
-				${profileImageUrl
-          ? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" id="imagePreview" />`
-          : `<div class="friend-avatar"
+				${
+					profileImageUrl
+						? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" id="imagePreview" />`
+						: `<div class="friend-avatar"
                    style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
-              ${initials || userUsername?.charAt(0).toUpperCase() || '?'}
+              ${initials || userUsername?.charAt(0).toUpperCase() || "?"}
              </div>`
-        }
+				}
 			</div>
 			<div class="profile-image-controls">
 				<label for="imageUpload" class="upload-btn">Choose file</label>
@@ -409,22 +446,26 @@ function renderProfile() {
 
 		// Add event listeners for the file input and buttons
 		const imageUpload = profileImageSelector.querySelector("#imageUpload");
-		const imagePreview = profileImageSelector.querySelector("#imagePreview");
-		const uploadImageBtn = profileImageSelector.querySelector("#uploadImageBtn");
-		const cancelImageBtn = profileImageSelector.querySelector("#cancelImageBtn");
+		// const imagePreview = profileImageSelector.querySelector("#imagePreview");
+		const uploadImageBtn =
+			profileImageSelector.querySelector("#uploadImageBtn");
+		const cancelImageBtn =
+			profileImageSelector.querySelector("#cancelImageBtn");
 
 		// Preview the selected image
 		imageUpload.addEventListener("change", function (event) {
-				const file = event.target.files[0];
-				if (file) {
-						const reader = new FileReader();
-						reader.onload = function (e) {
-								const previewContainer = profileImageSelector.querySelector(".profile-image-preview");
+			const file = event.target.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					const previewContainer = profileImageSelector.querySelector(
+						".profile-image-preview"
+					);
 
-								previewContainer.innerHTML = `<img src="${e.target.result}" alt="Profile" class="profile-card-image" id="imagePreview" />`;
-						};
-						reader.readAsDataURL(file);
-				}
+					previewContainer.innerHTML = `<img src="${e.target.result}" alt="Profile" class="profile-card-image" id="imagePreview" />`;
+				};
+				reader.readAsDataURL(file);
+			}
 		});
 
 		uploadImageBtn.addEventListener("click", async function () {
@@ -435,13 +476,17 @@ function renderProfile() {
 			}
 
 			if (!file.type.startsWith("image/")) {
-				showAlertForXSeconds("Selected file is not an image", "error", 3, { asToast: true });
+				showAlertForXSeconds("Selected file is not an image", "error", 3, {
+					asToast: true,
+				});
 				return;
 			}
 
 			const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 			if (file.size > MAX_FILE_SIZE) {
-				showAlertForXSeconds("File too large, maximum 10MB", "error", 3, { asToast: true });
+				showAlertForXSeconds("File too large, maximum 10MB", "error", 3, {
+					asToast: true,
+				});
 				return;
 			}
 
@@ -463,32 +508,41 @@ function renderProfile() {
 					const data = await response.json();
 
 					// Update avatar URL
-					const avatarUrl = url_api + '/user' + data.avatar;
+					const avatarUrl = url_api + "/user" + data.avatar;
 					setVariables({
-						profileImageUrl: avatarUrl
+						profileImageUrl: avatarUrl,
 					});
 
 					// Update the image in the UI
 
-					const profileImageCircle = document.querySelector(".profile-image-circle");
-          const existingImage = profileImageCircle.querySelector(".profile-card-image");
-          const existingDiv = profileImageCircle.querySelector(".friend-avatar");
+					const profileImageCircle = document.querySelector(
+						".profile-image-circle"
+					);
+					const existingImage = profileImageCircle.querySelector(
+						".profile-card-image"
+					);
+					const existingDiv =
+						profileImageCircle.querySelector(".friend-avatar");
 
-          if (existingImage) {
-              // Se esiste già un'immagine, aggiorna solo il src
-              existingImage.src = avatarUrl;
-          } else if (existingDiv) {
-              // Se esiste il div con iniziali, sostituiscilo con un'immagine
-              existingDiv.outerHTML = `<img src="${avatarUrl}" alt="Profile" class="profile-card-image" />`;
-          }
+					if (existingImage) {
+						// Se esiste già un'immagine, aggiorna solo il src
+						existingImage.src = avatarUrl;
+					} else if (existingDiv) {
+						// Se esiste il div con iniziali, sostituiscilo con un'immagine
+						existingDiv.outerHTML = `<img src="${avatarUrl}" alt="Profile" class="profile-card-image" />`;
+					}
 
-					showAlertForXSeconds("Avatar uploaded successfully", "success", 3, { asToast: true });
+					showAlertForXSeconds("Avatar uploaded successfully", "success", 3, {
+						asToast: true,
+					});
 
 					closeProfileImageSelector();
 				} else {
 					const errorData = await response.json();
 					console.error("Error uploading image:", errorData);
-					showAlertForXSeconds("Error uploading image", "error", 3, { asToast: true });
+					showAlertForXSeconds("Error uploading image", "error", 3, {
+						asToast: true,
+					});
 				}
 			} catch (error) {
 				console.error("Upload error:", error);

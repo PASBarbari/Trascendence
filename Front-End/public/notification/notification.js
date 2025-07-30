@@ -1,9 +1,8 @@
-import { setVariables, getVariables, calculateInitials, escapeHTML } from "../var.js";
-import { updateChatList } from "../chat/ExpandableSidebar.js";
+/* global bootstrap */
+import { getVariables, calculateInitials, escapeHTML } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 import { initFriendAutocomplete } from "./friendAutocomplete.js";
-import { renderNewTournament } from "../pong/tournament.js";
 import {
 	handleFriendAcceptedMessage,
 	handleFriendBlockedMessage,
@@ -23,7 +22,10 @@ import {
 	handleGameCreatedMessage,
 	handlePongInvitationMessage,
 } from "./handlers/game.js";
-import { handleTournamentCreatedMessage, handleTournamentDeletedMessage } from "./handlers/tournament.js";
+import {
+	handleTournamentCreatedMessage,
+	handleTournamentDeletedMessage,
+} from "./handlers/tournament.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -125,7 +127,6 @@ function renderSentFriendRequest(
 	console.log("Rendering sent friend request for ID:", receiver_id);
 	console.log("Rendering sent friend request for Username:", receiver_username);
 
-	const notificationContent = document.getElementById("notificationContent");
 	const safeReceiverUsername = escapeHTML(receiver_username);
 	const safeReceiverId = escapeHTML(receiver_id);
 
@@ -190,9 +191,7 @@ async function getFriends() {
 
 function renderFriendsList(friends) {
 	console.log("/***********renderFriendsList************/");
-	const { userId } = getVariables();
 	const friendsList = document.getElementById("friendsList");
-	const numericUserId = Number(userId);
 
 	if (friends.length === 0) {
 		friendsList.innerHTML = `
@@ -209,7 +208,6 @@ function renderFriendsList(friends) {
 			const friendInfo = friend.friend_info;
 			const friendId = friendInfo.user_id || friend.friend_id;
 			const username = friendInfo.username || "Unknown";
-			const email = friendInfo.email || "";
 			const isOnline = friendInfo.is_online || false; // Use the is_online data from backend
 
 			const friend_initials = calculateInitials(username);
@@ -273,51 +271,50 @@ export function updateFriendOnlineStatus(friendId, isOnline) {
 
 /**
  * Invite a friend to play a game
- */
-async function inviteToGame(friendId, friendName) {
-	try {
-		console.log(`Inviting ${friendName} (ID: ${friendId}) to play`);
+//  */
+// async function inviteToGame(friendId, friendName) {
+// 	try {
+// 		console.log(`Inviting ${friendName} (ID: ${friendId}) to play`);
 
-		const { token, url_api } = getVariables();
+// 		const { token, url_api } = getVariables();
 
-		// TODO: Replace with your actual game invitation API endpoint
-		const response = await fetch(`${url_api}/pong/api/invite/`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-				"X-CSRFToken": getCookie("csrftoken"),
-			},
-			body: JSON.stringify({
-				invited_user_id: friendId,
-				game_type: "pong",
-				message: `${friendName}, let's play Pong!`,
-			}),
-		});
+// 		// TODO: Replace with your actual game invitation API endpoint
+// 		const response = await fetch(`${url_api}/pong/api/invite/`, {
+// 			method: "POST",
+// 			headers: {
+// 				"Content-Type": "application/json",
+// 				Authorization: `Bearer ${token}`,
+// 				"X-CSRFToken": getCookie("csrftoken"),
+// 			},
+// 			body: JSON.stringify({
+// 				invited_user_id: friendId,
+// 				game_type: "pong",
+// 				message: `${friendName}, let's play Pong!`,
+// 			}),
+// 		});
 
-		if (response.ok) {
-			showAlertForXSeconds(
-				`🎮 Game invitation sent to ${friendName}!`,
-				"success",
-				5,
-				{ asToast: false, game: false, notification: true }
-			);
-		} else {
-			throw new Error("Failed to send invitation");
-		}
-	} catch (error) {
-		console.error("Error sending game invitation:", error);
-		showAlertForXSeconds("❌ Failed to send game invitation", "error", 5, {
-			asToast: false,
-			game: false,
-			notification: true,
-		});
-	}
-}
+// 		if (response.ok) {
+// 			showAlertForXSeconds(
+// 				`🎮 Game invitation sent to ${friendName}!`,
+// 				"success",
+// 				5,
+// 				{ asToast: false, game: false, notification: true }
+// 			);
+// 		} else {
+// 			throw new Error("Failed to send invitation");
+// 		}
+// 	} catch (error) {
+// 		console.error("Error sending game invitation:", error);
+// 		showAlertForXSeconds("❌ Failed to send game invitation", "error", 5, {
+// 			asToast: false,
+// 			game: false,
+// 			notification: true,
+// 		});
+// 	}
+// }
 
 export function renderFriendRequest() {
 	console.log("/***********renderFriendRequest************/");
-	const { userId } = getVariables();
 	const notificationContent = document.getElementById("notificationContent");
 
 	notificationContent.innerHTML = messageHistory
@@ -359,7 +356,6 @@ function renderFriendRequest2(friends) {
 
 	notificationContent.innerHTML = friends
 		.map((friendship, index) => {
-			const Data = friendship.friend_info;
 			const otherId = friendship.friend_info.user_id;
 			const actualSenderId = friendship.friend_info.sent_by.user_id;
 			const username = friendship.friend_info.username || "Unknown";
@@ -392,7 +388,6 @@ function renderFriendRequest2(friends) {
 
 function renderNotification() {
 	console.log("/***********renderNotification************/");
-	const { userId } = getVariables();
 	const notificationContainer = document.getElementById(
 		"notificationContainer"
 	);

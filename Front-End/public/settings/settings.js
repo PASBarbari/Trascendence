@@ -1,5 +1,5 @@
 import { toggleProfile } from "../home/home.js";
-import { getVariables, setVariables } from '../var.js';
+import {  setVariables } from '../var.js';
 import { cleanupPong } from "../pong/locale/settings.js";
 
 function Logout() {
@@ -7,7 +7,7 @@ function Logout() {
         cleanupPong();
         console.log("Cleanup Pong completato");
     } catch (error) {
-        console.log("Cleanup Pong non necessario o già eseguito");
+        console.log("Cleanup Pong non necessario o già eseguito", error || "");
     }
 
     // Chiude tutti i WebSocket attivi
@@ -75,7 +75,7 @@ function Logout() {
     //         navigateTo('#login');
     //     });
     // } else {
-        navigateTo('#login');
+        window.navigateTo('#login');
     // }
 }
 

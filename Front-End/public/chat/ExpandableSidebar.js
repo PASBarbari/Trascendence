@@ -1,13 +1,18 @@
-import { getVariables } from '../var.js';
-import { renderAddChat } from './AddChat.js';
-import { renderChatBubble } from './ChatBubble.js';
-import { getCookie } from '../cookie.js';
-import { getBlockedUsersList, showBlockedUsersModal, helperAutocomplete, loadBlockedUsers } from './blockUser.js';
-import { showAlertForXSeconds } from '../alert/alert.js';
+import { getVariables } from "../var.js";
+import { renderAddChat } from "./AddChat.js";
+import { renderChatBubble } from "./ChatBubble.js";
+import { getCookie } from "../cookie.js";
+import {
+	getBlockedUsersList,
+	showBlockedUsersModal,
+	helperAutocomplete,
+	loadBlockedUsers,
+} from "./blockUser.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
-const link = document.createElement('link');
-link.rel = 'stylesheet';
-link.href = '/chat/chat.css';
+const link = document.createElement("link");
+link.rel = "stylesheet";
+link.href = "/chat/chat.css";
 document.head.appendChild(link);
 
 const displayedDates = new Set();
@@ -16,7 +21,7 @@ let blockedUserListModal = null;
 let blockedUsers = []; // Cache degli utenti bloccati
 
 function isFirstMessageOfDay(date) {
-	const dateString = date.toLocaleDateString('it-IT');
+	const dateString = date.toLocaleDateString("it-IT");
 	if (!displayedDates.has(dateString)) {
 		displayedDates.add(dateString);
 		return true;
@@ -38,17 +43,14 @@ async function getChatRooms() {
 	console.log(`${url_api}/chat/chat_rooms/getchat/`);
 	console.log("\\_____ExpandableSidebar.js_____/");
 	try {
-		const response = await fetch(
-			`${url_api}/chat/chat/chat_rooms/getchat/`,
-			{
-				method: "GET",
-				headers: {
-					'Content-Type': 'application/json',
-					'X-CSRFToken': getCookie('csrftoken'),
-					'Authorization': `Bearer ${token}`,
-				},
-			}
-		);
+		const response = await fetch(`${url_api}/chat/chat/chat_rooms/getchat/`, {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				"X-CSRFToken": getCookie("csrftoken"),
+				Authorization: `Bearer ${token}`,
+			},
+		});
 
 		if (response.ok) {
 			const data = await response.json();
@@ -66,7 +68,9 @@ async function getChatRooms() {
 }
 
 async function renderExpandableSidebar() {
-	const sidebarContainer = document.querySelector('.expandable-sidebar-container');
+	const sidebarContainer = document.querySelector(
+		".expandable-sidebar-container"
+	);
 	sidebarContainer.innerHTML = `
 		<div class="sidebar">
 			<button id="toggleChatButton" class="btn btn-light mb-2">
@@ -88,54 +92,65 @@ async function renderExpandableSidebar() {
 		<div id="chatContainer" class="chat-container"></div>
 	`;
 
-	const toggleChatButton = document.getElementById('toggleChatButton');
-	const chatContainer = document.getElementById('chatContainer');
+	const toggleChatButton = document.getElementById("toggleChatButton");
+	const chatContainer = document.getElementById("chatContainer");
 	let chatContainerOpen = false;
 
-	toggleChatButton.addEventListener('click', function () {
+	toggleChatButton.addEventListener("click", function () {
 		chatContainerOpen = !chatContainerOpen;
-		chatContainer.classList.toggle('open', chatContainerOpen);
+		chatContainer.classList.toggle("open", chatContainerOpen);
 
-		toggleChatButton.innerHTML = chatContainerOpen ? `
+		toggleChatButton.innerHTML = chatContainerOpen
+			? `
 			<i class="bi bi-chevron-left"></i>
-		` : `
+		`
+			: `
 			<i class="bi bi-chevron-right"></i>
 		`;
 	});
 
-	document.getElementById('createChatButton').addEventListener('click', function () {
-		if (addChatContainer) {
-			chatContainer.removeChild(addChatContainer);
-			addChatContainer = null;
-		} else {
-			addChatContainer = renderAddChat();
-			chatContainer.insertBefore(addChatContainer, chatContainer.firstChild);
-		}
-	});
+	document
+		.getElementById("createChatButton")
+		.addEventListener("click", function () {
+			if (addChatContainer) {
+				chatContainer.removeChild(addChatContainer);
+				addChatContainer = null;
+			} else {
+				addChatContainer = renderAddChat();
+				chatContainer.insertBefore(addChatContainer, chatContainer.firstChild);
+			}
+		});
 
-	document.getElementById('blockUsers').addEventListener('click', function () {
+	document.getElementById("blockUsers").addEventListener("click", function () {
 		if (blockedUserListModal) {
 			chatContainer.removeChild(blockedUserListModal);
 			blockedUserListModal = null;
 		} else {
 			blockedUserListModal = showBlockedUsersModal();
 			helperAutocomplete(blockedUserListModal);
-			chatContainer.insertBefore(blockedUserListModal, chatContainer.firstChild);
+			chatContainer.insertBefore(
+				blockedUserListModal,
+				chatContainer.firstChild
+			);
 		}
 	});
 
-	document.getElementById('groupChatButton').addEventListener('click', function () {
-		renderChatItem({
-			id: '5',
-			name: 'Eve',
-			lastMessage: 'Thanks for your help!',
-			type: 'single'
+	document
+		.getElementById("groupChatButton")
+		.addEventListener("click", function () {
+			renderChatItem({
+				id: "5",
+				name: "Eve",
+				lastMessage: "Thanks for your help!",
+				type: "single",
+			});
 		});
-	});
 
-	document.getElementById('randomChatButton').addEventListener('click', function () {
-		alert('Random Chat clicked');
-	});
+	document
+		.getElementById("randomChatButton")
+		.addEventListener("click", function () {
+			alert("Random Chat clicked");
+		});
 
 	// Fetch chat rooms and render them
 	updateChatList();
@@ -149,10 +164,10 @@ async function renderExpandableSidebar() {
 async function updateChatList() {
 	const chats = await getChatRooms();
 	if (chats) {
-		const chatContainer = document.getElementById('chatContainer');
+		const chatContainer = document.getElementById("chatContainer");
 		if (!chatContainer) {
-	  return;
-	}
+			return;
+		}
 		if (addChatContainer && chatContainer.contains(addChatContainer)) {
 			chatContainer.removeChild(addChatContainer);
 			addChatContainer = null;
@@ -162,10 +177,10 @@ async function updateChatList() {
 			blockedUserListModal = null;
 		}
 
-		const chatItems = chatContainer.querySelectorAll('.chat-item'); // Pulisce il contenitore delle chat
-		chatItems.forEach(item => item.remove());
+		const chatItems = chatContainer.querySelectorAll(".chat-item"); // Pulisce il contenitore delle chat
+		chatItems.forEach((item) => item.remove());
 
-		chats.forEach(chat => {
+		chats.forEach((chat) => {
 			if (!chat.room_id) {
 				console.error("Chat ID non trovato:", chat);
 				return;
@@ -175,7 +190,7 @@ async function updateChatList() {
 				id: chat.room_id,
 				name: chat.room_name,
 				lastMessage: chat.room_description,
-				type: chat.type
+				type: chat.type,
 			});
 		});
 	}
@@ -186,7 +201,7 @@ function scrollToBottom(element) {
 }
 
 function stringToNumber(str) {
-	if (!str || typeof str !== 'string') return 1;
+	if (!str || typeof str !== "string") return 1;
 
 	let hash = 0;
 	for (let i = 0; i < str.length; i++) {
@@ -198,11 +213,11 @@ function stringToNumber(str) {
 }
 
 function renderChatItem(chat) {
-	const { wss_api, url_api } = getVariables();
-	const chatContainer = document.querySelector('.chat-container');
-	const chatItem = document.createElement('div');
+	const { url_api } = getVariables();
+	const chatContainer = document.querySelector(".chat-container");
+	const chatItem = document.createElement("div");
 	const imgNumber = stringToNumber(chat.name);
-	chatItem.className = 'chat-item';
+	chatItem.className = "chat-item";
 	chatItem.dataset.id = chat.id;
 
 	chatItem.innerHTML = `
@@ -238,24 +253,26 @@ function renderChatItem(chat) {
 
 	chatContainer.insertBefore(chatItem, chatContainer.firstChild);
 
-	const chatItemHeader = chatItem.querySelector('.chat-item-header');
-	const chatItemContent = chatItem.querySelector('.chat-item-content');
-	const chatItemIcon = chatItem.querySelector('.chat-item-icon i');
+	const chatItemHeader = chatItem.querySelector(".chat-item-header");
+	const chatItemContent = chatItem.querySelector(".chat-item-content");
+	const chatItemIcon = chatItem.querySelector(".chat-item-icon i");
 
 	let socket = null;
 
-	chatItemHeader.addEventListener('click', async function () {
-		const isOpen = chatItemContent.style.display === 'block';
-		chatItemContent.style.display = isOpen ? 'none' : 'block';
-		chatItemIcon.className = isOpen ? 'bi bi-chevron-down' : 'bi bi-chevron-up';
+	chatItemHeader.addEventListener("click", async function () {
+		const isOpen = chatItemContent.style.display === "block";
+		chatItemContent.style.display = isOpen ? "none" : "block";
+		chatItemIcon.className = isOpen ? "bi bi-chevron-down" : "bi bi-chevron-up";
 
 		if (!isOpen) {
 			// Apri il WebSocket per la chat room
 			const { token, wss_api } = getVariables();
-			socket = new WebSocket(`${wss_api}/chat/chat?room_id=${chat.id}&token=${token}`);
+			socket = new WebSocket(
+				`${wss_api}/chat/chat?room_id=${chat.id}&token=${token}`
+			);
 			console.log(socket);
 			if (!window.activeWebSockets) window.activeWebSockets = [];
-				window.activeWebSockets.push(socket);
+			window.activeWebSockets.push(socket);
 
 			socket.onopen = () => {
 				console.log(`WebSocket connection opened for chat room ${chat.id}`);
@@ -272,23 +289,26 @@ function renderChatItem(chat) {
 				}
 
 				const messageDate = new Date(data.timestamp);
-				const chatContent = chatItem.querySelector('.scrollable-content');
+				const chatContent = chatItem.querySelector(".scrollable-content");
 
 				if (isFirstMessageOfDay(messageDate)) {
-					const dateMessage = document.createElement('div');
-					dateMessage.className = 'date-message';
-					dateMessage.textContent = messageDate.toLocaleDateString('it-IT');
+					const dateMessage = document.createElement("div");
+					dateMessage.className = "date-message";
+					dateMessage.textContent = messageDate.toLocaleDateString("it-IT");
 					chatContent.appendChild(dateMessage);
 				}
 
 				// Aggiungi il messaggio alla chat room corrispondente
 				const chatBubble = renderChatBubble({
 					senderName: data.sender,
-					date: new Date(data.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+					date: new Date(data.timestamp).toLocaleTimeString("it-IT", {
+						hour: "2-digit",
+						minute: "2-digit",
+					}),
 					message: data.message,
-					isSingleChat: chat.type === 'single',
+					isSingleChat: chat.type === "single",
 					type: data.type,
-					senderId: data.sender_id
+					senderId: data.sender_id,
 				});
 				chatContent.appendChild(chatBubble);
 
@@ -298,7 +318,7 @@ function renderChatItem(chat) {
 			socket.onclose = () => {
 				console.log(`WebSocket connection closed for chat room ${chat.id}`);
 				// Cancella i messaggi quando il WebSocket viene chiuso
-				chatItem.querySelector('.scrollable-content').innerHTML = '';
+				chatItem.querySelector(".scrollable-content").innerHTML = "";
 			};
 
 			socket.onerror = (error) => {
@@ -313,37 +333,42 @@ function renderChatItem(chat) {
 						method: "GET",
 						headers: {
 							"Content-Type": "application/json",
-							"X-CSRFToken": getCookie('csrftoken'),
-							"Authorization": `Bearer ${token}`,
+							"X-CSRFToken": getCookie("csrftoken"),
+							Authorization: `Bearer ${token}`,
 						},
 					}
 				);
 				if (response.ok) {
 					const data = await response.json();
-					const chatContent = chatItem.querySelector('.scrollable-content');
-					data.forEach(msg => {
+					const chatContent = chatItem.querySelector(".scrollable-content");
+					data.forEach((msg) => {
 						// Filtra i messaggi degli utenti bloccati anche dai messaggi storici
 						if (isUserBlocked(msg.sender)) {
-							console.log(`Messaggio storico da utente bloccato ${msg.sender} ignorato`);
+							console.log(
+								`Messaggio storico da utente bloccato ${msg.sender} ignorato`
+							);
 							return; // Non visualizzare il messaggio
 						}
 
 						const messageDate = new Date(msg.timestamp);
 
 						if (isFirstMessageOfDay(messageDate)) {
-							const dateMessage = document.createElement('div');
-							dateMessage.className = 'date-message';
-							dateMessage.textContent = messageDate.toLocaleDateString('it-IT');
+							const dateMessage = document.createElement("div");
+							dateMessage.className = "date-message";
+							dateMessage.textContent = messageDate.toLocaleDateString("it-IT");
 							chatContent.appendChild(dateMessage);
 						}
 
 						const chatBubble = renderChatBubble({
 							senderName: msg.sender,
-							date: new Date(msg.timestamp).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+							date: new Date(msg.timestamp).toLocaleTimeString("it-IT", {
+								hour: "2-digit",
+								minute: "2-digit",
+							}),
 							message: msg.message,
-							isSingleChat: chat.type === 'single',
+							isSingleChat: chat.type === "single",
 							type: msg.message_type,
-							senderId: msg.sender_id
+							senderId: msg.sender_id,
 						});
 						chatContent.appendChild(chatBubble);
 					});
@@ -365,19 +390,22 @@ function renderChatItem(chat) {
 		}
 	});
 
-	const chatsInput = chatItem.querySelector('.chat-input');
-	const inputField = chatsInput.querySelector('input');
-	const sendButton = chatsInput.querySelector('button');
+	const chatsInput = chatItem.querySelector(".chat-input");
+	const inputField = chatsInput.querySelector("input");
 
 	// Modifica da apportare nel file ExpandableSidebar.js
-	// Nella funzione renderChatItem dove invii il messaggio
+	// Nella funzione renderChatItem dove invii il messaggio TODO
 
-	chatsInput.addEventListener('submit', function (e) {
+	chatsInput.addEventListener("submit", function (e) {
 		e.preventDefault();
 		const message = inputField.value;
 		console.info("Invio messaggio:", message);
 		const userVariables = getVariables();
-		if (message.trim() !== "" && socket && socket.readyState === WebSocket.OPEN) {
+		if (
+			message.trim() !== "" &&
+			socket &&
+			socket.readyState === WebSocket.OPEN
+		) {
 			// Usa userUsername per identificare l'utente
 			const messageData = {
 				type: "text",
@@ -388,34 +416,39 @@ function renderChatItem(chat) {
 			};
 			console.info("Invio messaggio tramite WebSocket:", messageData);
 			socket.send(JSON.stringify(messageData));
-			inputField.value = '';
+			inputField.value = "";
 
-			scrollToBottom(chatItem.querySelector('.scrollable-content'));
-		} else if (message.trim() == "" && socket && socket.readyState === WebSocket.OPEN) {
+			scrollToBottom(chatItem.querySelector(".scrollable-content"));
+		} else if (
+			message.trim() == "" &&
+			socket &&
+			socket.readyState === WebSocket.OPEN
+		) {
 			chatsInput.classList.add("shake");
 			setTimeout(() => {
 				chatsInput.classList.remove("shake");
 			}, 400);
 		} else {
-			showAlertForXSeconds(
-				"WebSocket connection not open",
-				"error",
-				3,
-				{ asToast: true }
-			);
+			showAlertForXSeconds("WebSocket connection not open", "error", 3, {
+				asToast: true,
+			});
 		}
 	});
 
-	const pongInviteButton = chatsInput.querySelector('#pongInvite');
+	const pongInviteButton = chatsInput.querySelector("#pongInvite");
 
-	pongInviteButton.addEventListener('click', function (e) {
+	pongInviteButton.addEventListener("click", function (e) {
 		e.preventDefault();
 		console.info("Pong invite button clicked");
 
 		const message = inputField.value;
 		console.info("Invio messaggio:", message);
 		const userVariables = getVariables();
-		if (message.trim() !== "" && socket && socket.readyState === WebSocket.OPEN) {
+		if (
+			message.trim() !== "" &&
+			socket &&
+			socket.readyState === WebSocket.OPEN
+		) {
 			// Usa userUsername per identificare l'utente
 			const messageData = {
 				type: "game_invitation",
@@ -426,30 +459,28 @@ function renderChatItem(chat) {
 			};
 			console.info("Invio messaggio tramite WebSocket:", messageData);
 			socket.send(JSON.stringify(messageData));
-			inputField.value = '';
+			inputField.value = "";
 
-			scrollToBottom(chatItem.querySelector('.scrollable-content'));
-		} else if (message.trim() == "" && socket && socket.readyState === WebSocket.OPEN) {
+			scrollToBottom(chatItem.querySelector(".scrollable-content"));
+		} else if (
+			message.trim() == "" &&
+			socket &&
+			socket.readyState === WebSocket.OPEN
+		) {
 			chatsInput.classList.add("shake");
 			setTimeout(() => {
 				chatsInput.classList.remove("shake");
 			}, 400);
 		} else {
-			showAlertForXSeconds(
-				"WebSocket connection not open",
-				"error",
-				3,
-				{ asToast: true }
-			);
+			showAlertForXSeconds("WebSocket connection not open", "error", 3, {
+				asToast: true,
+			});
 		}
-
 	});
-
-
 }
 
 function isUserBlocked(username) {
-	return blockedUsers.some(user => user.username === username);
+	return blockedUsers.some((user) => user.username === username);
 }
 
 // Funzione per aggiornare la lista degli utenti bloccati (da chiamare quando si blocca/sblocca un utente)
@@ -457,9 +488,14 @@ async function updateBlockedUsers() {
 	await getBlockedUsers();
 	console.log("Lista utenti bloccati aggiornata");
 	if (blockedUserListModal) {
-	await loadBlockedUsers(blockedUserListModal);
-  }
-  console.log("Lista utenti bloccati aggiornata");
+		await loadBlockedUsers(blockedUserListModal);
+	}
+	console.log("Lista utenti bloccati aggiornata");
 }
 
-export { renderExpandableSidebar, updateChatList, updateBlockedUsers, isUserBlocked };
+export {
+	renderExpandableSidebar,
+	updateChatList,
+	updateBlockedUsers,
+	isUserBlocked,
+};

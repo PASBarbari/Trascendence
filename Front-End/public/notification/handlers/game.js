@@ -1,3 +1,4 @@
+/* global bootstrap */
 import { showAlertForXSeconds } from "../../alert/alert.js";
 import { getVariables } from "../../var.js";
 import {

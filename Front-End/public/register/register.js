@@ -1,4 +1,4 @@
-import { setVariables, getVariables } from "../var.js";
+import { getVariables } from "../var.js";
 import { getCookie } from "../cookie.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
 
@@ -67,7 +67,16 @@ async function registerUser(username, email, password, isBaseRegister) {
 			});
 			if (response.ok) {
 				const data = await response.json();
-
+				if (data.error) {
+					console.error("Registration error:", data.error);
+					showAlertForXSeconds(
+						"Registration failed: " + data.error,
+						"error",
+						5,
+						{ asToast: true }
+					);
+					return false;
+				}
 				showAlertForXSeconds(
 					"Registration successful! Please login with your credentials.",
 					"success",

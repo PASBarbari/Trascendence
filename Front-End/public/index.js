@@ -4,20 +4,28 @@ import { renderHome } from "./home/home.js";
 import { renderPong } from "./pong/locale/pong.js";
 import { renderExpandableSidebar } from "./chat/ExpandableSidebar.js";
 
+import "./profile/profile.js"; // if this file uses qrcode
+import "./pong/pongContainer.js"; // if this file uses three
+
 function removeExpandableSidebar() {
 	// Rimuovi sidebar chat
-	const sidebarContainer = document.querySelector('.expandable-sidebar-container');
+	const sidebarContainer = document.querySelector(
+		".expandable-sidebar-container"
+	);
 	if (sidebarContainer) {
-		sidebarContainer.innerHTML = '';
+		sidebarContainer.innerHTML = "";
 	}
 	// Rimuovi pulsante impostazioni
-	const toggleSettingsButton = document.getElementById('toggleSettingsButton');
+	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
 	if (toggleSettingsButton) {
-		toggleSettingsButton.style.display = 'none';
+		toggleSettingsButton.style.display = "none";
 	}
 }
 //import { renderProfile } from './profile/profile.js';
-import { settingsPopup, Logout as OriginalLogout } from "./settings/settings.js";
+import {
+	settingsPopup,
+	Logout as OriginalLogout,
+} from "./settings/settings.js";
 import { cleanupPong } from "./pong/locale/settings.js";
 import { getVariables, setVariables } from "./var.js";
 
@@ -81,7 +89,12 @@ const routes = {
 			const opponentName = urlParams.get("opponentName");
 			const tournamentId = urlParams.get("tournamentId");
 
-			console.log("Route params:", { roomId, opponentId, opponentName, tournamentId });
+			console.log("Route params:", {
+				roomId,
+				opponentId,
+				opponentName,
+				tournamentId,
+			});
 
 			if (opponentId && opponentName) {
 				// Load multiplayer game with invitation data
@@ -107,7 +120,6 @@ const routes = {
 	},
 };
 
-
 const navigateTo = (path) => {
 	window.previousRoute = currentRoute;
 	window.location.hash = path;
@@ -121,6 +133,7 @@ function Logout() {
 
 import { processOAuthRedirect } from "./var.js";
 let currentRoute = "";
+// eslint-disable-next-line no-unused-vars
 let previousRoute = "";
 
 const locationHandler = async () => {
@@ -173,12 +186,14 @@ const locationHandler = async () => {
 		cleanupPong();
 	}
 
-if (routes[location]?.protected && checkAuth()) {
-	renderExpandableSidebar();
-	// Mostra il pulsante impostazioni se presente
-	const toggleSettingsButton = document.getElementById('toggleSettingsButton');
-	if (toggleSettingsButton) toggleSettingsButton.style.display = '';
-}
+	if (routes[location]?.protected && checkAuth()) {
+		renderExpandableSidebar();
+		// Mostra il pulsante impostazioni se presente
+		const toggleSettingsButton = document.getElementById(
+			"toggleSettingsButton"
+		);
+		if (toggleSettingsButton) toggleSettingsButton.style.display = "";
+	}
 
 	previousRoute = currentRoute;
 	currentRoute = location;
@@ -240,11 +255,9 @@ const initializeApp = async () => {
 
 	preloadPongCSS();
 
-
-
-if (checkAuth()) {
-	renderExpandableSidebar();
-}
+	if (checkAuth()) {
+		renderExpandableSidebar();
+	}
 
 	const toggleSettingsButton = document.getElementById("toggleSettingsButton");
 	if (toggleSettingsButton) {
@@ -276,7 +289,6 @@ function checkAuth() {
 	}
 	return false;
 }
-
 
 window.addEventListener("hashchange", locationHandler);
 window.addEventListener("load", initializeApp);

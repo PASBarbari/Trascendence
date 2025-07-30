@@ -11,7 +11,11 @@ export function handleChatRoomCreatedMessage(message) {
 	// Show notification
 	const roomData = message.message?.data || {};
 	const roomName = roomData.room_name || "A new chat room";
-	showNotificationToast(`${roomName} was created`, "info");
+	showAlertForXSeconds(`${roomName} was created`, "info", 5, {
+		asToast: true,
+		game: false,
+		notification: true,
+	});
 }
 
 export function handleChatRoomJoinedMessage(message) {
@@ -24,7 +28,11 @@ export function handleChatRoomJoinedMessage(message) {
 	const roomData = message.message?.data || {};
 	const roomName = roomData.room_name || "a chat room";
 	const userName = roomData.user_name || "Someone";
-	showNotificationToast(`${userName} joined ${roomName}`, "info");
+	showAlertForXSeconds(`${userName} joined ${roomName}`, "info", 5, {
+		asToast: true,
+		game: false,
+		notification: true,
+	});
 }
 
 export function handleChatRoomLeftMessage(message) {
@@ -37,8 +45,13 @@ export function handleChatRoomLeftMessage(message) {
 	const roomData = message.message?.data || {};
 	const roomName = roomData.room_name || "a chat room";
 	const userName = roomData.user_name || "Someone";
-	showNotificationToast(`${userName} left ${roomName}`, "info");
-}//chat
+	showAlertForXSeconds(`${userName} left ${roomName}`, "info", 5, {
+		asToast: true,
+		game: false,
+		notification: true,
+	});
+}
+
 export function handleChatInviteMessage(message) {
 	console.log("Processing chat invite message:", message);
 
@@ -47,7 +60,6 @@ export function handleChatInviteMessage(message) {
 	const chatData = message.message?.data || {};
 	const roomName = chatData.room_name || "a chat room";
 	const creatorName = chatData.creator_name || "Someone";
-	const roomId = chatData.room_id;
 
 	// Mostra notifica toast
 	if (creatorName != getVariables().userUsername) {
@@ -67,19 +79,19 @@ export function handleChatInviteMessage(message) {
 /**
  * Open chat with a friend
  */
-function openChatWithFriend(friendId, friendName) {
-	console.log(`Opening chat with ${friendName} (ID: ${friendId})`);
+// function openChatWithFriend(friendId, friendName) {
+// 	console.log(`Opening chat with ${friendName} (ID: ${friendId})`);
 
-	// TODO: Implement chat opening logic
-	// This could navigate to chat page or open a chat modal
-	// Example:
-	// window.navigateTo(`#chat/${friendId}`);
-	// or
-	// openChatModal(friendId, friendName);
-	showAlertForXSeconds(`💬 Opening chat with ${friendName}`, "info", 5, {
-		asToast: false,
-		game: false,
-		notification: true,
-	});
-}
+// 	// TODO: Implement chat opening logic
+// 	// This could navigate to chat page or open a chat modal
+// 	// Example:
+// 	// window.navigateTo(`#chat/${friendId}`);
+// 	// or
+// 	// openChatModal(friendId, friendName);
+// 	showAlertForXSeconds(`💬 Opening chat with ${friendName}`, "info", 5, {
+// 		asToast: false,
+// 		game: false,
+// 		notification: true,
+// 	});
+// }
 

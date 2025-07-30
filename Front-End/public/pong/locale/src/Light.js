@@ -29,6 +29,9 @@ export function initLights() {
 	dirLight.shadow.camera.far = 200;
 
 	const cameraHelper = new THREE.CameraHelper(dirLight.shadow.camera);
+	if (!cameraHelper) {
+		console.warn("CameraHelper not created, check THREE.js version.");
+	}
 	// state.scene.add(cameraHelper);
 	// state.lights.push(cameraHelper);
 
@@ -47,6 +50,9 @@ export function initLights() {
 		10,
 		0xffaa00
 	);
+	if (!dirLightHelper) {
+		console.warn("DirectionalLightHelper not created, check THREE.js version.");
+	}
 	// state.scene.add(dirLightHelper);
 	// state.lights.push(dirLightHelper);
 

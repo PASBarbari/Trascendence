@@ -1,7 +1,4 @@
 import * as THREE from "three";
-import { FontLoader } from "three/addons/loaders/FontLoader.js";
-import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
-import { Group, remove } from "three/addons/libs/tween.module.js";
 import { moveIA } from "./ai.js";
 import { state } from "./state.js";
 

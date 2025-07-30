@@ -2,7 +2,6 @@ import { getCookie } from "../cookie.js";
 import { getVariables } from "../var.js";
 import { initFriendAutocomplete } from "../notification/friendAutocomplete.js";
 import { showAlertForXSeconds } from "../alert/alert.js";
-import { initializeWebSocket } from "../notification/notification.js";
 
 const pongContainerCSS = document.createElement("link");
 pongContainerCSS.rel = "stylesheet";
@@ -67,7 +66,7 @@ function createTournament() {
         </form>
     `;
 
-	const userIdsInput = createTournamentForm.querySelector("#userIdsInput");
+	// const userIdsInput = createTournamentForm.querySelector("#userIdsInput");
 	const badgeContainer = createTournamentForm.querySelector("#selectedUserIds");
 	let selectedUsers = [];
 
@@ -113,7 +112,7 @@ function createTournament() {
 			e.preventDefault();
 
 			const tournamentName = document.getElementById("tournamentName").value;
-			const maxParticipants = document.getElementById("maxParticipants").value;
+			// const maxParticipants = document.getElementById("maxParticipants").value;
 			const { userId, token, url_api } = getVariables();
 
 			let userIdsArray = selectedUsers.map((u) => u.id);

@@ -1,13 +1,8 @@
-import * as THREE from "three";
-import { FontLoader } from "three/addons/loaders/FontLoader.js";
-import { TextGeometry } from "three/addons/geometries/TextGeometry.js";
-import { Group, remove } from "three/addons/libs/tween.module.js";
 import { state } from "./state.js";
 import * as UTILS from "./utils.js";
 import * as SETUP from "./setup.js";
 import * as SETTINGS from "./settings.js";
 import * as GAME from "./gameLogic.js";
-import Stats from "three/addons/libs/stats.module.js";
 
 export function renderPong() {
 	//add bootstrap css
@@ -127,10 +122,10 @@ export function renderPong() {
 	`;
 
 	document.addEventListener("keydown", pongKeyDownHandler);
-    document.addEventListener("keyup", pongKeyUpHandler);
-    
-    window.pongKeyDownHandler = pongKeyDownHandler;
-    window.pongKeyUpHandler = pongKeyUpHandler;
+	document.addEventListener("keyup", pongKeyUpHandler);
+
+	window.pongKeyDownHandler = pongKeyDownHandler;
+	window.pongKeyUpHandler = pongKeyUpHandler;
 
 	document
 		.getElementById("newGameButton")
@@ -166,16 +161,12 @@ export function renderPong() {
 	document
 		.getElementById("exitButtonPause")
 		.addEventListener("click", SETTINGS.exitGame);
-	document
-		.getElementById("player1Color")
-		.addEventListener("input", (event) => {
-			state.mat.p1.color.set(event.target.value);
-		});
-	document
-		.getElementById("player2Color")
-		.addEventListener("input", (event) => {
-			state.mat.p2.color.set(event.target.value);
-		});
+	document.getElementById("player1Color").addEventListener("input", (event) => {
+		state.mat.p1.color.set(event.target.value);
+	});
+	document.getElementById("player2Color").addEventListener("input", (event) => {
+		state.mat.p2.color.set(event.target.value);
+	});
 	document.getElementById("ballColor").addEventListener("input", (event) => {
 		state.mat.ball.color.set(event.target.value);
 	});
@@ -222,7 +213,6 @@ window.addEventListener("resize", () => {
 		state.renderer.setSize(width, height);
 	}
 });
-
 
 function pongKeyDownHandler(event) {
 	if (!event || !event.key) return;
@@ -298,14 +288,14 @@ function pongKeyUpHandler(event) {
 // 		state.p1_move_y = -state.player_speed;
 // 		state.keys.w = true;
 // 	}
-	// if (event.key == "ArrowDown" && !state.IAisActive) {
-	// 	state.p2_move_y = state.player_speed;
-	// 	state.keys.ArrowDown = true;
-	// }
-	// if (event.key == "ArrowUp" && !state.IAisActive) {
-	// 	state.p2_move_y = -state.player_speed;
-	// 	state.keys.ArrowUp = true;
-	// }
+// if (event.key == "ArrowDown" && !state.IAisActive) {
+// 	state.p2_move_y = state.player_speed;
+// 	state.keys.ArrowDown = true;
+// }
+// if (event.key == "ArrowUp" && !state.IAisActive) {
+// 	state.p2_move_y = -state.player_speed;
+// 	state.keys.ArrowUp = true;
+// }
 // 	if (event.key == "Escape" && state.isStarted) {
 // 		if (state.isPaused) {
 // 			SETTINGS.resumeGame();

@@ -1,7 +1,5 @@
 import * as THREE from "three";
 import { state } from "./state.js";
-// import { createScore, updateScore } from "./utils.js";
-import Stats from "three/addons/libs/stats.module.js";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import Ball from "./src/Ball.js";
 import Player from "./src/Player.js";

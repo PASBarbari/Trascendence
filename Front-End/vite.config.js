@@ -1,14 +1,16 @@
-export default {
+import { defineConfig } from "vite";
+
+export default defineConfig({
+	root: ".",
 	server: {
 		port: 3000,
 		host: "0.0.0.0",
 		watch: {
 			usePolling: true,
 			interval: 100,
-			ignored: ["**/node_modules/**", "**/dist/**"],
+			// ignored: ["**/node_modules/**", "**/dist/**"],
 		},
 		hmr: {
-			// Change this to properly handle WebSocket connections
 			clientPort: null, // Let Vite detect the port
 			path: "/@hmr", // Explicit HMR path
 			timeout: 5000, // Longer timeout
@@ -19,6 +21,12 @@ export default {
 	publicDir: "public",
 	cacheDir: ".vite",
 	optimizeDeps: {
-		force: true,
+		// force: true,
+		include: ["qrcode", "three"],
 	},
-};
+	build: {
+		commonjsOptions: {
+			include: [/qrcode/, /three/, /node_modules/],
+		},
+	},
+});

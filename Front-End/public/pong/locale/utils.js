@@ -1,4 +1,3 @@
-import * as THREE from "three";
 import { state } from "./state.js";
 import * as SETTINGS from "./settings.js";
 
