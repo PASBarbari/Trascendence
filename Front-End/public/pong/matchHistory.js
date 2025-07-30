@@ -68,7 +68,7 @@ async function matchHistory(page = 1) {
 			const myScore = match.player_1.user_id == userId ? match.player_1_score : match.player_2_score;
 			const scores = `${myScore} - ${opponentScore}`;
 			// const status = match.status || "Unknown";
-			const tournament = match.tournament_id == null ? "" : "tournament: " + match.tournament_id;
+			const tournament = match.tournament_id == null ? "" : "tournament: " + match.tournament_id.name;
 			const winnerColor = match.winner == null ? "text-bg-secondary" : match.winner.user_id == userId ? "text-bg-success" : "text-bg-danger";
 
 			const matchItem = document.createElement("div");
