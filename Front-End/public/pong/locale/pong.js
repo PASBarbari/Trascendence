@@ -55,6 +55,30 @@ export function renderPong() {
 				<button id="backButton" class="btn btn-secondary btn-lg">Back</button>
 			</div>
 			</div>
+
+			<!-- AI Difficulty Selection Menu -->
+        <div id="aiDifficultyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+          <h2 class="text-light mb-4">Select AI Difficulty</h2>
+          <div class="d-grid gap-3">
+              <button id="easyButton" class="btn btn-success btn-lg">
+                  <strong>Easy</strong><br>
+                  <small>Learning to Play</small>
+              </button>
+              <button id="mediumButton" class="btn btn-warning btn-lg">
+                  <strong>Medium</strong><br>
+                  <small>Casual Player</small>
+              </button>
+              <button id="hardButton" class="btn btn-danger btn-lg">
+                  <strong>Hard</strong><br>
+                  <small>Experienced Player</small>
+              </button>
+              <button id="expertButton" class="btn btn-dark btn-lg">
+                  <strong>Expert</strong><br>
+                  <small>Tournament Level</small>
+              </button>
+              <button id="backFromAIButton" class="btn btn-secondary btn-lg">Back</button>
+        </div>
+      </div>
 			
 			<!-- Settings Menu -->
 			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
@@ -141,9 +165,32 @@ export function renderPong() {
 	document
 		.getElementById("exitButton")
 		.addEventListener("click", SETTINGS.exitGame);
-	document
-		.getElementById("onePlayerButton")
-		.addEventListener("click", SETTINGS.startOnePlayerGame);
+	// document
+	// 	.getElementById("onePlayerButton")
+	// 	.addEventListener("click", SETTINGS.startOnePlayerGame);
+	// Updated one player button to show difficulty menu
+	document.getElementById("onePlayerButton").addEventListener("click", () => {
+		SETTINGS.showAIDifficultyMenu();
+	});
+		// AI Difficulty selection buttons
+		document.getElementById("easyButton").addEventListener("click", () => {
+			SETTINGS.startOnePlayerGame("easy");
+		});
+		document.getElementById("mediumButton").addEventListener("click", () => {
+			SETTINGS.startOnePlayerGame("medium");
+		});
+		document.getElementById("hardButton").addEventListener("click", () => {
+			SETTINGS.startOnePlayerGame("hard");
+		});
+		document.getElementById("expertButton").addEventListener("click", () => {
+			SETTINGS.startOnePlayerGame("expert");
+		});
+		document
+			.getElementById("backFromAIButton")
+			.addEventListener("click", () => {
+				SETTINGS.shownbrOfPlayerMenu();
+			});
+
 	document
 		.getElementById("twoPlayerButton")
 		.addEventListener("click", SETTINGS.startTwoPlayerGame);

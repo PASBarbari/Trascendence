@@ -53,7 +53,6 @@ function renderPongInfo() {
 		</div>
 	`;
 
-	matchHistory();
 }
 
 async function PongStatistic() {
