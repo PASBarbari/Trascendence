@@ -172,14 +172,13 @@ function renderProfile() {
 				<div class="profile-card-image-container">
 					<button class="profile-image-circle ">
 
-            ${
-							profileImageUrl
-								? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" />`
-								: `<div class="friend-avatar"
-                   style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
-                  ${initials || userUsername?.charAt(0).toUpperCase() || "?"}
-                 </div>`
-						}
+			${profileImageUrl
+			  ? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" />`
+			  : `<div class="friend-avatar"
+				   style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
+				  ${initials || userUsername?.charAt(0).toUpperCase() || '?'}
+				 </div>`
+			}
 
 						<div class="edit-icon-overlay">
 							<i class="bi bi-pencil"></i>
@@ -329,7 +328,7 @@ function renderProfile() {
 				const qrModal = document.createElement("div");
 				qrModal.className = "login-box-modal";
 				qrModal.innerHTML = `
-					<div class="login_box">
+					<div class="samus-box">
 						<h1>Set up Two-Factor Authentication</h1>
 						<p>Scan this QR Code with your authenticator app (such as Google Authenticator)</p>
 						<div id="qrCodeContainer" style="text-align:center; margin: 20px 0;"></div>
@@ -346,6 +345,13 @@ function renderProfile() {
 					</div>
 				`;
 				document.body.appendChild(qrModal);
+
+				// Chiudi il modal se clicchi fuori dal contenuto
+				qrModal.addEventListener("mousedown", function(event) {
+					if (event.target === qrModal) {
+						document.body.removeChild(qrModal);
+					}
+				});
 
 				// Genera il QR code usando la libreria
 				const qrCodeContainer = document.getElementById("qrCodeContainer");
@@ -422,17 +428,16 @@ function renderProfile() {
 		const profileImageSelector = document.createElement("div");
 		profileImageSelector.className = "login-box-modal";
 		profileImageSelector.innerHTML = `
-		<div class="login_box">
+		<div class="samus-box">
 			<h1>Select an image</h1>
 			<div class="profile-image-preview">
-				${
-					profileImageUrl
-						? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" id="imagePreview" />`
-						: `<div class="friend-avatar"
-                   style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
-              ${initials || userUsername?.charAt(0).toUpperCase() || "?"}
-             </div>`
-				}
+				${profileImageUrl
+		  ? `<img src="${profileImageUrl}" alt="Profile" class="profile-card-image" id="imagePreview" />`
+		  : `<div class="friend-avatar"
+				   style="width: 100%; height: 100%; font-weight: 600; font-size: 2rem;">
+			  ${initials || userUsername?.charAt(0).toUpperCase() || '?'}
+			 </div>`
+		}
 			</div>
 			<div class="profile-image-controls">
 				<label for="imageUpload" class="upload-btn">Choose file</label>
@@ -443,6 +448,13 @@ function renderProfile() {
 		</div>
 	`;
 		document.body.appendChild(profileImageSelector);
+
+		// Chiudi il modal se clicchi fuori dal contenuto
+		profileImageSelector.addEventListener("mousedown", function(event) {
+			if (event.target === profileImageSelector) {
+				document.body.removeChild(profileImageSelector);
+			}
+		});
 
 		// Add event listeners for the file input and buttons
 		const imageUpload = profileImageSelector.querySelector("#imageUpload");
@@ -515,22 +527,17 @@ function renderProfile() {
 
 					// Update the image in the UI
 
-					const profileImageCircle = document.querySelector(
-						".profile-image-circle"
-					);
-					const existingImage = profileImageCircle.querySelector(
-						".profile-card-image"
-					);
-					const existingDiv =
-						profileImageCircle.querySelector(".friend-avatar");
+			const profileImageCircle = document.querySelector(".profile-image-circle");
+		  const existingImage = profileImageCircle.querySelector(".profile-card-image");
+		  const existingDiv = profileImageCircle.querySelector(".friend-avatar");
 
-					if (existingImage) {
-						// Se esiste già un'immagine, aggiorna solo il src
-						existingImage.src = avatarUrl;
-					} else if (existingDiv) {
-						// Se esiste il div con iniziali, sostituiscilo con un'immagine
-						existingDiv.outerHTML = `<img src="${avatarUrl}" alt="Profile" class="profile-card-image" />`;
-					}
+		  if (existingImage) {
+			  // Se esiste già un'immagine, aggiorna solo il src
+			  existingImage.src = avatarUrl;
+		  } else if (existingDiv) {
+			  // Se esiste il div con iniziali, sostituiscilo con un'immagine
+			  existingDiv.outerHTML = `<img src="${avatarUrl}" alt="Profile" class="profile-card-image" />`;
+		  }
 
 					showAlertForXSeconds("Avatar uploaded successfully", "success", 3, {
 						asToast: true,

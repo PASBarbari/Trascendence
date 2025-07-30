@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { state } from "./state.js";
 import { updateScore } from "./src/Score.js";
+import { initializeAI, cleanupAI } from "./ai.js";
 
 export {
 	showMainMenu,
@@ -8,6 +9,7 @@ export {
 	showSettingsMenu,
 	showPauseMenu,
 	hidePauseMenu,
+	showAIDifficultyMenu,
 	startOnePlayerGame,
 	startTwoPlayerGame,
 	resumeGame,
@@ -74,16 +76,32 @@ function hidePauseMenu() {
 	document.getElementById("pauseMenu").style.display = "none";
 }
 
-function startOnePlayerGame() {
+function showAIDifficultyMenu() {
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	state.IAisActive = true;
-	state.isStarted = true;
-	state.isPaused = false;
-	
-	// Initialize mobile controls if on touch device
+	document.getElementById("aiDifficultyMenu").style.display = "block";
+	document.getElementById("menu").style.display = "none";
+	document.getElementById("settingsMenu").style.display = "none";
+	document.getElementById("pauseMenu").style.display = "none";
+}
+
+function startOnePlayerGame(difficulty = "medium") {
+	console.log(`🎮 Starting single player game with ${difficulty} AI`);
+
+	// Hide all menus
+	document.getElementById("nbrOfPlayerMenu").style.display = "none";
+	// document.getElementById("aiDifficultyMenu").style.display = "none";
+	document.getElementById("menu").style.display = "none";
+
+	// Initialize AI with selected difficulty
+	initializeAI(difficulty);
+
 	if (typeof window.initializeMobileControls === 'function') {
 		window.initializeMobileControls();
 	}
+
+	state.IAisActive = true;
+	state.isStarted = true;
+	state.isPaused = false;
 }
 
 function startTwoPlayerGame() {
@@ -113,6 +131,7 @@ export function cleanupPong() {
 	}
 
 	resetPongMenuState();
+	cleanupAI();
 
 	// 1. Dispose all meshes in the game group
 	if (state.game) {
