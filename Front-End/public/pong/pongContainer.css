@@ -56,3 +56,10 @@
     flex-grow: 1;
     padding: 10px;
 }
+
+.match-details {
+		display: flex;
+		flex-direction: row;
+		align-items: start;
+		justify-content: space-between;
+}
