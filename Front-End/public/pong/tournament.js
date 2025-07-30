@@ -202,11 +202,21 @@ async function renderNewTournament(tournamentData) {
 		tournamentDiv.id = `tournament-${tournament.id}`;
 		const isCreator = tournament.creator.user_id == getVariables().userId;
 		tournamentDiv.innerHTML = `
-			<h5>${tournament.name}</h5>
-			<p>Max Partecipanti: ${tournament.max_partecipants}</p>
-			<p>Partecipanti: ${tournament.partecipants}</p>
-			<p>Stato: ${tournament.status}</p>
-			<p>Inizio: ${new Date(tournament.begin_date).toLocaleString()}</p>
+		<div class="me-2">
+			<div class="tournament-details">
+				<h5><span class="badge text-bg-warning">${tournament.name}</span></h5>
+				<h6 style="margin-bottom: 3px; font-size: 0.9em; color: #6c757d;">
+					<i class="bi bi-calendar-event" style="color: var(--bs-secondary-color) !important; margin-right: 0.5rem;"></i> 
+					${new Date(tournament.begin_date).toLocaleString()}
+				</h6>
+			</div>
+			<div class="tournament-description">
+				<p style="margin-bottom: 0;">Max Partecipanti: ${tournament.max_partecipants}</p>
+				<p style="margin-bottom: 0;">Partecipanti: ${tournament.partecipants}</p>
+				<p style="margin-bottom: 0;">Stato: ${tournament.status}</p>
+			</div>
+		</div>
+		<div class="tournament-actions">
 			<button class="btn btn-primary" id="join-button" data-tournament-id="${tournament.id}">
 				join
 			</button>
@@ -219,6 +229,7 @@ async function renderNewTournament(tournamentData) {
 			<button class="btn btn-outline-danger" id="tournamentDelete" data-tournament-id="${tournament.id}" ${isCreator ? "" : "disabled"}>
 				delete
 			</button>
+		</div>
 		`;
 		tournamentListDiv.appendChild(tournamentDiv);
 
