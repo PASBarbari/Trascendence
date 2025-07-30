@@ -89,7 +89,7 @@ function startOnePlayerGame(difficulty = "medium") {
 
 	// Hide all menus
 	document.getElementById("nbrOfPlayerMenu").style.display = "none";
-	document.getElementById("aiDifficultyMenu").style.display = "none";
+	// document.getElementById("aiDifficultyMenu").style.display = "none";
 	document.getElementById("menu").style.display = "none";
 
 	// Initialize AI with selected difficulty

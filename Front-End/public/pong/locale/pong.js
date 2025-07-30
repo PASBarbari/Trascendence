@@ -56,7 +56,7 @@ export function renderPong() {
 			</div>
 			</div>
 
-			<!-- AI Difficulty Selection Menu -->
+			<!-- AI Difficulty Selection Menu >
         <div id="aiDifficultyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
           <h2 class="text-light mb-4">Select AI Difficulty</h2>
           <div class="d-grid gap-3">
@@ -78,8 +78,8 @@ export function renderPong() {
               </button>
               <button id="backFromAIButton" class="btn btn-secondary btn-lg">Back</button>
         </div>
-      </div>
-			
+      </div-->
+
 			<!-- Settings Menu -->
 			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
 			<h2 class="text-light mb-4 text-center">Settings</h2>
@@ -169,27 +169,31 @@ export function renderPong() {
 	// 	.getElementById("onePlayerButton")
 	// 	.addEventListener("click", SETTINGS.startOnePlayerGame);
 	// Updated one player button to show difficulty menu
+
+	// document.getElementById("onePlayerButton").addEventListener("click", () => {
+	// 	SETTINGS.showAIDifficultyMenu();
+	// });
 	document.getElementById("onePlayerButton").addEventListener("click", () => {
-		SETTINGS.showAIDifficultyMenu();
+			SETTINGS.startOnePlayerGame("medium");
 	});
 		// AI Difficulty selection buttons
-		document.getElementById("easyButton").addEventListener("click", () => {
-			SETTINGS.startOnePlayerGame("easy");
-		});
-		document.getElementById("mediumButton").addEventListener("click", () => {
-			SETTINGS.startOnePlayerGame("medium");
-		});
-		document.getElementById("hardButton").addEventListener("click", () => {
-			SETTINGS.startOnePlayerGame("hard");
-		});
-		document.getElementById("expertButton").addEventListener("click", () => {
-			SETTINGS.startOnePlayerGame("expert");
-		});
-		document
-			.getElementById("backFromAIButton")
-			.addEventListener("click", () => {
-				SETTINGS.shownbrOfPlayerMenu();
-			});
+		// document.getElementById("easyButton").addEventListener("click", () => {
+		// 	SETTINGS.startOnePlayerGame("easy");
+		// });
+		// document.getElementById("mediumButton").addEventListener("click", () => {
+		// 	SETTINGS.startOnePlayerGame("medium");
+		// });
+		// document.getElementById("hardButton").addEventListener("click", () => {
+		// 	SETTINGS.startOnePlayerGame("hard");
+		// });
+		// document.getElementById("expertButton").addEventListener("click", () => {
+		// 	SETTINGS.startOnePlayerGame("expert");
+		// });
+		// document
+		// 	.getElementById("backFromAIButton")
+		// 	.addEventListener("click", () => {
+		// 		SETTINGS.shownbrOfPlayerMenu();
+		// 	});
 
 	document
 		.getElementById("twoPlayerButton")
