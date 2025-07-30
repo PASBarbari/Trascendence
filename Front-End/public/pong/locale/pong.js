@@ -26,6 +26,11 @@ export function renderPong() {
 	// Inside renderPong function
 
 	const contentDiv = document.getElementById("content");
+
+	// Reset margine e classi di animazione come in home
+	contentDiv.classList.remove("animate-margin", "animate-margin-logout");
+	contentDiv.style.margin = "0 10px 10px 0";
+
 	contentDiv.innerHTML = `
 	<div class="pong-app">
 		<div class="gamecontainer position-relative">
@@ -52,28 +57,28 @@ export function renderPong() {
 			</div>
 
 			<!-- AI Difficulty Selection Menu >
-        <div id="aiDifficultyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
-          <h2 class="text-light mb-4">Select AI Difficulty</h2>
-          <div class="d-grid gap-3">
-              <button id="easyButton" class="btn btn-success btn-lg">
-                  <strong>Easy</strong><br>
-                  <small>Learning to Play</small>
-              </button>
-              <button id="mediumButton" class="btn btn-warning btn-lg">
-                  <strong>Medium</strong><br>
-                  <small>Casual Player</small>
-              </button>
-              <button id="hardButton" class="btn btn-danger btn-lg">
-                  <strong>Hard</strong><br>
-                  <small>Experienced Player</small>
-              </button>
-              <button id="expertButton" class="btn btn-dark btn-lg">
-                  <strong>Expert</strong><br>
-                  <small>Tournament Level</small>
-              </button>
-              <button id="backFromAIButton" class="btn btn-secondary btn-lg">Back</button>
-        </div>
-      </div-->
+		<div id="aiDifficultyMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
+		  <h2 class="text-light mb-4">Select AI Difficulty</h2>
+		  <div class="d-grid gap-3">
+			  <button id="easyButton" class="btn btn-success btn-lg">
+				  <strong>Easy</strong><br>
+				  <small>Learning to Play</small>
+			  </button>
+			  <button id="mediumButton" class="btn btn-warning btn-lg">
+				  <strong>Medium</strong><br>
+				  <small>Casual Player</small>
+			  </button>
+			  <button id="hardButton" class="btn btn-danger btn-lg">
+				  <strong>Hard</strong><br>
+				  <small>Experienced Player</small>
+			  </button>
+			  <button id="expertButton" class="btn btn-dark btn-lg">
+				  <strong>Expert</strong><br>
+				  <small>Tournament Level</small>
+			  </button>
+			  <button id="backFromAIButton" class="btn btn-secondary btn-lg">Back</button>
+		</div>
+	  </div-->
 
 			<!-- Settings Menu -->
 			<div id="settingsMenu" class="position-absolute top-50 start-50 translate-middle p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none; max-width: 400px;">
@@ -134,9 +139,9 @@ export function renderPong() {
 			</div>
 
 			<div id="gameOverMenu" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="display: none;">
-  			<h2 class="text-light mb-3">Game Over</h2>
-  			<h3 id="winnerAnnouncement" class="text-warning mb-4">Player 1 Wins!</h3>
- 			<div class="d-grid gap-3">
+			<h2 class="text-light mb-3">Game Over</h2>
+			<h3 id="winnerAnnouncement" class="text-warning mb-4">Player 1 Wins!</h3>
+			<div class="d-grid gap-3">
 				<button id="restartGameButton" class="btn btn-success btn-lg">Rematch</button>
 				<button id="mainMenuButton" class="btn btn-primary btn-lg">Back to Main Menu</button>
 			</div>

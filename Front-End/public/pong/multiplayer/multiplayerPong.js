@@ -37,89 +37,94 @@ export function renderMultiplayerPong(
 	document.head.appendChild(bootstrapCSS);
 
 	const contentDiv = document.getElementById("content");
+
+	// Reset margine e classi di animazione come in home/pong
+	contentDiv.classList.remove("animate-margin", "animate-margin-logout");
+	contentDiv.style.margin = "0 10px 10px 0";
+
 	contentDiv.innerHTML = `
-        <div class="pong-app">
-            <div class="gamecontainer position-relative">
-                <div id="threejs-container" class="w-100 h-100"></div>
-                
-                <!-- Multiplayer UI Overlay -->
-                <div class="position-absolute top-0 end-0 p-3 bg-dark bg-opacity-75 text-white rounded-bottom">
-                    <div class="mb-2">
-                        <i class="fas fa-wifi me-2"></i>
-                        <span class="fw-bold">vs ${opponentName}</span>
-                    </div>
-                    <div id="connection-status" class="small">
-                        <span class="badge bg-warning">Connecting...</span>
-                    </div>
-                </div>
-                
-                <!-- Ready Screen - Always show this, no overlay needed -->
-                <div id="ready-screen" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="min-width: 400px; max-width: 500px;">
-                    <div class="d-flex flex-column h-100">
-                        <!-- Header -->
-                        <div class="mb-4">
-                            <h2 class="text-light mb-3">🎮 Multiplayer Pong</h2>
-                            <h5 class="text-light">🥊 You vs ${opponentName}</h5>
-                        </div>
-                        
-                        <!-- Player Status Section -->
-                        <div class="mb-4">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <div id="player-ready-status" class="d-flex justify-content-between align-items-center p-2 bg-dark bg-opacity-50 rounded">
-                                        <span class="text-success">
-                                            <i class="fas fa-user me-2"></i>You:
-                                        </span>
-                                        <span class="badge bg-warning">Not Ready</span>
-                                    </div>
-                                </div>
-                                <div class="col-12">
-                                    <div id="opponent-ready-status" class="d-flex justify-content-between align-items-center p-2 bg-dark bg-opacity-50 rounded">
-                                        <span class="text-primary">
-                                            <i class="fas fa-user-friends me-2"></i>${opponentName}:
-                                        </span>
-                                        <span class="badge bg-warning">Not Ready</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Action Buttons -->
-                        <div class="mb-4">
-                            <div class="d-grid gap-2">
-                                <button id="ready-button" class="btn btn-success btn-lg">
-                                    <i class="fas fa-check-circle me-2"></i>Ready to Play
-                                </button>
-                                <button id="leave-game-btn" class="btn btn-outline-danger">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Leave Game
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Controls Info -->
-                        <div class="mt-auto">
-                            <div class="text-light small">
-                                <p class="mb-1 fw-bold">🎮 Controls:</p>
-                                <div class="d-flex justify-content-center gap-3">
-                                    <span><kbd class="bg-secondary text-white px-2 py-1 rounded">W</kbd> Move Up</span>
-                                    <span><kbd class="bg-secondary text-white px-2 py-1 rounded">S</kbd> Move Down</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- In-game controls info -->
-                <div id="controls-info" class="position-absolute bottom-0 start-0 p-3 bg-dark bg-opacity-75 text-white rounded-top" style="display: none;">
-                    <div class="small">
-                        <div><strong>W</strong> - Move Up</div>
-                        <div><strong>S</strong> - Move Down</div>
-                        <div><strong>ESC</strong> - Pause</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
+		<div class="pong-app">
+			<div class="gamecontainer position-relative">
+				<div id="threejs-container" class="w-100 h-100"></div>
+				
+				<!-- Multiplayer UI Overlay -->
+				<div class="position-absolute top-0 end-0 p-3 bg-dark bg-opacity-75 text-white rounded-bottom">
+					<div class="mb-2">
+						<i class="fas fa-wifi me-2"></i>
+						<span class="fw-bold">vs ${opponentName}</span>
+					</div>
+					<div id="connection-status" class="small">
+						<span class="badge bg-warning">Connecting...</span>
+					</div>
+				</div>
+				
+				<!-- Ready Screen - Always show this, no overlay needed -->
+				<div id="ready-screen" class="position-absolute top-50 start-50 translate-middle text-center p-4 bg-dark bg-opacity-75 rounded shadow" style="min-width: 400px; max-width: 500px;">
+					<div class="d-flex flex-column h-100">
+						<!-- Header -->
+						<div class="mb-4">
+							<h2 class="text-light mb-3">🎮 Multiplayer Pong</h2>
+							<h5 class="text-light">🥊 You vs ${opponentName}</h5>
+						</div>
+						
+						<!-- Player Status Section -->
+						<div class="mb-4">
+							<div class="row g-3">
+								<div class="col-12">
+									<div id="player-ready-status" class="d-flex justify-content-between align-items-center p-2 bg-dark bg-opacity-50 rounded">
+										<span class="text-success">
+											<i class="fas fa-user me-2"></i>You:
+										</span>
+										<span class="badge bg-warning">Not Ready</span>
+									</div>
+								</div>
+								<div class="col-12">
+									<div id="opponent-ready-status" class="d-flex justify-content-between align-items-center p-2 bg-dark bg-opacity-50 rounded">
+										<span class="text-primary">
+											<i class="fas fa-user-friends me-2"></i>${opponentName}:
+										</span>
+										<span class="badge bg-warning">Not Ready</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Action Buttons -->
+						<div class="mb-4">
+							<div class="d-grid gap-2">
+								<button id="ready-button" class="btn btn-success btn-lg">
+									<i class="fas fa-check-circle me-2"></i>Ready to Play
+								</button>
+								<button id="leave-game-btn" class="btn btn-outline-danger">
+									<i class="fas fa-sign-out-alt me-2"></i>Leave Game
+								</button>
+							</div>
+						</div>
+						
+						<!-- Controls Info -->
+						<div class="mt-auto">
+							<div class="text-light small">
+								<p class="mb-1 fw-bold">🎮 Controls:</p>
+								<div class="d-flex justify-content-center gap-3">
+									<span><kbd class="bg-secondary text-white px-2 py-1 rounded">W</kbd> Move Up</span>
+									<span><kbd class="bg-secondary text-white px-2 py-1 rounded">S</kbd> Move Down</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<!-- In-game controls info -->
+				<div id="controls-info" class="position-absolute bottom-0 start-0 p-3 bg-dark bg-opacity-75 text-white rounded-top" style="display: none;">
+					<div class="small">
+						<div><strong>W</strong> - Move Up</div>
+						<div><strong>S</strong> - Move Down</div>
+						<div><strong>ESC</strong> - Pause</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	`;
 
 	// Initialize game after DOM is ready
 	setTimeout(() => {
@@ -243,11 +248,11 @@ function handlePlayerReady() {
 
 		// Update player status with proper structure
 		playerStatus.innerHTML = `
-            <span class="text-success">
-                <i class="fas fa-user me-2"></i>You:
-            </span>
-            <span class="badge bg-success">Ready</span>
-        `;
+			<span class="text-success">
+				<i class="fas fa-user me-2"></i>You:
+			</span>
+			<span class="badge bg-success">Ready</span>
+		`;
 
 		// Send ready signal to server
 		try {
@@ -263,11 +268,11 @@ function handlePlayerReady() {
 			readyBtn.innerHTML =
 				'<i class="fas fa-check-circle me-2"></i>Ready to Play';
 			playerStatus.innerHTML = `
-                <span class="text-success">
-                    <i class="fas fa-user me-2"></i>You:
-                </span>
-                <span class="badge bg-warning">Not Ready</span>
-            `;
+				<span class="text-success">
+					<i class="fas fa-user me-2"></i>You:
+				</span>
+				<span class="badge bg-warning">Not Ready</span>
+			`;
 		}
 	}
 }
@@ -372,19 +377,19 @@ function showGameError(message) {
 	const readyScreen = document.getElementById("ready-screen");
 	if (readyScreen) {
 		readyScreen.innerHTML = `
-            <div class="text-center p-4 bg-dark rounded shadow">
-                <h3 class="text-danger mb-3">Connection Error</h3>
-                <p class="text-light mb-3">${message}</p>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="window.navigateTo('#home')">
-                        Return to Home
-                    </button>
-                    <button class="btn btn-outline-secondary" onclick="window.location.reload()">
-                        Retry
-                    </button>
-                </div>
-            </div>
-        `;
+			<div class="text-center p-4 bg-dark rounded shadow">
+				<h3 class="text-danger mb-3">Connection Error</h3>
+				<p class="text-light mb-3">${message}</p>
+				<div class="d-grid gap-2">
+					<button class="btn btn-primary" onclick="window.navigateTo('#home')">
+						Return to Home
+					</button>
+					<button class="btn btn-outline-secondary" onclick="window.location.reload()">
+						Retry
+					</button>
+				</div>
+			</div>
+		`;
 	}
 }
 
