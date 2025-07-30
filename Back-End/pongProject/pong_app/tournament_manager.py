@@ -1,6 +1,6 @@
 import asyncio
-import json
 import logging
+import random
 from sre_constants import SUCCESS
 from typing import Dict, List, Optional, Any
 from channels.db import database_sync_to_async
@@ -41,7 +41,7 @@ class TournamentManager:
 		async def get_tournament(self, tournament_id: int) -> Optional['TournamentState']:
 				"""Get tournament by ID, loading from database if not in memory"""
 				tournament = self.active_tournaments.get(tournament_id)
-				
+				logger.info(f"Fetching tournament {tournament_id} from active tournaments: {self.active_tournaments.keys()}")
 				if not tournament:
 						# Try to load from database
 						try:
@@ -224,7 +224,6 @@ class TournamentState:
 				self.current_round = 0
 				self.initialized = True
 				self.status = 'active'	# Set tournament status to active
-				
 				# Create initial bracket structure
 				self.brackets[0] = self.players.copy()
 				
@@ -261,7 +260,8 @@ class TournamentState:
 				self.is_round_active = True
 				self.round_start_time = datetime.now()
 				self.partecipants = self.next_round.copy()
-				
+				random.shuffle(self.partecipants)  # Shuffle participants for fair pairing
+
 				# Clear next_round for this round (only winners will be added back)
 				self.next_round = []
 				
@@ -295,15 +295,16 @@ class TournamentState:
 				
 				# Broadcast round start to all players
 				await self._broadcast_round_start(games)
-				
+				self.is_round_active = True
 				return {'type': 'success', 'success': f'Round {self.current_round} started'}
 		
 		async def register_game_result(self, game_id: str, winner: str, loser: str, auto_advance: bool = False) -> Dict[str, Any]:
 				"""Register the result of a tournament game"""
-				if not self.is_round_active:
-						logger.warning(f"Attempted to register result for {game_id} but no active round in tournament {self.tournament_id}")
-						return {'type': 'error', 'error': 'No active round'}
-				
+				# if not self.is_round_active:
+				# 		logger.warning(f"Attempted to register result for {game_id} but no active round in tournament {self.tournament_id}")
+				# 		return {'type': 'error', 'error': 'No active round'}
+				logger.info(f"active games: {self.active_games.keys()}")
+
 				# Handle bye advancement
 				if auto_advance:
 						logger.info(f"Auto-advancing {winner} (bye) in tournament {self.tournament_id}")
@@ -334,7 +335,11 @@ class TournamentState:
 								logger.warning(f"Winner {winner} already in next round: {self.next_round}")
 				else:
 						logger.error(f"Winner {winner} not in current participants: {self.partecipants}")
-				
+				if loser in self.next_round:
+						self.next_round.remove(loser)
+						logger.info(f"Loser {loser} removed from next round. Current next_round: {self.next_round}")
+				else:
+						logger.info(f"Loser {loser} eliminated from tournament")
 				# Check if round is complete (all games finished)
 				logger.info(f"Checking round completion. Active games remaining: {len(self.active_games)}")
 				await self._check_round_completion()
@@ -461,23 +466,24 @@ class TournamentState:
 								'game_id': game.id,
 								'player_1': player_1,
 								'player_2': player_2,
-								'created_at': datetime.now()
+								'created_at': datetime.now(),
+								'tournament_id': self.tournament_id
 						}
 						
 						# Broadcast game creation to tournament players
 						channel_layer = get_channel_layer()
-						await channel_layer.group_send(
-								f'tournament_{self.tournament_id}',
-								{
-										'type': 'create_game',
-										'game_id': game.id,
-										'player_1': player_1,
-										'player_2': player_2,
-										'tournament_id': self.tournament_id
-								}
-						)
-						
-						logger.info(f"Game {game.id} created for tournament {self.tournament_id}: {player_1} vs {player_2}")
+						if channel_layer:
+							await channel_layer.group_send(
+									f'tournament_{self.tournament_id}',
+									{
+											'type': 'create_game',
+											'game_id': game.id,
+											'player_1': player_1,
+											'player_2': player_2,
+											'tournament_id': self.tournament_id
+									}
+							)
+							logger.info(f"Game {game.id} created for tournament {self.tournament_id}: {player_1} vs {player_2}")
 						
 				except Exception as e:
 						logger.error(f"Error creating game for tournament: {e}", exc_info=True)
@@ -485,72 +491,77 @@ class TournamentState:
 		async def _broadcast_round_start(self, games: List[Dict]):
 				"""Broadcast round start to all tournament players"""
 				channel_layer = get_channel_layer()
-				await channel_layer.group_send(
-						f'tournament_{self.tournament_id}',
-						{
-								'type': 'tournament_start_round',
-								'message': f'Round {self.current_round} has started!',
-								'round_data': {
-										'round_number': self.current_round,
-										'games_count': len(games)
-								},
-								'games': games
-						}
-				)
+				if channel_layer:
+					await channel_layer.group_send(
+							f'tournament_{self.tournament_id}',
+							{
+									'type': 'tournament_start_round',
+									'message': f'Round {self.current_round} has started!',
+									'round_data': {
+											'round_number': self.current_round,
+											'games_count': len(games)
+									},
+									'games': games
+							}
+					)
 		
 		async def _broadcast_round_complete(self):
 				"""Broadcast round completion to all tournament players"""
 				channel_layer = get_channel_layer()
-				await channel_layer.group_send(
-						f'tournament_{self.tournament_id}',
-						{
-								'type': 'tournament_end_round',
-								'message': f'Round {self.current_round} completed!',
-								'results': {
-										'round': self.current_round,
-										'winners': self.next_round
-								},
-								'next_round_info': {
-										'players_advancing': len(self.next_round),
-										'next_round_number': self.current_round + 1
-								}
-						}
-				)
+				if channel_layer:
+					await channel_layer.group_send(
+							f'tournament_{self.tournament_id}',
+							{
+									'type': 'tournament_end_round',
+									'message': f'Round {self.current_round} completed!',
+									'results': {
+											'round': self.current_round,
+											'winners': self.next_round
+									},
+									'next_round_info': {
+											'players_advancing': len(self.next_round),
+											'next_round_number': self.current_round + 1
+									}
+							}
+					)
 		
 		async def _broadcast_round_end(self):
 				"""Broadcast round end to all tournament players"""
 				channel_layer = get_channel_layer()
-				await channel_layer.group_send(
-						f'tournament_{self.tournament_id}',
-						{
-								'type': 'tournament_round_end',
-								'message': f'Round {self.current_round} has ended!',
-								'round_data': {
-										'round_number': self.current_round,
-										'winners': self.next_round,
-										'players_advancing': len(self.next_round)
-								}
-						}
-				)
+				if channel_layer:
+					await channel_layer.group_send(
+							f'tournament_{self.tournament_id}',
+							{
+									'type': 'tournament_round_end',
+									'message': f'Round {self.current_round} has ended!',
+									'round_data': {
+											'round_number': self.current_round,
+											'winners': self.next_round,
+											'players_advancing': len(self.next_round)
+									}
+							}
+					)
 		
 		async def _broadcast_tournament_complete(self, winner=None):
 				"""Broadcast tournament completion"""
 				tournament_winner = winner or self.winner
 				channel_layer = get_channel_layer()
-				await channel_layer.group_send(
-						f'tournament_{self.tournament_id}',
-						{
-								'type': 'tournament_complete',
-								'message': f'Tournament completed!',
-								'winner': tournament_winner,
-								'tournament_data': {
-										'tournament_id': self.tournament_id,
-										'name': self.name,
-										'total_rounds': self.current_round,
-										'total_players': self.nbr_player
-								}
-						}
-				)
+				if channel_layer:
+					# Notify all players in the tournament group
+					await channel_layer.group_send(
+							f'tournament_{self.tournament_id}',
+							{
+									'type': 'tournament_complete',
+									'message': f'Tournament completed!',
+									'winner': tournament_winner,
+									'tournament_data': {
+											'tournament_id': self.tournament_id,
+											'name': self.name,
+											'total_rounds': self.current_round,
+											'total_players': self.nbr_player
+									}
+							}
+					)
 		
 		async def _update_tournament_in_db(self):
 				"""Update tournament status in database"""

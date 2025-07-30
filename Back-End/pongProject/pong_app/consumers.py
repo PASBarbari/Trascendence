@@ -20,7 +20,6 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		websocket_logger.info('New WebSocket connection attempt')
 		self.room_id = self.scope['url_route']['kwargs']['room_id']
 		self.room_name = f'game_{self.room_id}'
-		self.tournament_id = self.scope['url_route']['kwargs'].get('tournament_id', None)
 		
 		# Check authentication - reject AnonymousUser
 		user = self.scope.get('user')
@@ -146,13 +145,14 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 		logger.info(f"Starting game {self.room_id} with players {data}")
 		try:
+			self.tournament_id = await database_sync_to_async(self.get_tournament_id)()
 			del player_ready[self.room_id]
 			active_games[self.room_id] = GameState(
 				data['player1'], 
 				data['player2'], 
 				self.room_id, 
 				data.get('player_length', 10), 
-				self.tournament_id if self.tournament_id else None
+				tournament_id=self.tournament_id,
 			)
 			asyncio.create_task(active_games[self.room_id].start())
 			logger.info(f"Game {self.room_id} successfully started")
@@ -276,6 +276,19 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			'message': event.get('message', 'All players are ready!'),
 			'ready': True
 		}))
+	def get_tournament_id(self):
+		"""Get the tournament ID from the db"""
+		if hasattr(self, 'tournament_id'):
+			return self.tournament_id
+		try:
+			from .models import Game
+			game = Game.objects.get(id=self.room_id)
+			return game.tournament_id
+		except Game.DoesNotExist:
+			return None
+		except Exception as e:
+			logger.error(f"Error retrieving tournament ID for game {self.room_id}: {str(e)}")
+			return None
 
 	message_handlers = {
 		'chat_message': chat_message,
@@ -406,12 +419,12 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 				tournament_id=self.tournament_id,
 				name=tournament_db.name,
 				max_players=tournament_db.max_partecipants,
-				creator_id=tournament_db.creator.user_id if tournament_db.creator else self.player_id
+				creator_id=await database_sync_to_async(lambda: tournament_db.creator.user_id if tournament_db.creator else None)(),
 			)
 			
 			# Load existing participants from database
 			await tournament.load_players_from_db()
-			logger.info(f"Loaded tournament {tournament_db.name} from database with {tournament.nbr_player} players")
+			logger.info(f"Loaded tournament {tournament_db.name} from database with {tournament.nbr_player} players and creator {tournament.creator_id}")
 			return tournament
 			
 		except Exception as db_error:
@@ -426,7 +439,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					tournament_id=self.tournament_id,
 					name=name,
 					max_players=max_p,
-					creator_id=self.player_id
+					creator_id=None	# Creator will be set later
 				)
 				logger.info(f"Created new tournament {name} with creator {self.player_id}")
 				return tournament
@@ -757,7 +770,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		try:
 				player_1_id = event.get('player_1')
 				player_2_id = event.get('player_2')
-				tournament_id = event.get('tournament_id')
+				# tournament_id = event.get('tournament_id')
 				game_id = event.get('game_id')
 				
 				# Only send notification if this consumer belongs to one of the players in the game
@@ -791,7 +804,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 										'user_id': player_2_id,
 										'username': player_2_username
 								},
-								'tournament_id': tournament_id
+								'tournament_id': self.tournament_id
 						}
 				}))
 				

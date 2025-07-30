@@ -194,14 +194,14 @@ class TournamentGen(generics.ListCreateAPIView):
 	def perform_create(self, serializer):
 		"""Override to auto-set creator and adjust max_partecipants to nearest power of 2"""
 		# Get or create the user profile for the creator
-		creator, created = UserProfile.objects.get_or_create(
-			user_id=self.request.user.user_id,
-			defaults={
-				'username': getattr(self.request.user, 'username', f'User_{self.request.user.user_id}'),
-				'email': getattr(self.request.user, 'email', f'user_{self.request.user.user_id}@example.com')
-			}
-		)
-		
+		creator = self.request.user
+		if not isinstance(creator, UserProfile):
+			try:
+				logger.info(f"Fetching UserProfile idk why")
+				creator = UserProfile.objects.get(user_id=self.request.user.user_id)
+			except UserProfile.DoesNotExist:
+				logger.error(f"UserProfile not found for user_id {creator}, creating new profile")
+				return Response({'error': 'You don\'t exists lmao'}, status=status.HTTP_404_NOT_FOUND)
 		# Get the requested max_partecipants and adjust to nearest power of 2
 		max_partecipants = serializer.validated_data.get('max_partecipants', 8)
 		adjusted_max_partecipants = self.get_nearest_power_of_2(max_partecipants)

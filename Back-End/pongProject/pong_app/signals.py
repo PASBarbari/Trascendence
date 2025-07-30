@@ -1,4 +1,6 @@
 # praticamente quando un modello viene creato ricveve il segnale e fa quello che gli chiedi
+import inspect
+import json
 import math
 from pdb import post_mortem
 import random
@@ -66,12 +68,11 @@ class GameState:
 			ring_height=self.ring_height,
 			ring_thickness=self.ring_thickness
 		)
-		logger.info(f"Game {self.game_id} initialized with {engine_type} physics engine")
+
 
 	async def start(self):
 		self.running = True
 		tick_interval = 1 / tick_rate
-
 		if random.choice([True, False]):
 			self.angle = random.uniform(70, -70)
 		else:
@@ -136,64 +137,65 @@ class GameState:
 			
 			# Get the updated game object to access properties
 			game = await sync_to_async(Game.objects.get)(id=self.game_id)
-			winner_id = await sync_to_async(lambda: game.winner_id)()
-			loser_id = await sync_to_async(lambda: game.loser_id)()
-			
+
 		except Exception as e:
 			logger.error(f"Error saving game {self.game_id} to database: {str(e)}")
-			# Fallback: calculate winner manually if DB access fails
-			if self.player_1_score > self.player_2_score:
-				winner_id = self.player_1.user_id
-				loser_id = self.player_2.user_id
-			else:
-				winner_id = self.player_2.user_id
-				loser_id = self.player_1.user_id
-		
+
+		# Determine winner and loser based on scores
+		if self.player_1_score > self.player_2_score:
+			winner_id = self.player_1.user_id
+			loser_id = self.player_2.user_id
+		else:
+			winner_id = self.player_2.user_id
+			loser_id = self.player_1.user_id
 		# If this is a tournament game, register the result
-		if self.tournament_id and winner_id and loser_id:
+		if self.tournament_id:
+			logger.info(f"Game {self.game_id} is part of tournament {self.tournament_id}, registering result")
 			try:
 				from .tournament_manager import tournament_manager
-				tournament = await tournament_manager.get_tournament(self.tournament_id)
-				logger.info(f"Registering tournament result for game {self.game_id} with winner {winner_id} and loser {loser_id}")
+				tournament = await tournament_manager.get_tournament(self.tournament_id.id)
+				logger.info(f"Registering tournament result for game {self.game_id} ")
 				if tournament:
 					await tournament.register_game_result(self.game_id, winner_id, loser_id)
 					logger.info(f"Tournament game result registered for game {self.game_id}")
 					
 					# Notify tournament about game completion
 					channel_layer = get_channel_layer()
-					await channel_layer.group_send(
-						f'tournament_{self.tournament_id}',
-						{
-							'type': 'tournament_game_completed',
-							'game_id': self.game_id,
-							'winner': winner_id,
-							'loser': loser_id,
-							'scores': {
-								'player_1_score': self.player_1_score,
-								'player_2_score': self.player_2_score
+					if channel_layer:
+						await channel_layer.group_send(
+							f'tournament_{self.tournament_id.id}',
+							{
+								'type': 'tournament_game_completed',
+								'game_id': self.game_id,
+								'winner': winner_id,
+								'loser': loser_id,
+								'scores': {
+									'player_1_score': self.player_1_score,
+									'player_2_score': self.player_2_score
+								}
 							}
-						}
-					)
+						)
 				else:
-					logger.warning(f"Tournament {self.tournament_id} not found in active tournaments")
+					logger.warning(f"Tournament {self.tournament_id.id} not found in active tournaments")
 			except Exception as e:
 				logger.error(f"Error registering tournament result: {str(e)}")
 		
 		# Send game over message to players
 		try:
 			channel_layer = get_channel_layer()
-			await channel_layer.group_send(
-				f'game_{self.game_id}',
-				{
-					'type': 'game_over',
-					'winner': winner_id,
-					'loser': loser_id,
-					'final_scores': {
-						'player_1_score': self.player_1_score,
-						'player_2_score': self.player_2_score
+			if channel_layer:	
+				await channel_layer.group_send(
+					f'game_{self.game_id}',
+					{
+						'type': 'game_over',
+						'winner': winner_id,
+						'loser': loser_id,
+						'final_scores': {
+							'player_1_score': self.player_1_score,
+							'player_2_score': self.player_2_score
+						}
 					}
-				}
-			)
+				)
 		except Exception as e:
 			logger.error(f"Error sending game over message: {str(e)}")
 
