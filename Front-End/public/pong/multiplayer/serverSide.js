@@ -169,6 +169,7 @@ function initializeWebSocket(room_id) {
 				console.error("Error processing game state:", error);
 			}
 		} else if (message.type === "connection_success") {
+			console.log("Connected to game server:", message);
 			// Store player info in window object
 			window.multiplayerInfo = {
 				playerId: message.player_id,
@@ -185,6 +186,7 @@ function initializeWebSocket(room_id) {
 			message.message === "All players are ready!"
 		) {
 			// Add game-active class to body
+			console.log("Received all players ready message:", message);
 			document.body.classList.add("game-active");
 
 			// let player_1_pos = [state.players[0].mesh.position.x, state.players[0].mesh.position.y, state.players[0].mesh.position.z];
@@ -228,9 +230,11 @@ function initializeWebSocket(room_id) {
 				});
 			}
 		} else if (message.message === "Waiting for players to be ready...") {
+			console.log("Waiting for players to be ready...:", message);
 			updateOpponentStatus("waiting");
 		} else if (message.type === "quit_game") {
 			// Remove game-active class
+			console.log("Game quit by server:", message);
 			document.body.classList.remove("game-active");
 
 			showAlertForXSeconds(message.message, "warning", 5, {
@@ -244,6 +248,7 @@ function initializeWebSocket(room_id) {
 			showReadyScreen();
 		} else if (message.message === "Game Over!") {
 			// Remove game-active class
+			console.log("Game over message received:", message);
 			document.body.classList.remove("game-active");
 
 			handleGameOver();
