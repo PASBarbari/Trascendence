@@ -14,6 +14,8 @@ from asgiref.sync import async_to_sync
 import time, asyncio
 from .serializer import *
 from .physics_integration import create_physics_manager
+from .redis_state import RedisGameState
+
 
 logger = logging.getLogger('pong_app')
 
@@ -69,6 +71,18 @@ class GameState:
 			ring_thickness=self.ring_thickness
 		)
 
+	@classmethod
+	def from_dict(cls, data: dict):
+			instance = cls(
+					data.get('player_1'),
+					data.get('player_2'),
+					data.get('game_id'),
+					data.get('p_length', 10),
+					data.get('tournament_id', None)
+			)
+			for k, v in data.items():
+					setattr(instance, k, v)
+			return instance
 
 	async def start(self):
 		self.running = True
@@ -126,6 +140,14 @@ class GameState:
 
 		# Save game to database asynchronously
 		try:
+			Game.objects.update_or_create(
+      player_1_score=self.player_1_score,
+      player_2_score=self.player_2_score,
+      tournament_id=self.tournament_id
+    	)
+			# Cleanup Redis
+			RedisGameState.delete(self.game_id)
+
 			from django.utils import timezone
 			from asgiref.sync import sync_to_async
 			await sync_to_async(Game.objects.filter(id=self.game_id).update)(
@@ -152,6 +174,13 @@ class GameState:
 		if self.tournament_id:
 			logger.info(f"Game {self.game_id} is part of tournament {self.tournament_id}, registering result")
 			try:
+				Game.objects.update_or_create(
+					player_1_score=self.player_1_score,
+					player_2_score=self.player_2_score,
+					tournament_id=self.tournament_id
+				)
+				# RedisGameState.delete(self.game_id) lo chiamo dopo
+
 				from .tournament_manager import tournament_manager
 				tournament = await tournament_manager.get_tournament(self.tournament_id.id)
 				logger.info(f"Registering tournament result for game {self.game_id} ")
@@ -198,6 +227,7 @@ class GameState:
 				)
 		except Exception as e:
 			logger.error(f"Error sending game over message: {str(e)}")
+		RedisGameState.delete(self.game_id)
 
 
 	# Legacy collision detection methods (kept for compatibility)
@@ -266,30 +296,22 @@ class GameState:
 		self.physics.switch_engine(engine_type, preserve_state=True)
 
 	async def update(self):
-		# ✅ PERFORMANCE: Throttle WebSocket updates to reduce lag
-		self.frame_count += 1
-		
-		# Only send WebSocket updates every 3rd frame (10 FPS instead of 30 FPS)
-		if self.frame_count % 2 != 0:
-			return
-			
+		# Send to clients
 		channel_layer = get_channel_layer()
 		try:
-			serialized_data = GameStateSerializer(self.to_dict()).data
-			# Reduce logging verbosity - only log occasionally
-			if self.frame_count % 300 == 0:	# Log every 10 seconds at 30fps
-				logger.debug(f"Sending game state for game {self.game_id} (frame {self.frame_count})")
-			
+			state_dict = self.to_dict()
 			await channel_layer.group_send(
 				f'game_{self.game_id}',
 				{
-					'type': 'game_state',
-					'game_state': serialized_data
+						'type': 'game_state',
+						'game_state': state_dict
 				}
 			)
+			# Sync to Redis
+			RedisGameState.save(self.game_id, state_dict)
 		except Exception as e:
-			logger.error(f"Error sending game state for game {self.game_id}: {e}")
-			print(f"Error sending game state: {e}") #TODO logg
+				logger.error(f"Error sending or saving game state: {e}")
+
 
 	def reset_ball(self, angle):
 		self.ball_pos = [0, 0]
@@ -365,7 +387,6 @@ class GameState:
 		if hasattr(self, 'running'):
 			self.running = False
 		#TODO: implement forfeit logic - set quitting player score to 0 and opponent to 5
-
 
 
 @receiver(post_save, sender=Game)

@@ -7,6 +7,8 @@ from .tournament_manager import tournament_manager
 from .models import Game
 import logging
 from asgiref.sync import sync_to_async
+from .redis_state import RedisGameState
+
 
 # Get dedicated loggers
 logger = logging.getLogger('pong_app')
@@ -76,6 +78,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			if self.room_id in active_games:
 				# Remove game from active games
 				del active_games[self.room_id]
+				player_ready.pop(self.room_id, None)
 			logger.info(f"Game {self.room_id} resources cleaned up after disconnect")
 		
 		# Leave room group
@@ -147,23 +150,40 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 		try:
 			self.tournament_id = await database_sync_to_async(self.get_tournament_id)()
 			del player_ready[self.room_id]
-			active_games[self.room_id] = GameState(
-				data['player1'], 
-				data['player2'], 
-				self.room_id, 
-				data.get('player_length', 10), 
-				tournament_id=self.tournament_id,
-			)
-			asyncio.create_task(active_games[self.room_id].start())
+			# active_games[self.room_id] = GameState(
+			# 	data['player1'], 
+			# 	data['player2'], 
+			# 	self.room_id, 
+			# 	data.get('player_length', 10), 
+			# 	tournament_id=self.tournament_id,
+			# )
+			saved = await sync_to_async(RedisGameState.load)(self.room_id)
+			if saved:
+				gs = GameState.from_dict(saved)
+			else:
+				gs = GameState(
+					data['player1'],
+					data['player2'],
+					self.room_id,
+					data.get('player_length', 10),
+					tournament_id=self.tournament_id,
+				)
+				await sync_to_async(RedisGameState.save)(self.room_id, gs.to_dict())
+
+			active_games[self.room_id] = gs
+			asyncio.create_task(gs.start())  
+
 			logger.info(f"Game {self.room_id} successfully started")
 		except Exception as e:
 			logger.error(f"Error starting game {self.room_id}: {str(e)}", exc_info=True)
 
 	async def up(self, data):
 		try:
-			# Use authenticated user from connection instead of client data
-			player = self.player_id
-			active_games[self.room_id].up(player)
+			gs = active_games[self.room_id]
+			gs.up(data['player'])
+			await sync_to_async(RedisGameState.save)(self.room_id, gs.to_dict())
+			...
+
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found for UP movement")
 		except Exception as e:
@@ -171,9 +191,10 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 	async def down(self, data):
 		try:
-			# Use authenticated user from connection instead of client data
-			player = self.player_id
-			active_games[self.room_id].down(player)
+			gs = active_games[self.room_id]
+			gs.down(data['player'])
+			await sync_to_async(RedisGameState.save)(self.room_id, gs.to_dict())
+
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found for DOWN movement")
 		except Exception as e:
@@ -181,10 +202,10 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 
 	async def stop(self, data):
 		try:
-			# Use authenticated user from connection instead of client data
-			player = self.player_id
-			active_games[self.room_id].stop(player)
-			logger.debug(f"Player {player} stopped in game {self.room_id}")
+			gs = active_games[self.room_id]
+			gs.stop(data['player'])
+			await sync_to_async(RedisGameState.save)(self.room_id, gs.to_dict())
+			logger.debug(f"Player {data['player']} stopped in game {self.room_id}")
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found for STOP movement")
 		except Exception as e:
@@ -215,6 +236,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			state_dict = game_state.to_dict()
 			logger.info(f'Game {self.room_id} initialized with ball_speed: {game_state.ball_speed}')
 			logger.debug(f'Game state configuration: {state_dict}')
+			await sync_to_async(RedisGameState.save)(self.room_id, game_state.to_dict())
 		except KeyError:
 			logger.error(f"Game {self.room_id} not found during initialization")
 		except Exception as e:
@@ -245,6 +267,7 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			# Clean up game resources
 			if self.room_id in active_games:
 				del active_games[self.room_id]
+				player_ready.pop(self.room_id, None)
 			logger.info(f"Game {self.room_id} resources cleaned up after game over")
 		except KeyError:
 			logger.warning(f"Game {self.room_id} already removed from active_games")
@@ -262,6 +285,8 @@ class GameTableConsumer(AsyncWebsocketConsumer):
 			if self.room_id in active_games:
 				active_games[self.room_id].quit_game(player)
 				del active_games[self.room_id]
+				await sync_to_async(RedisGameState.delete)(self.room_id)
+				player_ready.pop(self.room_id, None)
 				logger.info(f"Game {self.room_id} resources cleaned up after player quit")
 		except KeyError:
 			logger.warning(f"Game {self.room_id} already removed from active_games")
@@ -349,15 +374,28 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 		
 		# Handle cleanup for tournament resources if needed
 		if hasattr(self, 'room_id') and self.room_id in active_games:
-			logger.info(f"Cleaning up game resources for tournament {self.tournament_id}")
-			active_games[self.room_id].quit_game(getattr(self, 'player_id', None))
-			del active_games[self.room_id]
+			try:
+				logger.info(f"Cleaning up game resources for tournament {self.tournament_id}")
+				active_games[self.room_id].quit_game(getattr(self, 'player_id', None))
+				del active_games[self.room_id]
+				await sync_to_async(RedisGameState.delete)(self.room_id)
+				player_ready.pop(self.room_id, None)
+			except KeyError:
+				logger.warning(f"Game {self.room_id} already removed from active_games")
+			except Exception as e:
+				logger.error(f"Error cleaning up game resources for tournament {self.tournament_id}: {str(e)}")
 
 	async def receive(self, text_data):
 		try:
 			data = json.loads(text_data)
+			game_id = data.get('game_id')
+			if game_id:
+				state_dict = await sync_to_async(RedisGameState.load)(game_id)
+				if state_dict:
+					restored_game = GameState.from_dict(state_dict)
+					logger.info(f"Game {game_id} state: {restored_game.to_dict()}")
+
 			message_type = data.get('type')
-			websocket_logger.debug(f"Received tournament message: type={message_type}, tournament={self.tournament_id}")
 			handler = self.message_handlers.get(message_type, self.default_handler)
 			await handler(self, data)
 		except json.JSONDecodeError:
