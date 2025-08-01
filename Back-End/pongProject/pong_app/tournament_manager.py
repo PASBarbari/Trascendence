@@ -258,6 +258,7 @@ class TournamentState:
 				
 				self.current_round += 1
 				self.is_round_active = True
+				self.active_games = {}  # Reset active games for new round
 				self.round_start_time = datetime.now()
 				self.partecipants = self.next_round.copy()
 				random.shuffle(self.partecipants)  # Shuffle participants for fair pairing
@@ -629,5 +630,14 @@ class TournamentState:
 						'completion_time': self.completion_time.isoformat() if hasattr(self, 'completion_time') and self.completion_time else None
 				}
 
-# Global tournament manager instance
-tournament_manager = TournamentManager()
+# Import Redis-backed implementation
+try:
+    from .redis_backed_tournament_manager import redis_backed_tournament_manager
+    # Use Redis-backed implementation by default
+    tournament_manager = redis_backed_tournament_manager
+    logger.info("Using Redis-backed tournament manager")
+except ImportError as e:
+    logger.warning(f"Failed to import Redis-backed tournament manager: {e}")
+    logger.info("Falling back to in-memory tournament manager")
+    # Fallback to original in-memory implementation
+    tournament_manager = TournamentManager()

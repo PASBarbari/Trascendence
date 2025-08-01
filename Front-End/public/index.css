@@ -14,16 +14,16 @@
 body {
 	margin: 0;
 	padding: 0;
-	height: 100vh;
+	height: 100dvh;
 	overflow: hidden;
 }
 
 .App {
 	display: flex;
 	flex-direction: column;
-	height: 100vh;
+	height: 100dvh;
 	min-width: 200px;
-	min-height: 350px;
+	min-height: 300px;
 }
 .logo-image {
 	cursor: pointer;
@@ -32,11 +32,6 @@ body {
 	align-items: center;
 	width: 160px;
 	height: auto;
-}
-@media (max-width: 767px) {
-	.logo-image {
-		width: 60px;
-	}
 }
 
 .propic-image {
@@ -74,6 +69,12 @@ body {
 	margin: 12% 41% 15% 38%;
 }
 /* background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%); */
+
+@media (max-width: 600px), (max-height: 500px) {
+    .content {
+        margin: 0 10px 10px 0 !important;
+    }
+}
 
 @keyframes animateMarginToZero {
 	from {

@@ -97,7 +97,7 @@
     top: 0;
     z-index: 1000;
     height: 100%;
-    width: calc(100vw - 60px);
+    width: calc(100dvw - 60px);
     box-shadow: -3px 0 10px rgba(0, 0, 0, 0.2);
     background-color: white;
     border-radius: 12px;

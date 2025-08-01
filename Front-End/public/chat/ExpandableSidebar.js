@@ -82,12 +82,12 @@ async function renderExpandableSidebar() {
 			<button id="blockUsers" class="btn btn-light mb-2">
 				<i class="bi bi-chat-dots"></i>
 			</button>
-			<button id="groupChatButton" class="btn btn-light mb-2">
+			<!--button id="groupChatButton" class="btn btn-light mb-2">
 				<i class="bi bi-people"></i>
 			</button>
 			<button id="randomChatButton" class="btn btn-light mb-2">
 				<i class="bi bi-shuffle"></i>
-			</button>
+			</button-->
 		</div>
 		<div id="chatContainer" class="chat-container"></div>
 	`;
@@ -135,22 +135,22 @@ async function renderExpandableSidebar() {
 		}
 	});
 
-	document
-		.getElementById("groupChatButton")
-		.addEventListener("click", function () {
-			renderChatItem({
-				id: "5",
-				name: "Eve",
-				lastMessage: "Thanks for your help!",
-				type: "single",
-			});
-		});
+	// document
+	// 	.getElementById("groupChatButton")
+	// 	.addEventListener("click", function () {
+	// 		renderChatItem({
+	// 			id: "5",
+	// 			name: "Eve",
+	// 			lastMessage: "Thanks for your help!",
+	// 			type: "single",
+	// 		});
+	// 	});
 
-	document
-		.getElementById("randomChatButton")
-		.addEventListener("click", function () {
-			alert("Random Chat clicked");
-		});
+	// document
+	// 	.getElementById("randomChatButton")
+	// 	.addEventListener("click", function () {
+	// 		alert("Random Chat clicked");
+	// 	});
 
 	// Fetch chat rooms and render them
 	updateChatList();

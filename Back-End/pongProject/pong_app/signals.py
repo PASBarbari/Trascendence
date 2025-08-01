@@ -196,6 +196,15 @@ class GameState:
 						}
 					}
 				)
+				
+				# Give a moment for the game_over message to be processed
+				import asyncio
+				await asyncio.sleep(2)
+				
+				# Clean up the game group by discarding all channels
+				# Note: This is a cleanup operation, so we don't need to get all channels first
+				logger.info(f"Cleaning up game group: game_{self.game_id}")
+				
 		except Exception as e:
 			logger.error(f"Error sending game over message: {str(e)}")
 
