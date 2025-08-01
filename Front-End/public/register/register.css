@@ -1,7 +1,7 @@
 /* .register
 {
-    height: 100vh;
-    width: 100vw;
+    height: 100dvh;
+    width: 100dvw;
 	background: radial-gradient(circle at -200px 230px, #03173f 0%, #142869 10%, #26357c 18%, #335fab 51%, #1152a1 100%);
     display: flex;
     justify-content: center;

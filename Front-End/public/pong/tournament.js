@@ -223,7 +223,7 @@ async function renderNewTournament(tournamentData) {
 			<button class="btn ${isCreator ? "btn-outline-success" : "btn-outline-secondary"}" id="start-button" data-tournament-id="${tournament.id}" disabled>
 				start
 			</button>
-			<button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${tournament.id}" disabled>
+			<button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${tournament.id}" >
 				get_brackets
 			</button>
 			<button class="btn btn-outline-danger" id="tournamentDelete" data-tournament-id="${tournament.id}" ${isCreator ? "" : "disabled"}>
@@ -273,7 +273,7 @@ async function renderNewTournament(tournamentData) {
 			"#tournamentStatsButton"
 		);
 		tournamentStatsButton.addEventListener("click", async () => {
-			if (socket && socket.readyState === WebSocket.OPEN) {
+			// if (socket && socket.readyState === WebSocket.OPEN) {
 				socket.send(
 					JSON.stringify({
 						type: "get_brackets",
@@ -281,11 +281,11 @@ async function renderNewTournament(tournamentData) {
 					})
 				);
 				console.warn("Messaggio 'get_brackets' inviato via WebSocket");
-			} else {
-				showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
-					asToast: true,
-				});
-			}
+			// } else {
+			// 	showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
+			// 		asToast: true,
+			// 	});
+			// }
 		});
 
 		const tournamentDeleteButton =
@@ -295,6 +295,22 @@ async function renderNewTournament(tournamentData) {
 		});
 	});
 }
+
+window.sendGetBrackets = function () {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(
+            JSON.stringify({
+                type: "get_brackets",
+                message: "suca2",
+            })
+        );
+        console.warn("Messaggio 'get_brackets' inviato via WebSocket");
+    } else {
+        showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
+            asToast: true,
+        });
+    }
+};
 
 function deleteTournamentDiv(tournamentId) {
 	const tournamentDiv = document.getElementById(`tournament-${tournamentId}`);

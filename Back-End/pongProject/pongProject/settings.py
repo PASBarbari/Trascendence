@@ -236,6 +236,8 @@ CHANNEL_LAYERS = {
         'CONFIG': {
             "hosts": [f'redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CHANNEL_DB}'],
             'prefix': 'pong',  # Channel prefix
+            'capacity': 1500,  # Increase capacity for high-frequency game updates
+            'expiry': 60,  # Messages expire after 60 seconds
         },
     }
 }

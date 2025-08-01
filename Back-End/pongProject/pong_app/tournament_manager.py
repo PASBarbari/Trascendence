@@ -318,7 +318,7 @@ class TournamentState:
 				# Check if this game belongs to the tournament
 				if game_id not in self.active_games:
 						logger.warning(f"Game {game_id} not found in tournament {self.tournament_id} active games: {list(self.active_games.keys())}")
-						# return {'type': 'error', 'error': 'Game not found in tournament'}
+						return {'type': 'error', 'error': 'Game not found in tournament'}
 				
 				# Remove the completed game
 				game_info = self.active_games.pop(game_id)
@@ -354,7 +354,7 @@ class TournamentState:
 						return
 				
 				# Round is complete when no more active games
-				if len(self.active_games) == 0 or (len(self.next_round) == len(self.partecipants) / 2):
+				if len(self.active_games) == 0:
 						logger.info(f"Round {self.current_round} completed in tournament {self.tournament_id}")
 						logger.info(f"Winners advancing to next round: {self.next_round}")
 						
@@ -630,5 +630,14 @@ class TournamentState:
 						'completion_time': self.completion_time.isoformat() if hasattr(self, 'completion_time') and self.completion_time else None
 				}
 
-# Global tournament manager instance
-tournament_manager = TournamentManager()
+# Import Redis-backed implementation
+try:
+    from .redis_backed_tournament_manager import redis_backed_tournament_manager
+    # Use Redis-backed implementation by default
+    tournament_manager = redis_backed_tournament_manager
+    logger.info("Using Redis-backed tournament manager")
+except ImportError as e:
+    logger.warning(f"Failed to import Redis-backed tournament manager: {e}")
+    logger.info("Falling back to in-memory tournament manager")
+    # Fallback to original in-memory implementation
+    tournament_manager = TournamentManager()
