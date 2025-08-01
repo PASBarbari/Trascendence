@@ -449,7 +449,7 @@ function updateGameState(gameStateData) {
 			// Update position (Z in ThreeJS is Y in backend)
 			state.players[0].mesh.position.z = actualY;
 		} else {
-			console.warn(
+			console.log(
 				"Player 1 - Invalid percentY:",
 				percentY,
 				"or frontend ring_height:",
@@ -487,7 +487,7 @@ function updateGameState(gameStateData) {
 			// Update position (Z in ThreeJS is Y in backend)
 			state.players[1].mesh.position.z = actualY;
 		} else {
-			console.warn(
+			console.log(
 				"Player 2 - Invalid percentY:",
 				percentY,
 				"or frontend ring_height:",

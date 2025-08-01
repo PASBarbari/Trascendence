@@ -109,7 +109,7 @@ const routes = {
 						tournamentId || null
 					);
 				} catch (error) {
-					console.error("Failed to load multiplayer pong:", error);
+					console.warn("Failed to load multiplayer pong:", error);
 					window.navigateTo("#home");
 				}
 			}

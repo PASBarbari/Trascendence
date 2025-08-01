@@ -7,7 +7,7 @@ pongContainerCSS.href = "/pongContainer/pongContainer.css";
 document.head.appendChild(pongContainerCSS);
 
 export function renderMatchHistory() {
-	console.warn("/***********matchHistoryContainer************/");
+	console.log("/***********matchHistoryContainer************/");
 
 	const matchHistoryContainer = document.getElementById("matchHistoryContainer");
 	

@@ -58,7 +58,7 @@ export function showAlertForXSeconds(message, type, seconds, options = {}) {
 	} else {
 		container = document.getElementById("alert-container");
 		if (!container) {
-			console.error("Alert container not found");
+			console.warn("Alert container not found");
 			return;
 		}
 	}

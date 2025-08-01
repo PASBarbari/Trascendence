@@ -9,7 +9,7 @@ pongContainerCSS.href = "/pongContainer/pongContainer.css";
 document.head.appendChild(pongContainerCSS);
 
 function renderTournament() {
-	console.warn("/***********tournamentContainer************/");
+	console.log("/***********tournamentContainer************/");
 
 	const tournamentContainer = document.getElementById("tournamentContainer");
 	tournamentContainer.innerHTML = `
@@ -133,9 +133,9 @@ function createTournament() {
 				return;
 			}
 
-			console.warn("Utenti torneo:", userIdsArray);
-			console.warn("Nome torneo:", tournamentName);
-			console.warn("Max partecipanti:", maxParticipantsValue);
+			console.log("Utenti torneo:", userIdsArray);
+			console.log("Nome torneo:", tournamentName);
+			console.log("Max partecipanti:", maxParticipantsValue);
 
 			try {
 				const response = await fetch(`${url_api}/pong/tournament`, {
@@ -154,7 +154,7 @@ function createTournament() {
 
 				if (response.ok) {
 					const data = await response.json();
-					console.warn("Torneo creato:", data);
+					console.log("Torneo creato:", data);
 
 					//clean form
 					document.getElementById("tournamentName").value = "";
@@ -178,25 +178,26 @@ function createTournament() {
 let socket;
 
 async function renderNewTournament(tournamentData) {
-	console.warn("Rendering new tournament:", tournamentData.message);
-	console.error("Rendering new tournament data:", tournamentData);
+	console.log("Rendering new tournament:", tournamentData.message);
+	console.log("Rendering new tournament data:", tournamentData);
 	
 	const tournamentStat = await tournamentStats();
-	console.error("Tournament stats:", tournamentStat);
+	console.log("Tournament stats:", tournamentStat);
 	if (
 		!tournamentStat ||
 		!tournamentStat.results ||
 		tournamentStat.results.length === 0
 	) {
-		console.warn("Nessun torneo trovato.");
+		console.log("Nessun torneo trovato.");
 		return;
 	}
-	console.warn("Tournament stats:", tournamentStat.results);
+	console.log("Tournament stats:", tournamentStat.results);
 
 	const tournamentListDiv = document.getElementById("tournamentList");
 	tournamentListDiv.innerHTML = "";
 
 	tournamentStat.results.forEach((tournament) => {
+		if (tournament.status == "completed") return;
 		const tournamentDiv = document.createElement("div");
 		tournamentDiv.className = "tournament-item";
 		tournamentDiv.id = `tournament-${tournament.id}`;
@@ -261,7 +262,7 @@ async function renderNewTournament(tournamentData) {
 						// puoi aggiungere altri dati se il backend li richiede
 					})
 				);
-				console.warn("Messaggio 'start_tournament' inviato via WebSocket");
+				console.log("Messaggio 'start_tournament' inviato via WebSocket");
 			} else {
 				showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
 					asToast: true,
@@ -280,7 +281,7 @@ async function renderNewTournament(tournamentData) {
 						message: "suca2",
 					})
 				);
-				console.warn("Messaggio 'get_brackets' inviato via WebSocket");
+				console.log("Messaggio 'get_brackets' inviato via WebSocket");
 			// } else {
 			// 	showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
 			// 		asToast: true,
@@ -304,7 +305,7 @@ window.sendGetBrackets = function () {
                 message: "suca2",
             })
         );
-        console.warn("Messaggio 'get_brackets' inviato via WebSocket");
+        console.log("Messaggio 'get_brackets' inviato via WebSocket");
     } else {
         showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
             asToast: true,
@@ -316,9 +317,9 @@ function deleteTournamentDiv(tournamentId) {
 	const tournamentDiv = document.getElementById(`tournament-${tournamentId}`);
 	if (tournamentDiv) {
 		tournamentDiv.remove();
-		console.warn(`Torneo ${tournamentId} rimosso dalla lista.`);
+		console.log(`Torneo ${tournamentId} rimosso dalla lista.`);
 	} else {
-		console.warn(`Torneo ${tournamentId} non trovato nella lista.`);
+		console.log(`Torneo ${tournamentId} non trovato nella lista.`);
 	}
 }
 
@@ -335,7 +336,7 @@ function httpTournamentRequest(method, tournamentId) {
 	})
 		.then((response) => {
 			if (response.ok) {
-				console.warn(
+				console.log(
 					`Torneo ${
 						method === "DELETE" ? "eliminato" : "aggiornato"
 					} con successo!`
@@ -370,21 +371,21 @@ function messageHandlerTournament(message) {
 		showAlertForXSeconds(message.error, "error", 3, { asToast: true });
 		return;
 	} else if (message.type === "success") {
-		console.warn("(Handler) Messaggio torneo:", message);
+		console.log("(Handler) Messaggio torneo:", message);
 	} else if (message.type === "tournament_connection_success") {
-		console.warn("(Handler) Torneo iniziato:", message); //rendere pulsante start premibile se sei il creatore del torneo
+		console.log("(Handler) Torneo iniziato:", message); //rendere pulsante start premibile se sei il creatore del torneo
 	} else if (message.type === "tournament_initialized") {
-		console.warn("(Handler) Torneo inizializzato:", message);
+		console.log("(Handler) Torneo inizializzato:", message);
 	} else if (message.type === "game_created") {
 		//arriva 2 volte al creatore
 		// se arriva 2 volte la stessa notifica, non fare nulla. salvato globalmente message
 		const gameId = message.game_data.game_id;
 		if (handledGameIds.has(gameId)) {
-			console.error("(Handler) Gioco già gestito:", gameId);
+			console.log("(Handler) Gioco già gestito:", gameId);
 			return;
 		}
 		handledGameIds.add(gameId);
-		console.warn("(Handler) Gioco creato:", message);
+		console.log("(Handler) Gioco creato:", message);
 
 		const myId = getVariables().userId;
 		const player1Id = message.game_data.player_1.user_id;
@@ -412,12 +413,12 @@ function messageHandlerTournament(message) {
 		);
 	} else if (message.type === "start_round") {
 		//arriva 2 volte al creatore
-		console.warn("(Handler) round partito:", message);
+		console.log("(Handler) round partito:", message);
 	} else if (message.type === "brackets") {
-		console.warn("(Handler) Brackets ricevuti:", message.brackets);
+		console.log("(Handler) Brackets ricevuti:", message.brackets);
 		console.table(message.brackets);
 	} else {
-		console.error("(Handler) Messaggio torneo non riconosciuto:", message);
+		console.log("(Handler) Altro messaggio torneo:", message);
 		return;
 	}
 }
@@ -428,14 +429,14 @@ function initializeWebSocketTournament(room_id) {
 	const { token, wss_api } = getVariables();
 
 	const wsUrl = `${wss_api}/pong/ws/tournament/${room_id}/?token=${token}`;
-	console.warn("Connecting to tournaments:", wsUrl);
+	console.log("Connecting to tournaments:", wsUrl);
 
 	socket = new WebSocket(wsUrl);
 	if (!window.activeWebSockets) window.activeWebSockets = [];
 	window.activeWebSockets.push(socket);
 
 	socket.onopen = function () {
-		console.warn("WebSocket connection established for tournament:", room_id);
+		console.log("WebSocket connection established for tournament:", room_id);
 	};
 
 	socket.onmessage = function (event) {
@@ -448,7 +449,7 @@ function initializeWebSocketTournament(room_id) {
 	};
 
 	socket.onclose = function (event) {
-		console.error("WebSocket closed:", event);
+		console.log("WebSocket closed:", event);
 	};
 }
 
@@ -456,7 +457,7 @@ async function tournamentStats() {
 	// pong/pong/user-tournaments get -> history of tournaments. ?user_id per qualcunaltro ?current_only=true prende i tornei non completati. ?status=active per i tornei attivi, ?status=completed pending (no ready) active.
 	try {
 		const { token, url_api, userId } = getVariables();
-		console.warn("[PongTournament] Fetching player stats for user_id:", userId);
+		console.log("[PongTournament] Fetching player stats for user_id:", userId);
 		const response = await fetch(`${url_api}/pong/user-tournaments`, {
 			method: "GET",
 			headers: {
@@ -469,7 +470,7 @@ async function tournamentStats() {
 			throw new Error(`HTTP error! status: ${response.status}`);
 		}
 		const data = await response.json();
-		console.warn("[PongTournament] API response:", data);
+		console.log("[PongTournament] API response:", data);
 		return data;
 	} catch (error) {
 		console.error("[PongTournament] API error:", error);

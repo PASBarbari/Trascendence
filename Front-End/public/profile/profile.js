@@ -93,7 +93,7 @@ async function initializeProfile() {
 	}
 
 	if (!document.getElementById("profile")) {
-		console.error("Profile element not found in DOM");
+		console.log("Profile element not found in DOM");
 		return;
 	}
 

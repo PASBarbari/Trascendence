@@ -34,7 +34,7 @@ async function toggleProfile() {
 			await initializeProfile();
 		}
 	} else {
-		console.error("Elemento #profile non trovato nel DOM");
+		console.log("Elemento #profile non trovato nel DOM");
 	}
 }
 
