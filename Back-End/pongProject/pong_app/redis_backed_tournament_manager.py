@@ -496,6 +496,7 @@ class RedisBackedTournamentState:
                 else:
                     logger.error(f"Tournament {tournament_id} expired and no players found!")
             
+
             # End tournament due to timeout
             await self.redis_state._update_data({
                 'status': 'completed',
@@ -735,6 +736,7 @@ class RedisBackedTournamentState:
             all_players = await self.get_players()
             logger.info(f"DEBUG: Tournament {tournament_id} state - is_complete: {is_complete}, next_round_players: {next_round_players}, all_players: {all_players}")
             
+
             tournament_obj = await database_sync_to_async(Tournament.objects.get)(id=self.redis_state.tournament_id)
             
             # Update tournament status
