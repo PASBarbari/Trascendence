@@ -475,14 +475,37 @@ class RedisBackedTournamentState:
         expired = await self.redis_state.manager.cleanup_expired_games(tournament_id)
         if expired:
             logger.warning(f"Active games for tournament {tournament_id} have expired due to TTL")
+            
+            # Try to determine winner from current round state
+            next_round_players = await self.redis_state.get_next_round_players()
+            winner = None
+            
+            if len(next_round_players) == 1:
+                winner = next_round_players[0]
+                logger.info(f"Tournament {tournament_id} expired but found single winner: {winner}")
+            elif len(next_round_players) > 1:
+                # Multiple players remain, pick one arbitrarily or use tournament rules
+                winner = next_round_players[0]  # Could also use random.choice() or other logic
+                logger.warning(f"Tournament {tournament_id} expired with {len(next_round_players)} remaining players, selected winner: {winner}")
+            else:
+                # No next round players, try to find any player from current tournament
+                all_players = await self.get_players()
+                if all_players:
+                    winner = all_players[0]  # Last resort: pick first original player
+                    logger.warning(f"Tournament {tournament_id} expired with no clear winner, selected: {winner}")
+                else:
+                    logger.error(f"Tournament {tournament_id} expired and no players found!")
+            
+
             # End tournament due to timeout
             await self.redis_state._update_data({
                 'status': 'completed',
                 'is_complete': True,
-                'completion_time': datetime.now().isoformat()
+                'completion_time': datetime.now().isoformat(),
+                'winner': winner
             })
             await self._update_tournament_in_db()
-            await self._broadcast_tournament_complete()
+            await self._broadcast_tournament_complete(winner)
             return
 
         # Round is complete when no more active games
@@ -504,8 +527,17 @@ class RedisBackedTournamentState:
                     winner = next_round_players[0]
                     logger.info(f"Tournament winner: {winner}")
                 else:
-                    logger.error(f"Tournament {tournament_id} completed but no winner found!")
-                    winner = None
+                    # No next round players - try to find a winner from the current state
+                    logger.warning(f"Tournament {tournament_id} completed but no next round players found!")
+                    
+                    # Try to get winner from tournament players as fallback
+                    all_players = await self.get_players()
+                    if all_players:
+                        winner = all_players[0]  # Pick first player as fallback
+                        logger.warning(f"Tournament {tournament_id} using fallback winner: {winner}")
+                    else:
+                        logger.error(f"Tournament {tournament_id} completed but no players found at all!")
+                        winner = None
                 
                 # Mark tournament as complete
                 await self.redis_state._update_data({
@@ -698,6 +730,13 @@ class RedisBackedTournamentState:
             tournament_id = await self.get_tournament_id()
             logger.info(f"DEBUG: Updating tournament {tournament_id} in database")
             
+            # Log current state for debugging
+            is_complete = await self.get_is_complete()
+            next_round_players = await self.redis_state.get_next_round_players()
+            all_players = await self.get_players()
+            logger.info(f"DEBUG: Tournament {tournament_id} state - is_complete: {is_complete}, next_round_players: {next_round_players}, all_players: {all_players}")
+            
+
             tournament_obj = await database_sync_to_async(Tournament.objects.get)(id=self.redis_state.tournament_id)
             
             # Update tournament status
