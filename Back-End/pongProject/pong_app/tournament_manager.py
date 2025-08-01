@@ -258,6 +258,7 @@ class TournamentState:
 				
 				self.current_round += 1
 				self.is_round_active = True
+				self.active_games = {}  # Reset active games for new round
 				self.round_start_time = datetime.now()
 				self.partecipants = self.next_round.copy()
 				random.shuffle(self.partecipants)  # Shuffle participants for fair pairing
