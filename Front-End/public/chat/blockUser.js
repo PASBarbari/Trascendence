@@ -29,9 +29,6 @@ async function blockUser(userId, username) {
 
 		if (response.ok) {
 			const data = await response.json();
-			if (!data.success) {
-				console.error("Error blocking user:", data.error);
-			}
 			showAlertForXSeconds(
 				`${username} has been blocked successfully`,
 				"success",
@@ -82,9 +79,6 @@ async function unblockUser(userId, username) {
 
 		if (response.ok) {
 			const data = await response.json();
-			if (!data.success) {
-				console.error("Error unblocking user:", data.error);
-			}
 			showAlertForXSeconds(
 				`${username} has been unblocked successfully`,
 				"success",
