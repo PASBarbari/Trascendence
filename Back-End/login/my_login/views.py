@@ -816,14 +816,6 @@ class UserLogin(APIView):
 				'username': user.username,
 				'email': user.email
 			}, status=status.HTTP_200_OK)
-		except AppUser.DoesNotExist:
-			return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-		except serializers.ValidationError as e:
-			logger.error(f"User login validation error: {str(e)}", exc_info=True)
-			return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
-		except ValueError as ve:
-			logger.error(f"User login validation error: {str(ve)}", exc_info=True)
-			return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
 			if str(e) == '[\'user not found\']':
 				return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
