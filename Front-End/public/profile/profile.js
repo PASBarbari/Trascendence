@@ -392,10 +392,12 @@ function renderProfile() {
 								has_two_factor_auth: true,
 							});
 							toggle2FAButton.innerText = "Disable 2FA";
+
 							showAlertForXSeconds("2FA setup successful", "success", 3, {
 								asToast: true,
 							});
 							document.body.removeChild(qrModal);
+							renderProfile();
 						} else {
 							showAlertForXSeconds(
 								"Invalid OTP code. Please try again.",

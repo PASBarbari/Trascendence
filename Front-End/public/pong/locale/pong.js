@@ -118,10 +118,10 @@ export function renderPong() {
 				</div>
 			</div>
 			
-			<div class="form-check mb-4">
+			<!--div class="form-check mb-4">
 				<input class="form-check-input" type="checkbox" id="showStats">
 				<label class="form-check-label text-light" for="showStats">Show Stats</label>
-			</div>
+			</div-->
 			
 			<div class="d-flex gap-2 justify-content-center">
 				<button id="saveSettingsButton" class="btn btn-success">Save</button>
@@ -235,9 +235,9 @@ export function renderPong() {
 		state.mat.plane.color.set(event.target.value);
 	});
 
-	document.getElementById("showStats").addEventListener("change", (event) => {
-		UTILS.toggleStats(event.target.checked);
-	});
+	// document.getElementById("showStats").addEventListener("change", (event) => {
+	// 	UTILS.toggleStats(event.target.checked);
+	// });
 
 	document
 		.getElementById("restartGameButton")
