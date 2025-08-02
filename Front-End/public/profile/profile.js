@@ -369,6 +369,7 @@ function renderProfile() {
 				});
 
 				const setup2FAForm = qrModal.querySelector("#setup2FAForm");
+				
 				setup2FAForm.addEventListener("submit", async function (event) {
 					event.preventDefault();
 					const otpCode = qrModal.querySelector("#otpCode").value;

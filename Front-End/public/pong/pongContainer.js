@@ -44,14 +44,38 @@ function renderPongInfo() {
 				<button class="btn btn-secondary" onclick="handleMultiPong()">
 					<i class="fas fa-users me-2"></i>Online
 				</button>
-				<button class="btn btn-success" onclick="PongStatistic()">
+				<button class="btn btn-success" id="pongStatsBtn">
 					<i class="fas fa-gamepad me-2"></i>statistic
 				</button>
+				<div id="pongStatsSection" class="mt-3"></div>
 			</div>
-			
 		</div>
 	`;
+    // Carica subito le statistiche
+    loadPongStats();
 
+    // Ricarica statistiche al click
+    document.getElementById("pongStatsBtn").onclick = loadPongStats;
+}
+
+async function loadPongStats() {
+    const statsSection = document.getElementById("pongStatsSection");
+    statsSection.innerHTML = `<div class="text-muted">Caricamento statistiche...</div>`;
+    const stats = await PongStatistic();
+    if (stats) {
+        statsSection.innerHTML = `
+            <div class="pong-stats">
+                <p style="margin-bottom: 0;"><strong>Partite totali:</strong> ${stats.total_games}</p>
+                <p style="margin-bottom: 0;"><strong>Vittorie:</strong> ${stats.total_wins}</p>
+                <p style="margin-bottom: 0;"><strong>Sconfitte:</strong> ${stats.total_losses}</p>
+                <p style="margin-bottom: 0;"><strong>Tornei giocati:</strong> ${stats.total_tournaments}</p>
+                <p style="margin-bottom: 0;"><strong>Tornei vinti:</strong> ${stats.total_tournament_wins}</p>
+                <p style="margin-bottom: 0;"><strong>Win Rate:</strong> ${stats.win_rate}%</p>
+            </div>
+        `;
+    } else {
+        statsSection.innerHTML = `<div class="alert alert-warning">Nessuna statistica trovata.</div>`;
+    }
 }
 
 async function PongStatistic() {
@@ -72,6 +96,7 @@ async function PongStatistic() {
 		);
 		const data = await response.json();
 		console.log("[PongStatistic] API response:", data);
+		return data;
 	} catch (error) {
 		console.error("[PongStatistic] API error:", error);
 	}

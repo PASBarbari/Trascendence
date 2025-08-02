@@ -111,6 +111,16 @@ function createTournament() {
 		.addEventListener("submit", async function (e) {
 			e.preventDefault();
 
+      if (selectedUsers.length === 0) {
+          showAlertForXSeconds(
+              "Seleziona almeno un partecipante per il torneo.",
+              "info",
+              3,
+              { asToast: true }
+          );
+          return;
+      }
+
 			const tournamentName = document.getElementById("tournamentName").value;
 			// const maxParticipants = document.getElementById("maxParticipants").value;
 			const { userId, token, url_api } = getVariables();

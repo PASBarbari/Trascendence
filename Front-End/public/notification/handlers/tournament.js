@@ -15,7 +15,7 @@ export function handleTournamentCreatedMessage(message) {
 
 export function handleTournamentDeletedMessage(message) {
 	console.log("Processing tournament deleted message:", message);
-	if (!message.message || !message.message.tournament_id || !message.message.name) {
+	if (!message.message || !message.message.tournament_id) {
 		console.error("Invalid tournament deletion message format");
 		return;
 	}
