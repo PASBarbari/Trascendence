@@ -2,6 +2,7 @@ import { getCookie } from "../cookie.js";
 import { getVariables } from "../var.js";
 import { updateChatList } from "./ExpandableSidebar.js";
 import { initFriendAutocomplete } from "../notification/friendAutocomplete.js";
+import { showAlertForXSeconds } from "../alert/alert.js";
 
 const link = document.createElement("link");
 link.rel = "stylesheet";
@@ -83,6 +84,19 @@ initFriendAutocomplete({
 	let userIdsArray = selectedUsers.map(u => u.id);
 	if (!userIdsArray.includes(userId)) {
 		userIdsArray.push(userId);
+	}
+
+	if (!roomName) {
+			showAlertForXSeconds("Il nome della chat è obbligatorio.", "error", 3, { asToast: true });
+			return;
+	}
+	if (!roomDescription) {
+			showAlertForXSeconds("La descrizione è obbligatoria.", "error", 3, { asToast: true });
+			return;
+	}
+	if (userIdsArray.length < 2) {
+			showAlertForXSeconds("Aggiungi almeno un altro utente.", "error", 3, { asToast: true });
+			return;
 	}
 
 	console.log("Utenti:", userIdsArray);

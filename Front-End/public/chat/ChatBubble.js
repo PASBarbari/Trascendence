@@ -76,9 +76,12 @@ function renderChatBubble({
 	if (!isSingleChat && !isSenderMe) {
 		takeDatafromUserId(senderId).then((ImgData) => {
 			console.log("[renderChatBubble] ImgData:", ImgData);
-			let ProfileImg = ImgData?.current_avatar.image_url || "";
-			if (ProfileImg == "/media/placeholder.jpeg") ProfileImg = "";
-			else ProfileImg = url_api + "/user" + ProfileImg;
+			let ProfileImg = "";
+			if (ImgData && ImgData.current_avatar && ImgData.current_avatar.image_url) {
+        ProfileImg = ImgData.current_avatar.image_url;
+        if (ProfileImg == "/media/placeholder.jpeg") ProfileImg = "";
+        else ProfileImg = url_api + "/user" + ProfileImg;
+    	}
 
 			const avatarDiv = chatBubble.querySelector(".friend-avatar");
 			if (avatarDiv) {
