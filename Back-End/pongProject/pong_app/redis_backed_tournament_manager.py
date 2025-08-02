@@ -85,6 +85,7 @@ class RedisBackedTournamentManager:
             
             # Wait for tournament to be initialized (brackets created)
             while not await tournament.get_initialized():
+                logger.info(f"Tournament {tournament_id} waiting for initialization...")
                 await asyncio.sleep(1)
             
             logger.info(f"Tournament {tournament_id} initialized, starting auto-round progression")
@@ -92,12 +93,14 @@ class RedisBackedTournamentManager:
             # Auto-start rounds until tournament is complete
             while not await tournament.get_is_complete():
                 if await tournament.can_start_next_round():
+                    logger.info(f"Tournament {tournament_id} can start next round, starting...")
                     await tournament.start_round()
                     
                     # Wait for round to complete (with timeout)
                     await self._wait_for_round_completion(tournament)
                 else:
                     # Wait a bit before checking again
+                    logger.info(f"Tournament {tournament_id} cannot start next round yet, waiting...")
                     await asyncio.sleep(2)
             
             logger.info(f"Tournament {tournament_id} completed!")
@@ -301,10 +304,40 @@ class RedisBackedTournamentState:
             # Update tournament status in database
             asyncio.create_task(self._update_tournament_status_in_db('active'))
             
+            # Ensure management task is started for auto-round progression
+            await self._ensure_management_task()
+            
             return {'type': 'success', 'success': 'Tournament initialized successfully'}
             
         finally:
             await self.redis_state.manager._release_lock(self.redis_state.tournament_id)
+    
+    async def _ensure_management_task(self):
+        """Ensure management task is running for this tournament"""
+        if not self.manager:
+            return
+            
+        tournament_id = await self.get_tournament_id()
+        
+        # Check if task already exists and is not done
+        if tournament_id in self.manager.tournament_tasks:
+            task = self.manager.tournament_tasks[tournament_id]
+            if not task.done():
+                logger.info(f"Management task already running for tournament {tournament_id}")
+                return
+            else:
+                # Remove completed task
+                del self.manager.tournament_tasks[tournament_id]
+        
+        # Start new management task if tournament is active
+        if (await self.get_status() == 'active' and 
+            not await self.get_is_complete()):
+            task = asyncio.create_task(self.manager._manage_tournament(self))
+            self.manager.tournament_tasks[tournament_id] = task
+            logger.info(f"Started management task for tournament {tournament_id}")
+        else:
+            logger.info(f"Tournament {tournament_id} not ready for management task: status={await self.get_status()}, complete={await self.get_is_complete()}")
+    
     
     async def can_start_next_round(self) -> bool:
         """Check if next round can be started"""
@@ -313,17 +346,17 @@ class RedisBackedTournamentState:
         is_complete = await self.get_is_complete()
         is_round_active = await self.get_is_round_active()
         
-        #logger.info(f"DEBUG: can_start_next_round for tournament {tournament_id}: initialized={is_initialized}, complete={is_complete}, round_active={is_round_active}")
+        logger.info(f"DEBUG: can_start_next_round for tournament {tournament_id}: initialized={is_initialized}, complete={is_complete}, round_active={is_round_active}")
         
         if (not is_initialized or is_complete or is_round_active):
             return False
         
         next_round_players = await self.redis_state.get_next_round_players()
-        #logger.info(f"DEBUG: Next round players for tournament {tournament_id}: {next_round_players}")
+        logger.info(f"DEBUG: Next round players for tournament {tournament_id}: {next_round_players}")
         
         # Check if we have players for next round
         if len(next_round_players) < 2:
-            #logger.info(f"DEBUG: Not enough players for next round: {len(next_round_players)}")
+            logger.info(f"DEBUG: Not enough players for next round: {len(next_round_players)}")
             return False
         
         # If only one player left, tournament is complete

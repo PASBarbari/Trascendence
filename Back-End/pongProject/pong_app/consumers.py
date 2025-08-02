@@ -473,7 +473,7 @@ class TournamentConsumer(AsyncWebsocketConsumer):
 					tournament_id=self.tournament_id,
 					name=name,
 					max_players=max_p,
-					creator_id=None	# Creator will be set later
+					creator_id=self.player_id	# Set the first joiner as creator
 				)
 				logger.info(f"Created new tournament {name} with creator {self.player_id}")
 				return tournament

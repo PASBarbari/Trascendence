@@ -176,7 +176,7 @@ class RedisTournamentManager:
             creator_id = await database_sync_to_async(
                 lambda: tournament_db.creator.user_id if tournament_db.creator else None
             )()
-            
+            logger.info(f"Loading tournament {tournament_id} from database with creator {creator_id}")
             # Get winner_id safely in async context
             winner_id = await database_sync_to_async(
                 lambda: tournament_db.winner.user_id if tournament_db.winner else None
