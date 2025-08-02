@@ -188,7 +188,7 @@ class RedisBackedTournamentState:
         # Round is active if there are active games
         active_games = await self.redis_state.get_active_games()
         tournament_id = await self.get_tournament_id()
-        logger.info(f"DEBUG: get_is_round_active for tournament {tournament_id}: active_games={len(active_games)}")
+        #logger.info(f"DEBUG: get_is_round_active for tournament {tournament_id}: active_games={len(active_games)}")
         return len(active_games) > 0
     
     async def get_winner(self) -> Optional[int]:
@@ -313,22 +313,22 @@ class RedisBackedTournamentState:
         is_complete = await self.get_is_complete()
         is_round_active = await self.get_is_round_active()
         
-        logger.info(f"DEBUG: can_start_next_round for tournament {tournament_id}: initialized={is_initialized}, complete={is_complete}, round_active={is_round_active}")
+        #logger.info(f"DEBUG: can_start_next_round for tournament {tournament_id}: initialized={is_initialized}, complete={is_complete}, round_active={is_round_active}")
         
         if (not is_initialized or is_complete or is_round_active):
             return False
         
         next_round_players = await self.redis_state.get_next_round_players()
-        logger.info(f"DEBUG: Next round players for tournament {tournament_id}: {next_round_players}")
+        #logger.info(f"DEBUG: Next round players for tournament {tournament_id}: {next_round_players}")
         
         # Check if we have players for next round
         if len(next_round_players) < 2:
-            logger.info(f"DEBUG: Not enough players for next round: {len(next_round_players)}")
+            #logger.info(f"DEBUG: Not enough players for next round: {len(next_round_players)}")
             return False
         
         # If only one player left, tournament is complete
         if len(next_round_players) == 1:
-            logger.info(f"DEBUG: Only one player left, completing tournament {tournament_id}")
+            #logger.info(f"DEBUG: Only one player left, completing tournament {tournament_id}")
             # Mark tournament as complete
             await self.redis_state._update_data({
                 'winner': next_round_players[0],
@@ -357,7 +357,7 @@ class RedisBackedTournamentState:
             
             # Update round state
             tournament_id = await self.get_tournament_id()
-            logger.info(f"DEBUG: Starting round {new_round} for tournament {tournament_id}")
+            #logger.info(f"DEBUG: Starting round {new_round} for tournament {tournament_id}")
             await self.redis_state._update_data({
                 'current_round': new_round,
                 'round_start_time': datetime.now().isoformat()
@@ -469,7 +469,7 @@ class RedisBackedTournamentState:
     async def _check_round_completion(self):
         """Check if current round is complete and handle progression"""
         tournament_id = await self.get_tournament_id()
-        logger.info(f"DEBUG: _check_round_completion called for tournament {tournament_id}")
+        #logger.info(f"DEBUG: _check_round_completion called for tournament {tournament_id}")
         
         # Check for expired games first
         expired = await self.redis_state.manager.cleanup_expired_games(tournament_id)
@@ -510,8 +510,8 @@ class RedisBackedTournamentState:
 
         # Round is complete when no more active games
         active_games = await self.redis_state.get_active_games()
-        logger.info(f"DEBUG: Retrieved active games: {list(active_games.keys()) if active_games else 'None'}")
-        logger.info(f"DEBUG: Active games count: {len(active_games)}")
+        #logger.info(f"DEBUG: Retrieved active games: {list(active_games.keys()) if active_games else 'None'}")
+        #logger.info(f"DEBUG: Active games count: {len(active_games)}")
         
         if len(active_games) == 0:
             current_round = await self.get_current_round()
@@ -548,7 +548,7 @@ class RedisBackedTournamentState:
                 })
                 
                 # Update database BEFORE broadcasting
-                logger.info(f"DEBUG: Updating database for completed tournament {tournament_id}")
+                #logger.info(f"DEBUG: Updating database for completed tournament {tournament_id}")
                 await self._update_tournament_in_db()
                 
                 # Broadcast completion
@@ -728,13 +728,13 @@ class RedisBackedTournamentState:
             from .models import Tournament, UserProfile
             
             tournament_id = await self.get_tournament_id()
-            logger.info(f"DEBUG: Updating tournament {tournament_id} in database")
+            #logger.info(f"DEBUG: Updating tournament {tournament_id} in database")
             
             # Log current state for debugging
             is_complete = await self.get_is_complete()
             next_round_players = await self.redis_state.get_next_round_players()
             all_players = await self.get_players()
-            logger.info(f"DEBUG: Tournament {tournament_id} state - is_complete: {is_complete}, next_round_players: {next_round_players}, all_players: {all_players}")
+            #logger.info(f"DEBUG: Tournament {tournament_id} state - is_complete: {is_complete}, next_round_players: {next_round_players}, all_players: {all_players}")
             
 
             tournament_obj = await database_sync_to_async(Tournament.objects.get)(id=self.redis_state.tournament_id)
@@ -743,14 +743,14 @@ class RedisBackedTournamentState:
             status = await self.get_status()
             winner_id = await self.get_winner()
             
-            logger.info(f"DEBUG: Tournament {tournament_id} - status: {status}, winner_id: {winner_id}")
+            #logger.info(f"DEBUG: Tournament {tournament_id} - status: {status}, winner_id: {winner_id}")
             
             tournament_obj.status = status
             if winner_id:
                 try:
                     winner_obj = await database_sync_to_async(UserProfile.objects.get)(user_id=winner_id)
                     tournament_obj.winner = winner_obj
-                    logger.info(f"DEBUG: Set winner {winner_id} for tournament {tournament_id}")
+                    #logger.info(f"DEBUG: Set winner {winner_id} for tournament {tournament_id}")
                 except Exception as e:
                     logger.error(f"Failed to get winner UserProfile {winner_id}: {e}")
                     logger.warning(f"Failed to set winner {winner_id} in database")

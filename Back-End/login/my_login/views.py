@@ -2,6 +2,7 @@ from math import log
 import stat
 from urllib import response
 from urllib.parse import urlencode
+from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model, login, logout
 from django.utils.decorators import method_decorator
 from django.shortcuts import redirect
@@ -10,7 +11,7 @@ import requests
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .serializers import UserRegisterSerializer, UserLoginSerializer, UserSerializer
-from rest_framework import permissions, status
+from rest_framework import permissions, status, serializers
 from .validations import custom_validation, validate_email, validate_password
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication , TokenHasScope, TokenHasReadWriteScope
 from .errors import error_codes
@@ -660,6 +661,8 @@ class Verify2FALoginView(APIView):
 			return Response({"error": "User not found"}, 
 						  status=status.HTTP_404_NOT_FOUND)
 		except Exception as e:
+			if str(e) == '[\'user not found\']':
+				return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 			logger.error(f"Error during 2FA verification: {str(e)}")
 			return Response({"error": 'Internal server error'},
 						  status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -813,7 +816,17 @@ class UserLogin(APIView):
 				'username': user.username,
 				'email': user.email
 			}, status=status.HTTP_200_OK)
+		except AppUser.DoesNotExist:
+			return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+		except serializers.ValidationError as e:
+			logger.error(f"User login validation error: {str(e)}", exc_info=True)
+			return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+		except ValueError as ve:
+			logger.error(f"User login validation error: {str(ve)}", exc_info=True)
+			return Response({'error': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
 		except Exception as e:
+			if str(e) == '[\'user not found\']':
+				return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 			logger.error(f"User login error: {str(e)}", exc_info=True)
 			return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
