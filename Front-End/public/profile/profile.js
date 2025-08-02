@@ -401,7 +401,7 @@ function renderProfile() {
 						} else {
 							showAlertForXSeconds(
 								"Invalid OTP code. Please try again.",
-								"error",
+								"warn",
 								3,
 								{ asToast: true }
 							);
@@ -409,7 +409,7 @@ function renderProfile() {
 					} catch (error) {
 						showAlertForXSeconds(
 							`Network error during OTP verification: ${error.message}`,
-							"error",
+							"warn",
 							3,
 							{ asToast: true }
 						);
