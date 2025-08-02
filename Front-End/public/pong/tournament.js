@@ -234,9 +234,9 @@ async function renderNewTournament(tournamentData) {
 			<button class="btn ${isCreator ? "btn-outline-success" : "btn-outline-secondary"}" id="start-button" data-tournament-id="${tournament.id}" disabled>
 				start
 			</button>
-			<button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${tournament.id}" >
+			<!--button class="btn btn-outline-secondary" id="tournamentStatsButton" data-tournament-id="${tournament.id}" >
 				get_brackets
-			</button>
+			</button-->
 			<button class="btn btn-outline-danger" id="tournamentDelete" data-tournament-id="${tournament.id}" ${isCreator ? "" : "disabled"}>
 				delete
 			</button>
@@ -283,21 +283,21 @@ async function renderNewTournament(tournamentData) {
 		const tournamentStatsButton = tournamentDiv.querySelector(
 			"#tournamentStatsButton"
 		);
-		tournamentStatsButton.addEventListener("click", async () => {
-			// if (socket && socket.readyState === WebSocket.OPEN) {
-				socket.send(
-					JSON.stringify({
-						type: "get_brackets",
-						message: "suca2",
-					})
-				);
-				console.log("Messaggio 'get_brackets' inviato via WebSocket");
-			// } else {
-			// 	showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
-			// 		asToast: true,
-			// 	});
-			// }
-		});
+		// tournamentStatsButton.addEventListener("click", async () => {
+		// 	// if (socket && socket.readyState === WebSocket.OPEN) {
+		// 		socket.send(
+		// 			JSON.stringify({
+		// 				type: "get_brackets",
+		// 				message: "suca2",
+		// 			})
+		// 		);
+		// 		console.log("Messaggio 'get_brackets' inviato via WebSocket");
+		// 	// } else {
+		// 	// 	showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
+		// 	// 		asToast: true,
+		// 	// 	});
+		// 	// }
+		// });
 
 		const tournamentDeleteButton =
 			tournamentDiv.querySelector("#tournamentDelete");
@@ -307,21 +307,21 @@ async function renderNewTournament(tournamentData) {
 	});
 }
 
-window.sendGetBrackets = function () {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(
-            JSON.stringify({
-                type: "get_brackets",
-                message: "suca2",
-            })
-        );
-        console.log("Messaggio 'get_brackets' inviato via WebSocket");
-    } else {
-        showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
-            asToast: true,
-        });
-    }
-};
+// window.sendGetBrackets = function () {
+//     if (socket && socket.readyState === WebSocket.OPEN) {
+//         socket.send(
+//             JSON.stringify({
+//                 type: "get_brackets",
+//                 message: "suca2",
+//             })
+//         );
+//         console.log("Messaggio 'get_brackets' inviato via WebSocket");
+//     } else {
+//         showAlertForXSeconds("Connessione WebSocket non attiva!", "error", 3, {
+//             asToast: true,
+//         });
+//     }
+// };
 
 function deleteTournamentDiv(tournamentId) {
 	const tournamentDiv = document.getElementById(`tournament-${tournamentId}`);
