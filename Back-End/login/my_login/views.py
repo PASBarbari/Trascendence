@@ -478,7 +478,7 @@ class OAuthCallbackView(APIView):
 	# 		"""
 		
 	# 	return HttpResponse(html_content, content_type='text/html')
-
+## check
 @method_decorator(ratelimit(key='user', rate='50/m', method='GET'), name='get')
 class Setup2FAView(APIView):
 	permission_classes = [permissions.IsAuthenticated]
